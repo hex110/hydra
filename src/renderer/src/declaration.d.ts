@@ -389,6 +389,11 @@ declare global {
       objectId: string,
       autoRunGamemode: boolean
     ) => Promise<void>;
+    toggleGameDefaultLaunchOptions: (
+      shop: GameShop,
+      objectId: string,
+      ignoreDefaultLaunchOptions: boolean
+    ) => Promise<void>;
     isGamemodeAvailable: () => Promise<boolean>;
     isSteamAppExecutable: (
       appId: string,

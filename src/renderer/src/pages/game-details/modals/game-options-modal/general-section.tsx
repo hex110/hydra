@@ -19,11 +19,62 @@ import type { ClassicsDisc, LibraryGame, ShortcutLocation } from "@types";
 import { DotIcon, FileIcon } from "@primer/octicons-react";
 import { HardDrive, X, FolderOpen, ChevronDown } from "lucide-react";
 import { gameDetailsContext } from "@renderer/context";
+import { useAppSelector } from "@renderer/hooks";
 import {
   getSkuRegion,
   getSkuRegionFlag,
   platformToSystem,
 } from "@renderer/helpers";
+
+function DefaultLaunchOptionsToggle({ game }: Readonly<{ game: LibraryGame }>) {
+  const { t } = useTranslation("game_details");
+  const { updateGame } = useContext(gameDetailsContext);
+  const defaultLaunchOptions = useAppSelector(
+    (state) => state.userPreferences.value?.defaultLaunchOptions
+  );
+  const [ignoreDefaults, setIgnoreDefaults] = useState(
+    game.ignoreDefaultLaunchOptions === true
+  );
+
+  useEffect(() => {
+    setIgnoreDefaults(game.ignoreDefaultLaunchOptions === true);
+  }, [game.ignoreDefaultLaunchOptions]);
+
+  if (!defaultLaunchOptions) return null;
+
+  const handleChange = async () => {
+    const nextValue = !ignoreDefaults;
+    setIgnoreDefaults(nextValue);
+    await window.electron.toggleGameDefaultLaunchOptions(
+      game.shop,
+      game.objectId,
+      nextValue
+    );
+    await updateGame();
+  };
+
+  return (
+    <div className="game-options-modal__default-launch-options">
+      {!ignoreDefaults && (
+        <p className="game-options-modal__header-description">
+          <Trans
+            i18nKey="default_launch_options_hint"
+            ns="game_details"
+            values={{ options: defaultLaunchOptions }}
+            components={{
+              code: <code className="game-options-modal__inline-code" />,
+            }}
+          />
+        </p>
+      )}
+      <CheckboxField
+        label={t("ignore_default_launch_options")}
+        checked={ignoreDefaults}
+        onChange={handleChange}
+      />
+    </div>
+  );
+}
 
 interface ClassicsDiscSectionProps {
   game: LibraryGame;
@@ -952,6 +1003,7 @@ export function GeneralSettingsSection({
               )
             }
           />
+          <DefaultLaunchOptionsToggle game={game} />
         </div>
       )}
     </>

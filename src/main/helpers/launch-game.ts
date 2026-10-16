@@ -42,6 +42,7 @@ import { parseExecutablePath } from "../events/helpers/parse-executable-path";
 import { isGamemodeAvailable } from "./is-gamemode-available";
 import { isMangohudAvailable } from "./is-mangohud-available";
 import { resolveLaunchCommand } from "./resolve-launch-command";
+import { applyDefaultLaunchOptions } from "./default-launch-options";
 import {
   buildWindowsBatchCommand,
   isWindowsBatchFile,
@@ -715,6 +716,12 @@ const launchGameWithCloudSaveChecks = async (
     })
     .catch(() => null);
 
+  const effectiveLaunchOptions = applyDefaultLaunchOptions(
+    userPreferences?.defaultLaunchOptions,
+    launchOptions,
+    game?.ignoreDefaultLaunchOptions === true
+  );
+
   const useMangohud =
     (userPreferences?.autoRunMangohud === true ||
       game?.autoRunMangohud === true) &&
@@ -919,7 +926,7 @@ const launchGameWithCloudSaveChecks = async (
               prepared.session,
               prepared.parameters,
               {
-                launchOptions,
+                launchOptions: effectiveLaunchOptions,
                 useGamemode,
                 useMangohud,
                 onStatus: createUmuStatusReporter(gameKey),
@@ -930,7 +937,7 @@ const launchGameWithCloudSaveChecks = async (
           } else {
             pid = await launchAuthenticatedEpicGame(
               prepared.parameters,
-              launchOptions
+              effectiveLaunchOptions
             );
             recordManagedEpicProcess(prepared.session, pid);
           }
@@ -967,12 +974,17 @@ const launchGameWithCloudSaveChecks = async (
   await new Promise((resolve) => setTimeout(resolve, LAUNCH_DELAY_IN_MS));
 
   if (steamProtocolLaunch) {
-    if (launchOptions?.includes("%command%") || useMangohud || useGamemode) {
+    if (
+      effectiveLaunchOptions?.includes("%command%") ||
+      useMangohud ||
+      useGamemode
+    ) {
       logger.warn(
         "Steam protocol launch delegates command wrappers to Steam settings",
         {
           objectId,
-          hasCommandWrapper: launchOptions?.includes("%command%") === true,
+          hasCommandWrapper:
+            effectiveLaunchOptions?.includes("%command%") === true,
           useMangohud,
           useGamemode,
         }
@@ -995,7 +1007,7 @@ const launchGameWithCloudSaveChecks = async (
           objectId,
           parsedPath,
           compatibilityContext,
-          launchOptions,
+          effectiveLaunchOptions,
           useMangohud,
           useGamemode
         );
@@ -1027,7 +1039,7 @@ const launchGameWithCloudSaveChecks = async (
     objectId,
     parsedPath,
     compatibilityContext,
-    launchOptions,
+    effectiveLaunchOptions,
     useMangohud,
     useGamemode
   );

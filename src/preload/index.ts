@@ -998,6 +998,17 @@ contextBridge.exposeInMainWorld("electron", {
     autoRunGamemode: boolean
   ) =>
     ipcRenderer.invoke("toggleGameGamemode", shop, objectId, autoRunGamemode),
+  toggleGameDefaultLaunchOptions: (
+    shop: GameShop,
+    objectId: string,
+    ignoreDefaultLaunchOptions: boolean
+  ) =>
+    ipcRenderer.invoke(
+      "toggleGameDefaultLaunchOptions",
+      shop,
+      objectId,
+      ignoreDefaultLaunchOptions
+    ),
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),

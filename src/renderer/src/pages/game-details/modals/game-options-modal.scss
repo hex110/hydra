@@ -160,6 +160,18 @@ $disc-menu-transition-duration: 0.15s;
     }
   }
 
+  &__default-launch-options {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin-top: calc(globals.$spacing-unit / 2);
+
+    p {
+      margin: 0;
+      word-break: break-word;
+    }
+  }
+
   &__inline-code {
     font-family: monospace;
     user-select: text;

@@ -87,6 +87,7 @@ export interface Game extends LibraryCatalogueMetadata {
   trackingExecutablePaths?: string[] | null;
   trackingExecutablePathsUpdatedAt?: Date | null;
   launchOptions?: string | null;
+  ignoreDefaultLaunchOptions?: boolean;
   autoRunMangohud?: boolean | null;
   autoRunGamemode?: boolean | null;
   favorite?: boolean;
@@ -232,6 +233,7 @@ export interface UserPreferences {
   globalTrackersUrl?: string;
   appendGlobalTrackersUrl?: boolean;
   defaultProtonPath?: string | null;
+  defaultLaunchOptions?: string | null;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
   hideClassicsBookmark?: boolean;

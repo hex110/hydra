@@ -1,5 +1,6 @@
-import { useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { debounce } from "lodash-es";
+import { Trans, useTranslation } from "react-i18next";
 import { GAMEMODE_SITE_URL, MANGOHUD_SITE_URL } from "@shared";
 
 import {
@@ -52,6 +53,9 @@ export function SettingsContextCompatibility() {
   const [autoRunGamemode, setAutoRunGamemode] = useState(
     () => userPreferences?.autoRunGamemode ?? false
   );
+  const [defaultLaunchOptions, setDefaultLaunchOptions] = useState(
+    () => userPreferences?.defaultLaunchOptions ?? ""
+  );
   const [gamemodeAvailable, setGamemodeAvailable] = useState(false);
   const [mangohudAvailable, setMangohudAvailable] = useState(false);
 
@@ -87,6 +91,28 @@ export function SettingsContextCompatibility() {
 
     return () => unlisten();
   }, [shouldShowCommonRedist]);
+
+  useEffect(() => {
+    setDefaultLaunchOptions(userPreferences?.defaultLaunchOptions ?? "");
+  }, [userPreferences?.defaultLaunchOptions]);
+
+  const updateUserPreferencesRef = useRef(updateUserPreferences);
+  updateUserPreferencesRef.current = updateUserPreferences;
+
+  const saveDefaultLaunchOptions = useMemo(
+    () =>
+      debounce((value: string) => {
+        updateUserPreferencesRef.current({
+          defaultLaunchOptions: value.trim() || null,
+        });
+      }, 1000),
+    []
+  );
+
+  useEffect(
+    () => () => saveDefaultLaunchOptions.flush(),
+    [saveDefaultLaunchOptions]
+  );
 
   useEffect(() => {
     if (!userPreferences) return;
@@ -386,6 +412,45 @@ export function SettingsContextCompatibility() {
           </div>
         </div>
       )}
+
+      <div className="settings-context-panel__group">
+        <h3>{t("default_launch_options")}</h3>
+        <p className="settings-general__common-redist-description">
+          {window.electron.platform === "linux" ? (
+            <Trans
+              i18nKey="default_launch_options_description_linux"
+              ns="settings"
+              components={{ code: <code /> }}
+            />
+          ) : (
+            t("default_launch_options_description")
+          )}
+        </p>
+        <TextField
+          value={defaultLaunchOptions}
+          theme="dark"
+          placeholder={t("default_launch_options_placeholder")}
+          onChange={(event) => {
+            setDefaultLaunchOptions(event.target.value);
+            saveDefaultLaunchOptions(event.target.value);
+          }}
+          rightContent={
+            defaultLaunchOptions && (
+              <Button
+                type="button"
+                theme="outline"
+                onClick={() => {
+                  saveDefaultLaunchOptions.cancel();
+                  setDefaultLaunchOptions("");
+                  updateUserPreferences({ defaultLaunchOptions: null });
+                }}
+              >
+                {t("clear")}
+              </Button>
+            )
+          }
+        />
+      </div>
 
       {shouldShowCommonRedist && (
         <div className="settings-context-panel__group">
