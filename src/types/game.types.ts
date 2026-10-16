@@ -1,5 +1,25 @@
 export type GameShop = "steam" | "epic" | "custom" | "launchbox";
 
+export type GameSetupReason =
+  | "download-complete"
+  | "executable-changed"
+  | "library-scan"
+  | "manual";
+
+export type GameSetupStatus =
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed"
+  | "skipped";
+
+export interface GameSetupStatusEvent {
+  shop: GameShop;
+  objectId: string;
+  status: GameSetupStatus;
+  stepId: string | null;
+}
+
 export type ShortcutLocation = "desktop" | "start_menu";
 
 export interface UnlockedAchievement {

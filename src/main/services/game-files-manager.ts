@@ -39,6 +39,7 @@ import { publishExtractionCompleteNotification } from "./notifications";
 import { SystemPath } from "./system-path";
 import { WindowManager } from "./window-manager";
 import { runAutomaticCloudSaveSync } from "./cloud-save";
+import { GameSetup } from "./game-setup";
 
 const PROGRESS_THROTTLE_MS = 1000;
 
@@ -563,6 +564,9 @@ export class GameFilesManager {
         );
 
         void runAchievementMetadataExport(this.gameKey, updatedGame);
+        void GameSetup.enqueue(this.shop, this.objectId, {
+          reason: "download-complete",
+        });
 
         WindowManager.sendToAppWindows("on-library-batch-complete");
 

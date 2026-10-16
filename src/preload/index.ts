@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  GameSetupStatusEvent,
   SystemPowerAction,
   GameShop,
   DownloadProgress,
@@ -998,6 +999,19 @@ contextBridge.exposeInMainWorld("electron", {
     autoRunGamemode: boolean
   ) =>
     ipcRenderer.invoke("toggleGameGamemode", shop, objectId, autoRunGamemode),
+  runGameSetup: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("runGameSetup", shop, objectId),
+  countGamesMissingPrefix: () => ipcRenderer.invoke("countGamesMissingPrefix"),
+  prepareMissingGamePrefixes: () =>
+    ipcRenderer.invoke("prepareMissingGamePrefixes"),
+  onGameSetupStatus: (cb: (event: GameSetupStatusEvent) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: GameSetupStatusEvent
+    ) => cb(payload);
+    ipcRenderer.on("on-game-setup-status", listener);
+    return () => ipcRenderer.removeListener("on-game-setup-status", listener);
+  },
   toggleGameDefaultLaunchOptions: (
     shop: GameShop,
     objectId: string,

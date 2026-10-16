@@ -9,11 +9,11 @@ options (**Game options → General → Launch options**).
 Both values use the same syntax as per-game launch options. When both are set,
 Hydra merges them at launch time; neither value is rewritten on disk.
 
-| Part | Rule |
-|---|---|
-| Environment variables (`NAME=value` before `%command%`) | Both are kept. If both set the same variable, the game's value wins. `WINEDLLOVERRIDES` is the exception: both lists are joined with `;`. |
-| Wrapper commands (between the variables and `%command%`) | The defaults wrap the game's own wrappers. |
-| Arguments (after `%command%`, or the whole value when there is no `%command%`) | Default arguments come first, then the game's. |
+| Part                                                                           | Rule                                                                                                                                      |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Environment variables (`NAME=value` before `%command%`)                        | Both are kept. If both set the same variable, the game's value wins. `WINEDLLOVERRIDES` is the exception: both lists are joined with `;`. |
+| Wrapper commands (between the variables and `%command%`)                       | The defaults wrap the game's own wrappers.                                                                                                |
+| Arguments (after `%command%`, or the whole value when there is no `%command%`) | Default arguments come first, then the game's.                                                                                            |
 
 Example:
 

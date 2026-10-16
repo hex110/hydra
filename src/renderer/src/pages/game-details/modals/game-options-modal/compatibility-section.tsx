@@ -10,6 +10,7 @@ import {
 import type { LibraryGame, ProtonVersion } from "@types";
 import { FileDirectoryIcon, LinkExternalIcon } from "@primer/octicons-react";
 import { Tooltip } from "react-tooltip";
+import { GameSetupButton } from "./game-setup-button";
 
 interface CompatibilitySettingsSectionProps {
   game: LibraryGame;
@@ -157,6 +158,8 @@ export function CompatibilitySettingsSection({
           {showWinetricksUnavailableTooltip && (
             <Tooltip id="winetricks-unavailable-tooltip" />
           )}
+
+          <GameSetupButton game={game} />
         </div>
       </div>
 

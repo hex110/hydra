@@ -281,7 +281,30 @@ export class Umu {
     );
   }
 
-  public static async preparePrefix(options: {
+  private static readonly prefixPreparations = new Map<string, Promise<void>>();
+
+  /**
+   * Concurrent calls for the same prefix share one umu-run process, so
+   * background game setup and a launch never initialize a prefix twice.
+   */
+  public static preparePrefix(options: {
+    winePrefixPath: string;
+    protonPath?: string | null;
+    gameId?: string | null;
+    onStatus?: UmuStatusListener;
+  }): Promise<void> {
+    const key = path.resolve(options.winePrefixPath);
+    const inflight = this.prefixPreparations.get(key);
+    if (inflight) return inflight;
+
+    const preparation = this.runPrefixPreparation(options).finally(() => {
+      this.prefixPreparations.delete(key);
+    });
+    this.prefixPreparations.set(key, preparation);
+    return preparation;
+  }
+
+  private static async runPrefixPreparation(options: {
     winePrefixPath: string;
     protonPath?: string | null;
     gameId?: string | null;

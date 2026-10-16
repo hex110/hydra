@@ -11,6 +11,7 @@ import {
 import { logger } from "@main/services";
 import { runAutomaticCloudSaveSync } from "@main/services/cloud-save";
 import { AchievementWatcherManager } from "@main/services/achievements/achievement-watcher-manager";
+import { GameSetup } from "@main/services/game-setup";
 import type { GameShop } from "@types";
 
 const updateExecutablePath = async (
@@ -44,6 +45,10 @@ const updateExecutablePath = async (
 
   if (parsedPath) {
     void AchievementWatcherManager.syncGameAchievementFiles(shop, objectId);
+  }
+
+  if (environmentChanged) {
+    void GameSetup.enqueue(shop, objectId, { reason: "executable-changed" });
   }
 
   // Calculate size in background and update later

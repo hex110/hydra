@@ -140,4 +140,13 @@
     padding-top: calc(globals.$spacing-unit / 2);
     gap: calc(globals.$spacing-unit * 1.25);
   }
+
+  &__setup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+    margin: globals.$spacing-unit 0;
+    color: globals.$muted-color;
+  }
 }

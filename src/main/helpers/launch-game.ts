@@ -43,6 +43,7 @@ import { isGamemodeAvailable } from "./is-gamemode-available";
 import { isMangohudAvailable } from "./is-mangohud-available";
 import { resolveLaunchCommand } from "./resolve-launch-command";
 import { applyDefaultLaunchOptions } from "./default-launch-options";
+import { resolveProtonPath } from "./resolve-proton-path";
 import {
   buildWindowsBatchCommand,
   isWindowsBatchFile,
@@ -252,28 +253,6 @@ const isValidWinePrefix = (winePrefixPath: string | null) => {
   } catch {
     return false;
   }
-};
-
-const resolveProtonPathForLaunch = async (
-  gameProtonPath?: string | null
-): Promise<string | null> => {
-  if (gameProtonPath && Umu.isValidProtonPath(gameProtonPath)) {
-    return gameProtonPath;
-  }
-
-  const userPreferences = await db
-    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
-      valueEncoding: "json",
-    })
-    .catch(() => null);
-
-  const defaultProtonPath = userPreferences?.defaultProtonPath;
-
-  if (defaultProtonPath && Umu.isValidProtonPath(defaultProtonPath)) {
-    return defaultProtonPath;
-  }
-
-  return null;
 };
 
 interface CloudSavePrefixPreparationResult {
@@ -538,7 +517,7 @@ const prepareLinuxCompatibilityForLaunch = async (
     objectId
   );
   let context: LinuxCompatibilityLaunchContext = {
-    protonPath: await resolveProtonPathForLaunch(game?.protonPath),
+    protonPath: await resolveProtonPath(game?.protonPath),
     winePrefixPath: await Wine.resolvePrefixPath(requestedWinePrefixPath),
   };
   logger.info("[Cloud Save] Resolved authoritative launch prefix", {

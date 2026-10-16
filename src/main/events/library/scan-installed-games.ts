@@ -23,6 +23,7 @@ import {
 } from "@main/services";
 import { runAutomaticCloudSaveSync } from "@main/services/cloud-save";
 import { clearMissingExecutables } from "@main/services/clear-missing-executables";
+import { GameSetup } from "@main/services/game-setup";
 import { trackAchievementBatchGame } from "@main/services/achievements/achievement-batch-games";
 import { resolveSteamLaunchExecutables } from "@main/services/steam-integration/steam-app-info-core";
 import {
@@ -830,6 +831,9 @@ export const addGameOutsideLibrary = async (
 
   await gamesSublevel.put(gameKey, game);
   await createGame(game).catch(() => {});
+  void GameSetup.enqueue(DISCOVERED_GAMES_SHOP, objectId, {
+    reason: "library-scan",
+  });
 
   if (AchievementWatcherManager.isBatching) {
     AchievementWatcherManager.trackBatchGame(DISCOVERED_GAMES_SHOP, objectId);
@@ -1067,6 +1071,9 @@ const linkLibraryGames = async (
 
     await gamesSublevel.put(key, updateGameExecutablePath(game, foundPath));
     trackAchievementBatchGame(key);
+    void GameSetup.enqueue(game.shop, game.objectId, {
+      reason: "library-scan",
+    });
     void runAutomaticCloudSaveSync(
       game.objectId,
       game.shop,

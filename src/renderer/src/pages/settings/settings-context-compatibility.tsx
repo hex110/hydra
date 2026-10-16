@@ -26,6 +26,8 @@ export function SettingsContextCompatibility() {
   const { t } = useTranslation("settings");
   const { t: tGameDetails } = useTranslation("game_details");
   const { updateUserPreferences } = useContext(settingsContext);
+  const updateUserPreferencesRef = useRef(updateUserPreferences);
+  updateUserPreferencesRef.current = updateUserPreferences;
   const shouldShowCommonRedist = window.electron.platform === "win32";
 
   const userPreferences = useAppSelector(
@@ -56,6 +58,19 @@ export function SettingsContextCompatibility() {
   const [defaultLaunchOptions, setDefaultLaunchOptions] = useState(
     () => userPreferences?.defaultLaunchOptions ?? ""
   );
+  const [prepareWinePrefixOnInstall, setPrepareWinePrefixOnInstall] = useState(
+    () => userPreferences?.prepareWinePrefixOnInstall !== false
+  );
+  const [postInstallCommand, setPostInstallCommand] = useState(
+    () => userPreferences?.postInstallCommand ?? ""
+  );
+  const [gamesMissingPrefix, setGamesMissingPrefix] = useState<number | null>(
+    null
+  );
+  const [prefixPreparation, setPrefixPreparation] = useState<{
+    total: number;
+    done: number;
+  } | null>(null);
   const [gamemodeAvailable, setGamemodeAvailable] = useState(false);
   const [mangohudAvailable, setMangohudAvailable] = useState(false);
 
@@ -96,8 +111,67 @@ export function SettingsContextCompatibility() {
     setDefaultLaunchOptions(userPreferences?.defaultLaunchOptions ?? "");
   }, [userPreferences?.defaultLaunchOptions]);
 
-  const updateUserPreferencesRef = useRef(updateUserPreferences);
-  updateUserPreferencesRef.current = updateUserPreferences;
+  useEffect(() => {
+    setPrepareWinePrefixOnInstall(
+      userPreferences?.prepareWinePrefixOnInstall !== false
+    );
+    setPostInstallCommand(userPreferences?.postInstallCommand ?? "");
+  }, [
+    userPreferences?.prepareWinePrefixOnInstall,
+    userPreferences?.postInstallCommand,
+  ]);
+
+  useEffect(() => {
+    if (window.electron.platform !== "linux") return;
+
+    window.electron
+      .countGamesMissingPrefix()
+      .then(setGamesMissingPrefix)
+      .catch(() => setGamesMissingPrefix(null));
+  }, []);
+
+  const isPreparingPrefixes = prefixPreparation !== null;
+
+  useEffect(() => {
+    if (!isPreparingPrefixes) return;
+
+    return window.electron.onGameSetupStatus(({ status }) => {
+      if (status !== "completed" && status !== "failed" && status !== "skipped")
+        return;
+
+      setPrefixPreparation((current) => {
+        if (!current) return current;
+        const done = current.done + 1;
+        if (done < current.total) return { ...current, done };
+
+        window.electron
+          .countGamesMissingPrefix()
+          .then(setGamesMissingPrefix)
+          .catch(() => {});
+        return null;
+      });
+    });
+  }, [isPreparingPrefixes]);
+
+  const handlePrepareMissingPrefixes = async () => {
+    const total = await window.electron.prepareMissingGamePrefixes();
+    if (total > 0) setPrefixPreparation({ total, done: 0 });
+  };
+
+  const savePostInstallCommand = useMemo(
+    () =>
+      debounce((value: string) => {
+        updateUserPreferencesRef.current({
+          postInstallCommand: value.trim() || null,
+        });
+      }, 1000),
+    []
+  );
+
+  useEffect(
+    () => () => savePostInstallCommand.flush(),
+    [savePostInstallCommand]
+  );
 
   const saveDefaultLaunchOptions = useMemo(
     () =>
@@ -412,6 +486,68 @@ export function SettingsContextCompatibility() {
           </div>
         </div>
       )}
+
+      <div className="settings-context-panel__group">
+        <h3>{t("game_setup")}</h3>
+        <p className="settings-general__common-redist-description">
+          {t("game_setup_description")}
+        </p>
+
+        {window.electron.platform === "linux" && (
+          <>
+            <CheckboxField
+              label={t("prepare_wine_prefix_on_install")}
+              checked={prepareWinePrefixOnInstall}
+              onChange={() => {
+                const nextValue = !prepareWinePrefixOnInstall;
+                setPrepareWinePrefixOnInstall(nextValue);
+                updateUserPreferences({
+                  prepareWinePrefixOnInstall: nextValue,
+                });
+              }}
+            />
+
+            <div className="settings-context-compatibility__setup-row">
+              <span>
+                {prefixPreparation
+                  ? t("preparing_wine_prefixes", {
+                      done: prefixPreparation.done,
+                      total: prefixPreparation.total,
+                    })
+                  : t("games_missing_wine_prefix", {
+                      count: gamesMissingPrefix ?? 0,
+                    })}
+              </span>
+              <Button
+                type="button"
+                theme="outline"
+                disabled={isPreparingPrefixes || !gamesMissingPrefix}
+                onClick={handlePrepareMissingPrefixes}
+              >
+                {t("prepare_missing_wine_prefixes")}
+              </Button>
+            </div>
+          </>
+        )}
+
+        <TextField
+          label={t("post_install_command")}
+          value={postInstallCommand}
+          theme="dark"
+          placeholder={t("post_install_command_placeholder")}
+          onChange={(event) => {
+            setPostInstallCommand(event.target.value);
+            savePostInstallCommand(event.target.value);
+          }}
+        />
+        <p className="settings-general__common-redist-description">
+          <Trans
+            i18nKey="post_install_command_description"
+            ns="settings"
+            components={{ code: <code /> }}
+          />
+        </p>
+      </div>
 
       <div className="settings-context-panel__group">
         <h3>{t("default_launch_options")}</h3>

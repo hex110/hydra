@@ -1,5 +1,6 @@
 import type { AuthPage, Downloader } from "@shared";
 import type {
+  GameSetupStatusEvent,
   SystemPowerAction,
   AppUpdaterEvent,
   GameShop,
@@ -389,6 +390,12 @@ declare global {
       objectId: string,
       autoRunGamemode: boolean
     ) => Promise<void>;
+    runGameSetup: (shop: GameShop, objectId: string) => Promise<void>;
+    countGamesMissingPrefix: () => Promise<number>;
+    prepareMissingGamePrefixes: () => Promise<number>;
+    onGameSetupStatus: (
+      cb: (event: GameSetupStatusEvent) => void
+    ) => () => Electron.IpcRenderer;
     toggleGameDefaultLaunchOptions: (
       shop: GameShop,
       objectId: string,
