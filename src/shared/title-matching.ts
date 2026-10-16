@@ -1,0 +1,206 @@
+/**
+ * Helpers for matching free-form release and folder names ("Cyberpunk.2077.
+ * v2.3-FitGirl", "Hades II [DODI Repack]") against catalogue titles.
+ */
+
+const RELEASE_GROUPS = [
+  "fitgirl",
+  "dodi",
+  "elamigos",
+  "kaos",
+  "xatab",
+  "codex",
+  "rune",
+  "tenoke",
+  "skidrow",
+  "plaza",
+  "empress",
+  "goldberg",
+  "p2p",
+  "gog",
+  "darksiders",
+  "tinyiso",
+  "flt",
+  "razor1911",
+  "cpy",
+  "hoodlum",
+  "simplex",
+  "anomaly",
+  "chronos",
+  "dinobytes",
+  "steamrip",
+  "ankergames",
+  "onlinefix",
+  "online-fix",
+  "repack",
+  "repacks",
+  "portable",
+  "multi",
+];
+
+const NOISE_WORDS = new Set([
+  ...RELEASE_GROUPS,
+  "steam",
+  "rip",
+  "build",
+  "update",
+  "updated",
+  "hotfix",
+  "x64",
+  "x86",
+  "win64",
+  "win32",
+  "windows",
+  "pc",
+  "proper",
+  "crack",
+  "cracked",
+  "fix",
+  "incl",
+  "dlc",
+  "dlcs",
+  "bonus",
+  "ost",
+  "soundtrack",
+  "lossless",
+  "selective",
+  "download",
+]);
+
+/** Words that describe a release of a game rather than a different game. */
+const EDITION_WORDS = new Set([
+  "edition",
+  "deluxe",
+  "ultimate",
+  "complete",
+  "definitive",
+  "goty",
+  "gold",
+  "premium",
+  "digital",
+  "standard",
+  "collectors",
+  "anniversary",
+  "enhanced",
+  "special",
+  "director",
+  "directors",
+  "cut",
+  "game",
+  "of",
+  "the",
+  "year",
+]);
+
+const ROMAN_NUMERALS: Record<string, string> = {
+  ii: "2",
+  iii: "3",
+  iv: "4",
+  v: "5",
+  vi: "6",
+  vii: "7",
+  viii: "8",
+  ix: "9",
+  x: "10",
+};
+
+const VERSION_TOKEN = /^(v|ver|version)?\d+([._]\d+)+[a-z]?$|^v\d+[a-z]?$/;
+const BUILD_NUMBER_TOKEN = /^(b|build)?\d{5,}$/;
+
+/**
+ * Turns a release or folder name into a readable title: separators become
+ * spaces and bracketed tags, versions, build numbers and release group names
+ * are dropped.
+ */
+export const cleanReleaseName = (name: string): string => {
+  let value = name.normalize("NFKC");
+
+  // Everything after a "+" (DLC lists, bonus content) or a " - Group" suffix.
+  value = value.replace(/\s\+\s.*$/, "");
+  value = value.replaceAll(/[[({][^\])}]*[\])}]/g, " ");
+
+  if (!/\s/.test(value.trim())) {
+    value = value.replaceAll(/[._]+/g, " ");
+  } else {
+    value = value.replaceAll("_", " ");
+  }
+
+  value = value.replaceAll(/[™®©]/g, "");
+  value = value.replace(
+    new RegExp(`[-\\s]+(${RELEASE_GROUPS.join("|")})\\b.*$`, "i"),
+    ""
+  );
+
+  const tokens = value.split(/\s+/).filter(Boolean);
+  const kept: string[] = [];
+
+  for (const token of tokens) {
+    const lower = token.toLowerCase().replace(/^-+|-+$/g, "");
+    if (!lower) continue;
+    if (VERSION_TOKEN.test(lower) || BUILD_NUMBER_TOKEN.test(lower)) break;
+    // Whatever follows "Build" is a build identifier.
+    if (lower === "build") break;
+    if (NOISE_WORDS.has(lower) || /^multi\d+$/.test(lower)) continue;
+    kept.push(token.replace(/^-+|-+$/g, ""));
+  }
+
+  return kept.join(" ").replaceAll(/\s+/g, " ").trim();
+};
+
+/** Lowercase tokens with punctuation removed and roman numerals as digits. */
+export const titleTokens = (title: string): string[] =>
+  title
+    .replaceAll(/[™®©]/g, "")
+    .normalize("NFKD")
+    .replaceAll(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replaceAll("&", " and ")
+    .replaceAll(/['’]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .map((token) => ROMAN_NUMERALS[token] ?? token);
+
+const stripEditionWords = (tokens: string[]) => {
+  let end = tokens.length;
+  while (end > 1 && EDITION_WORDS.has(tokens[end - 1])) end -= 1;
+  return tokens.slice(0, end);
+};
+
+/** A comparison key that ignores punctuation, spacing and edition suffixes. */
+export const comparableTitle = (title: string) =>
+  stripEditionWords(titleTokens(title)).join("");
+
+/**
+ * True when both names refer to the same game. Sequels and spin-offs do not
+ * match ("Dishonored" vs "Dishonored 2"), editions do ("Hades" vs "Hades
+ * Deluxe Edition").
+ */
+export const isSameTitle = (a: string, b: string) => {
+  const left = comparableTitle(a);
+  return left.length > 0 && left === comparableTitle(b);
+};
+
+/**
+ * Similarity between 0 and 1 based on shared tokens (Dice coefficient), with
+ * an exact comparable match scoring 1.
+ */
+export const titleSimilarity = (a: string, b: string): number => {
+  if (isSameTitle(a, b)) return 1;
+
+  const left = stripEditionWords(titleTokens(a));
+  const right = stripEditionWords(titleTokens(b));
+  if (left.length === 0 || right.length === 0) return 0;
+
+  const remaining = [...right];
+  let shared = 0;
+
+  for (const token of left) {
+    const index = remaining.indexOf(token);
+    if (index !== -1) {
+      shared += 1;
+      remaining.splice(index, 1);
+    }
+  }
+
+  return (2 * shared) / (left.length + right.length);
+};

@@ -1,0 +1,57 @@
+@use "../../scss/globals.scss";
+
+.settings-library-folders {
+  &__description,
+  &__hint,
+  &__empty {
+    color: globals.$muted-color;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    background-color: globals.$dark-background-color;
+    border-radius: 4px;
+    padding: calc(globals.$spacing-unit * 2);
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__path {
+    color: globals.$body-color;
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  &__remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: globals.$muted-color;
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+      color: globals.$body-color;
+    }
+  }
+}

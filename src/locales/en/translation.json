@@ -190,7 +190,9 @@
     "scan_games_folders_title": "Folders to scan",
     "scan_games_add_folder": "Add folder",
     "scan_games_remove_folder": "Remove folder",
-    "scan_games_folders_hint_manual": "Add at least one folder to scan for games."
+    "scan_games_folders_hint_manual": "Add at least one folder to scan for games.",
+    "scan_games_folders_hint_automatic": "Your Steam libraries and Hydra's downloads folder are always scanned too.",
+    "scan_games_manage_folders": "Manage folders"
   },
   "bottom_panel": {
     "reconnecting": "Reconnecting {{title}}…",
@@ -1547,6 +1549,17 @@
     "default_wine_prefix": "Default Wine prefix location",
     "default_proton_version": "Default Proton version",
     "default_proton_version_description": "Select the Proton version used by Auto mode when a game has no custom override",
+    "library_folders": "Library folders",
+    "library_folders_description": "Folders where you keep installed games, one game per subfolder. Hydra scans them to add games that are not in your library yet and to find executables for games that are.",
+    "library_folders_list": "Folders",
+    "library_folders_add": "Add folder",
+    "library_folders_remove": "Remove folder",
+    "library_folders_empty": "No folders added yet.",
+    "library_folders_always_included": "Your Steam libraries and Hydra's downloads folder are always scanned too.",
+    "library_folders_scan_on_startup": "Scan these folders when Hydra starts",
+    "library_folders_identify_by_name": "Identify games by their folder name",
+    "library_folders_identify_by_name_description": "When a folder's executable isn't in Hydra's catalogue, look the folder name up instead. Exact matches are added; anything uncertain is listed for you to confirm.",
+    "library_folders_scan_now": "Scan now",
     "game_setup": "Game setup",
     "game_setup_description": "Runs automatically when a game becomes playable: after a download finishes, when you pick its executable, or when a library scan finds it.",
     "prepare_wine_prefix_on_install": "Create the game's Wine prefix right away instead of on first launch",

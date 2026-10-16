@@ -12,7 +12,7 @@ import {
   type KnownGameExecutable,
 } from "@main/helpers/game-executable-ranking";
 import { updateGameExecutablePath } from "@main/helpers/update-executable-path";
-import { gamesSublevel, levelKeys } from "@main/level";
+import { db, gamesSublevel, levelKeys } from "@main/level";
 import { AchievementWatcherManager } from "@main/services/achievements/achievement-watcher-manager";
 import { createGame } from "@main/services/library-sync";
 import {
@@ -24,13 +24,14 @@ import {
 import { runAutomaticCloudSaveSync } from "@main/services/cloud-save";
 import { clearMissingExecutables } from "@main/services/clear-missing-executables";
 import { GameSetup } from "@main/services/game-setup";
+import { identifyUnclaimedFolders } from "@main/services/library-scan/identify-folders";
 import { trackAchievementBatchGame } from "@main/services/achievements/achievement-batch-games";
 import { resolveSteamLaunchExecutables } from "@main/services/steam-integration/steam-app-info-core";
 import {
   getInstalledSteamApps,
   loadSteamAppInfo,
 } from "@main/services/steam-integration/steam-launch-executables";
-import type { Game, GameShop } from "@types";
+import type { Game, GameShop, UserPreferences } from "@types";
 
 const SCAN_DIRECTORIES = [String.raw`C:\Games`, String.raw`D:\Games`];
 
@@ -172,10 +173,8 @@ const isWithin = (child: string, parent: string) => {
   );
 };
 
-const getDefaultScanDirectories = async (
-  steamFallbackDirectories: string[]
-) => {
-  const downloadsPath = await getDownloadsPath().catch((err) => {
+const getDownloadsPathForScan = () =>
+  getDownloadsPath().catch((err) => {
     logger.error(
       "[ScanInstalledGames] Failed to read the downloads path:",
       err
@@ -183,11 +182,32 @@ const getDefaultScanDirectories = async (
     return null;
   });
 
+const getDefaultScanDirectories = async (
+  steamFallbackDirectories: string[],
+  libraryFolders: string[]
+) => {
+  const downloadsPath = await getDownloadsPathForScan();
+
   return [
     ...SCAN_DIRECTORIES,
     ...steamFallbackDirectories,
+    ...libraryFolders,
     ...(downloadsPath ? [downloadsPath] : []),
   ];
+};
+
+const loadScanPreferences = async () => {
+  const userPreferences = await db
+    .get<
+      string,
+      UserPreferences | null
+    >(levelKeys.userPreferences, { valueEncoding: "json" })
+    .catch(() => null);
+
+  return {
+    libraryFolders: userPreferences?.libraryScanDirectories ?? [],
+    identifyByFolderName: userPreferences?.identifyGamesByFolderName !== false,
+  };
 };
 
 interface InstalledSteamGames {
@@ -1118,17 +1138,22 @@ const runScan = async (
   signal: CancelSignal,
   additionalDirectories: string[],
   includeDefaultDirectories: boolean,
-  addGamesToLibrary: boolean
+  addGamesToLibrary: boolean,
+  notifyWhenEmpty = true
 ): Promise<ScanResult> => {
   if (!(await GameExecutables.ensureLoaded(true))) {
     throw new Error("game-executable-catalogue-unavailable");
   }
 
+  const scanPreferences = await loadScanPreferences();
   const installedSteamGames: InstalledSteamGames = includeDefaultDirectories
     ? await findInstalledSteamGames()
     : { executables: new Map(), unresolvedDirectories: [] };
   const baseDirectories = includeDefaultDirectories
-    ? await getDefaultScanDirectories(installedSteamGames.unresolvedDirectories)
+    ? await getDefaultScanDirectories(
+        installedSteamGames.unresolvedDirectories,
+        scanPreferences.libraryFolders
+      )
     : [];
   const directories = [...baseDirectories, ...additionalDirectories];
   const steamExecutables = installedSteamGames.executables;
@@ -1179,32 +1204,106 @@ const runScan = async (
           ambiguousMatches: [] as AmbiguousMatch[],
         };
 
+  const identificationDownloadsPath = includeDefaultDirectories
+    ? await getDownloadsPathForScan()
+    : null;
+  const identifiedFolders =
+    addGamesToLibrary &&
+    scanPreferences.identifyByFolderName &&
+    !signal.cancelled
+      ? await identifyUnclaimedFolders({
+          roots: [
+            ...(includeDefaultDirectories
+              ? [
+                  ...scanPreferences.libraryFolders,
+                  ...(identificationDownloadsPath
+                    ? [identificationDownloadsPath]
+                    : []),
+                ]
+              : []),
+            ...additionalDirectories,
+          ],
+          occupiedPaths: [
+            ...games.flatMap(({ game }) =>
+              game.executablePath ? [game.executablePath] : []
+            ),
+            ...claimedPaths,
+            ...steamPathByObjectId.values(),
+            ...outsideLibrary.pathByObjectId.values(),
+            ...outsideLibrary.ambiguousMatches.map(
+              (match) => match.executablePath
+            ),
+          ],
+          libraryObjectIds: new Set([
+            ...libraryObjectIds,
+            ...steamPathByObjectId.keys(),
+            ...outsideLibrary.pathByObjectId.keys(),
+          ]),
+          isCancelled: () => signal.cancelled,
+        })
+      : [];
+
+  const pathByObjectIdFromFolders = new Map(
+    identifiedFolders.flatMap((folder) =>
+      folder.match ? [[folder.match.objectId, folder.executablePath]] : []
+    ) as [string, string][]
+  );
+  const ambiguousMatches = [
+    ...outsideLibrary.ambiguousMatches,
+    ...identifiedFolders
+      .filter((folder) => !folder.match)
+      .map((folder) => ({
+        executablePath: folder.executablePath,
+        choices: folder.choices,
+      })),
+  ];
+
   const addedGames = signal.cancelled
     ? []
     : await addGamesOutsideLibrary(
-        new Map([...steamPathByObjectId, ...outsideLibrary.pathByObjectId])
+        new Map([
+          ...steamPathByObjectId,
+          ...outsideLibrary.pathByObjectId,
+          ...pathByObjectIdFromFolders,
+        ])
       );
 
   logger.info(
-    `[ScanInstalledGames] Linked ${linkedGames.length} of ${gamesToScan.length} games in the library, added ${addedGames.length} new ones, ${outsideLibrary.ambiguousMatches.length} need a choice`
+    `[ScanInstalledGames] Linked ${linkedGames.length} of ${gamesToScan.length} games in the library, added ${addedGames.length} new ones, ${ambiguousMatches.length} need a choice`
   );
 
   WindowManager.sendToAppWindows("on-library-batch-complete");
 
-  if (!signal.cancelled) {
+  const foundAnything =
+    addedGames.length + linkedGames.length + ambiguousMatches.length > 0;
+
+  if (!signal.cancelled && (foundAnything || notifyWhenEmpty)) {
     await publishScanNotification(
       addedGames.length,
       linkedGames.length,
-      outsideLibrary.ambiguousMatches.length
+      ambiguousMatches.length
     );
   }
 
   return {
     linkedGames,
     addedGames,
-    ambiguousMatches: outsideLibrary.ambiguousMatches,
+    ambiguousMatches: ambiguousMatches,
     total: gamesToScan.length,
   };
+};
+
+/** Background scan of the default and configured folders, used at startup. */
+export const scanLibraryFoldersInBackground = async () => {
+  const signal: CancelSignal = { cancelled: false };
+
+  try {
+    await AchievementWatcherManager.runBatch(() =>
+      runScan(signal, [], true, true, false)
+    );
+  } catch (error) {
+    logger.error("[ScanInstalledGames] Startup scan failed", error);
+  }
 };
 
 registerEvent("scanInstalledGames", scanInstalledGames);

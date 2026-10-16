@@ -17,7 +17,7 @@ import {
   VideoIcon,
   ShieldCheckIcon,
 } from "@primer/octicons-react";
-import { Gamepad2, Wrench } from "lucide-react";
+import { FolderSearch, Gamepad2, Wrench } from "lucide-react";
 import { SettingsContextGeneral } from "./settings-context-general";
 import { SettingsContextDownloads } from "./settings-context-downloads";
 import { SettingsContextDownloadSources } from "./settings-context-download-sources";
@@ -25,6 +25,7 @@ import { SettingsContextNotifications } from "./settings-context-notifications";
 import { SettingsContextContentGameplay } from "./settings-context-content-gameplay";
 import { SettingsContextIntegrations } from "./settings-context-integrations";
 import { SettingsContextCompatibility } from "./settings-context-compatibility";
+import { SettingsContextLibraryFolders } from "./settings-context-library-folders";
 import { SettingsContextBigPicture } from "./settings-context-big-picture";
 import { SettingsContextEmulation } from "./emulation/settings-context-emulation";
 
@@ -69,6 +70,11 @@ export default function Settings() {
         id: "compatibility" as const,
         label: t("compatibility"),
         icon: <Wrench size={16} />,
+      },
+      {
+        id: "library_folders" as const,
+        label: t("library_folders"),
+        icon: <FolderSearch size={16} />,
       },
       ...(userDetails
         ? [
@@ -130,6 +136,10 @@ export default function Settings() {
 
             if (selectedCategoryId === "compatibility") {
               return <SettingsContextCompatibility />;
+            }
+
+            if (selectedCategoryId === "library_folders") {
+              return <SettingsContextLibraryFolders />;
             }
 
             if (selectedCategoryId === "big_picture") {

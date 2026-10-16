@@ -237,6 +237,9 @@ export interface UserPreferences {
   defaultLaunchOptions?: string | null;
   prepareWinePrefixOnInstall?: boolean;
   postInstallCommand?: string | null;
+  libraryScanDirectories?: string[];
+  scanLibraryOnStartup?: boolean;
+  identifyGamesByFolderName?: boolean;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
   hideClassicsBookmark?: boolean;

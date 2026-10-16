@@ -8,7 +8,10 @@ import {
 } from "@primer/octicons-react";
 import cn from "classnames";
 
+import { useNavigate } from "react-router-dom";
+
 import { Button, CheckboxField, Modal } from "@renderer/components";
+import { useAppSelector } from "@renderer/hooks";
 
 import "./scan-games-modal.scss";
 
@@ -76,19 +79,27 @@ export function ScanGamesModal({
 }: Readonly<ScanGamesModalProps>) {
   const { t } = useTranslation("header");
 
+  const navigate = useNavigate();
   const isWindows = window.electron.platform === "win32";
+  const libraryFolders = useAppSelector(
+    (state) => state.userPreferences.value?.libraryScanDirectories ?? []
+  );
+  const defaultScanMode: ScanMode =
+    isWindows || libraryFolders.length > 0 ? "automatic" : "manual";
 
   const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
-  const [scanMode, setScanMode] = useState<ScanMode>(
-    isWindows ? "automatic" : "manual"
-  );
+  const [scanMode, setScanMode] = useState<ScanMode>(defaultScanMode);
   const [addGamesToLibrary, setAddGamesToLibrary] = useState(true);
   const [pending, setPending] = useState<AmbiguousMatch[]>([]);
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [isResolving, setIsResolving] = useState(false);
   const [resolvedGames, setResolvedGames] = useState<FoundGame[]>([]);
 
-  const isManualMode = !isWindows || scanMode === "manual";
+  useEffect(() => {
+    if (visible) setScanMode(defaultScanMode);
+  }, [visible, defaultScanMode]);
+
+  const isManualMode = scanMode === "manual";
   const requiresFolderSelection = isManualMode && selectedFolders.length === 0;
 
   const addedGames = [...(scanResult?.addedGames ?? []), ...resolvedGames];
@@ -149,7 +160,7 @@ export function ScanGamesModal({
 
   const handleClose = () => {
     setSelectedFolders([]);
-    setScanMode(isWindows ? "automatic" : "manual");
+    setScanMode(defaultScanMode);
     onClose();
   };
 
@@ -218,28 +229,65 @@ export function ScanGamesModal({
       <div className="scan-games-modal">
         {!scanResult && !isScanning && (
           <>
-            {isWindows && (
-              <div className="scan-games-modal__mode-toggle">
-                <button
-                  type="button"
-                  className={cn("scan-games-modal__mode-option", {
-                    "scan-games-modal__mode-option--active":
-                      scanMode === "automatic",
-                  })}
-                  onClick={() => setScanMode("automatic")}
-                >
-                  {t("scan_games_mode_automatic")}
-                </button>
-                <button
-                  type="button"
-                  className={cn("scan-games-modal__mode-option", {
-                    "scan-games-modal__mode-option--active":
-                      scanMode === "manual",
-                  })}
-                  onClick={() => setScanMode("manual")}
-                >
-                  {t("scan_games_mode_manual")}
-                </button>
+            <div className="scan-games-modal__mode-toggle">
+              <button
+                type="button"
+                className={cn("scan-games-modal__mode-option", {
+                  "scan-games-modal__mode-option--active":
+                    scanMode === "automatic",
+                })}
+                onClick={() => setScanMode("automatic")}
+              >
+                {t("scan_games_mode_automatic")}
+              </button>
+              <button
+                type="button"
+                className={cn("scan-games-modal__mode-option", {
+                  "scan-games-modal__mode-option--active":
+                    scanMode === "manual",
+                })}
+                onClick={() => setScanMode("manual")}
+              >
+                {t("scan_games_mode_manual")}
+              </button>
+            </div>
+
+            {!isManualMode && (
+              <div className="scan-games-modal__folders">
+                <div className="scan-games-modal__folders-header">
+                  <span className="scan-games-modal__folders-title">
+                    {t("scan_games_folders_title")}
+                  </span>
+                  <Button
+                    theme="outline"
+                    onClick={() => {
+                      handleClose();
+                      navigate("/settings?tab=library_folders");
+                    }}
+                  >
+                    <FileDirectoryIcon size={14} />
+                    {t("scan_games_manage_folders")}
+                  </Button>
+                </div>
+
+                {libraryFolders.length > 0 && (
+                  <ul className="scan-games-modal__folders-list">
+                    {libraryFolders.map((folder) => (
+                      <li
+                        key={folder}
+                        className="scan-games-modal__folder-item"
+                      >
+                        <span className="scan-games-modal__folder-path">
+                          {folder}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <p className="scan-games-modal__folders-hint">
+                  {t("scan_games_folders_hint_automatic")}
+                </p>
               </div>
             )}
 

@@ -129,6 +129,12 @@ export const loadState = async () => {
     const { syncDownloadSourcesFromApi } = await import("./services/user");
     void syncDownloadSourcesFromApi();
 
+    if (userPreferences?.scanLibraryOnStartup) {
+      void import("./events/library/scan-installed-games").then(
+        ({ scanLibraryFoldersInBackground }) => scanLibraryFoldersInBackground()
+      );
+    }
+
     // Check for new download options on startup (if enabled)
     (async () => {
       await DownloadSourcesChecker.checkForChanges();
