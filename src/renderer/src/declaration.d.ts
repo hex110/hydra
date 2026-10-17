@@ -454,20 +454,15 @@ declare global {
       objectId: string,
       proxyDll: OptiScalerProxyDll | null
     ) => Promise<void>;
-    setGameHdrEnabled: (
-      shop: GameShop,
-      objectId: string,
-      enabled: boolean | null
-    ) => Promise<void>;
     getGameLaunchAdditions: (
       shop: GameShop,
       objectId: string
     ) => Promise<GameLaunchAdditions>;
-    setGameLaunchRuleIgnored: (
+    setGameLaunchRuleOverride: (
       shop: GameShop,
       objectId: string,
       ruleId: string,
-      ignored: boolean
+      applied: boolean | null
     ) => Promise<void>;
     isGamemodeAvailable: () => Promise<boolean>;
     isSteamAppExecutable: (

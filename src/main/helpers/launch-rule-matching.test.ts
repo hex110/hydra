@@ -12,10 +12,16 @@ import {
   parseLaunchRulesExport,
 } from "../../shared/launch-rules.js";
 
-const rule = (id: string, files: string[], enabled = true): LaunchRule => ({
+const rule = (
+  id: string,
+  files: string[],
+  enabled = true,
+  matchAllGames = false
+): LaunchRule => ({
   id,
   name: id,
   enabled,
+  matchAllGames,
   files,
   launchOptions: "%command%",
 });
@@ -31,7 +37,7 @@ afterEach(() => {
 });
 
 describe("findLaunchRuleMatches", () => {
-  it("finds the shallowest match per enabled rule", async () => {
+  it("finds the shallowest match per file-based rule", async () => {
     for (const file of [
       "Game.exe",
       "Game_Data/Plugins/x86_64/UnityPlayer.dll",
@@ -48,6 +54,7 @@ describe("findLaunchRuleMatches", () => {
       rule("reshade", ["ReShade.ini"]),
       rule("eac", ["EasyAntiCheat"]),
       rule("disabled", ["Game.exe"], false),
+      rule("everywhere", ["Game.exe"], true, true),
       rule("missing", ["nothing.dll"]),
     ]);
 
@@ -55,6 +62,7 @@ describe("findLaunchRuleMatches", () => {
       unity: "UnityPlayer.dll",
       reshade: path.join("bin", "ReShade.ini"),
       eac: "EasyAntiCheat",
+      disabled: "Game.exe",
     });
   });
 });

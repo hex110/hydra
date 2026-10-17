@@ -31,20 +31,21 @@ const getGameLaunchAdditions = async (
   });
 };
 
-const setGameLaunchRuleIgnored = async (
+/** True or false replaces the rule's setting for the game; null follows it again. */
+const setGameLaunchRuleOverride = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
   objectId: string,
   ruleId: string,
-  ignored: boolean
+  applied: boolean | null
 ) => {
   await updateGameRecord(levelKeys.game(shop, objectId), (game) => {
-    const current = new Set(game.ignoredLaunchRules ?? []);
-    if (ignored) current.add(ruleId);
-    else current.delete(ruleId);
-    return { ignoredLaunchRules: [...current] };
+    const overrides = { ...game.launchRuleOverrides };
+    if (applied === null) delete overrides[ruleId];
+    else overrides[ruleId] = applied;
+    return { launchRuleOverrides: overrides };
   });
 };
 
 registerEvent("getGameLaunchAdditions", getGameLaunchAdditions);
-registerEvent("setGameLaunchRuleIgnored", setGameLaunchRuleIgnored);
+registerEvent("setGameLaunchRuleOverride", setGameLaunchRuleOverride);

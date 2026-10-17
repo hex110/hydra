@@ -1,7 +1,21 @@
 import type { LaunchRule } from "@types";
 
 /** Built-in rules a new install starts with; each can be turned off or removed. */
+export const HDR_LAUNCH_RULE_ID = "preset-hdr";
+
 export const LAUNCH_RULE_PRESETS: LaunchRule[] = [
+  {
+    id: HDR_LAUNCH_RULE_ID,
+    presetId: "hdr",
+    name: "HDR",
+    enabled: false,
+    matchAllGames: true,
+    files: [],
+    // Wine's Wayland driver is needed for HDR. Valve and GE Proton read
+    // PROTON_ENABLE_HDR; Proton-CachyOS only honours DXVK_HDR.
+    launchOptions:
+      "PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%",
+  },
   {
     id: "preset-reshade",
     presetId: "reshade",
@@ -76,6 +90,7 @@ export const parseLaunchRulesExport = (text: string): LaunchRule[] | null => {
       id: rule.id,
       name: rule.name,
       enabled: rule.enabled,
+      ...(rule.matchAllGames === true ? { matchAllGames: true } : {}),
       files: rule.files,
       launchOptions: rule.launchOptions,
       ...(rule.presetId ? { presetId: rule.presetId } : {}),
@@ -98,3 +113,9 @@ export const mergeLaunchRules = (
 export const resolveLaunchRules = (
   launchRules: LaunchRule[] | null | undefined
 ): LaunchRule[] => launchRules ?? LAUNCH_RULE_PRESETS;
+
+/** Whether a rule applies to a game, given the game's overrides. */
+export const isLaunchRuleApplied = (
+  rule: LaunchRule,
+  overrides: Record<string, boolean> | null | undefined
+) => overrides?.[rule.id] ?? rule.enabled;

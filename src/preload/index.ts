@@ -1069,25 +1069,20 @@ contextBridge.exposeInMainWorld("electron", {
     proxyDll: OptiScalerProxyDll | null
   ) =>
     ipcRenderer.invoke("setGameOptiScalerProxyDll", shop, objectId, proxyDll),
-  setGameHdrEnabled: (
-    shop: GameShop,
-    objectId: string,
-    enabled: boolean | null
-  ) => ipcRenderer.invoke("setGameHdrEnabled", shop, objectId, enabled),
   getGameLaunchAdditions: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameLaunchAdditions", shop, objectId),
-  setGameLaunchRuleIgnored: (
+  setGameLaunchRuleOverride: (
     shop: GameShop,
     objectId: string,
     ruleId: string,
-    ignored: boolean
+    applied: boolean | null
   ) =>
     ipcRenderer.invoke(
-      "setGameLaunchRuleIgnored",
+      "setGameLaunchRuleOverride",
       shop,
       objectId,
       ruleId,
-      ignored
+      applied
     ),
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>

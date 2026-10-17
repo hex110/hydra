@@ -82,56 +82,6 @@ function DefaultLaunchOptionsToggle({ game }: Readonly<{ game: LibraryGame }>) {
   );
 }
 
-function HdrToggle({ game }: Readonly<{ game: LibraryGame }>) {
-  const { t } = useTranslation("game_details");
-  const { updateGame } = useContext(gameDetailsContext);
-  const globalHdr = useAppSelector(
-    (state) => state.userPreferences.value?.enableHdr === true
-  );
-
-  if (
-    window.electron.platform !== "linux" ||
-    !/\.exe"?$/i.test(game.executablePath ?? "")
-  ) {
-    return null;
-  }
-
-  const enabled = game.hdrEnabled ?? globalHdr;
-  const followsDefault =
-    game.hdrEnabled === undefined || game.hdrEnabled === null;
-
-  const setHdr = async (value: boolean | null) => {
-    await window.electron.setGameHdrEnabled(game.shop, game.objectId, value);
-    await updateGame();
-  };
-
-  return (
-    <div className="game-options-modal__default-launch-options">
-      <CheckboxField
-        label={t("enable_hdr")}
-        checked={enabled}
-        onChange={() => setHdr(!enabled)}
-      />
-      <p className="game-options-modal__header-description">
-        {followsDefault ? (
-          t(globalHdr ? "hdr_follows_default_on" : "hdr_follows_default_off")
-        ) : (
-          <>
-            {t("hdr_overridden")}{" "}
-            <button
-              type="button"
-              className="game-options-modal__link-button"
-              onClick={() => setHdr(null)}
-            >
-              {t("hdr_use_default")}
-            </button>
-          </>
-        )}
-      </p>
-    </div>
-  );
-}
-
 function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
   const { t } = useTranslation("game_details");
   const userPreferences = useAppSelector(
@@ -151,12 +101,10 @@ function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
   }, [
     refresh,
     game.executablePath,
-    game.hdrEnabled,
-    game.ignoredLaunchRules,
+    game.launchRuleOverrides,
     game.optiScaler,
     game.onlineFix,
     userPreferences?.launchRules,
-    userPreferences?.enableHdr,
     userPreferences?.prepareOnlineFixGames,
   ]);
 
@@ -164,12 +112,12 @@ function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
     return null;
   }
 
-  const toggleRule = async (ruleId: string, ignored: boolean) => {
-    await window.electron.setGameLaunchRuleIgnored(
+  const setOverride = async (ruleId: string, applied: boolean | null) => {
+    await window.electron.setGameLaunchRuleOverride(
       game.shop,
       game.objectId,
       ruleId,
-      ignored
+      applied
     );
     refresh();
   };
@@ -177,15 +125,40 @@ function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
   return (
     <div className="game-options-modal__default-launch-options">
       {additions.rules.map((rule) => (
-        <CheckboxField
-          key={rule.ruleId}
-          label={t("launch_rule_applies", {
-            name: rule.name,
-            file: rule.matchedPath,
-          })}
-          checked={!rule.ignored}
-          onChange={() => toggleRule(rule.ruleId, !rule.ignored)}
-        />
+        <div key={rule.ruleId} className="game-options-modal__launch-rule">
+          <CheckboxField
+            label={
+              rule.matchedPath
+                ? t("launch_rule_applies_found", {
+                    name: rule.name,
+                    file: rule.matchedPath,
+                  })
+                : rule.name
+            }
+            checked={rule.applied}
+            onChange={() => setOverride(rule.ruleId, !rule.applied)}
+          />
+          <p className="game-options-modal__header-description">
+            {rule.override === null ? (
+              t(
+                rule.enabledByDefault
+                  ? "launch_rule_follows_default_on"
+                  : "launch_rule_follows_default_off"
+              )
+            ) : (
+              <>
+                {t("launch_rule_overridden")}{" "}
+                <button
+                  type="button"
+                  className="game-options-modal__link-button"
+                  onClick={() => setOverride(rule.ruleId, null)}
+                >
+                  {t("launch_rule_use_default")}
+                </button>
+              </>
+            )}
+          </p>
+        </div>
       ))}
       {additions.launchOptions && (
         <p className="game-options-modal__header-description">
@@ -1131,7 +1104,6 @@ export function GeneralSettingsSection({
             }
           />
           <DefaultLaunchOptionsToggle game={game} />
-          <HdrToggle game={game} />
           <LaunchAdditionsSummary game={game} />
         </div>
       )}

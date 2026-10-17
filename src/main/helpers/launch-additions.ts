@@ -4,7 +4,7 @@ import { Wine } from "@main/services/wine";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
-import { resolveLaunchRules } from "@shared";
+import { isLaunchRuleApplied, resolveLaunchRules } from "@shared";
 import type {
   Game,
   GameLaunchAdditions,
@@ -19,8 +19,8 @@ const isWindowsExecutable = (executablePath: string) =>
   path.extname(executablePath).toLowerCase() === ".exe";
 
 /**
- * Environment Hydra adds when a Windows game runs under Proton: HDR, and the
- * DLL overrides OptiScaler and OnlineFix need to load their proxy DLLs.
+ * Environment Hydra adds when a Windows game runs under Proton: the DLL
+ * overrides OptiScaler and OnlineFix need to load their proxy DLLs.
  */
 const getLinuxLaunchEnvironment = async (
   objectId: string,
@@ -53,7 +53,6 @@ const getLinuxLaunchEnvironment = async (
   const optiScalerDll = OptiScaler.getLaunchNativeDll(game);
 
   return buildLaunchEnvironment({
-    hdr: game?.hdrEnabled ?? userPreferences?.enableHdr === true,
     nativeDlls: [
       ...(optiScalerDll ? [optiScalerDll] : []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
@@ -63,7 +62,8 @@ const getLinuxLaunchEnvironment = async (
 
 /**
  * Everything Hydra adds in front of a game's own launch options: its Linux
- * environment, then each matching launch rule. Later layers win on conflicts.
+ * DLL overrides, then each launch rule that applies to the game. Later layers
+ * win on conflicts.
  */
 export const getLaunchAdditions = async ({
   objectId,
@@ -82,7 +82,7 @@ export const getLaunchAdditions = async ({
   prepareMissing?: boolean;
 }): Promise<GameLaunchAdditions> => {
   const rules = resolveLaunchRules(userPreferences?.launchRules);
-  const ignored = new Set(game?.ignoredLaunchRules ?? []);
+  const overrides = game?.launchRuleOverrides ?? {};
 
   const matches = await findLaunchRuleMatches(
     resolveGameRootForDetection(path.dirname(executablePath)),
@@ -90,12 +90,14 @@ export const getLaunchAdditions = async ({
   );
 
   const matchedRules: GameLaunchRuleMatch[] = rules
-    .filter((rule) => matches.has(rule.id))
+    .filter((rule) => rule.matchAllGames || matches.has(rule.id))
     .map((rule) => ({
       ruleId: rule.id,
       name: rule.name,
-      matchedPath: matches.get(rule.id)!,
-      ignored: ignored.has(rule.id),
+      matchedPath: matches.get(rule.id) ?? null,
+      enabledByDefault: rule.enabled,
+      override: overrides[rule.id] ?? null,
+      applied: isLaunchRuleApplied(rule, overrides),
     }));
 
   let launchOptions = await getLinuxLaunchEnvironment(
@@ -108,7 +110,7 @@ export const getLaunchAdditions = async ({
   );
 
   for (const match of matchedRules) {
-    if (match.ignored) continue;
+    if (!match.applied) continue;
     const rule = rules.find((item) => item.id === match.ruleId)!;
     launchOptions = applyDefaultLaunchOptions(
       launchOptions,

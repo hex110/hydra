@@ -779,3 +779,9 @@ $disc-menu-transition-duration: 0.15s;
   font-size: 12px;
   color: globals.$muted-color;
 }
+
+.game-options-modal__launch-rule {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit / 2);
+}

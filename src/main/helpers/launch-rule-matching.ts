@@ -7,8 +7,9 @@ const MAX_DEPTH = 6;
 const MAX_ENTRIES = 20_000;
 
 /**
- * Walks a game folder breadth-first and returns, per enabled rule, the first
- * file or folder (relative to the game folder) matching one of its patterns.
+ * Walks a game folder breadth-first and returns, per file-based rule, the
+ * first file or folder (relative to the game folder) matching one of its
+ * patterns. Disabled rules are matched too, since a game can turn them on.
  */
 export const findLaunchRuleMatches = async (
   gameRoot: string,
@@ -16,7 +17,7 @@ export const findLaunchRuleMatches = async (
 ): Promise<Map<string, string>> => {
   const matches = new Map<string, string>();
   const pending = rules.filter(
-    (rule) => rule.enabled && rule.files.some((file) => file.trim())
+    (rule) => !rule.matchAllGames && rule.files.some((file) => file.trim())
   );
   if (pending.length === 0) return matches;
 

@@ -104,9 +104,11 @@ export interface Game extends LibraryCatalogueMetadata {
   optiScaler?: GameOptiScalerInstallation | null;
   /** OnlineFix found in the game folder; null when checked and absent. */
   onlineFix?: GameOnlineFix | null;
-  /** Launch rules the user turned off for this game. */
+  /** Per-rule choices that replace a launch rule's global setting for this game. */
+  launchRuleOverrides?: Record<string, boolean>;
+  /** @deprecated Migrated to launchRuleOverrides (false). */
   ignoredLaunchRules?: string[];
-  /** Per-game HDR; the global preference applies when unset. */
+  /** @deprecated Migrated to the HDR launch rule's override. */
   hdrEnabled?: boolean | null;
   /** Set when the user removed OptiScaler or opted the game out of auto-install. */
   optiScalerAutoInstallDisabled?: boolean;
@@ -273,7 +275,7 @@ export interface UserPreferences {
   startBrowserDownloadsImmediately?: boolean;
   /** Unset until first edited; the built-in presets apply until then. */
   launchRules?: LaunchRule[];
-  /** Launch every game with HDR enabled (Linux, Proton's Wayland driver). */
+  /** @deprecated Migrated to the HDR launch rule. */
   enableHdr?: boolean;
   /** Load OnlineFix's proxy DLLs and give its games Steam's client files. */
   prepareOnlineFixGames?: boolean;

@@ -17,7 +17,13 @@ import {
 } from "@shared";
 import type { LaunchRule } from "@types";
 
-import { Badge, Button, CheckboxField, TextField } from "@renderer/components";
+import {
+  Badge,
+  Button,
+  CheckboxField,
+  SelectField,
+  TextField,
+} from "@renderer/components";
 import { settingsContext } from "@renderer/context";
 import { useAppSelector, useToast } from "@renderer/hooks";
 
@@ -32,6 +38,7 @@ const toDraft = (rule: LaunchRule): RuleDraft => ({
   id: rule.id,
   name: rule.name,
   enabled: rule.enabled,
+  ...(rule.matchAllGames ? { matchAllGames: true } : {}),
   launchOptions: rule.launchOptions,
   filesText: rule.files.join(", "),
   ...(rule.presetId ? { presetId: rule.presetId } : {}),
@@ -183,15 +190,44 @@ export function SettingsContextLaunchRules() {
                 updateRule(rule.id, { name: event.target.value })
               }
             />
-            <TextField
-              label={t("launch_rules_files")}
-              value={rule.filesText}
+            <SelectField
+              label={t("launch_rules_applies_to")}
               theme="dark"
-              placeholder="ReShade.ini, *protected_game*.exe"
+              value={rule.matchAllGames ? "all" : "files"}
+              options={[
+                {
+                  key: "files",
+                  value: "files",
+                  label: t("launch_rules_applies_to_files"),
+                },
+                {
+                  key: "all",
+                  value: "all",
+                  label: t("launch_rules_applies_to_all"),
+                },
+              ]}
               onChange={(event) =>
-                updateRule(rule.id, { filesText: event.target.value })
+                commit(
+                  drafts.map((item) =>
+                    item.id === rule.id
+                      ? { ...item, matchAllGames: event.target.value === "all" }
+                      : item
+                  ),
+                  true
+                )
               }
             />
+            {!rule.matchAllGames && (
+              <TextField
+                label={t("launch_rules_files")}
+                value={rule.filesText}
+                theme="dark"
+                placeholder="ReShade.ini, *protected_game*.exe"
+                onChange={(event) =>
+                  updateRule(rule.id, { filesText: event.target.value })
+                }
+              />
+            )}
             <TextField
               label={t("launch_rules_launch_options")}
               value={rule.launchOptions}

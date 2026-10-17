@@ -42,6 +42,7 @@ import { startSteamSyncOnStartup } from "./services/steam-integration/steam-star
 import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automatic-sync-emulator-migration";
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
+import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migration";
 import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
 
@@ -73,6 +74,7 @@ export const loadState = async () => {
   await migrateCloudSaveAutomaticSyncDefaults();
   await migrateEmulatorCloudSaveDefaults();
   await migrateGameVisibilityFields();
+  await migrateLegacyLaunchRuleSettings();
 
   const userPreferences = await db.get<string, UserPreferences | null>(
     levelKeys.userPreferences,
