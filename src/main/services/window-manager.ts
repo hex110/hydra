@@ -61,6 +61,8 @@ const FRIENDS_WINDOW_SHOW_FALLBACK_MS = 400;
 
 interface CreateMainWindowOptions {
   forceBigPicture?: boolean;
+  /** Page to open instead of the start page, e.g. from a deep link. */
+  initialHash?: string;
 }
 
 export class WindowManager {
@@ -294,7 +296,28 @@ export class WindowManager {
     };
   }
 
-  public static async createMainWindow(options?: CreateMainWindowOptions) {
+  private static mainWindowCreation: Promise<void> | null = null;
+  private static pendingInitialHash: string | null = null;
+
+  /**
+   * Creates the main window once; calls made while it is being created share
+   * that creation, and the latest initialHash wins.
+   */
+  public static createMainWindow(options?: CreateMainWindowOptions) {
+    if (this.mainWindow) return Promise.resolve();
+    if (options?.initialHash !== undefined) {
+      this.pendingInitialHash = options.initialHash;
+    }
+
+    this.mainWindowCreation ??= this.createMainWindowNow(options).finally(
+      () => {
+        this.mainWindowCreation = null;
+      }
+    );
+    return this.mainWindowCreation;
+  }
+
+  private static async createMainWindowNow(options?: CreateMainWindowOptions) {
     if (this.mainWindow) return;
 
     const userPreferences = await db
@@ -416,7 +439,10 @@ export class WindowManager {
       }
     );
 
-    const initialHash = userPreferences?.launchToLibraryPage ? "library" : "";
+    const initialHash =
+      this.pendingInitialHash ??
+      (userPreferences?.launchToLibraryPage ? "library" : "");
+    this.pendingInitialHash = null;
 
     this.loadMainWindowURL(initialHash);
     mainWindow.removeMenu();
@@ -1266,7 +1292,12 @@ export class WindowManager {
   }
 
   public static redirect(hash: string) {
-    if (!this.mainWindow) this.createMainWindow();
+    // On a cold start the window may still be getting created; open the page
+    // as its first page instead of loading it into nothing.
+    if (!this.mainWindow) {
+      void this.createMainWindow({ initialHash: hash });
+      return;
+    }
     this.loadMainWindowURL(hash);
 
     if (this.bigPicture && !this.bigPicture.isDestroyed()) {
