@@ -82,6 +82,11 @@ i18n.init({
 });
 
 const PROTOCOL = "hydralauncher";
+// Hydra Plus's own scheme, which upstream Hydra never claims; the browser
+// add-on uses it.
+const PLUS_PROTOCOL = "hydraplus";
+const DEEP_LINK_PATTERN = /^(hydralauncher|hydraplus):\/\//;
+const RUN_DEEP_LINK_PATTERN = /^(hydralauncher|hydraplus):\/\/run\b/;
 
 // Register the custom schemes as privileged so the renderer can fetch them
 // (supportFetchAPI) and use the results on a canvas without tainting it
@@ -97,14 +102,16 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [
-      path.resolve(process.argv[1]),
-    ]);
+for (const scheme of [PROTOCOL, PLUS_PROTOCOL]) {
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(scheme, process.execPath, [
+        path.resolve(process.argv[1]),
+      ]);
+    }
+  } else {
+    app.setAsDefaultProtocolClient(scheme);
   }
-} else {
-  app.setAsDefaultProtocolClient(PROTOCOL);
 }
 
 const initializeApp = async () => {
@@ -213,11 +220,9 @@ const initializeApp = async () => {
   if (language) i18n.changeLanguage(language);
 
   // Check if starting from a "run" deep link - don't show main window in that case
-  const deepLinkArg = process.argv.find((arg) =>
-    arg.startsWith("hydralauncher://")
-  );
+  const deepLinkArg = process.argv.find((arg) => DEEP_LINK_PATTERN.test(arg));
   const forceBigPicture = process.argv.includes("--big-picture");
-  const isRunDeepLink = deepLinkArg?.startsWith("hydralauncher://run");
+  const isRunDeepLink = RUN_DEEP_LINK_PATTERN.test(deepLinkArg ?? "");
 
   if (!process.argv.includes("--hidden") && !isRunDeepLink) {
     WindowManager.createMainWindow({ forceBigPicture });
@@ -295,6 +300,14 @@ const handleRunGame = async (shop: GameShop, objectId: string) => {
   });
 };
 
+/** Only Steam app ids are accepted: any web page can open these links. */
+const parseStoreGameDeepLink = (url: URL) => {
+  const shop = url.searchParams.get("shop") ?? "steam";
+  const objectId = url.searchParams.get("objectId") ?? "";
+  if (shop !== "steam" || !/^\d{1,10}$/.test(objectId)) return null;
+  return { shop, objectId };
+};
+
 const handleDeepLinkPath = (uri?: string) => {
   if (!uri) return;
 
@@ -312,6 +325,19 @@ const handleDeepLinkPath = (uri?: string) => {
         });
       }
 
+      return;
+    }
+
+    // From the browser add-on: open a store game, optionally to download it.
+    if (url.host === "game" || url.host === "download") {
+      const target = parseStoreGameDeepLink(url);
+      if (target) {
+        WindowManager.redirect(
+          `game/${target.shop}/${target.objectId}${
+            url.host === "download" ? "?download=1" : ""
+          }`
+        );
+      }
       return;
     }
 
@@ -363,13 +389,11 @@ const handleDeepLinkPath = (uri?: string) => {
 };
 
 app.on("second-instance", (_event, commandLine) => {
-  const deepLink = commandLine.find((arg) =>
-    arg.startsWith("hydralauncher://")
-  );
+  const deepLink = commandLine.find((arg) => DEEP_LINK_PATTERN.test(arg));
   const forceBigPicture = commandLine.includes("--big-picture");
 
   // Check if this is a "run" deep link - don't show main window in that case
-  const isRunDeepLink = deepLink?.startsWith("hydralauncher://run");
+  const isRunDeepLink = RUN_DEEP_LINK_PATTERN.test(deepLink ?? "");
 
   if (!isRunDeepLink) {
     if (WindowManager.mainWindow) {

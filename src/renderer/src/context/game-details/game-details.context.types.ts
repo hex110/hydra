@@ -27,6 +27,14 @@ export interface GameDetailsContext {
   catalogueGame: CatalogueGameIdentity;
   shopDetails: ShopDetailsWithAssets | null;
   repacks: GameRepack[];
+  /** False while download options are being fetched. */
+  repacksLoaded: boolean;
+  /**
+   * Set when the browser add-on asked to download this game: "select"
+   * preselects the best repack, "start" also starts it.
+   */
+  autoDownloadRequest: "select" | "start" | null;
+  clearAutoDownloadRequest: () => void;
   shop: GameShop;
   gameTitle: string;
   isGameRunning: boolean;

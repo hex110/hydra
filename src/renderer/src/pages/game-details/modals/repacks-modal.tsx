@@ -22,8 +22,11 @@ import { DownloadSettingsModal } from "./download-settings-modal";
 import { gameDetailsContext } from "@renderer/context";
 import {
   Downloader,
+  getDownloadersForUri,
   getOfficialStoreMembers,
   isEpicMemberInCurrentScope,
+  rankRepacks,
+  resolveRepackPreferences,
 } from "@shared";
 import { orderBy } from "lodash-es";
 import {
@@ -31,6 +34,7 @@ import {
   useAppDispatch,
   useAppSelector,
   useIsNonSteamExecutable,
+  useToast,
 } from "@renderer/hooks";
 import { clearNewDownloadOptions } from "@renderer/features";
 import { levelDBService } from "@renderer/services/leveldb.service";
@@ -85,8 +89,17 @@ export function RepacksModal({
     new Set()
   );
 
-  const { game, presentation, repacks, updateGame } =
-    useContext(gameDetailsContext);
+  const {
+    game,
+    presentation,
+    repacks,
+    repacksLoaded,
+    autoDownloadRequest,
+    clearAutoDownloadRequest,
+    updateGame,
+  } = useContext(gameDetailsContext);
+  const { showWarningToast } = useToast();
+  const [autoStartDownload, setAutoStartDownload] = useState(false);
   const { steam: steamGame, epic: epicGame } = getOfficialStoreMembers(
     presentation?.members ?? (game ? [game] : [])
   );
@@ -235,6 +248,46 @@ export function RepacksModal({
     setViewedRepackIds((prev) => new Set(prev).add(repack.id));
   };
 
+  // The browser add-on asked for this game: preselect the best repack.
+  useEffect(() => {
+    if (!visible || !autoDownloadRequest || !repacksLoaded) return;
+
+    const request = autoDownloadRequest;
+    clearAutoDownloadRequest();
+
+    const accounts = {
+      [Downloader.RealDebrid]: !!userPreferences?.realDebridApiToken,
+      [Downloader.TorBox]: !!userPreferences?.torBoxApiToken,
+      [Downloader.Premiumize]: !!userPreferences?.premiumizeApiToken,
+      [Downloader.AllDebrid]: !!userPreferences?.allDebridApiToken,
+    } as Partial<Record<Downloader, boolean>>;
+    const isUsable = (candidate: GameRepack) =>
+      candidate.uris.some(
+        (uri) =>
+          !candidate.unavailableUris?.includes(uri) &&
+          getDownloadersForUri(uri).some(
+            (downloader) =>
+              downloader !== Downloader.Hydra && (accounts[downloader] ?? true)
+          )
+      );
+
+    const [best] = rankRepacks(
+      repacks,
+      resolveRepackPreferences(userPreferences),
+      isUsable
+    );
+
+    if (!best) {
+      showWarningToast(t("no_repack_matches_preferences"));
+      return;
+    }
+
+    setAutoStartDownload(request === "start");
+    handleRepackClick(best);
+    // handleRepackClick only sets state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, autoDownloadRequest, repacksLoaded, repacks, userPreferences]);
+
   const handleFilter: React.ChangeEventHandler<HTMLInputElement> = (event) => {
     setFilterTerm(event.target.value);
   };
@@ -314,9 +367,13 @@ export function RepacksModal({
     <>
       <DownloadSettingsModal
         visible={showSelectFolderModal}
-        onClose={() => setShowSelectFolderModal(false)}
+        onClose={() => {
+          setShowSelectFolderModal(false);
+          setAutoStartDownload(false);
+        }}
         startDownload={startDownload}
         repack={repack}
+        autoStart={autoStartDownload}
       />
       <EpicInstallModal
         game={activeEpicInstallGame}

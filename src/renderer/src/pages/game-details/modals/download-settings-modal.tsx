@@ -70,6 +70,8 @@ export interface DownloadSettingsModalProps {
     signal?: AbortSignal
   ) => Promise<{ ok: boolean; error?: string }>;
   repack: GameRepack | null;
+  /** Start as soon as the defaults are ready (browser add-on downloads). */
+  autoStart?: boolean;
 }
 
 type TorrentSortColumn = "name" | "size" | "downloading";
@@ -270,6 +272,7 @@ export function DownloadSettingsModal({
   onClose,
   startDownload,
   repack,
+  autoStart = false,
 }: Readonly<DownloadSettingsModalProps>) {
   const { t } = useTranslation("game_details");
 
@@ -1117,6 +1120,30 @@ export function DownloadSettingsModal({
     await handleStartClick();
   };
 
+  const canStartDownload =
+    !downloadStarting &&
+    selectedDownloader !== null &&
+    !!hasWritePermission &&
+    hasEnoughDiskSpace &&
+    !downloadOptions.some(
+      (option) =>
+        option.downloader === selectedDownloader &&
+        (option.isAvailableButNotConfigured || !option.isAvailable)
+    );
+
+  const autoStartedRepackIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!visible || !autoStart || !repack || !selectedPath) return;
+    if (!canStartDownload) return;
+    if (autoStartedRepackIdRef.current === repack.id) return;
+
+    autoStartedRepackIdRef.current = repack.id;
+    void handleStartClick();
+    // handleStartClick reads the current selection through state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, autoStart, repack, selectedPath, canStartDownload]);
+
   const handleTorrentStepDownload = async () => {
     const selectedFileIndices = Array.from(selectedTorrentIndices).sort(
       (a, b) => a - b
@@ -1582,20 +1609,7 @@ export function DownloadSettingsModal({
           }
         />
 
-        <Button
-          onClick={handlePrimaryButtonClick}
-          disabled={
-            downloadStarting ||
-            selectedDownloader === null ||
-            !hasWritePermission ||
-            !hasEnoughDiskSpace ||
-            downloadOptions.some(
-              (option) =>
-                option.downloader === selectedDownloader &&
-                (option.isAvailableButNotConfigured || !option.isAvailable)
-            )
-          }
-        >
+        <Button onClick={handlePrimaryButtonClick} disabled={!canStartDownload}>
           {getButtonContent()}
         </Button>
       </div>

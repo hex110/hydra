@@ -1,0 +1,15 @@
+.hydra-plus-box {
+  margin-bottom: 28px;
+}
+
+.hydra-plus-box__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hydra-plus-box__actions a span {
+  padding: 0 15px;
+  font-size: 15px;
+  line-height: 30px;
+}

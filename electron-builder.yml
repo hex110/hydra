@@ -127,6 +127,7 @@ linux:
   category: Game
   mimeTypes:
     - x-scheme-handler/hydralauncher
+    - x-scheme-handler/hydraplus
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

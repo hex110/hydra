@@ -78,6 +78,13 @@ jobs:
           MAIN_VITE_LAUNCHER_SUBDOMAIN: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Unsigned for now; Firefox installs it temporarily from about:debugging,
+      # Chromium-based browsers through "Load unpacked".
+      - name: Package Steam add-on
+        run: |
+          version="$(node -p 'require("./extensions/steam/manifest.json").version')"
+          (cd extensions/steam && zip -r "../../dist/hydra-plus-steam-addon-${version}.zip" .)
+
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -87,5 +94,6 @@ jobs:
           files: |
             dist/*.AppImage
             dist/*.pacman
+            dist/hydra-plus-steam-addon-*.zip
             dist/latest-linux.yml
             dist/*.blockmap

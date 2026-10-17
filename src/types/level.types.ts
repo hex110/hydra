@@ -263,6 +263,14 @@ export interface UserPreferences {
   libraryScanDirectories?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
+  /** Download source ids, most preferred first, for choosing a repack automatically. */
+  preferredDownloadSourceIds?: string[];
+  repackSortPreference?: "newest" | "smallest";
+  /** Comma-separated words that rule a release out of automatic choice. */
+  repackExcludedWords?: string;
+  repackMaxSizeInGigabytes?: number | null;
+  /** Start downloads requested by the browser add-on without confirmation. */
+  startBrowserDownloadsImmediately?: boolean;
   /** Unset until first edited; the built-in presets apply until then. */
   launchRules?: LaunchRule[];
   /** Launch every game with HDR enabled (Linux, Proton's Wayland driver). */

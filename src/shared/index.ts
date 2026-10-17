@@ -35,6 +35,7 @@ export * from "./title-matching";
 export * from "./optiscaler";
 export * from "./local-source-matching";
 export * from "./launch-rules";
+export * from "./repack-ranking";
 export {
   getDisplayedPlayTimeInMilliseconds,
   getPlayTimeHoursAndMinutes,

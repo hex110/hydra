@@ -1,0 +1,18 @@
+{
+  "extensionName": { "message": "Hydra Plus for Steam" },
+  "extensionDescription": {
+    "message": "Adds buttons to Steam store pages that open or download the game in Hydra Plus."
+  },
+  "boxTitle": { "message": "Hydra Plus" },
+  "downloadButton": { "message": "Download" },
+  "openButton": { "message": "Open in Hydra Plus" },
+  "downloadTooltip": {
+    "message": "Opens the game in Hydra Plus with the best download chosen."
+  },
+  "openTooltip": { "message": "Opens the game's page in Hydra Plus." },
+  "optionsTitle": { "message": "Hydra Plus for Steam" },
+  "optionsShowOpen": { "message": "Show the \"Open in Hydra Plus\" button" },
+  "optionsHint": {
+    "message": "The first click asks your browser for permission to open Hydra Plus. Tick \"Always allow\" to skip the question next time. Whether a download starts right away is set in Hydra Plus under Settings → Downloads."
+  }
+}

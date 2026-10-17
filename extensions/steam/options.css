@@ -1,0 +1,31 @@
+body {
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  margin: 16px;
+  min-width: 320px;
+}
+
+h1 {
+  font-size: 16px;
+}
+
+label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+p {
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1c1b22;
+    color: #fbfbfe;
+  }
+
+  p {
+    color: #aaa;
+  }
+}

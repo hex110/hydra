@@ -6,6 +6,7 @@ import { settingsContext } from "@renderer/context";
 import { useAppSelector } from "@renderer/hooks";
 import type { NetworkInterface, UserPreferences } from "@types";
 import { SettingsGlobalTrackers } from "./settings-global-trackers";
+import { SettingsRepackPreferences } from "./settings-repack-preferences";
 
 import "./settings-general.scss";
 
@@ -260,6 +261,8 @@ export function SettingsContextDownloads() {
           />
         )}
       </div>
+
+      <SettingsRepackPreferences />
 
       <div className="settings-context-panel__group">
         <h3>{t("global_trackers")}</h3>

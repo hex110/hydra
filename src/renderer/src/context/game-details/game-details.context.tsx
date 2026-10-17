@@ -44,6 +44,9 @@ export const gameDetailsContext = createContext<GameDetailsContext>({
   catalogueGame: { shop: "steam", objectId: "" },
   shopDetails: null,
   repacks: [],
+  repacksLoaded: false,
+  autoDownloadRequest: null,
+  clearAutoDownloadRequest: () => {},
   shop: "steam",
   gameTitle: "",
   isGameRunning: false,
@@ -110,6 +113,10 @@ export function GameDetailsContextProvider({
   const [gameOptionsInitialCategory, setGameOptionsInitialCategory] =
     useState<GameOptionsCategoryId>("general");
   const [repacks, setRepacks] = useState<GameRepack[]>([]);
+  const [repacksLoaded, setRepacksLoaded] = useState(false);
+  const [autoDownloadRequest, setAutoDownloadRequest] = useState<
+    "select" | "start" | null
+  >(null);
 
   const { t, i18n } = useTranslation("game_details");
   const location = useLocation();
@@ -385,6 +392,21 @@ export function GameDetailsContextProvider({
     refreshGameDetails,
   ]);
 
+  // Download requests from the browser add-on arrive as "?download=1".
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("download") !== "1") return;
+
+    setAutoDownloadRequest(
+      userPreferences?.startBrowserDownloadsImmediately ? "start" : "select"
+    );
+    setShowRepacksModal(true);
+    try {
+      window.history.replaceState({}, document.title, location.pathname);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [location, userPreferences?.startBrowserDownloadsImmediately]);
+
   useEffect(() => {
     const state =
       (location && (location.state as Record<string, unknown>)) || {};
@@ -542,6 +564,7 @@ export function GameDetailsContextProvider({
     let cancelled = false;
 
     const fetchDownloadSources = async () => {
+      setRepacksLoaded(false);
       try {
         const sourcesRaw = (await levelDBService.values(
           "downloadSources"
@@ -582,6 +605,7 @@ export function GameDetailsContextProvider({
         );
 
         setRepacks(downloadOptions);
+        setRepacksLoaded(true);
 
         const results = await fetchHosterAvailability(
           downloadOptions,
@@ -594,6 +618,7 @@ export function GameDetailsContextProvider({
         setRepacks(applyHosterAvailability(downloadOptions, results));
       } catch (error) {
         console.error("Failed to fetch download sources:", error);
+        if (!cancelled) setRepacksLoaded(true);
       }
     };
 
@@ -650,6 +675,9 @@ export function GameDetailsContextProvider({
         shopDetails,
         shop: lockAchievementIdentity ? achievementShop : operationalShop,
         repacks,
+        repacksLoaded,
+        autoDownloadRequest,
+        clearAutoDownloadRequest: () => setAutoDownloadRequest(null),
         gameTitle: presentation?.title ?? shopDetails?.name ?? gameTitle,
         isGameRunning,
         isLoading,

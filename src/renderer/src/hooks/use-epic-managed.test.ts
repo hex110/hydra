@@ -658,6 +658,7 @@ describe("Epic managed UI lifecycle", () => {
           useAppSelector: () => ({}),
           useIsNonSteamExecutable: () => false,
           useLibrary: () => ({ updateLibrary: async () => {} }),
+          useToast: () => ({ showWarningToast: () => {} }),
         },
         "@shared": { getOfficialStoreMembers, isEpicMemberInCurrentScope },
         "@renderer/components": Object.fromEntries(
@@ -802,6 +803,7 @@ describe("Epic managed UI lifecycle", () => {
           useAppSelector: () => ({}),
           useIsNonSteamExecutable: () => false,
           useLibrary: () => ({ updateLibrary: async () => {} }),
+          useToast: () => ({ showWarningToast: () => {} }),
         },
         "@shared": { getOfficialStoreMembers, isEpicMemberInCurrentScope },
         "@renderer/components": {
