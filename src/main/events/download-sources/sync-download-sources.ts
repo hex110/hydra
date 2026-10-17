@@ -1,4 +1,5 @@
 import { HydraApi } from "@main/services";
+import { LocalSources } from "@main/services/local-sources/local-sources";
 import { registerEvent } from "../register-event";
 import { downloadSourcesSublevel } from "@main/level";
 import type { DownloadSource } from "@types";
@@ -24,6 +25,9 @@ const syncDownloadSources = async (_event: Electron.IpcMainInvokeEvent) => {
       ...downloadSource,
     });
   }
+
+  // Refreshes stale local copies in the background.
+  void LocalSources.refreshAll();
 };
 
 registerEvent("syncDownloadSources", syncDownloadSources);

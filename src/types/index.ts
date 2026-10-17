@@ -917,6 +917,7 @@ export * from "./artwork.types";
 export * from "./cloud-save.types";
 export * from "./souvenir.types";
 export * from "./optiscaler.types";
+export * from "./local-source.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }

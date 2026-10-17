@@ -32,6 +32,7 @@ import {
   applyHosterAvailability,
   fetchHosterAvailability,
   filterDownloadableRepacks,
+  mergeLocalRepacks,
   getGameExecutableFilters,
   SteamContentDescriptor,
 } from "@shared";
@@ -532,6 +533,9 @@ export function GameDetailsContextProvider({
     };
   }, [achievementObjectId, achievementShop, userDetails, presentation]);
 
+  // Release names in sources are matched against the store title.
+  const repackMatchTitle = shopDetails?.name ?? game?.title ?? gameTitle;
+
   useEffect(() => {
     if (shop === "custom") return;
 
@@ -550,20 +554,30 @@ export function GameDetailsContextProvider({
           downloadSourceIds: sources.map((source) => source.id),
         };
 
-        const downloads = await window.electron.hydraApi.get<GameRepack[]>(
-          `/games/${catalogueShop}/${catalogueObjectId}/download-sources`,
-          {
-            params,
-            needsAuth: false,
-          }
-        );
+        const [downloads, localRepacks] = await Promise.all([
+          window.electron.hydraApi.get<GameRepack[]>(
+            `/games/${catalogueShop}/${catalogueObjectId}/download-sources`,
+            {
+              params,
+              needsAuth: false,
+            }
+          ),
+          repackMatchTitle
+            ? window.electron
+                .getLocalSourceRepacks(repackMatchTitle)
+                .catch(() => [] as GameRepack[])
+            : Promise.resolve([] as GameRepack[]),
+        ]);
 
         if (cancelled) return;
 
         const downloadOptions = filterDownloadableRepacks(
-          ensureArray<GameRepack>(
-            downloads,
-            `/games/${catalogueShop}/${catalogueObjectId}/download-sources`
+          mergeLocalRepacks(
+            ensureArray<GameRepack>(
+              downloads,
+              `/games/${catalogueShop}/${catalogueObjectId}/download-sources`
+            ),
+            localRepacks
           )
         );
 
@@ -588,7 +602,7 @@ export function GameDetailsContextProvider({
     return () => {
       cancelled = true;
     };
-  }, [shop, catalogueShop, catalogueObjectId]);
+  }, [shop, catalogueShop, catalogueObjectId, repackMatchTitle]);
 
   const getDownloadsPath = async () => {
     if (userPreferences?.downloadsPath) return userPreferences.downloadsPath;

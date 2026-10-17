@@ -3,6 +3,7 @@ import { HydraApi } from "@main/services/hydra-api";
 import { downloadSourcesSublevel } from "@main/level";
 import type { DownloadSource } from "@types";
 import { logger } from "@main/services";
+import { LocalSources } from "@main/services/local-sources/local-sources";
 
 const addDownloadSource = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -34,11 +35,16 @@ const addDownloadSource = async (
       }
     }
 
-    await downloadSourcesSublevel.put(downloadSource.id, {
+    const storedSource: DownloadSource = {
       ...downloadSource,
       isRemote: true,
       createdAt: new Date().toISOString(),
-    });
+    };
+    await downloadSourcesSublevel.put(downloadSource.id, storedSource);
+
+    if (await LocalSources.isEnabled()) {
+      void LocalSources.refresh(storedSource);
+    }
 
     return downloadSource;
   } catch (error) {

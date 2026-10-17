@@ -5,6 +5,7 @@ import {
   applyHosterAvailability,
   fetchHosterAvailability,
   filterDownloadableRepacks,
+  mergeLocalRepacks,
 } from "@shared";
 import { orderBy } from "lodash-es";
 
@@ -116,8 +117,15 @@ function setNoDownloadOptionsState(
   });
 }
 
+const fetchLocalRepacks = (title: string | undefined) =>
+  title
+    ? globalThis.window.electron
+        .getLocalSourceRepacks(title)
+        .catch(() => [] as GameRepack[])
+    : Promise.resolve([] as GameRepack[]);
+
 async function fetchDownloadOptions(
-  game: Pick<Game, "objectId" | "shop">,
+  game: Pick<Game, "objectId" | "shop"> & { title?: string },
   signal: { cancelled: boolean },
   setters: DownloadStateSetters,
   knownGameSourcesEmptyStateReason: DownloadOptionsEmptyStateReason | null
@@ -145,29 +153,34 @@ async function fetchDownloadOptions(
     return;
   }
 
-  if (knownGameSourcesEmptyStateReason !== null) {
-    setKnownEmptyState(signal, setters, knownGameSourcesEmptyStateReason);
-    return;
-  }
-
   startRemoteDownloadOptionsLoading(signal, setters);
 
   try {
     const endpoint = `/games/${game.shop}/${game.objectId}/download-sources`;
 
-    const response = await globalThis.window.electron.hydraApi.get<
-      GameRepack[]
-    >(endpoint, {
-      params: {
-        take: 100,
-        skip: 0,
-        downloadSourceIds: sortedSources.map((source) => source.id),
-      },
-      needsAuth: false,
-    });
-    const options = Array.isArray(response)
-      ? filterDownloadableRepacks(response)
-      : [];
+    // The server already knows it has nothing; Hydra's own copy of the
+    // sources may still match the game.
+    const [response, localRepacks] = await Promise.all([
+      knownGameSourcesEmptyStateReason === null
+        ? globalThis.window.electron.hydraApi.get<GameRepack[]>(endpoint, {
+            params: {
+              take: 100,
+              skip: 0,
+              downloadSourceIds: sortedSources.map((source) => source.id),
+            },
+            needsAuth: false,
+          })
+        : Promise.resolve([] as GameRepack[]),
+      fetchLocalRepacks(game.title),
+    ]);
+    const options = filterDownloadableRepacks(
+      mergeLocalRepacks(Array.isArray(response) ? response : [], localRepacks)
+    );
+
+    if (options.length === 0 && knownGameSourcesEmptyStateReason !== null) {
+      setKnownEmptyState(signal, setters, knownGameSourcesEmptyStateReason);
+      return;
+    }
 
     setDownloadOptionsSuccessState(signal, setters, options);
 
@@ -191,6 +204,7 @@ async function fetchDownloadOptions(
 
 export function useGameDownloadOptions(
   game: Pick<Game, "objectId" | "shop"> & {
+    title?: string;
     downloadSources?: string[];
   },
   visible: boolean
@@ -207,15 +221,17 @@ export function useGameDownloadOptions(
   const [localDownloadSources, setLocalDownloadSources] = useState<
     DownloadSource[]
   >([]);
+  // Local source matching needs a title; without one an empty server answer is final.
+  const knownEmptyState = game.title ? null : knownGameSourcesEmptyStateReason;
   const [isCheckingSources, setIsCheckingSources] = useState(
-    shouldLoadDownloadOptions && knownGameSourcesEmptyStateReason === null
+    shouldLoadDownloadOptions && knownEmptyState === null
   );
   const [isLoading, setIsLoading] = useState(
-    shouldLoadDownloadOptions && knownGameSourcesEmptyStateReason === null
+    shouldLoadDownloadOptions && knownEmptyState === null
   );
   const [emptyStateReason, setEmptyStateReason] =
     useState<DownloadOptionsEmptyStateReason | null>(
-      shouldLoadDownloadOptions ? knownGameSourcesEmptyStateReason : null
+      shouldLoadDownloadOptions ? knownEmptyState : null
     );
 
   useEffect(() => {
@@ -228,12 +244,12 @@ export function useGameDownloadOptions(
       return;
     }
 
-    if (knownGameSourcesEmptyStateReason !== null) {
+    if (knownEmptyState !== null) {
       setDownloadOptions([]);
       setLocalDownloadSources([]);
       setIsCheckingSources(false);
       setIsLoading(false);
-      setEmptyStateReason(knownGameSourcesEmptyStateReason);
+      setEmptyStateReason(knownEmptyState);
       return;
     }
 
@@ -259,6 +275,8 @@ export function useGameDownloadOptions(
     downloadSourcesDependencyKey,
     game.objectId,
     game.shop,
+    game.title,
+    knownEmptyState,
     knownGameSourcesEmptyStateReason,
     shouldLoadDownloadOptions,
   ]);

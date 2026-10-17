@@ -43,6 +43,7 @@ import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automati
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
 import { UmuUpdater } from "./services/umu-updater";
+import { LocalSources } from "@main/services/local-sources/local-sources";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -128,6 +129,8 @@ export const loadState = async () => {
 
     const { syncDownloadSourcesFromApi } = await import("./services/user");
     void syncDownloadSourcesFromApi();
+
+    void LocalSources.refreshAll();
 
     if (userPreferences?.scanLibraryOnStartup) {
       void import("./events/library/scan-installed-games").then(

@@ -1,14 +1,15 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import {
   TextField,
   Button,
   Badge,
+  CheckboxField,
   ConfirmationModal,
 } from "@renderer/components";
 import { useTranslation } from "react-i18next";
 
-import type { DownloadSource } from "@types";
+import type { DownloadSource, LocalSourceStatus } from "@types";
 import {
   NoEntryIcon,
   PlusCircleIcon,
@@ -16,7 +17,12 @@ import {
   TrashIcon,
 } from "@primer/octicons-react";
 import { AddDownloadSourceModal } from "./add-download-source-modal";
-import { useAppDispatch, useToast } from "@renderer/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useDate,
+  useToast,
+} from "@renderer/hooks";
 import { useFormat } from "@renderer/hooks/use-format";
 import { DownloadSourceStatus } from "@shared";
 import { settingsContext } from "@renderer/context";
@@ -42,7 +48,17 @@ export function SettingsDownloadSources() {
   const [isRemovingDownloadSource, setIsRemovingDownloadSource] =
     useState(false);
 
-  const { sourceUrl, clearSourceUrl } = useContext(settingsContext);
+  const [localSourceStatuses, setLocalSourceStatuses] = useState<
+    Record<string, LocalSourceStatus>
+  >({});
+
+  const { sourceUrl, clearSourceUrl, updateUserPreferences } =
+    useContext(settingsContext);
+  const matchLocally = useAppSelector(
+    (state) =>
+      state.userPreferences.value?.matchDownloadSourcesLocally !== false
+  );
+  const { formatDistance } = useDate();
 
   const { t } = useTranslation("settings");
   const { showSuccessToast } = useToast();
@@ -55,6 +71,28 @@ export function SettingsDownloadSources() {
   useEffect(() => {
     if (sourceUrl) setShowAddDownloadSourceModal(true);
   }, [sourceUrl]);
+
+  const loadLocalSourceStatuses = useCallback(async () => {
+    try {
+      const statuses = await window.electron.getLocalSourceStatuses();
+      setLocalSourceStatuses(
+        Object.fromEntries(statuses.map((status) => [status.sourceId, status]))
+      );
+    } catch (error) {
+      logger.error("Failed to load local source statuses:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadLocalSourceStatuses();
+  }, [loadLocalSourceStatuses, downloadSources]);
+
+  const toggleMatchLocally = async () => {
+    await updateUserPreferences({ matchDownloadSourcesLocally: !matchLocally });
+    if (!matchLocally) {
+      void window.electron.refreshLocalSources().then(loadLocalSourceStatuses);
+    }
+  };
 
   useEffect(() => {
     const fetchDownloadSources = async () => {
@@ -155,6 +193,12 @@ export function SettingsDownloadSources() {
       const sorted = orderBy(sources, "createdAt", "desc");
       setDownloadSources(sorted);
 
+      if (matchLocally) {
+        void window.electron
+          .refreshLocalSources()
+          .then(loadLocalSourceStatuses);
+      }
+
       showSuccessToast(t("download_sources_synced_successfully"));
     } finally {
       setIsSyncingDownloadSources(false);
@@ -207,6 +251,15 @@ export function SettingsDownloadSources() {
       />
 
       <p>{t("download_sources_description")}</p>
+
+      <div className="settings-download-sources__local-matching">
+        <CheckboxField
+          label={t("match_download_sources_locally")}
+          checked={matchLocally}
+          onChange={toggleMatchLocally}
+        />
+        <small>{t("match_download_sources_locally_description")}</small>
+      </div>
 
       <div className="settings-download-sources__header">
         <Button
@@ -294,6 +347,16 @@ export function SettingsDownloadSources() {
                 </button>
               </div>
 
+              {matchLocally && (
+                <LocalSourceStatusLine
+                  status={localSourceStatuses[downloadSource.id]}
+                  formatCount={(count) => numberFormatter.format(count)}
+                  formatAge={(date) =>
+                    formatDistance(date, new Date(), { addSuffix: true })
+                  }
+                />
+              )}
+
               <TextField
                 label={t("download_source_url")}
                 value={downloadSource.url}
@@ -317,5 +380,46 @@ export function SettingsDownloadSources() {
         })}
       </ul>
     </>
+  );
+}
+
+function LocalSourceStatusLine({
+  status,
+  formatCount,
+  formatAge,
+}: Readonly<{
+  status: LocalSourceStatus | undefined;
+  formatCount: (count: number) => string;
+  formatAge: (date: string) => string;
+}>) {
+  const { t } = useTranslation("settings");
+
+  if (!status) {
+    return (
+      <small className="settings-download-sources__local-status">
+        {t("local_source_pending")}
+      </small>
+    );
+  }
+
+  const copy = status.fetchedAt
+    ? t("local_source_ready", {
+        count: status.entries,
+        countFormatted: formatCount(status.entries),
+        age: formatAge(status.fetchedAt),
+      })
+    : null;
+
+  if (status.state === "failed") {
+    return (
+      <small className="settings-download-sources__local-status settings-download-sources__local-status--failed">
+        {t("local_source_failed", { error: status.error })}
+        {copy && ` ${t("local_source_using_previous", { copy })}`}
+      </small>
+    );
+  }
+
+  return (
+    <small className="settings-download-sources__local-status">{copy}</small>
   );
 }

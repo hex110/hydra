@@ -1025,6 +1025,10 @@ contextBridge.exposeInMainWorld("electron", {
       objectId,
       ignoreDefaultLaunchOptions
     ),
+  getLocalSourceRepacks: (title: string) =>
+    ipcRenderer.invoke("getLocalSourceRepacks", title),
+  getLocalSourceStatuses: () => ipcRenderer.invoke("getLocalSourceStatuses"),
+  refreshLocalSources: () => ipcRenderer.invoke("refreshLocalSources"),
   getOptiScalerOverview: () => ipcRenderer.invoke("getOptiScalerOverview"),
   checkOptiScalerUpdates: () => ipcRenderer.invoke("checkOptiScalerUpdates"),
   downloadOptiScaler: () => ipcRenderer.invoke("downloadOptiScaler"),

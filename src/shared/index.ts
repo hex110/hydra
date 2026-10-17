@@ -33,6 +33,7 @@ export * from "./steam-session";
 export * from "./window-layout";
 export * from "./title-matching";
 export * from "./optiscaler";
+export * from "./local-source-matching";
 export {
   getDisplayedPlayTimeInMilliseconds,
   getPlayTimeHoursAndMinutes,

@@ -4,6 +4,7 @@ import type {
   GameOptiScalerInstallation,
   GameOptiScalerStatus,
   OptiScalerBulkProgress,
+  LocalSourceStatus,
   OptiScalerOverview,
   OptiScalerProxyDll,
   SystemPowerAction,
@@ -406,6 +407,9 @@ declare global {
       objectId: string,
       ignoreDefaultLaunchOptions: boolean
     ) => Promise<void>;
+    getLocalSourceRepacks: (title: string) => Promise<GameRepack[]>;
+    getLocalSourceStatuses: () => Promise<LocalSourceStatus[]>;
+    refreshLocalSources: () => Promise<void>;
     getOptiScalerOverview: () => Promise<OptiScalerOverview>;
     checkOptiScalerUpdates: () => Promise<void>;
     downloadOptiScaler: () => Promise<string>;

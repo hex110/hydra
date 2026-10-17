@@ -250,6 +250,8 @@ export interface UserPreferences {
   libraryScanDirectories?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
+  /** Also match games against Hydra's own copy of each download source. */
+  matchDownloadSourcesLocally?: boolean;
   optiScalerAutoInstall?: boolean;
   optiScalerChannel?: OptiScalerChannel;
   optiScalerProxyDll?: OptiScalerProxyDll;

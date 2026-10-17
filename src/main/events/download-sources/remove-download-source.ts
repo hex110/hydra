@@ -1,5 +1,6 @@
 import { HydraApi } from "@main/services";
 import { downloadSourcesSublevel } from "@main/level";
+import { LocalSources } from "@main/services/local-sources/local-sources";
 import { registerEvent } from "../register-event";
 
 const removeDownloadSource = async (
@@ -18,9 +19,12 @@ const removeDownloadSource = async (
   }
 
   if (removeAll) {
+    const sourceIds = await downloadSourcesSublevel.keys().all();
     await downloadSourcesSublevel.clear();
+    for (const sourceId of sourceIds) await LocalSources.forget(sourceId);
   } else if (downloadSourceId) {
     await downloadSourcesSublevel.del(downloadSourceId);
+    await LocalSources.forget(downloadSourceId);
   }
 };
 
