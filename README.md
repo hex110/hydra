@@ -16,6 +16,31 @@
 
 </div>
 
+## Hydra Plus
+
+This is **Hydra Plus**, a fork of Hydra Launcher focused on playing Windows
+games on Linux with as little manual work as possible. It installs next to
+upstream Hydra with its own data, and updates from
+[this fork's releases](https://github.com/hex110/hydra/releases).
+
+| Feature                                                           | What it does                                                                                                                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Game setup](docs/features/game-setup.md)                         | Creates a game's Wine prefix as soon as it is installed or found, not on first launch, and can run your own command afterwards (save imports, tweaks). |
+| [Default launch options](docs/features/default-launch-options.md) | Launch options applied to every game, with a per-game opt-out.                                                                                         |
+| [Library folders](docs/features/library-scanning.md)              | Scans folders such as `~/Games` for installed games, identifies them by executable or folder name and adds them to the library.                        |
+| [OptiScaler](docs/features/optiscaler.md)                         | Downloads OptiScaler and installs it into games that support it, with INI overrides, OptiPatcher and clean removal.                                    |
+| [Local source matching](docs/features/local-source-matching.md)   | Matches download sources against games on your machine too, catching releases the server misses and refreshing stale ones.                             |
+
+### Install
+
+Download the AppImage, or the `.pacman` package on Arch-based systems
+(`sudo pacman -U hydra-plus-*.pacman`), from the
+[latest release](https://github.com/hex110/hydra/releases/latest).
+
+Hydra Plus uses Hydra's servers for the catalogue, accounts and download
+sources, exactly like Hydra. Both apps handle `hydralauncher://` links
+(sign-in, adding sources); the one launched last receives them.
+
 ## Features
 
 - Add games that you own to your library

@@ -1,5 +1,5 @@
-appId: gg.hydralauncher.hydra
-productName: Hydra
+appId: io.github.hex110.hydraplus
+productName: Hydra Plus
 beforePack: scripts/legendary-before-pack.cjs
 afterPack: scripts/legendary-after-pack.cjs
 afterSign: scripts/legendary-after-pack.cjs
@@ -34,7 +34,7 @@ asarUnpack:
   - node_modules/sharp/**
   - node_modules/@img/sharp-libvips-*/**
 win:
-  executableName: Hydra
+  executableName: HydraPlus
   extraResources:
     - from: legendary/win32/${arch}
       to: legendary
@@ -118,12 +118,12 @@ linux:
         - NOTICE.md
     - from: binaries/7zzs
     - from: binaries/umu/umu-run
+  executableName: hydra-plus
   target:
     - AppImage
-    - snap
-    - deb
-    - rpm
-  maintainer: electronjs.org
+    - pacman
+  maintainer: hex110 <https://github.com/hex110>
+  synopsis: Hydra Launcher fork with extra Linux gaming features
   category: Game
   mimeTypes:
     - x-scheme-handler/hydralauncher
@@ -132,7 +132,7 @@ appImage:
 npmRebuild: false
 publish:
   provider: github
-  owner: hydralauncher
+  owner: hex110
   repo: hydra
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

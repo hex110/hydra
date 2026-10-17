@@ -54,11 +54,14 @@ crashReporter.start({
 
 const { autoUpdater } = updater;
 
+// Hydra Plus updates from its own releases, never from upstream Hydra.
 autoUpdater.setFeedURL({
   provider: "github",
-  owner: "hydralauncher",
+  owner: "hex110",
   repo: "hydra",
 });
+// Fork versions look like "4.1.6-plus.1"; they are releases, not prereleases.
+autoUpdater.allowPrerelease = false;
 
 autoUpdater.logger = logger;
 
@@ -106,7 +109,7 @@ if (process.defaultApp) {
 
 const initializeApp = async () => {
   refreshPortableShortcutLauncher();
-  electronApp.setAppUserModelId("gg.hydralauncher.hydra");
+  electronApp.setAppUserModelId("io.github.hex110.hydraplus");
 
   logger.info("Crash dumps directory", app.getPath("crashDumps"));
 
