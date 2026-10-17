@@ -76,6 +76,56 @@ function DefaultLaunchOptionsToggle({ game }: Readonly<{ game: LibraryGame }>) {
   );
 }
 
+function HdrToggle({ game }: Readonly<{ game: LibraryGame }>) {
+  const { t } = useTranslation("game_details");
+  const { updateGame } = useContext(gameDetailsContext);
+  const globalHdr = useAppSelector(
+    (state) => state.userPreferences.value?.enableHdr === true
+  );
+
+  if (
+    window.electron.platform !== "linux" ||
+    !/\.exe"?$/i.test(game.executablePath ?? "")
+  ) {
+    return null;
+  }
+
+  const enabled = game.hdrEnabled ?? globalHdr;
+  const followsDefault =
+    game.hdrEnabled === undefined || game.hdrEnabled === null;
+
+  const setHdr = async (value: boolean | null) => {
+    await window.electron.setGameHdrEnabled(game.shop, game.objectId, value);
+    await updateGame();
+  };
+
+  return (
+    <div className="game-options-modal__default-launch-options">
+      <CheckboxField
+        label={t("enable_hdr")}
+        checked={enabled}
+        onChange={() => setHdr(!enabled)}
+      />
+      <p className="game-options-modal__header-description">
+        {followsDefault ? (
+          t(globalHdr ? "hdr_follows_default_on" : "hdr_follows_default_off")
+        ) : (
+          <>
+            {t("hdr_overridden")}{" "}
+            <button
+              type="button"
+              className="game-options-modal__link-button"
+              onClick={() => setHdr(null)}
+            >
+              {t("hdr_use_default")}
+            </button>
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
 interface ClassicsDiscSectionProps {
   game: LibraryGame;
 }
@@ -1004,6 +1054,7 @@ export function GeneralSettingsSection({
             }
           />
           <DefaultLaunchOptionsToggle game={game} />
+          <HdrToggle game={game} />
         </div>
       )}
     </>

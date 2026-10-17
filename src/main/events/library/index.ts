@@ -51,6 +51,7 @@ import "./toggle-automatic-cloud-sync";
 import "./toggle-game-gamemode";
 import "./toggle-game-mangohud";
 import "./toggle-game-default-launch-options";
+import "./set-game-hdr-enabled";
 import "./run-game-setup";
 import "./toggle-game-pin";
 import "./update-custom-game";

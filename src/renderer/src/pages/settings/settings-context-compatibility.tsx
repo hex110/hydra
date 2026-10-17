@@ -527,6 +527,20 @@ export function SettingsContextCompatibility() {
                 {t("prepare_missing_wine_prefixes")}
               </Button>
             </div>
+
+            <CheckboxField
+              label={t("prepare_online_fix_games")}
+              checked={userPreferences?.prepareOnlineFixGames !== false}
+              onChange={() =>
+                updateUserPreferences({
+                  prepareOnlineFixGames:
+                    userPreferences?.prepareOnlineFixGames === false,
+                })
+              }
+            />
+            <p className="settings-general__common-redist-description">
+              {t("prepare_online_fix_games_description")}
+            </p>
           </>
         )}
 
@@ -548,6 +562,28 @@ export function SettingsContextCompatibility() {
           />
         </p>
       </div>
+
+      {window.electron.platform === "linux" && (
+        <div className="settings-context-panel__group">
+          <h3>{t("hdr")}</h3>
+          <CheckboxField
+            label={t("enable_hdr_for_all_games")}
+            checked={userPreferences?.enableHdr === true}
+            onChange={() =>
+              updateUserPreferences({
+                enableHdr: userPreferences?.enableHdr !== true,
+              })
+            }
+          />
+          <p className="settings-general__common-redist-description">
+            <Trans
+              i18nKey="enable_hdr_description"
+              ns="settings"
+              components={{ code: <code /> }}
+            />
+          </p>
+        </div>
+      )}
 
       <div className="settings-context-panel__group">
         <h3>{t("default_launch_options")}</h3>

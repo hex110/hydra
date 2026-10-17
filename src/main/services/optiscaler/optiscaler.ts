@@ -9,7 +9,6 @@ import {
   compareOptiScalerVersions,
   evaluateOptiScalerEligibility,
   findOptiScalerCompatibilityEntry,
-  getOptiScalerDllOverride,
   resolveOptiScalerSettings,
   type OptiScalerSettings,
 } from "@shared";
@@ -428,15 +427,15 @@ export class OptiScaler {
     this.sendBulkProgress({ ...progress, status: "completed" });
   }
 
-  /** The WINEDLLOVERRIDES entry a game needs, or null when OptiScaler is not installed. */
-  public static getLaunchDllOverride(game: Game | null | undefined) {
+  /** The proxy DLL (without ".dll") Wine must load natively, or null when OptiScaler is not installed. */
+  public static getLaunchNativeDll(game: Game | null | undefined) {
     if (!game?.optiScaler) return null;
     const manifestPath = path.join(
       game.optiScaler.directory,
       OPTISCALER_MANIFEST_FILE
     );
     return fs.existsSync(manifestPath)
-      ? getOptiScalerDllOverride(game.optiScaler.proxyDll)
+      ? game.optiScaler.proxyDll.replace(/\.dll$/i, "")
       : null;
   }
 }

@@ -267,7 +267,3 @@ export const resolveOptiScalerSettings = (
   iniOverrides: parseIniOverrides(preferences?.optiScalerIniOverrides ?? "")
     .overrides,
 });
-
-/** The WINEDLLOVERRIDES entry that makes Wine load OptiScaler's proxy DLL. */
-export const getOptiScalerDllOverride = (proxyDll: OptiScalerProxyDll) =>
-  `${proxyDll.replace(/\.dll$/i, "")}=n,b`;

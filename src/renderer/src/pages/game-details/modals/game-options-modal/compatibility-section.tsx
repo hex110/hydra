@@ -161,6 +161,17 @@ export function CompatibilitySettingsSection({
 
           <GameSetupButton game={game} />
         </div>
+
+        {game.onlineFix && (
+          <p className="game-options-modal__online-fix">
+            {t("online_fix_detected", {
+              dlls:
+                game.onlineFix.proxyDlls
+                  .map((dll) => `${dll}.dll`)
+                  .join(", ") || "-",
+            })}
+          </p>
+        )}
       </div>
 
       <div className="game-options-modal__section">

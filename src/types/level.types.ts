@@ -48,6 +48,12 @@ export interface LibraryCatalogueMetadata {
   availableShops?: GameShop[];
 }
 
+export interface GameOnlineFix {
+  directory: string;
+  /** Proxy DLLs (without ".dll") Wine must load from the game folder. */
+  proxyDlls: string[];
+}
+
 export interface Game extends LibraryCatalogueMetadata {
   title: string;
   iconUrl: string | null;
@@ -95,6 +101,10 @@ export interface Game extends LibraryCatalogueMetadata {
   ignoreDefaultLaunchOptions?: boolean;
   postInstallCommandRanAt?: Date | null;
   optiScaler?: GameOptiScalerInstallation | null;
+  /** OnlineFix found in the game folder; null when checked and absent. */
+  onlineFix?: GameOnlineFix | null;
+  /** Per-game HDR; the global preference applies when unset. */
+  hdrEnabled?: boolean | null;
   /** Set when the user removed OptiScaler or opted the game out of auto-install. */
   optiScalerAutoInstallDisabled?: boolean;
   /** Per-game proxy DLL; the global preference applies when unset. */
@@ -250,6 +260,10 @@ export interface UserPreferences {
   libraryScanDirectories?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
+  /** Launch every game with HDR enabled (Linux, Proton's Wayland driver). */
+  enableHdr?: boolean;
+  /** Load OnlineFix's proxy DLLs and give its games Steam's client files. */
+  prepareOnlineFixGames?: boolean;
   /** Also match games against Hydra's own copy of each download source. */
   matchDownloadSourcesLocally?: boolean;
   optiScalerAutoInstall?: boolean;

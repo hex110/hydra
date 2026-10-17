@@ -763,3 +763,19 @@ $disc-menu-transition-duration: 0.15s;
   font-size: 12px;
   color: globals.$muted-color;
 }
+
+.game-options-modal__link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: globals.$body-color;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.game-options-modal__online-fix {
+  margin: 0;
+  font-size: 12px;
+  color: globals.$muted-color;
+}
