@@ -21,6 +21,18 @@ describe("cleanReleaseName", () => {
     ["The Witcher® 3: Wild Hunt", "The Witcher 3: Wild Hunt"],
     ["Halo Infinite", "Halo Infinite"],
     ["Portal 2", "Portal 2"],
+    ["Going Medieval – V 1.2.12 / Build 25933619", "Going Medieval"],
+    ["Mini Motorways – Build 25381668", "Mini Motorways"],
+    [
+      "Survivalist: Invisible Strain – V 272 / Build 22802494",
+      "Survivalist: Invisible Strain",
+    ],
+    ["Stardew Valley V 1.6.14 – V 1.6.14 / Build 16375315", "Stardew Valley"],
+    ["Brotato – v1.1.12.1 / Build 20236656", "Brotato"],
+    ["Grand Theft Auto V", "Grand Theft Auto V"],
+    ["Escape Simulator 2 – V 22715r / Build 25386453", "Escape Simulator 2"],
+    ["Way of the Hunter 2 – Build: 25630108", "Way of the Hunter 2"],
+    ["Rocky V - Remastered", "Rocky V Remastered"],
   ];
 
   for (const [input, expected] of cases) {

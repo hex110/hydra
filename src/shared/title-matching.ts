@@ -113,7 +113,8 @@ const BUILD_NUMBER_TOKEN = /^(b|build)?\d{5,}$/;
  * are dropped.
  */
 export const cleanReleaseName = (name: string): string => {
-  let value = name.normalize("NFKC");
+  // Before NFKC, which would turn "™" into "TM".
+  let value = name.replaceAll(/[™®©]/g, "").normalize("NFKC");
 
   // Everything after a "+" (DLC lists, bonus content) or a " - Group" suffix.
   value = value.replace(/\s\+\s.*$/, "");
@@ -134,10 +135,21 @@ export const cleanReleaseName = (name: string): string => {
   const tokens = value.split(/\s+/).filter(Boolean);
   const kept: string[] = [];
 
-  for (const token of tokens) {
-    const lower = token.toLowerCase().replace(/^-+|-+$/g, "");
-    if (!lower) continue;
+  for (const [index, token] of tokens.entries()) {
+    const lower = token.toLowerCase().replace(/^-+|[-:]+$/g, "");
+    // Separators such as "–" or "/" between the title and the version.
+    if (!/[\p{L}\p{N}]/u.test(lower)) continue;
     if (VERSION_TOKEN.test(lower) || BUILD_NUMBER_TOKEN.test(lower)) break;
+    // "V 1.2.3", or "– V 272" after a separator, is a version, not a numeral.
+    const next = tokens[index + 1] ?? "";
+    const previous = tokens[index - 1] ?? "";
+    if (
+      /^(v|ver|version)\.?$/.test(lower) &&
+      (/^\d+([._]\d+)+/.test(next) ||
+        (/^\d/.test(next) && /^[-–—/:|]+$/.test(previous)))
+    ) {
+      break;
+    }
     // Whatever follows "Build" is a build identifier.
     if (lower === "build") break;
     if (NOISE_WORDS.has(lower) || /^multi\d+$/.test(lower)) continue;
