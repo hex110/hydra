@@ -29,6 +29,8 @@ jobs:
   # MSVC output differs on every build, so rebuilding current bundles would
   # only commit new bytes. Manual runs always rebuild.
   status:
+    # Upstream only; Hydra Plus releases come from plus-release.yml.
+    if: github.repository == 'hydralauncher/hydra'
     runs-on: ubuntu-latest
 
     outputs:

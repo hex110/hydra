@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   build:
+    # Upstream only; Hydra Plus releases come from plus-release.yml.
+    if: github.repository == 'hydralauncher/hydra'
     strategy:
       matrix:
         os: [windows-2022, ubuntu-latest]
@@ -156,7 +158,7 @@ jobs:
             dist/*.AppImage
 
   build-production:
-    if: github.event_name == 'push'
+    if: github.repository == 'hydralauncher/hydra' && github.event_name == 'push'
 
     strategy:
       matrix:
