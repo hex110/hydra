@@ -1,27 +1,35 @@
-<div align="center">
+# Hydra Plus
 
-[<img src="https://raw.githubusercontent.com/hydralauncher/hydra/refs/heads/main/resources/icon.png" width="144"/>](https://help.hydralauncher.gg)
-
-  <h1 align="center">Hydra Launcher</h1>
-
-  <p align="center">
-    <strong>Hydra Launcher is an open-source gaming platform created to be the single tool that you need in order to manage your gaming library. Hydra is written in Node.js (Electron, React, Typescript) and Rust, with libtorrent providing the torrent engine.</strong>
-  </p>
-
-[![build](https://img.shields.io/github/actions/workflow/status/hydralauncher/hydra/build.yml)](https://github.com/hydralauncher/hydra/actions)
-[![release](https://img.shields.io/github/package-json/v/hydralauncher/hydra)](https://github.com/hydralauncher/hydra/releases)
-[![chocolatey](https://img.shields.io/chocolatey/v/hydralauncher.svg)](https://community.chocolatey.org/packages/hydralauncher)
-
-![Hydra Launcher Home Page](./docs/screenshot.png)
-
-</div>
-
-## Hydra Plus
-
-This is **Hydra Plus**, a fork of Hydra Launcher focused on playing Windows
-games on Linux with as little manual work as possible. It installs next to
-upstream Hydra with its own data, and updates from
+**Hydra Plus** is a fork of [Hydra Launcher](https://github.com/hydralauncher/hydra)
+focused on playing Windows games on Linux with as little manual work as
+possible: a game should be ready to play, with its fixes, mods and saves, as
+soon as it is downloaded or found on disk. It installs next to upstream Hydra
+with its own data, and updates from
 [this fork's releases](https://github.com/hex110/hydra/releases).
+
+## What's new compared to Hydra
+
+- **Games are ready when they finish downloading.** The Wine prefix is created
+  at install instead of on first launch, OnlineFix games get the files and DLL
+  overrides they need, OptiScaler is installed where it helps, saves and
+  achievements are imported from your Windows drive, and your own
+  post-install command runs last.
+- **Launch options without retyping them.** Default launch options for every
+  game, and launch rules that add options to every game or to games
+  containing a given file (HDR, ReShade, Unity on Vulkan, …), each overridable
+  per game and shareable as JSON.
+- **Your existing games and saves come along.** Library folders such as
+  `~/Games` are scanned and matched to the catalogue, download sources are
+  matched against games on disk, and saves and crack achievements are imported
+  from a Windows install, with backups and without overwriting newer files.
+- **Faster downloads from Steam.** A Firefox/Chrome add-on adds "Download" and
+  "Open in Hydra Plus" buttons to Steam store pages (`hydraplus://` links); the
+  download dialog opens with the best repack preselected according to your
+  repack preferences, and can start right away.
+- **Packaged for Linux.** AppImage and Arch (`.pacman`) builds, a separate app
+  id and data folder, so it runs side by side with Hydra.
+
+Every feature has its own settings page and documentation:
 
 | Feature                                                           | What it does                                                                                                                                                               |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,6 +52,29 @@ Download the AppImage, or the `.pacman` package on Arch-based systems
 Hydra Plus uses Hydra's servers for the catalogue, accounts and download
 sources, exactly like Hydra. Both apps handle `hydralauncher://` links
 (sign-in, adding sources); the one launched last receives them.
+
+---
+
+<details>
+<summary>Upstream Hydra Launcher README</summary>
+
+<div align="center">
+
+[<img src="https://raw.githubusercontent.com/hydralauncher/hydra/refs/heads/main/resources/icon.png" width="144"/>](https://help.hydralauncher.gg)
+
+  <h1 align="center">Hydra Launcher</h1>
+
+  <p align="center">
+    <strong>Hydra Launcher is an open-source gaming platform created to be the single tool that you need in order to manage your gaming library. Hydra is written in Node.js (Electron, React, Typescript) and Rust, with libtorrent providing the torrent engine.</strong>
+  </p>
+
+[![build](https://img.shields.io/github/actions/workflow/status/hydralauncher/hydra/build.yml)](https://github.com/hydralauncher/hydra/actions)
+[![release](https://img.shields.io/github/package-json/v/hydralauncher/hydra)](https://github.com/hydralauncher/hydra/releases)
+[![chocolatey](https://img.shields.io/chocolatey/v/hydralauncher.svg)](https://community.chocolatey.org/packages/hydralauncher)
+
+![Hydra Launcher Home Page](./docs/screenshot.png)
+
+</div>
 
 ## Features
 
@@ -79,3 +110,5 @@ On Windows x64 and Linux x64, the libtorrent bridge comes prebuilt from `native/
 ## License
 
 Hydra is licensed under the [MIT License](LICENSE).
+
+</details>
