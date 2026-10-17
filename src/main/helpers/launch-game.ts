@@ -57,6 +57,7 @@ import {
 } from "@main/services/epic/launch";
 import type { EpicLaunchParameters } from "@main/services/epic/launch-protocol";
 import { EpicSaveFailure } from "@main/services/epic/cloud-save-protocol";
+import { OptiScaler } from "@main/services/optiscaler/optiscaler";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 
 export interface LaunchGameOptions {
@@ -695,10 +696,19 @@ const launchGameWithCloudSaveChecks = async (
     })
     .catch(() => null);
 
+  // OptiScaler's proxy DLL only loads under Wine when it is preferred over the builtin.
+  const optiScalerDllOverride =
+    process.platform === "linux" ? OptiScaler.getLaunchDllOverride(game) : null;
+
   const effectiveLaunchOptions = applyDefaultLaunchOptions(
-    userPreferences?.defaultLaunchOptions,
-    launchOptions,
-    game?.ignoreDefaultLaunchOptions === true
+    optiScalerDllOverride
+      ? `WINEDLLOVERRIDES=${optiScalerDllOverride} %command%`
+      : null,
+    applyDefaultLaunchOptions(
+      userPreferences?.defaultLaunchOptions,
+      launchOptions,
+      game?.ignoreDefaultLaunchOptions === true
+    )
   );
 
   const useMangohud =

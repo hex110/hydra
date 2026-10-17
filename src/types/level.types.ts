@@ -3,6 +3,11 @@ import type { GameShop } from "./game.types";
 import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
 import type {
+  GameOptiScalerInstallation,
+  OptiScalerChannel,
+  OptiScalerProxyDll,
+} from "./optiscaler.types";
+import type {
   EpicDownloadMetadata,
   EpicInstallation,
 } from "./epic-managed.types";
@@ -89,6 +94,11 @@ export interface Game extends LibraryCatalogueMetadata {
   launchOptions?: string | null;
   ignoreDefaultLaunchOptions?: boolean;
   postInstallCommandRanAt?: Date | null;
+  optiScaler?: GameOptiScalerInstallation | null;
+  /** Set when the user removed OptiScaler or opted the game out of auto-install. */
+  optiScalerAutoInstallDisabled?: boolean;
+  /** Per-game proxy DLL; the global preference applies when unset. */
+  optiScalerProxyDll?: OptiScalerProxyDll | null;
   autoRunMangohud?: boolean | null;
   autoRunGamemode?: boolean | null;
   favorite?: boolean;
@@ -240,6 +250,14 @@ export interface UserPreferences {
   libraryScanDirectories?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
+  optiScalerAutoInstall?: boolean;
+  optiScalerChannel?: OptiScalerChannel;
+  optiScalerProxyDll?: OptiScalerProxyDll;
+  optiScalerDetectNativeUpscalers?: boolean;
+  optiScalerUseCompatibilityList?: boolean;
+  optiScalerInstallOptiPatcher?: boolean;
+  /** INI fragment applied to OptiScaler.ini on every install. */
+  optiScalerIniOverrides?: string;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
   hideClassicsBookmark?: boolean;

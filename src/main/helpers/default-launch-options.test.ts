@@ -76,4 +76,25 @@ describe("applyDefaultLaunchOptions", () => {
       "two words",
     ]);
   });
+
+  it("layers the OptiScaler DLL override over merged options", () => {
+    const merged = applyDefaultLaunchOptions(
+      "WINEDLLOVERRIDES=dxgi=n,b %command%",
+      applyDefaultLaunchOptions(
+        "gamemoderun %command%",
+        "WINEDLLOVERRIDES=winhttp=n,b %command% -dx12"
+      )
+    );
+
+    assert.deepStrictEqual(stringArgv(merged ?? ""), [
+      "WINEDLLOVERRIDES=dxgi=n,b;winhttp=n,b",
+      "gamemoderun",
+      "%command%",
+      "-dx12",
+    ]);
+    assert.strictEqual(
+      applyDefaultLaunchOptions("WINEDLLOVERRIDES=dxgi=n,b %command%", null),
+      "WINEDLLOVERRIDES=dxgi=n,b %command%"
+    );
+  });
 });

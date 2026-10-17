@@ -1,6 +1,11 @@
 import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
+  GameOptiScalerInstallation,
+  GameOptiScalerStatus,
+  OptiScalerBulkProgress,
+  OptiScalerOverview,
+  OptiScalerProxyDll,
   SystemPowerAction,
   AppUpdaterEvent,
   GameShop,
@@ -400,6 +405,49 @@ declare global {
       shop: GameShop,
       objectId: string,
       ignoreDefaultLaunchOptions: boolean
+    ) => Promise<void>;
+    getOptiScalerOverview: () => Promise<OptiScalerOverview>;
+    checkOptiScalerUpdates: () => Promise<void>;
+    downloadOptiScaler: () => Promise<string>;
+    clearOptiScalerCache: () => Promise<void>;
+    runOptiScalerBulk: (
+      mode: "install-eligible" | "update-installed"
+    ) => Promise<boolean>;
+    onOptiScalerBulkProgress: (
+      cb: (progress: OptiScalerBulkProgress) => void
+    ) => () => Electron.IpcRenderer;
+    getGameOptiScalerStatus: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameOptiScalerStatus>;
+    installGameOptiScaler: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<
+      | { ok: true; installation: GameOptiScalerInstallation }
+      | {
+          ok: false;
+          error:
+            | "not-found"
+            | "not-windows-game"
+            | "external-install"
+            | "failed";
+          message: string;
+        }
+    >;
+    uninstallGameOptiScaler: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<void>;
+    setGameOptiScalerAutoInstallDisabled: (
+      shop: GameShop,
+      objectId: string,
+      disabled: boolean
+    ) => Promise<void>;
+    setGameOptiScalerProxyDll: (
+      shop: GameShop,
+      objectId: string,
+      proxyDll: OptiScalerProxyDll | null
     ) => Promise<void>;
     isGamemodeAvailable: () => Promise<boolean>;
     isSteamAppExecutable: (

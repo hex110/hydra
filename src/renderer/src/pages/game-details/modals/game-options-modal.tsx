@@ -55,7 +55,7 @@ import {
   HistoryIcon,
   ImageIcon,
 } from "@primer/octicons-react";
-import { Wrench } from "lucide-react";
+import { Sparkles, Wrench } from "lucide-react";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { GameAssetsSettings } from "./game-assets-settings";
 import { debounce } from "lodash-es";
@@ -66,6 +66,7 @@ import { logger } from "@renderer/logger";
 import { GameOptionsSidebar } from "./game-options-modal/sidebar";
 import { GeneralSettingsSection } from "./game-options-modal/general-section";
 import { CompatibilitySettingsSection } from "./game-options-modal/compatibility-section";
+import { OptiScalerSettingsSection } from "./game-options-modal/optiscaler-section";
 import { DownloadsSettingsSection } from "./game-options-modal/downloads-section";
 import { DangerZoneSection } from "./game-options-modal/danger-zone-section";
 import { HydraCloudLegacySettingsSection } from "./game-options-modal/hydra-cloud-section";
@@ -915,6 +916,8 @@ export function GameOptionsModal({
   };
 
   const isLaunchbox = game.shop === "launchbox";
+  const showOptiScalerSettings =
+    !isLaunchbox && /\.exe"?$/i.test(game.executablePath ?? "");
   const showDownloadSettings = game.shop !== "custom";
   const shouldShowWinePrefixConfiguration =
     globalThis.window.electron.platform === "linux";
@@ -984,6 +987,15 @@ export function GameOptionsModal({
             },
           ]
         : []),
+      ...(showOptiScalerSettings
+        ? [
+            {
+              id: "optiscaler" as const,
+              label: "OptiScaler",
+              icon: <Sparkles size={16} />,
+            },
+          ]
+        : []),
       ...(showDownloadSettings
         ? [
             {
@@ -1007,6 +1019,7 @@ export function GameOptionsModal({
       showLegacyCloudSaveSettings,
       showEpicCloudSettings,
       showDownloadSettings,
+      showOptiScalerSettings,
       shouldShowWinePrefixConfiguration,
       t,
     ]
@@ -1401,6 +1414,9 @@ export function GameOptionsModal({
                   onChangeProtonVersion={handleChangeProtonVersion}
                 />
               )}
+            {selectedCategory === "optiscaler" && showOptiScalerSettings && (
+              <OptiScalerSettingsSection game={game} />
+            )}
             {selectedCategory === "downloads" && showDownloadSettings && (
               <DownloadsSettingsSection
                 game={downloadGame}

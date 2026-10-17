@@ -1,0 +1,50 @@
+@use "../../scss/globals.scss";
+
+.settings-optiscaler {
+  &__muted {
+    color: globals.$muted-color;
+    font-size: 12px;
+    margin: 0;
+
+    code {
+      font-size: 11px;
+    }
+  }
+
+  &__nested {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 1.5);
+    padding-left: calc(globals.$spacing-unit * 3);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: globals.$spacing-unit;
+  }
+
+  &__textarea {
+    width: 100%;
+    padding: calc(globals.$spacing-unit * 1.5);
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    background: globals.$dark-background-color;
+    color: globals.$body-color;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: globals.$brand-teal;
+    }
+  }
+
+  &__error {
+    color: globals.$error-color;
+    font-size: 12px;
+    margin: 0;
+  }
+}

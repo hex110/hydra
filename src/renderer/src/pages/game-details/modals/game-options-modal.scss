@@ -740,3 +740,26 @@ $disc-menu-transition-duration: 0.15s;
     font-weight: 500;
   }
 }
+
+.game-options-modal__optiscaler-facts {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: globals.$body-color;
+    word-break: break-word;
+  }
+}
+
+.game-options-modal__optiscaler-warning {
+  color: globals.$warning-color !important;
+}
+
+.game-options-modal__optiscaler-hint {
+  margin: 0;
+  font-size: 12px;
+  color: globals.$muted-color;
+}

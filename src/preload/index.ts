@@ -5,6 +5,8 @@ import { randomUUID } from "node:crypto";
 
 import type {
   GameSetupStatusEvent,
+  OptiScalerBulkProgress,
+  OptiScalerProxyDll,
   SystemPowerAction,
   GameShop,
   DownloadProgress,
@@ -1023,6 +1025,46 @@ contextBridge.exposeInMainWorld("electron", {
       objectId,
       ignoreDefaultLaunchOptions
     ),
+  getOptiScalerOverview: () => ipcRenderer.invoke("getOptiScalerOverview"),
+  checkOptiScalerUpdates: () => ipcRenderer.invoke("checkOptiScalerUpdates"),
+  downloadOptiScaler: () => ipcRenderer.invoke("downloadOptiScaler"),
+  clearOptiScalerCache: () => ipcRenderer.invoke("clearOptiScalerCache"),
+  runOptiScalerBulk: (mode: "install-eligible" | "update-installed") =>
+    ipcRenderer.invoke("runOptiScalerBulk", mode),
+  onOptiScalerBulkProgress: (
+    cb: (progress: OptiScalerBulkProgress) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: OptiScalerBulkProgress
+    ) => cb(payload);
+    ipcRenderer.on("on-optiscaler-bulk-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-optiscaler-bulk-progress", listener);
+  },
+  getGameOptiScalerStatus: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameOptiScalerStatus", shop, objectId),
+  installGameOptiScaler: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("installGameOptiScaler", shop, objectId),
+  uninstallGameOptiScaler: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("uninstallGameOptiScaler", shop, objectId),
+  setGameOptiScalerAutoInstallDisabled: (
+    shop: GameShop,
+    objectId: string,
+    disabled: boolean
+  ) =>
+    ipcRenderer.invoke(
+      "setGameOptiScalerAutoInstallDisabled",
+      shop,
+      objectId,
+      disabled
+    ),
+  setGameOptiScalerProxyDll: (
+    shop: GameShop,
+    objectId: string,
+    proxyDll: OptiScalerProxyDll | null
+  ) =>
+    ipcRenderer.invoke("setGameOptiScalerProxyDll", shop, objectId, proxyDll),
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),
