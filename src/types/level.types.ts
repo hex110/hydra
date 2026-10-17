@@ -4,6 +4,11 @@ import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
 import type { LaunchRule } from "./launch-rule.types";
 import type {
+  GameSaveImportState,
+  SaveImportCustomSource,
+  SaveImportMode,
+} from "./save-import.types";
+import type {
   GameOptiScalerInstallation,
   OptiScalerChannel,
   OptiScalerProxyDll,
@@ -104,6 +109,7 @@ export interface Game extends LibraryCatalogueMetadata {
   optiScaler?: GameOptiScalerInstallation | null;
   /** OnlineFix found in the game folder; null when checked and absent. */
   onlineFix?: GameOnlineFix | null;
+  saveImport?: GameSaveImportState;
   /** Per-rule choices that replace a launch rule's global setting for this game. */
   launchRuleOverrides?: Record<string, boolean>;
   /** @deprecated Migrated to launchRuleOverrides (false). */
@@ -265,6 +271,11 @@ export interface UserPreferences {
   libraryScanDirectories?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
+  /** What game setup does when a source has saves for a new game. */
+  saveImportMode?: SaveImportMode;
+  saveImportCustomSources?: SaveImportCustomSource[];
+  /** Ids of detected sources the user turned off. */
+  saveImportDisabledSources?: string[];
   /** Download source ids, most preferred first, for choosing a repack automatically. */
   preferredDownloadSourceIds?: string[];
   repackSortPreference?: "newest" | "smallest";

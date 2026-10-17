@@ -7,6 +7,8 @@ import type {
   GameSetupStatusEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
+  SaveImportBulkProgress,
+  SaveImportOptions,
   SystemPowerAction,
   GameShop,
   DownloadProgress,
@@ -1084,6 +1086,51 @@ contextBridge.exposeInMainWorld("electron", {
       ruleId,
       applied
     ),
+  listSaveImportSources: () => ipcRenderer.invoke("listSaveImportSources"),
+  inspectSaveImportFolder: (rootPath: string) =>
+    ipcRenderer.invoke("inspectSaveImportFolder", rootPath),
+  previewGameSaveImport: (
+    shop: GameShop,
+    objectId: string,
+    sourceId?: string
+  ) => ipcRenderer.invoke("previewGameSaveImport", shop, objectId, sourceId),
+  applyGameSaveImport: (
+    shop: GameShop,
+    objectId: string,
+    sourceId: string,
+    options: SaveImportOptions
+  ) =>
+    ipcRenderer.invoke(
+      "applyGameSaveImport",
+      shop,
+      objectId,
+      sourceId,
+      options
+    ),
+  dismissGameSaveImport: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("dismissGameSaveImport", shop, objectId),
+  runSaveImportBulk: () => ipcRenderer.invoke("runSaveImportBulk"),
+  onSaveImportBulkProgress: (
+    cb: (progress: SaveImportBulkProgress) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: SaveImportBulkProgress
+    ) => cb(payload);
+    ipcRenderer.on("on-save-import-bulk-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-save-import-bulk-progress", listener);
+  },
+  onSaveImportFound: (
+    cb: (payload: { shop: GameShop; objectId: string; title: string }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: { shop: GameShop; objectId: string; title: string }
+    ) => cb(payload);
+    ipcRenderer.on("on-save-import-found", listener);
+    return () => ipcRenderer.removeListener("on-save-import-found", listener);
+  },
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),

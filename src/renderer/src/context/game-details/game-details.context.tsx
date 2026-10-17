@@ -510,8 +510,14 @@ export function GameDetailsContextProvider({
   useEffect(() => {
     const state =
       (location && (location.state as Record<string, unknown>)) || {};
-    if (state.openGameOptions) {
-      setGameOptionsInitialCategory("general");
+    // Notifications link to a section with ?options=<category>.
+    const requestedCategory = new URLSearchParams(location?.search ?? "").get(
+      "options"
+    );
+    if (state.openGameOptions || requestedCategory) {
+      setGameOptionsInitialCategory(
+        requestedCategory === "save_import" ? "save_import" : "general"
+      );
       setShowGameOptionsModal(true);
 
       try {

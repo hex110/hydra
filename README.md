@@ -23,16 +23,17 @@ games on Linux with as little manual work as possible. It installs next to
 upstream Hydra with its own data, and updates from
 [this fork's releases](https://github.com/hex110/hydra/releases).
 
-| Feature                                                           | What it does                                                                                                                                             |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Game setup](docs/features/game-setup.md)                         | Creates a game's Wine prefix as soon as it is installed or found, not on first launch, and can run your own command afterwards (save imports, tweaks).   |
-| [Default launch options](docs/features/default-launch-options.md) | Launch options applied to every game, with a per-game opt-out.                                                                                           |
-| [Library folders](docs/features/library-scanning.md)              | Scans folders such as `~/Games` for installed games, identifies them by executable or folder name and adds them to the library.                          |
-| [Launch rules](docs/features/launch-rules.md)                     | Adds launch options to every game or to games containing a given file (HDR, ReShade, …), with per-game overrides, built-in rules and copy/paste sharing. |
-| [Browser add-on](docs/features/browser-addon.md)                  | A Firefox/Chrome add-on that adds "Download" and "Open in Hydra Plus" buttons to Steam store pages, with the best download chosen automatically.         |
-| [OnlineFix games](docs/features/online-fix.md)                    | Loads OnlineFix's proxy DLLs and gives its games Steam's client files, so they start without manual prefix fixes.                                        |
-| [OptiScaler](docs/features/optiscaler.md)                         | Downloads OptiScaler and installs it into games that support it, with INI overrides, OptiPatcher and clean removal.                                      |
-| [Local source matching](docs/features/local-source-matching.md)   | Matches download sources against games on your machine too, catching releases the server misses and refreshing stale ones.                               |
+| Feature                                                           | What it does                                                                                                                                                               |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Game setup](docs/features/game-setup.md)                         | Creates a game's Wine prefix as soon as it is installed or found, not on first launch, and can run your own command afterwards (tweaks, scripts).                          |
+| [Default launch options](docs/features/default-launch-options.md) | Launch options applied to every game, with a per-game opt-out.                                                                                                             |
+| [Library folders](docs/features/library-scanning.md)              | Scans folders such as `~/Games` for installed games, identifies them by executable or folder name and adds them to the library.                                            |
+| [Launch rules](docs/features/launch-rules.md)                     | Adds launch options to every game or to games containing a given file (HDR, ReShade, …), with per-game overrides, built-in rules and copy/paste sharing.                   |
+| [Browser add-on](docs/features/browser-addon.md)                  | A Firefox/Chrome add-on that adds "Download" and "Open in Hydra Plus" buttons to Steam store pages, with the best download chosen automatically.                           |
+| [Save import](docs/features/save-import.md)                       | Brings a game's saves and achievements over from a Windows install on another drive when the game is added, never overwriting newer files and backing up what it replaces. |
+| [OnlineFix games](docs/features/online-fix.md)                    | Loads OnlineFix's proxy DLLs and gives its games Steam's client files, so they start without manual prefix fixes.                                                          |
+| [OptiScaler](docs/features/optiscaler.md)                         | Downloads OptiScaler and installs it into games that support it, with INI overrides, OptiPatcher and clean removal.                                                        |
+| [Local source matching](docs/features/local-source-matching.md)   | Matches download sources against games on your machine too, catching releases the server misses and refreshing stale ones.                                                 |
 
 ### Install
 

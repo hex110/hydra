@@ -732,7 +732,8 @@ export type LocalNotificationType =
   | "DOWNLOAD_COMPLETE"
   | "UPDATE_AVAILABLE"
   | "ACHIEVEMENT_UNLOCKED"
-  | "SCAN_GAMES_COMPLETE";
+  | "SCAN_GAMES_COMPLETE"
+  | "SAVES_FOUND";
 
 export interface Notification {
   id: string;
@@ -919,6 +920,7 @@ export * from "./souvenir.types";
 export * from "./optiscaler.types";
 export * from "./local-source.types";
 export * from "./launch-rule.types";
+export * from "./save-import.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }

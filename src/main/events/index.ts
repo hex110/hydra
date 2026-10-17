@@ -33,6 +33,7 @@ import "./emulators";
 import "./retroarch";
 import "./epic";
 import "./optiscaler";
+import "./save-import";
 
 ipcMain.handle("ping", () => "pong");
 ipcMain.handle("getVersion", () => appVersion);

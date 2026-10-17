@@ -55,7 +55,7 @@ import {
   HistoryIcon,
   ImageIcon,
 } from "@primer/octicons-react";
-import { Sparkles, Wrench } from "lucide-react";
+import { FolderSync, Sparkles, Wrench } from "lucide-react";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { GameAssetsSettings } from "./game-assets-settings";
 import { debounce } from "lodash-es";
@@ -67,6 +67,7 @@ import { GameOptionsSidebar } from "./game-options-modal/sidebar";
 import { GeneralSettingsSection } from "./game-options-modal/general-section";
 import { CompatibilitySettingsSection } from "./game-options-modal/compatibility-section";
 import { OptiScalerSettingsSection } from "./game-options-modal/optiscaler-section";
+import { SaveImportSection } from "./game-options-modal/save-import-section";
 import { DownloadsSettingsSection } from "./game-options-modal/downloads-section";
 import { DangerZoneSection } from "./game-options-modal/danger-zone-section";
 import { HydraCloudLegacySettingsSection } from "./game-options-modal/hydra-cloud-section";
@@ -918,6 +919,8 @@ export function GameOptionsModal({
   const isLaunchbox = game.shop === "launchbox";
   const showOptiScalerSettings =
     !isLaunchbox && /\.exe"?$/i.test(game.executablePath ?? "");
+  const showSaveImportSettings =
+    globalThis.window.electron.platform === "linux" && showOptiScalerSettings;
   const showDownloadSettings = game.shop !== "custom";
   const shouldShowWinePrefixConfiguration =
     globalThis.window.electron.platform === "linux";
@@ -996,6 +999,15 @@ export function GameOptionsModal({
             },
           ]
         : []),
+      ...(showSaveImportSettings
+        ? [
+            {
+              id: "save_import" as const,
+              label: t("settings_category_save_import"),
+              icon: <FolderSync size={16} />,
+            },
+          ]
+        : []),
       ...(showDownloadSettings
         ? [
             {
@@ -1020,6 +1032,7 @@ export function GameOptionsModal({
       showEpicCloudSettings,
       showDownloadSettings,
       showOptiScalerSettings,
+      showSaveImportSettings,
       shouldShowWinePrefixConfiguration,
       t,
     ]
@@ -1416,6 +1429,9 @@ export function GameOptionsModal({
               )}
             {selectedCategory === "optiscaler" && showOptiScalerSettings && (
               <OptiScalerSettingsSection game={game} />
+            )}
+            {selectedCategory === "save_import" && showSaveImportSettings && (
+              <SaveImportSection game={game} />
             )}
             {selectedCategory === "downloads" && showDownloadSettings && (
               <DownloadsSettingsSection

@@ -460,6 +460,31 @@ export const publishExtractionCompleteNotification = async (game: Game) => {
   );
 };
 
+export const publishSavesFoundNotification = async (
+  game: Game,
+  found: { files: number; achievements: number; sourceLabel: string }
+) => {
+  const title = t("saves_found", { ns: "notifications", title: game.title });
+  const body = t("saves_found_description", {
+    ns: "notifications",
+    files: found.files,
+    achievements: found.achievements,
+    source: found.sourceLabel,
+  });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "SAVES_FOUND",
+    title,
+    body,
+    {
+      pictureUrl: game.iconUrl,
+      url: `/game/${game.shop}/${game.objectId}?options=save_import`,
+    }
+  );
+};
+
 export const publishNewAchievementNotification = async (info: {
   achievements: { title: string; iconUrl: string }[];
   unlockedAchievementCount: number;

@@ -7,5 +7,6 @@ export type GameSettingsCategoryId =
   | "hydra_cloud_legacy"
   | "compatibility"
   | "optiscaler"
+  | "save_import"
   | "downloads"
   | "danger_zone";

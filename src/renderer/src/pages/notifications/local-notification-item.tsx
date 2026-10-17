@@ -6,6 +6,7 @@ import {
   SyncIcon,
   TrophyIcon,
   ClockIcon,
+  HistoryIcon,
 } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -60,6 +61,8 @@ export function LocalNotificationItem({
         return <TrophyIcon size={24} />;
       case "SCAN_GAMES_COMPLETE":
         return <SyncIcon size={24} />;
+      case "SAVES_FOUND":
+        return <HistoryIcon size={24} />;
       default:
         return <DownloadIcon size={24} />;
     }

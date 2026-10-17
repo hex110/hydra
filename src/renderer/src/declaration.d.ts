@@ -8,6 +8,12 @@ import type {
   LocalSourceStatus,
   OptiScalerOverview,
   OptiScalerProxyDll,
+  SaveImportBulkProgress,
+  SaveImportError,
+  SaveImportOptions,
+  SaveImportPreview,
+  SaveImportResult,
+  SaveImportSourceInfo,
   SystemPowerAction,
   AppUpdaterEvent,
   GameShop,
@@ -464,6 +470,33 @@ declare global {
       ruleId: string,
       applied: boolean | null
     ) => Promise<void>;
+    listSaveImportSources: () => Promise<SaveImportSourceInfo[]>;
+    inspectSaveImportFolder: (rootPath: string) => Promise<string[] | null>;
+    previewGameSaveImport: (
+      shop: GameShop,
+      objectId: string,
+      sourceId?: string
+    ) => Promise<
+      | { ok: true; previews: SaveImportPreview[] }
+      | { ok: false; error: SaveImportError; message: string }
+    >;
+    applyGameSaveImport: (
+      shop: GameShop,
+      objectId: string,
+      sourceId: string,
+      options: SaveImportOptions
+    ) => Promise<
+      | { ok: true; result: SaveImportResult }
+      | { ok: false; error: SaveImportError; message: string }
+    >;
+    dismissGameSaveImport: (shop: GameShop, objectId: string) => Promise<void>;
+    runSaveImportBulk: () => Promise<boolean>;
+    onSaveImportBulkProgress: (
+      cb: (progress: SaveImportBulkProgress) => void
+    ) => () => Electron.IpcRenderer;
+    onSaveImportFound: (
+      cb: (payload: { shop: GameShop; objectId: string; title: string }) => void
+    ) => () => Electron.IpcRenderer;
     isGamemodeAvailable: () => Promise<boolean>;
     isSteamAppExecutable: (
       appId: string,

@@ -17,6 +17,8 @@ export type GameOptionsCategoryId =
   | "epic_cloud"
   | "hydra_cloud_legacy"
   | "compatibility"
+  | "optiscaler"
+  | "save_import"
   | "downloads"
   | "danger_zone";
 
