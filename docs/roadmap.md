@@ -3,12 +3,6 @@
 What we plan to add or fix, in order. Shipped features are documented in
 `docs/features/`; move an item there (and out of this file) when it ships.
 
-## Urgent
-
-- [ ] **Pin the release build image to `ubuntu-24.04`.** GitHub moves
-      `ubuntu-latest` to Ubuntu 26 on 2026-10-19. Also move the release
-      actions off the deprecated Node 20.
-
 ## Next, in order
 
 1. [ ] **Update detection.** Notice when an installed game has a newer
@@ -25,10 +19,11 @@ What we plan to add or fix, in order. Shipped features are documented in
 - [ ] **Ignore a folder.** Unrecognised folders such as launchers and mod
       managers (`Prism Launcher`, `r2modman`, `Vortex Mods`) show up after
       every scan. Add "this is not a game" to hide them for good.
-- [ ] **Flag broken game folders.** A folder that looks like a game but has no
-      executable is skipped silently. `~/Downloads/Cult of the lamb` holds a
-      Unity `_Data` folder but no `Cult Of The Lamb.exe`. The copy is
-      incomplete, so tell the user instead of skipping it.
+- [ ] **Explain skipped folders.** A folder without any `.exe` is skipped
+      silently. `~/Downloads/Cult of the lamb` looked like a missed game but
+      was an empty folder skeleton; the game itself lives in
+      `/mnt/Multimedia/home-offload/Downloads/`. A "skipped: no executable"
+      list would have made that obvious.
 - [ ] **Better version stripping.** `DMD.CH4-1.01-pc` cleans to
       `DMD CH4-1 01-pc`.
 
