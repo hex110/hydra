@@ -2,6 +2,7 @@ import type { Downloader } from "@shared";
 import type { GameShop } from "./game.types";
 import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
+import type { LaunchRule } from "./launch-rule.types";
 import type {
   GameOptiScalerInstallation,
   OptiScalerChannel,
@@ -103,6 +104,8 @@ export interface Game extends LibraryCatalogueMetadata {
   optiScaler?: GameOptiScalerInstallation | null;
   /** OnlineFix found in the game folder; null when checked and absent. */
   onlineFix?: GameOnlineFix | null;
+  /** Launch rules the user turned off for this game. */
+  ignoredLaunchRules?: string[];
   /** Per-game HDR; the global preference applies when unset. */
   hdrEnabled?: boolean | null;
   /** Set when the user removed OptiScaler or opted the game out of auto-install. */
@@ -260,6 +263,8 @@ export interface UserPreferences {
   libraryScanDirectories?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
+  /** Unset until first edited; the built-in presets apply until then. */
+  launchRules?: LaunchRule[];
   /** Launch every game with HDR enabled (Linux, Proton's Wayland driver). */
   enableHdr?: boolean;
   /** Load OnlineFix's proxy DLLs and give its games Steam's client files. */

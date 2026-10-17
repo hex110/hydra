@@ -668,7 +668,7 @@ export function App() {
           }`}
         >
           <h4>
-            Hydra
+            Hydra Plus
             {hasActiveSubscription && (
               <span className="title-bar__cloud-text"> Cloud</span>
             )}

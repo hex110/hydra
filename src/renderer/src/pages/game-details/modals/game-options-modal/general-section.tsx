@@ -5,6 +5,7 @@ import {
 } from "@shared";
 import {
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useId,
@@ -15,7 +16,12 @@ import {
 import { Tooltip } from "react-tooltip";
 import { Button, CheckboxField, TextField } from "@renderer/components";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
-import type { ClassicsDisc, LibraryGame, ShortcutLocation } from "@types";
+import type {
+  ClassicsDisc,
+  GameLaunchAdditions,
+  LibraryGame,
+  ShortcutLocation,
+} from "@types";
 import { DotIcon, FileIcon } from "@primer/octicons-react";
 import { HardDrive, X, FolderOpen, ChevronDown } from "lucide-react";
 import { gameDetailsContext } from "@renderer/context";
@@ -122,6 +128,77 @@ function HdrToggle({ game }: Readonly<{ game: LibraryGame }>) {
           </>
         )}
       </p>
+    </div>
+  );
+}
+
+function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
+  const { t } = useTranslation("game_details");
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
+  const [additions, setAdditions] = useState<GameLaunchAdditions | null>(null);
+
+  const refresh = useCallback(() => {
+    window.electron
+      .getGameLaunchAdditions(game.shop, game.objectId)
+      .then(setAdditions)
+      .catch(() => setAdditions(null));
+  }, [game.shop, game.objectId]);
+
+  useEffect(() => {
+    refresh();
+  }, [
+    refresh,
+    game.executablePath,
+    game.hdrEnabled,
+    game.ignoredLaunchRules,
+    game.optiScaler,
+    game.onlineFix,
+    userPreferences?.launchRules,
+    userPreferences?.enableHdr,
+    userPreferences?.prepareOnlineFixGames,
+  ]);
+
+  if (!additions || (!additions.launchOptions && !additions.rules.length)) {
+    return null;
+  }
+
+  const toggleRule = async (ruleId: string, ignored: boolean) => {
+    await window.electron.setGameLaunchRuleIgnored(
+      game.shop,
+      game.objectId,
+      ruleId,
+      ignored
+    );
+    refresh();
+  };
+
+  return (
+    <div className="game-options-modal__default-launch-options">
+      {additions.rules.map((rule) => (
+        <CheckboxField
+          key={rule.ruleId}
+          label={t("launch_rule_applies", {
+            name: rule.name,
+            file: rule.matchedPath,
+          })}
+          checked={!rule.ignored}
+          onChange={() => toggleRule(rule.ruleId, !rule.ignored)}
+        />
+      ))}
+      {additions.launchOptions && (
+        <p className="game-options-modal__header-description">
+          <Trans
+            i18nKey="launch_additions_hint"
+            ns="game_details"
+            values={{ options: additions.launchOptions }}
+            components={{
+              code: <code className="game-options-modal__inline-code" />,
+            }}
+          />
+        </p>
+      )}
     </div>
   );
 }
@@ -1055,6 +1132,7 @@ export function GeneralSettingsSection({
           />
           <DefaultLaunchOptionsToggle game={game} />
           <HdrToggle game={game} />
+          <LaunchAdditionsSummary game={game} />
         </div>
       )}
     </>

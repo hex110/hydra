@@ -1074,6 +1074,21 @@ contextBridge.exposeInMainWorld("electron", {
     objectId: string,
     enabled: boolean | null
   ) => ipcRenderer.invoke("setGameHdrEnabled", shop, objectId, enabled),
+  getGameLaunchAdditions: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameLaunchAdditions", shop, objectId),
+  setGameLaunchRuleIgnored: (
+    shop: GameShop,
+    objectId: string,
+    ruleId: string,
+    ignored: boolean
+  ) =>
+    ipcRenderer.invoke(
+      "setGameLaunchRuleIgnored",
+      shop,
+      objectId,
+      ruleId,
+      ignored
+    ),
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),

@@ -1,6 +1,7 @@
 import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
+  GameLaunchAdditions,
   GameOptiScalerInstallation,
   GameOptiScalerStatus,
   OptiScalerBulkProgress,
@@ -457,6 +458,16 @@ declare global {
       shop: GameShop,
       objectId: string,
       enabled: boolean | null
+    ) => Promise<void>;
+    getGameLaunchAdditions: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameLaunchAdditions>;
+    setGameLaunchRuleIgnored: (
+      shop: GameShop,
+      objectId: string,
+      ruleId: string,
+      ignored: boolean
     ) => Promise<void>;
     isGamemodeAvailable: () => Promise<boolean>;
     isSteamAppExecutable: (

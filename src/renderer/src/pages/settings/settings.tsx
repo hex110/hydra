@@ -17,7 +17,13 @@ import {
   VideoIcon,
   ShieldCheckIcon,
 } from "@primer/octicons-react";
-import { FolderSearch, Gamepad2, Sparkles, Wrench } from "lucide-react";
+import {
+  FolderSearch,
+  Gamepad2,
+  ListChecks,
+  Sparkles,
+  Wrench,
+} from "lucide-react";
 import { SettingsContextGeneral } from "./settings-context-general";
 import { SettingsContextDownloads } from "./settings-context-downloads";
 import { SettingsContextDownloadSources } from "./settings-context-download-sources";
@@ -26,6 +32,7 @@ import { SettingsContextContentGameplay } from "./settings-context-content-gamep
 import { SettingsContextIntegrations } from "./settings-context-integrations";
 import { SettingsContextCompatibility } from "./settings-context-compatibility";
 import { SettingsContextOptiScaler } from "./settings-context-optiscaler";
+import { SettingsContextLaunchRules } from "./settings-context-launch-rules";
 import { SettingsContextLibraryFolders } from "./settings-context-library-folders";
 import { SettingsContextBigPicture } from "./settings-context-big-picture";
 import { SettingsContextEmulation } from "./emulation/settings-context-emulation";
@@ -71,6 +78,11 @@ export default function Settings() {
         id: "compatibility" as const,
         label: t("compatibility"),
         icon: <Wrench size={16} />,
+      },
+      {
+        id: "launch_rules" as const,
+        label: t("launch_rules"),
+        icon: <ListChecks size={16} />,
       },
       {
         id: "library_folders" as const,
@@ -146,6 +158,10 @@ export default function Settings() {
 
             if (selectedCategoryId === "library_folders") {
               return <SettingsContextLibraryFolders />;
+            }
+
+            if (selectedCategoryId === "launch_rules") {
+              return <SettingsContextLaunchRules />;
             }
 
             if (selectedCategoryId === "optiscaler") {

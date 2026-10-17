@@ -57,9 +57,7 @@ import {
 } from "@main/services/epic/launch";
 import type { EpicLaunchParameters } from "@main/services/epic/launch-protocol";
 import { EpicSaveFailure } from "@main/services/epic/cloud-save-protocol";
-import { OptiScaler } from "@main/services/optiscaler/optiscaler";
-import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
-import { buildLaunchEnvironment } from "./launch-environment";
+import { getLaunchAdditions } from "./launch-additions";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 
 export interface LaunchGameOptions {
@@ -662,52 +660,6 @@ const launchAuthenticatedEpicGame = (
 };
 
 /**
- * Environment Hydra adds when a Windows game runs under Proton: HDR, and the
- * DLL overrides OptiScaler and OnlineFix need to load their proxy DLLs.
- */
-const getLinuxLaunchEnvironment = async (
-  objectId: string,
-  gameKey: string,
-  game: Game | undefined,
-  executablePath: string,
-  userPreferences: UserPreferences | null
-) => {
-  if (process.platform !== "linux" || !isWindowsExecutable(executablePath)) {
-    return null;
-  }
-
-  let onlineFix = game?.onlineFix;
-  if (
-    onlineFix === undefined &&
-    userPreferences?.prepareOnlineFixGames !== false
-  ) {
-    // Games set up before OnlineFix handling existed are checked once here.
-    onlineFix = await prepareOnlineFixGame({
-      gameKey,
-      executablePath,
-      winePrefixPath: await Wine.resolvePrefixPath(
-        Wine.getEffectivePrefixPath(game?.winePrefixPath, objectId)
-      ),
-    }).catch((error) => {
-      logger.error("Failed to prepare OnlineFix game", { gameKey, error });
-      return null;
-    });
-  }
-
-  const optiScalerDll = OptiScaler.getLaunchNativeDll(game);
-
-  return buildLaunchEnvironment({
-    hdr: game?.hdrEnabled ?? userPreferences?.enableHdr === true,
-    nativeDlls: [
-      ...(optiScalerDll ? [optiScalerDll] : []),
-      ...(userPreferences?.prepareOnlineFixGames !== false
-        ? (onlineFix?.proxyDlls ?? [])
-        : []),
-    ],
-  });
-};
-
-/**
  * Shows the launcher window and launches the game executable
  * Shared between deep link handler and openGame event
  */
@@ -745,13 +697,15 @@ const launchGameWithCloudSaveChecks = async (
     .catch(() => null);
 
   const effectiveLaunchOptions = applyDefaultLaunchOptions(
-    await getLinuxLaunchEnvironment(
-      objectId,
-      gameKey,
-      game,
-      parsedPath,
-      userPreferences
-    ),
+    (
+      await getLaunchAdditions({
+        objectId,
+        gameKey,
+        game,
+        executablePath: parsedPath,
+        userPreferences,
+      })
+    ).launchOptions,
     applyDefaultLaunchOptions(
       userPreferences?.defaultLaunchOptions,
       launchOptions,

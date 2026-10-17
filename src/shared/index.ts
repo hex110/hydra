@@ -34,6 +34,7 @@ export * from "./window-layout";
 export * from "./title-matching";
 export * from "./optiscaler";
 export * from "./local-source-matching";
+export * from "./launch-rules";
 export {
   getDisplayedPlayTimeInMilliseconds,
   getPlayTimeHoursAndMinutes,

@@ -918,6 +918,7 @@ export * from "./cloud-save.types";
 export * from "./souvenir.types";
 export * from "./optiscaler.types";
 export * from "./local-source.types";
+export * from "./launch-rule.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }
