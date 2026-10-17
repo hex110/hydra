@@ -196,6 +196,11 @@ const getDefaultScanDirectories = async (
   ];
 };
 
+const MAX_USEFUL_AMBIGUOUS_CHOICES = 5;
+
+const isTooAmbiguous = (match: AmbiguousMatch) =>
+  match.choices.length > MAX_USEFUL_AMBIGUOUS_CHOICES;
+
 const loadScanPreferences = async () => {
   const userPreferences = await db
     .get<
@@ -1230,9 +1235,9 @@ const runScan = async (
             ...claimedPaths,
             ...steamPathByObjectId.values(),
             ...outsideLibrary.pathByObjectId.values(),
-            ...outsideLibrary.ambiguousMatches.map(
-              (match) => match.executablePath
-            ),
+            ...outsideLibrary.ambiguousMatches
+              .filter((match) => !isTooAmbiguous(match))
+              .map((match) => match.executablePath),
           ],
           libraryObjectIds: new Set([
             ...libraryObjectIds,
@@ -1248,8 +1253,19 @@ const runScan = async (
       folder.match ? [[folder.match.objectId, folder.executablePath]] : []
     ) as [string, string][]
   );
+  // A folder identified by name replaces an executable-name match that was
+  // too ambiguous to be useful (generic names like "game.exe").
+  const identifiedFolderPaths = identifiedFolders.map((folder) =>
+    normalizePath(folder.folderPath)
+  );
   const ambiguousMatches = [
-    ...outsideLibrary.ambiguousMatches,
+    ...outsideLibrary.ambiguousMatches.filter(
+      (match) =>
+        !isTooAmbiguous(match) ||
+        !identifiedFolderPaths.some((folderPath) =>
+          normalizePath(match.executablePath).startsWith(`${folderPath}/`)
+        )
+    ),
     ...identifiedFolders
       .filter((folder) => !folder.match)
       .map((folder) => ({

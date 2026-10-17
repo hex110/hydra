@@ -108,7 +108,7 @@ export function SettingsContextLibraryFolders() {
         </p>
       </div>
 
-      <div className="settings-context-panel__group">
+      <div className="settings-library-folders__actions">
         <Button
           type="button"
           theme="outline"
