@@ -24,14 +24,23 @@ import {
 import { runAutomaticCloudSaveSync } from "@main/services/cloud-save";
 import { clearMissingExecutables } from "@main/services/clear-missing-executables";
 import { GameSetup } from "@main/services/game-setup";
-import { identifyUnclaimedFolders } from "@main/services/library-scan/identify-folders";
+import {
+  identifyUnclaimedFolders,
+  type IdentifiedFolder,
+} from "@main/services/library-scan/identify-folders";
 import { trackAchievementBatchGame } from "@main/services/achievements/achievement-batch-games";
 import { resolveSteamLaunchExecutables } from "@main/services/steam-integration/steam-app-info-core";
 import {
   getInstalledSteamApps,
   loadSteamAppInfo,
 } from "@main/services/steam-integration/steam-launch-executables";
-import type { Game, GameShop, UserPreferences } from "@types";
+import type {
+  Game,
+  GameShop,
+  ScannedFolderMatch,
+  ScannedGameChoice,
+  UserPreferences,
+} from "@types";
 
 const SCAN_DIRECTORIES = [String.raw`C:\Games`, String.raw`D:\Games`];
 
@@ -52,26 +61,21 @@ interface CancelSignal {
 
 const inflightScans = new Map<string, CancelSignal>();
 
-interface AmbiguousChoice {
-  objectId: string;
-  title: string;
-  iconUrl: string | null;
-}
+type AmbiguousChoice = ScannedGameChoice;
 
 type ChoiceLookup =
   | { status: "found"; choice: AmbiguousChoice }
   | { status: "missing" }
   | { status: "failed" };
 
-interface AmbiguousMatch {
-  executablePath: string;
-  choices: AmbiguousChoice[];
-}
+type AmbiguousMatch = ScannedFolderMatch;
 
 interface ScanResult {
   linkedGames: FoundGame[];
   addedGames: FoundGame[];
   ambiguousMatches: AmbiguousMatch[];
+  /** Folders with a game executable whose name the catalogue doesn't know. */
+  unidentifiedFolders: AmbiguousMatch[];
   total: number;
 }
 
@@ -1139,6 +1143,13 @@ const collectSteamGamesToAdd = (
   return steamPathByObjectId;
 };
 
+const toFolderMatch = (folder: IdentifiedFolder): AmbiguousMatch => ({
+  executablePath: folder.executablePath,
+  choices: folder.choices,
+  folderPath: folder.folderPath,
+  searchQuery: folder.folderTitle,
+});
+
 const runScan = async (
   signal: CancelSignal,
   additionalDirectories: string[],
@@ -1267,12 +1278,13 @@ const runScan = async (
         )
     ),
     ...identifiedFolders
-      .filter((folder) => !folder.match)
-      .map((folder) => ({
-        executablePath: folder.executablePath,
-        choices: folder.choices,
-      })),
+      .filter((folder) => !folder.match && folder.choices.length > 0)
+      .map(toFolderMatch),
   ];
+  const unidentifiedFolders = identifiedFolders
+    .filter((folder) => !folder.match && folder.choices.length === 0)
+    .map(toFolderMatch)
+    .sort((a, b) => a.executablePath.localeCompare(b.executablePath));
 
   const addedGames = signal.cancelled
     ? []
@@ -1305,6 +1317,7 @@ const runScan = async (
     linkedGames,
     addedGames,
     ambiguousMatches: ambiguousMatches,
+    unidentifiedFolders,
     total: gamesToScan.length,
   };
 };

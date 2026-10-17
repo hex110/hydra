@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  ChevronDownIcon,
+  ChevronRightIcon,
   DeviceDesktopIcon,
   FileDirectoryIcon,
   SyncIcon,
@@ -12,7 +14,9 @@ import { useNavigate } from "react-router-dom";
 
 import { Button, CheckboxField, Modal } from "@renderer/components";
 import { useAppSelector } from "@renderer/hooks";
+import type { ScannedFolderMatch } from "@types";
 
+import { ScanGamePicker } from "./scan-game-picker";
 import "./scan-games-modal.scss";
 
 type ScanMode = "automatic" | "manual";
@@ -23,22 +27,17 @@ interface FoundGame {
   iconUrl: string | null;
 }
 
-interface AmbiguousChoice {
-  objectId: string;
-  title: string;
-  iconUrl: string | null;
-}
-
-interface AmbiguousMatch {
-  executablePath: string;
-  choices: AmbiguousChoice[];
-}
-
 export interface ScanResult {
   linkedGames: FoundGame[];
   addedGames: FoundGame[];
-  ambiguousMatches: AmbiguousMatch[];
+  ambiguousMatches: ScannedFolderMatch[];
+  unidentifiedFolders: ScannedFolderMatch[];
   total: number;
+}
+
+interface Pick {
+  objectId: string;
+  folderPath?: string;
 }
 
 export interface ScanGamesModalProps {
@@ -90,8 +89,11 @@ export function ScanGamesModal({
   const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
   const [scanMode, setScanMode] = useState<ScanMode>(defaultScanMode);
   const [addGamesToLibrary, setAddGamesToLibrary] = useState(true);
-  const [pending, setPending] = useState<AmbiguousMatch[]>([]);
-  const [picks, setPicks] = useState<Record<string, string>>({});
+  const [pending, setPending] = useState<ScannedFolderMatch[]>([]);
+  const [unidentified, setUnidentified] = useState<ScannedFolderMatch[]>([]);
+  const [isIdentifying, setIsIdentifying] = useState(false);
+  const [isUnidentifiedOpen, setIsUnidentifiedOpen] = useState(false);
+  const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [isResolving, setIsResolving] = useState(false);
   const [resolvedGames, setResolvedGames] = useState<FoundGame[]>([]);
 
@@ -124,19 +126,42 @@ export function ScanGamesModal({
   );
 
   useEffect(() => {
+    setPicks({});
+    setIsIdentifying(false);
+
     if (!scanResult) {
       setPending([]);
-      setPicks({});
+      setUnidentified([]);
       setResolvedGames([]);
       return;
     }
 
     setPending(scanResult.ambiguousMatches);
+    setUnidentified(scanResult.unidentifiedFolders ?? []);
+    setIsUnidentifiedOpen(scanResult.ambiguousMatches.length === 0);
   }, [scanResult]);
 
-  const handlePick = useCallback((executablePath: string, objectId: string) => {
-    setPicks((prev) => ({ ...prev, [executablePath]: objectId }));
-  }, []);
+  const isPicking = pending.length > 0 || isIdentifying;
+
+  const handlePick = useCallback(
+    (match: ScannedFolderMatch, objectId: string) => {
+      setPicks((prev) => ({
+        ...prev,
+        [match.executablePath]: { objectId, folderPath: match.folderPath },
+      }));
+    },
+    []
+  );
+
+  const handleStopPicking = () => {
+    setPending([]);
+    setIsIdentifying(false);
+  };
+
+  const handleIdentifyFolders = () => {
+    setIsUnidentifiedOpen(true);
+    setIsIdentifying(true);
+  };
 
   const handleConfirmPicks = async () => {
     setIsResolving(true);
@@ -144,17 +169,21 @@ export function ScanGamesModal({
     try {
       const added: FoundGame[] = await window.electron
         .addScannedGames(
-          Object.entries(picks).map(([executablePath, objectId]) => ({
-            objectId,
+          Object.entries(picks).map(([executablePath, pick]) => ({
+            ...pick,
             executablePath,
           }))
         )
         .catch(() => []);
 
-      setResolvedGames(added);
+      setResolvedGames((prev) => [...prev, ...added]);
+      setUnidentified((prev) =>
+        prev.filter((match) => !picks[match.executablePath])
+      );
     } finally {
+      setPicks({});
       setIsResolving(false);
-      setPending([]);
+      handleStopPicking();
     }
   };
 
@@ -354,56 +383,71 @@ export function ScanGamesModal({
           </div>
         )}
 
-        {scanResult && pending.length > 0 && (
+        {scanResult && isPicking && (
           <div className="scan-games-modal__ambiguous">
-            <p className="scan-games-modal__ambiguous-title">
-              {t("scan_games_ambiguous_title", { count: pending.length })}
-            </p>
-            <p className="scan-games-modal__ambiguous-hint">
-              {t("scan_games_ambiguous_hint")}
-            </p>
+            {pending.length > 0 && (
+              <>
+                <p className="scan-games-modal__ambiguous-title">
+                  {t("scan_games_ambiguous_title", { count: pending.length })}
+                </p>
+                <p className="scan-games-modal__ambiguous-hint">
+                  {t("scan_games_ambiguous_hint")}
+                </p>
 
-            <ul className="scan-games-modal__ambiguous-list">
-              {pending.map((match) => (
-                <li
-                  key={match.executablePath}
-                  className="scan-games-modal__ambiguous-item"
+                <ul className="scan-games-modal__ambiguous-list">
+                  {pending.map((match) => (
+                    <ScanGamePicker
+                      key={match.executablePath}
+                      match={match}
+                      pickedObjectId={picks[match.executablePath]?.objectId}
+                      onPick={handlePick}
+                    />
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {unidentified.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  className="scan-games-modal__unidentified-toggle"
+                  onClick={() => setIsUnidentifiedOpen((prev) => !prev)}
+                  aria-expanded={isUnidentifiedOpen}
                 >
-                  <span className="scan-games-modal__game-path">
-                    {match.executablePath}
-                  </span>
+                  {isUnidentifiedOpen ? (
+                    <ChevronDownIcon size={14} />
+                  ) : (
+                    <ChevronRightIcon size={14} />
+                  )}
+                  {t("scan_games_unidentified_title", {
+                    count: unidentified.length,
+                  })}
+                </button>
 
-                  <div className="scan-games-modal__ambiguous-choices">
-                    {match.choices.map((choice) => (
-                      <button
-                        key={choice.objectId}
-                        type="button"
-                        className={cn("scan-games-modal__choice", {
-                          "scan-games-modal__choice--active":
-                            picks[match.executablePath] === choice.objectId,
-                        })}
-                        onClick={() =>
-                          handlePick(match.executablePath, choice.objectId)
-                        }
-                      >
-                        {choice.iconUrl && (
-                          <img
-                            src={choice.iconUrl}
-                            alt=""
-                            className="scan-games-modal__choice-icon"
-                          />
-                        )}
-                        <span>{choice.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                {isUnidentifiedOpen && (
+                  <>
+                    <p className="scan-games-modal__ambiguous-hint">
+                      {t("scan_games_unidentified_hint")}
+                    </p>
+                    <ul className="scan-games-modal__ambiguous-list">
+                      {unidentified.map((match) => (
+                        <ScanGamePicker
+                          key={match.executablePath}
+                          match={match}
+                          pickedObjectId={picks[match.executablePath]?.objectId}
+                          onPick={handlePick}
+                        />
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </>
+            )}
           </div>
         )}
 
-        {scanResult && pending.length === 0 && (
+        {scanResult && !isPicking && (
           <div className="scan-games-modal__results">
             {hasResults ? (
               <div className="scan-games-modal__result-section">
@@ -415,14 +459,29 @@ export function ScanGamesModal({
                 {t("scan_games_no_results")}
               </p>
             )}
+
+            {unidentified.length > 0 && (
+              <div className="scan-games-modal__unidentified-notice">
+                <span>
+                  {t("scan_games_unidentified_title", {
+                    count: unidentified.length,
+                  })}
+                </span>
+                <Button theme="outline" onClick={handleIdentifyFolders}>
+                  {t("scan_games_identify_folders")}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
         <div className="scan-games-modal__actions">
-          {scanResult && pending.length > 0 ? (
+          {scanResult && isPicking ? (
             <>
-              <Button theme="outline" onClick={() => setPending([])}>
-                {t("scan_games_ambiguous_skip")}
+              <Button theme="outline" onClick={handleStopPicking}>
+                {pending.length > 0
+                  ? t("scan_games_ambiguous_skip")
+                  : t("scan_games_back")}
               </Button>
               <Button
                 onClick={handleConfirmPicks}

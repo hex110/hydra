@@ -1394,8 +1394,9 @@ contextBridge.exposeInMainWorld("electron", {
     ),
   cancelScanInstalledGames: (requestId: string) =>
     ipcRenderer.invoke("cancelScanInstalledGames", requestId),
-  addScannedGames: (picks: { objectId: string; executablePath: string }[]) =>
-    ipcRenderer.invoke("addScannedGames", picks),
+  addScannedGames: (
+    picks: { objectId: string; executablePath: string; folderPath?: string }[]
+  ) => ipcRenderer.invoke("addScannedGames", picks),
   getDefaultWinePrefixSelectionPath: () =>
     ipcRenderer.invoke("getDefaultWinePrefixSelectionPath"),
   createSteamShortcut: (

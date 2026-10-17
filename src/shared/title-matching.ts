@@ -120,7 +120,9 @@ export const cleanReleaseName = (name: string): string => {
   value = value.replace(/\s\+\s.*$/, "");
   value = value.replaceAll(/[[({][^\])}]*[\])}]/g, " ");
 
-  if (!/\s/.test(value.trim())) {
+  const isSpaceless = !/\s/.test(value.trim());
+
+  if (isSpaceless) {
     value = value.replaceAll(/[._]+/g, " ");
   } else {
     value = value.replaceAll("_", " ");
@@ -153,7 +155,16 @@ export const cleanReleaseName = (name: string): string => {
     // Whatever follows "Build" is a build identifier.
     if (lower === "build") break;
     if (NOISE_WORDS.has(lower) || /^multi\d+$/.test(lower)) continue;
-    kept.push(token.replace(/^-+|-+$/g, ""));
+    const word = token.replace(/^-+|-+$/g, "");
+    // "AceCombat8" → "Ace Combat 8". Uppercase runs ("CH4") and lowercase
+    // names ("r2modman") stay intact.
+    kept.push(
+      isSpaceless && /^[A-Z].*[a-z]/.test(word)
+        ? word
+            .replaceAll(/([a-z])([A-Z])/g, "$1 $2")
+            .replaceAll(/([a-z])(\d)/g, "$1 $2")
+        : word
+    );
   }
 
   return kept.join(" ").replaceAll(/\s+/g, " ").trim();

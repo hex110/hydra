@@ -11,6 +11,9 @@ describe("cleanReleaseName", () => {
   const cases: [string, string][] = [
     ["Cyberpunk.2077.v2.3-FitGirl", "Cyberpunk 2077"],
     ["Hades II [DODI Repack]", "Hades II"],
+    ["AceCombat8", "Ace Combat 8"],
+    ["ItTakesTwo", "It Takes Two"],
+    ["r2modman", "r2modman"],
     ["Elden Ring - FitGirl Repack", "Elden Ring"],
     ["Elden Ring v1.12 + All DLCs - FitGirl Repack", "Elden Ring"],
     ["Baldurs_Gate_3", "Baldurs Gate 3"],

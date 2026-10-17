@@ -14,6 +14,7 @@ import type {
   SaveImportPreview,
   SaveImportResult,
   SaveImportSourceInfo,
+  ScannedFolderMatch,
   SystemPowerAction,
   AppUpdaterEvent,
   GameShop,
@@ -1069,15 +1070,13 @@ declare global {
         executablePath: string;
         iconUrl: string | null;
       }[];
-      ambiguousMatches: {
-        executablePath: string;
-        choices: { objectId: string; title: string; iconUrl: string | null }[];
-      }[];
+      ambiguousMatches: ScannedFolderMatch[];
+      unidentifiedFolders: ScannedFolderMatch[];
       total: number;
     }>;
     cancelScanInstalledGames: (requestId: string) => Promise<void>;
     addScannedGames: (
-      picks: { objectId: string; executablePath: string }[]
+      picks: { objectId: string; executablePath: string; folderPath?: string }[]
     ) => Promise<
       {
         title: string;

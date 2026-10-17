@@ -921,6 +921,7 @@ export * from "./optiscaler.types";
 export * from "./local-source.types";
 export * from "./launch-rule.types";
 export * from "./save-import.types";
+export * from "./library-scan.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }

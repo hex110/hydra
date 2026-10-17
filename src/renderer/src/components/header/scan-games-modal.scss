@@ -206,6 +206,45 @@
     }
   }
 
+  &__choice--search {
+    border-style: dashed;
+  }
+
+  &__search {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+  }
+
+  &__search-status {
+    color: globals.$muted-color;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  &__unidentified-toggle {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    padding: 0;
+    border: none;
+    background: none;
+    color: globals.$body-color;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__unidentified-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+    color: globals.$muted-color;
+    font-size: 12px;
+  }
+
   &__choice-icon {
     width: 16px;
     height: 16px;

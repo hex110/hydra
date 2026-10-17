@@ -25,10 +25,15 @@ export interface FolderChoice {
 
 export interface IdentifiedFolder {
   folderPath: string;
+  /** The cleaned-up folder name, used as the default search for the game. */
+  folderTitle: string;
   executablePath: string;
   /** Set when exactly one catalogue game matches the folder name. */
   match: FolderChoice | null;
-  /** Plausible games for the user to pick from when there is no match. */
+  /**
+   * Plausible games for the user to pick from when there is no match. Empty
+   * when the catalogue knows nothing like the folder name.
+   */
   choices: FolderChoice[];
 }
 
@@ -110,6 +115,16 @@ const searchCatalogue = async (
   }
 };
 
+/** The catalogue's known executable for a game, if the folder contains it. */
+export const findKnownExecutable = async (
+  folderPath: string,
+  objectId: string
+) => {
+  const known = GameExecutables.getExecutablesForGame(objectId);
+  if (!known?.length) return null;
+  return findGameExecutableInFolder(folderPath, known);
+};
+
 /** Prefer the catalogue's known executable for a game, then fall back to a guess. */
 const pickExecutable = async (
   folderPath: string,
@@ -118,11 +133,8 @@ const pickExecutable = async (
   candidates: ExecutableFileCandidate[]
 ) => {
   if (objectId) {
-    const known = GameExecutables.getExecutablesForGame(objectId);
-    if (known?.length) {
-      const found = await findGameExecutableInFolder(folderPath, known);
-      if (found) return found;
-    }
+    const found = await findKnownExecutable(folderPath, objectId);
+    if (found) return found;
   }
 
   const guessed = guessGameExecutable(candidates, title);
@@ -142,6 +154,17 @@ const identifyFolder = async (
 
   const results = await searchCatalogue(folderTitle);
   if (!results) return null;
+
+  // The folder of a library game whose executable lives elsewhere.
+  if (
+    results.some(
+      (choice) =>
+        libraryObjectIds.has(choice.objectId) &&
+        isSameTitle(choice.title, folderTitle)
+    )
+  ) {
+    return null;
+  }
 
   const available = results.filter(
     (choice) => !libraryObjectIds.has(choice.objectId)
@@ -167,7 +190,6 @@ const identifyFolder = async (
       folderPath,
       folderTitle,
     });
-    return null;
   }
 
   const executablePath = await pickExecutable(
@@ -178,7 +200,7 @@ const identifyFolder = async (
   );
   if (!executablePath) return null;
 
-  return { folderPath, executablePath, match, choices };
+  return { folderPath, folderTitle, executablePath, match, choices };
 };
 
 /**

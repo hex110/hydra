@@ -66,4 +66,27 @@ describe("guessGameExecutable", () => {
       "bin/x64/game.exe"
     );
   });
+
+  it("skips the Easy Anti-Cheat bootstrapper for a deep game binary", () => {
+    assert.strictEqual(
+      guessGameExecutable(
+        [
+          {
+            relativePath: "game/start_protected_game.exe",
+            sizeInBytes: 4 * MB,
+          },
+          {
+            relativePath: "game/EasyAntiCheat/EasyAntiCheat_EOS_Setup.exe",
+            sizeInBytes: MB,
+          },
+          {
+            relativePath: "game/Game/Binaries/Win64/AceCombat8.exe",
+            sizeInBytes: 555 * MB,
+          },
+        ],
+        "Ace Combat 8"
+      ),
+      "game/Game/Binaries/Win64/AceCombat8.exe"
+    );
+  });
 });

@@ -29,9 +29,14 @@ const scoreCandidate = (
   // Unreal shipping binaries are the real game; their bootstrap at the root
   // is preferred when it exists because it sets up the working directory.
   if (/-win64-shipping$/i.test(stem)) score -= 0.5;
-  if (/launcher/i.test(stem)) score -= 2;
+  // Easy Anti-Cheat's bootstrapper; cracked releases run the game binary.
+  if (/launcher|^start_protected_game$/i.test(stem)) score -= 2;
 
-  const stemWords = titleTokens(stem.replaceAll(/([a-z])([A-Z])/g, "$1 $2"));
+  const stemWords = titleTokens(
+    stem
+      .replaceAll(/([a-z])([A-Z])/g, "$1 $2")
+      .replaceAll(/([a-z])(\d)/g, "$1 $2")
+  );
   const sharedWords = stemWords.filter((word) => titleWords.has(word)).length;
   if (stemWords.length > 0) score += (4 * sharedWords) / stemWords.length;
 
