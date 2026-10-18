@@ -42,6 +42,12 @@ game setup fills the sandbox with Wine prefixes (24 GB once).
   line (it kills the tool shell, exit 144); find them with a bracketed first
   letter, e.g. `pgrep -f "[e]lectron-vite dev"`.
 - Hydra API array params need `downloadSourceIds[]=` encoding when testing with curl.
+- A sandbox seeded with a copy of `hydra-db` inherits the sign-in and
+  `scanLibraryOnStartup`: on start it scans the real library folders, creates
+  prefixes and posts added games to the user's Hydra profile. Delete the
+  `auth`/`user` keys and turn `scanLibraryOnStartup` off in the copy first.
+- Point `HOME` at a scratch folder when testing the Proton manager; it
+  installs into `~/.local/share/Steam/compatibilitytools.d`.
 - A dev build writes app-launcher `.desktop` entries only when
   `HYDRA_PLUS_APPLICATIONS_DIR` is set; point it at a scratch folder.
 
