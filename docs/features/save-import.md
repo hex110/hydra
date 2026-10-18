@@ -86,6 +86,22 @@ yet are skipped.
   `<Hydra data>/save-import/backups/<shop>-<id>/<time>/`, laid out like the
   prefix. The game's options link to the backup after an import.
 
+## Backups
+
+Backups of a game live in `<Hydra data>/save-import/backups/<shop>-<id>/`, one
+timestamped folder each:
+
+- `<time>/`: the files a save import replaced, laid out like the prefix;
+- `<time>-update/`: a Ludusavi backup of the game's saves, made before an
+  [update](updates.md) is installed.
+
+**Settings → Saves & achievements → Backups** lists every game with backups,
+how many and their size on disk, with buttons to open or delete them.
+**Backups to keep per game** deletes the oldest backups beyond that number
+whenever a new one is made; **Delete older backups now** applies it to every
+game at once. Empty keeps every backup. The game's **Saves & achievements**
+section shows the same for one game.
+
 ## Per game
 
 The game's **Saves & achievements** section shows what a source has: how many

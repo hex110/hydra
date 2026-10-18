@@ -36,6 +36,10 @@ describe("cleanReleaseName", () => {
     ["Escape Simulator 2 – V 22715r / Build 25386453", "Escape Simulator 2"],
     ["Way of the Hunter 2 – Build: 25630108", "Way of the Hunter 2"],
     ["Rocky V - Remastered", "Rocky V Remastered"],
+    ["DMD.CH4-1.01-pc", "DMD CH4"],
+    ["Some.Game.1.2.3", "Some Game"],
+    ["Spider-Man.2", "Spider-Man 2"],
+    ["Game Name-v1.0.4-Win64", "Game Name"],
   ];
 
   for (const [input, expected] of cases) {

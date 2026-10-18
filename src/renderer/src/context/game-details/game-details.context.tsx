@@ -115,7 +115,7 @@ export function GameDetailsContextProvider({
   const [repacks, setRepacks] = useState<GameRepack[]>([]);
   const [repacksLoaded, setRepacksLoaded] = useState(false);
   const [autoDownloadRequest, setAutoDownloadRequest] = useState<
-    "select" | "start" | null
+    "select" | "start" | "update" | null
   >(null);
 
   const { t, i18n } = useTranslation("game_details");
@@ -392,12 +392,19 @@ export function GameDetailsContextProvider({
     refreshGameDetails,
   ]);
 
-  // Download requests from the browser add-on arrive as "?download=1".
+  // Download requests from the browser add-on arrive as "?download=1",
+  // updates from the Downloads page as "?update=1".
   useEffect(() => {
-    if (new URLSearchParams(location.search).get("download") !== "1") return;
+    const search = new URLSearchParams(location.search);
+    const isUpdate = search.get("update") === "1";
+    if (search.get("download") !== "1" && !isUpdate) return;
 
     setAutoDownloadRequest(
-      userPreferences?.startBrowserDownloadsImmediately ? "start" : "select"
+      isUpdate
+        ? "update"
+        : userPreferences?.startBrowserDownloadsImmediately
+          ? "start"
+          : "select"
     );
     setShowRepacksModal(true);
     try {

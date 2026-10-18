@@ -11,6 +11,7 @@ import type {
   SaveImportSourceInfo,
 } from "@types";
 
+import { SettingsSaveBackups } from "./settings-save-backups";
 import "./settings-save-import.scss";
 
 const SAVE_IMPORT_MODES: SaveImportMode[] = ["ask", "automatic", "never"];
@@ -206,6 +207,8 @@ export function SettingsContextSaveImport() {
           {t("save_import_backups_hint")}
         </p>
       </div>
+
+      <SettingsSaveBackups />
     </div>
   );
 }

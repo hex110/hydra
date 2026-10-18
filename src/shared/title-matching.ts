@@ -123,10 +123,20 @@ export const cleanReleaseName = (name: string): string => {
   const isSpaceless = !/\s/.test(value.trim());
 
   if (isSpaceless) {
-    value = value.replaceAll(/[._]+/g, " ");
+    // Dots inside a version ("1.01") are not separators.
+    value = value
+      .replaceAll(/(\d)\.(?=\d)/g, "$1\u0000")
+      .replaceAll(/[._]+/g, " ")
+      .replaceAll("\u0000", ".");
   } else {
     value = value.replaceAll("_", " ");
   }
+
+  // "CH4-1.01-pc": a hyphen before a version or a platform tag separates it.
+  value = value.replaceAll(
+    /-(?=v?\d+(?:[._]\d+)+(?![\p{L}\d])|(?:pc|win(?:32|64)?|x64|x86|linux)(?![\p{L}\d]))/giu,
+    " "
+  );
 
   value = value.replaceAll(/[™®©]/g, "");
   value = value.replace(

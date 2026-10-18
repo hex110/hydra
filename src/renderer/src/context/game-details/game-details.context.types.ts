@@ -33,9 +33,10 @@ export interface GameDetailsContext {
   repacksLoaded: boolean;
   /**
    * Set when the browser add-on asked to download this game: "select"
-   * preselects the best repack, "start" also starts it.
+   * preselects the best repack, "start" also starts it. "update" opens the
+   * game's available update (from the Downloads page).
    */
-  autoDownloadRequest: "select" | "start" | null;
+  autoDownloadRequest: "select" | "start" | "update" | null;
   clearAutoDownloadRequest: () => void;
   shop: GameShop;
   gameTitle: string;

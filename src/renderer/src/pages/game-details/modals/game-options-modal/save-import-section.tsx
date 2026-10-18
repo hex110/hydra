@@ -1,12 +1,14 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileDirectoryIcon, SyncIcon } from "@primer/octicons-react";
+import { FileDirectoryIcon, SyncIcon, TrashIcon } from "@primer/octicons-react";
 
 import { Button, CheckboxField, SelectField } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
 import { useDate, useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
+import { formatBytes } from "@shared";
 import type {
+  GameSaveBackups,
   LibraryGame,
   SaveImportError,
   SaveImportFileAction,
@@ -30,6 +32,16 @@ export function SaveImportSection({ game }: Readonly<{ game: LibraryGame }>) {
   const [overwriteNewer, setOverwriteNewer] = useState(false);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<SaveImportResult | null>(null);
+  const [backups, setBackups] = useState<GameSaveBackups | null>(null);
+
+  const refreshBackups = useCallback(() => {
+    window.electron
+      .getGameSaveBackups(game.shop, game.objectId)
+      .then(setBackups)
+      .catch(() => setBackups(null));
+  }, [game.shop, game.objectId]);
+
+  useEffect(refreshBackups, [refreshBackups, result]);
 
   const search = useCallback(() => {
     setPreviews(null);
@@ -269,6 +281,41 @@ export function SaveImportSection({ game }: Readonly<{ game: LibraryGame }>) {
           >
             <FileDirectoryIcon />
             {t("save_import_open_backup")}
+          </Button>
+        </div>
+      )}
+
+      {backups && (
+        <div className="game-options-modal__row">
+          <p className="game-options-modal__optiscaler-hint">
+            {t("save_backups_summary", {
+              count: backups.count,
+              size: formatBytes(backups.sizeInBytes),
+            })}
+          </p>
+          <Button
+            type="button"
+            theme="outline"
+            onClick={() =>
+              window.electron.openGameSaveBackups(game.shop, game.objectId)
+            }
+          >
+            <FileDirectoryIcon />
+            {t("save_backups_open")}
+          </Button>
+          <Button
+            type="button"
+            theme="outline"
+            onClick={async () => {
+              await window.electron.deleteGameSaveBackups(
+                game.shop,
+                game.objectId
+              );
+              refreshBackups();
+            }}
+          >
+            <TrashIcon />
+            {t("save_backups_delete")}
           </Button>
         </div>
       )}

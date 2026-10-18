@@ -31,7 +31,10 @@ something.
    folder that step 1 did not claim is looked up by name:
    - The name is cleaned first: separators become spaces, and bracketed tags,
      versions, build numbers and release group names are removed
-     (`Cyberpunk.2077.v2.3-FitGirl` → `Cyberpunk 2077`). Names without spaces
+     (`Cyberpunk.2077.v2.3-FitGirl` → `Cyberpunk 2077`, `DMD.CH4-1.01-pc` →
+     `DMD CH4`). In names without spaces, a dot between digits belongs to a
+     version, and a hyphen before a version or a platform tag (`-pc`,
+     `-win64`) separates it. Names without spaces
      are split at capitals and numbers (`AceCombat8` → `Ace Combat 8`), but
      uppercase runs and lowercase names stay whole (`CH4`, `r2modman`).
    - If exactly one catalogue game has the same title (ignoring punctuation,

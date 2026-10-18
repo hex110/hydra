@@ -17,6 +17,7 @@ import {
   findLibraryGamePresentation,
   getOfficialStoreMembers,
   isEpicMemberInCurrentScope,
+  toDownloadRelease,
 } from "@shared";
 import { DOWNLOADER_NAME, IS_DESKTOP } from "../../../constants";
 import useEmblaCarousel from "embla-carousel-react";
@@ -1689,6 +1690,7 @@ function DownloadGameOptions({
       automaticallyExtract: automaticExtractionEnabled,
       automaticallyDeleteArchiveFiles: deleteArchiveFilesAfterExtraction,
       fileSize: option.fileSize,
+      release: toDownloadRelease(option),
     } as const;
 
     setIsSubmitting(true);

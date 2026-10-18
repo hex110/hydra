@@ -62,7 +62,8 @@ export interface RepacksModalProps {
     fileIndices?: number[],
     selectedFilesSize?: number | null,
     automaticallyDeleteArchiveFiles?: boolean,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    updateInPlace?: boolean
   ) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
 }
@@ -91,6 +92,7 @@ export function RepacksModal({
 
   const {
     game,
+    downloadGame,
     presentation,
     repacks,
     repacksLoaded,
@@ -255,6 +257,19 @@ export function RepacksModal({
     const request = autoDownloadRequest;
     clearAutoDownloadRequest();
 
+    if (request === "update") {
+      const wanted = (downloadGame ?? game)?.availableUpdate?.release;
+      const update = wanted
+        ? (repacks.find((candidate) => candidate.title === wanted.title) ??
+          repacks.find((candidate) =>
+            candidate.uris.some((uri) => wanted.uris.includes(uri))
+          ))
+        : null;
+      if (update) handleRepackClick(update);
+      else showWarningToast(t("update_release_not_found"));
+      return;
+    }
+
     const accounts = {
       [Downloader.RealDebrid]: !!userPreferences?.realDebridApiToken,
       [Downloader.TorBox]: !!userPreferences?.torBoxApiToken,
@@ -299,6 +314,9 @@ export function RepacksModal({
         : [...prev, fingerprint]
     );
   };
+
+  const installedTitle = game?.installedVersion?.title;
+  const updateTitle = game?.availableUpdate?.release.title;
 
   const checkIfLastDownloadedOption = (repack: GameRepack) => {
     if (!game?.download) return false;
@@ -554,6 +572,12 @@ export function RepacksModal({
 
                     {isLastDownloadedOption && (
                       <Badge>{t("last_downloaded_option")}</Badge>
+                    )}
+                    {repack.title === installedTitle && (
+                      <Badge>{t("installed_release")}</Badge>
+                    )}
+                    {repack.title === updateTitle && (
+                      <Badge>{t("update_release")}</Badge>
                     )}
 
                     <p className="repacks-modal__repack-info">

@@ -1,18 +1,120 @@
 # Hydra Plus roadmap
 
-What we plan to add or fix, in order. Shipped features are documented in
+What we plan to add or fix. Shipped features are documented in
 `docs/features/`; move an item there (and out of this file) when it ships.
 
-## Next, in order
+## Order
 
-1. [ ] **Update detection.** Notice when an installed game has a newer
-       download in your sources.
-2. [ ] **Per-game OnlineFix switch.** Turn the automatic OnlineFix
-       preparation off for a single game.
-3. [ ] **Setup log per game.** Show what each setup step did, or why it was
-       skipped.
-4. [ ] **Proton version in launch rules.** Let a rule pick GE-Proton or
-       Proton-CachyOS.
+Work top to bottom. Each phase is roughly one release; the items are described
+in the sections below.
+
+1. **Updates.** Finish the install → update loop. Shipped:
+   [Game updates](features/updates.md), backups in
+   [Save import](features/save-import.md#backups).
+   1. [x] Store the installed version
+   2. [x] Better version stripping
+   3. [x] Update detection
+   4. [x] Update a game in place
+   5. [x] Backup cleanup, with backup sizes
+2. **Setup you can see and fix.**
+   1. [ ] Per-game OnlineFix switch
+   2. [ ] Setup log per game
+   3. [ ] Run a setup step again
+   4. [ ] Launch command preview
+3. **Proton and launch options.**
+   1. [ ] Proton manager
+   2. [ ] Proton version in launch rules
+   3. [ ] GOverlay vs a built-in MangoHud editor (decision)
+   4. [ ] GameMode and MangoHud settings
+   5. [ ] Gamescope as a launch-rule action
+   6. [ ] Upscaler and frame-gen indicator
+   7. [ ] OptiScaler per game
+   8. [ ] Prefix tools
+4. **Small fixes.** Cheap items batched into one release.
+   1. [ ] One name for the options dialog
+   2. [ ] Move pin and favourite
+   3. [ ] Open elsewhere
+   4. [ ] Ignore a folder
+   5. [ ] Explain skipped folders
+   6. [ ] Mark missing games
+   7. [ ] Check free space
+   8. [ ] Paste a Steam link
+   9. [ ] Middle-click autoscroll
+5. **Library.**
+   1. [ ] Play status
+   2. [ ] Genres
+   3. [ ] Source tabs
+   4. [ ] Sorting
+   5. [ ] Library filters
+   6. [ ] Rescan automatically
+   7. [ ] Collections
+6. **Home page.**
+   1. [ ] Redesign around your own games
+   2. [ ] Personalised suggestions (research first)
+7. **More save sources.**
+   1. [ ] Heroic and Lutris
+   2. [ ] Ludusavi backups
+   3. [ ] Steam's own prefixes
+   4. [ ] Steam Cloud
+   5. [ ] Hydra cloud account
+8. **Distribution.**
+   1. [ ] Export and import settings
+   2. [ ] pacman updates
+   3. [ ] Sign the browser add-on
+   4. [ ] Translations
+9. **Mods.** Native mod support, after a design.
+
+Why this order:
+
+- Updates come first: they were already next, and in-place updates need the
+  stored version and create backups, so those items ship together.
+- Phases 2–3 build on each other: the setup log is what "run again" and the
+  launch preview hang off, and the preview is the debugging tool for every
+  launch-rule action in phase 3. Pick the Proton build before rules can use it.
+- Small fixes go before the library work so they don't wait behind it.
+- Play status leads the library phase because filters, sorting and the home
+  page's "Clear your backlog" all read it. The home redesign needs the library
+  data, so it follows.
+- Save sources are independent of everything else; Heroic/Lutris and
+  Ludusavi are cheap, Steam Cloud needs a Steam login, Hydra cloud waits on
+  the account existing.
+- Settings export makes the postponed laptop install a one-step job.
+  Translations go last, once the settings pages stop changing.
+- Mods are the largest item and need a design before any of it is built.
+
+## Setup and launch
+
+- [ ] **Per-game OnlineFix switch.** Turn the automatic OnlineFix
+      preparation off for a single game.
+- [ ] **Setup log per game.** Show what each setup step did, or why it was
+      skipped.
+- [ ] **Run a setup step again.** From the setup log, re-run prefix creation,
+      OnlineFix preparation or OptiScaler install for one game.
+- [ ] **Launch command preview.** For one game, show the final command,
+      environment and Proton build after all launch rules apply.
+
+## Linux gaming
+
+- [ ] **Proton manager.** Download and update GE-Proton and Proton-CachyOS
+      into `compatibilitytools.d`. Upstream's per-game Proton picker only
+      lists builds that are already installed.
+- [ ] **Proton version in launch rules.** Let a rule pick GE-Proton or
+      Proton-CachyOS.
+- [ ] **GameMode and MangoHud settings.** Upstream already has per-game and
+      global on/off toggles. Missing: a MangoHud config editor (position,
+      metrics, FPS limit), per game and as defaults, and both as launch-rule
+      actions.
+- [ ] **GOverlay vs a built-in MangoHud editor.** Decide whether to launch
+      GOverlay or build our own editor before starting the item above.
+- [ ] **Gamescope as a launch-rule action.** Resolution, FPS limit and HDR.
+- [ ] **Upscaler and frame-gen indicator.** A clear overlay line saying which
+      upscaler is active and whether frame generation is on, and which one.
+      OptiScaler's overlay shows this, but only for games it is installed in,
+      and it is hard to read. Look at what MangoHud can show first.
+- [ ] **OptiScaler per game.** Update a game's OptiScaler to a newer version,
+      or uninstall it.
+- [ ] **Prefix tools.** Upstream has Winetricks and a reset on Proton switch.
+      Add winecfg, a plain "reset prefix", and each prefix's size on disk.
 
 ## Library scanning
 
@@ -24,22 +126,71 @@ What we plan to add or fix, in order. Shipped features are documented in
       was an empty folder skeleton; the game itself lives in
       `/mnt/Multimedia/home-offload/Downloads/`. A "skipped: no executable"
       list would have made that obvious.
-- [ ] **Better version stripping.** `DMD.CH4-1.01-pc` cleans to
-      `DMD CH4-1 01-pc`.
-
-## Linux gaming
-
-- [ ] **GameMode and MangoHud settings.** Toggles and a MangoHud config editor
-      (position, metrics, FPS limit), per game and as defaults. Probably as
-      launch-rule actions.
-- [ ] **GOverlay vs a built-in MangoHud editor.** Decide whether to launch
-      GOverlay or build our own editor before starting the item above.
+- [ ] **Mark missing games.** When an installed game's folder is gone, mark
+      it missing instead of failing at launch.
+- [ ] **Rescan automatically.** Watch library folders and pick up changes
+      without a manual scan.
 
 ## Downloads
 
 - [ ] **Paste a Steam link.** Paste a store URL in Hydra to open the game and
       start the download choice. The browser add-on already covers this from
       the Steam store page.
+- [ ] **Check free space** before downloading and before extracting.
+
+## Library
+
+- [ ] **Play status.** Playing, finished, dropped, backlog. Filters, sorting
+      and the home page's "Clear your backlog" read it; Backloggd suggestions
+      would too.
+- [ ] **Genres.** Show a game's genres on its page, and filter the library by
+      genre. The most wanted item in this section.
+- [ ] **Source tabs.** Replace the `All / PC / Classics` buttons with
+      `All / Local / Steam / Epic / Classics`, so local and Steam games can be
+      told apart without a hand-kept collection.
+- [ ] **Library filters.** The catalogue already has filters and tags; the
+      library has none. Add genre, install source, play status, ProtonDB tier
+      (the catalogue has this filter already), installed size, How Long to
+      Beat ranges (under 2 h, 2–6 h, 6–15 h, …), OpenCritic/Metacritic score
+      ranges, and the other usual ones.
+- [ ] **Sorting.** The sort options a game library is expected to have (name,
+      last played, play time, added, release date, score, installed size, …).
+- [ ] **Collections.** A better way to manage them. Low priority.
+
+## Home page
+
+- [ ] **Redesign around your own games.** The hero shows the last game played
+      instead of the current hot game. Below it come "Continue playing" (last
+      few played) and "Clear your backlog" (installed games never played, or
+      not in a long time). "Hot now", "Top games of the week" and "Games to
+      beat" move further down.
+- [ ] **Personalised suggestions.** Suggest what to play next from what you
+      played. Ideally through a Backloggd integration (what the user uses) and
+      similar services, falling back to Hydra's own play history. Needs
+      research: Backloggd has no public API, and a free recommendations API
+      still has to be found.
+
+## Game page
+
+- [ ] **One name for the options dialog.** The right-click menu (library and
+      sidebar) calls it "Properties"; the game page button calls it "Options".
+- [ ] **Move pin and favourite.** They are rarely used but sit in the most
+      prominent spot on the game page.
+- [ ] **Open elsewhere.** Buttons to open the game's Steam page,
+      PCGamingWiki page, and similar.
+
+## Interface
+
+- [ ] **Middle-click autoscroll** (hold middle button and move to scroll), if
+      it is easy.
+
+## Mods
+
+- [ ] **Native mod support.** A mod manager inside Hydra, along the lines of
+      Amethyst Mod Manager or another open-source one, ideally as smooth as
+      Prism Launcher but for every game. Sources: Nexus Mods, Wabbajack lists,
+      and the other popular mod sites. TorBox integration to get around Nexus
+      Mods' slow free downloads. Large; needs a design first.
 
 ## Save import, later sources
 
@@ -47,6 +198,9 @@ All of these plug into the `SaveImportSource` interface.
 
 - [x] **Upstream Hydra Launcher.** Reads each game's prefix from
       `~/.config/hydralauncher`, so switching to Hydra Plus keeps saves.
+- [ ] **Heroic and Lutris.** Read their per-game prefixes, the same way as
+      the upstream Hydra source.
+- [ ] **Ludusavi backups.** Import from a Ludusavi backup folder.
 - [ ] **Steam Cloud.** Download cloud saves for every owned game, installed or
       not. Needs a Steam login inside Hydra.
 - [ ] **Hydra cloud account.** Import from it once it exists.
@@ -55,9 +209,10 @@ All of these plug into the `SaveImportSource` interface.
 
 ## Distribution and upkeep
 
+- [ ] **Export and import settings.** Launch rules, library folders and
+      defaults in one file, for setting up another machine.
 - [ ] **pacman updates.** The in-app updater only updates the AppImage. Add a
       `hydra-plus-bin` AUR package or a small pacman repo.
-- [ ] **Backup cleanup.** A setting to keep only the last N backups per game.
 - [ ] **Translations.** The Hydra Plus settings are English-only; other
       languages fall back to English.
 - [ ] **Sign the browser add-on** for Firefox Add-ons, and the Chrome Web

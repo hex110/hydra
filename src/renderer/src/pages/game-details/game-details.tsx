@@ -21,7 +21,7 @@ import {
 } from "@renderer/context";
 import { useDownload } from "@renderer/hooks";
 import { GameOptionsModal, RepacksModal } from "./modals";
-import { Downloader, getDownloadersForUri } from "@shared";
+import { Downloader, getDownloadersForUri, toDownloadRelease } from "@shared";
 import { CloudSyncFilesModal } from "./cloud-sync-files-modal/cloud-sync-files-modal";
 import { CloudSaveV2Provider } from "./cloud-save-v2";
 import "./game-details.scss";
@@ -108,7 +108,8 @@ export default function GameDetails() {
             fileIndices?: number[],
             selectedFilesSize?: number | null,
             automaticallyDeleteArchiveFiles = false,
-            signal?: AbortSignal
+            signal?: AbortSignal,
+            updateInPlace = false
           ) => {
             const payload = {
               objectId: downloadGame?.objectId ?? game?.objectId ?? objectId!,
@@ -122,6 +123,8 @@ export default function GameDetails() {
               fileSize: repack.fileSize,
               fileIndices,
               selectedFilesSize,
+              release: toDownloadRelease(repack),
+              updateInPlace,
             };
 
             const response = addToQueueOnly

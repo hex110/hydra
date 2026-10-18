@@ -46,6 +46,7 @@ import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migrati
 import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
 import { AppLauncherEntries } from "./services/app-launcher-entries";
+import { GameUpdates } from "./services/game-updates";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -134,7 +135,7 @@ export const loadState = async () => {
     const { syncDownloadSourcesFromApi } = await import("./services/user");
     void syncDownloadSourcesFromApi();
 
-    void LocalSources.refreshAll();
+    void LocalSources.refreshAll().then(() => GameUpdates.checkAllIfEnabled());
 
     if (userPreferences?.scanLibraryOnStartup) {
       void import("./events/library/scan-installed-games").then(

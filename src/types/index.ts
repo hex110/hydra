@@ -3,6 +3,7 @@ import type { SteamAppDetails } from "./steam.types";
 import type {
   AchievementCustomNotificationPosition,
   Download,
+  DownloadRelease,
   Game,
   CatalogueGameIdentity,
   LibraryCatalogueMetadata,
@@ -174,6 +175,9 @@ export interface StartGameDownloadPayload {
   fileSize?: string | null;
   fileIndices?: number[];
   selectedFilesSize?: number | null;
+  release?: DownloadRelease | null;
+  /** Install over the game's current folder instead of next to it. */
+  updateInPlace?: boolean;
 }
 
 export interface UserFriend {
@@ -733,7 +737,9 @@ export type LocalNotificationType =
   | "UPDATE_AVAILABLE"
   | "ACHIEVEMENT_UNLOCKED"
   | "SCAN_GAMES_COMPLETE"
-  | "SAVES_FOUND";
+  | "SAVES_FOUND"
+  | "GAME_UPDATES_AVAILABLE"
+  | "GAME_UPDATED";
 
 export interface Notification {
   id: string;
@@ -922,6 +928,7 @@ export * from "./local-source.types";
 export * from "./launch-rule.types";
 export * from "./save-import.types";
 export * from "./library-scan.types";
+export * from "./game-update.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }

@@ -1,6 +1,9 @@
 import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
+  GameSaveBackups,
+  GameUpdateCheckResult,
+  GameUpdateFailedEvent,
   GameLaunchAdditions,
   GameOptiScalerInstallation,
   GameOptiScalerStatus,
@@ -498,6 +501,21 @@ declare global {
     onSaveImportFound: (
       cb: (payload: { shop: GameShop; objectId: string; title: string }) => void
     ) => () => Electron.IpcRenderer;
+    checkGameUpdates: () => Promise<GameUpdateCheckResult>;
+    isCheckingGameUpdates: () => Promise<boolean>;
+    dismissGameUpdate: (shop: GameShop, objectId: string) => Promise<void>;
+    onGameUpdatesChecking: (cb: (checking: boolean) => void) => () => void;
+    onGameUpdateFailed: (
+      cb: (event: GameUpdateFailedEvent) => void
+    ) => () => Electron.IpcRenderer;
+    listSaveBackups: () => Promise<GameSaveBackups[]>;
+    getGameSaveBackups: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameSaveBackups | null>;
+    deleteGameSaveBackups: (shop: GameShop, objectId: string) => Promise<void>;
+    pruneSaveBackups: () => Promise<number>;
+    openGameSaveBackups: (shop: GameShop, objectId: string) => Promise<void>;
     isGamemodeAvailable: () => Promise<boolean>;
     isSteamAppExecutable: (
       appId: string,

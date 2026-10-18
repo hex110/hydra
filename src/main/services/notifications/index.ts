@@ -10,7 +10,12 @@ import icon from "@resources/icon.png?asset";
 import { NotificationOptions, toXmlString } from "./xml";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
-import type { Game, UserPreferences, UserProfile } from "@types";
+import type {
+  Game,
+  GameUpdateFailure,
+  UserPreferences,
+  UserProfile,
+} from "@types";
 import { db, levelKeys, themesSublevel } from "@main/level";
 import { restartAndInstallUpdate } from "@main/events/autoupdater/restart-and-install-update";
 import { SystemPath } from "../system-path";
@@ -481,6 +486,80 @@ export const publishSavesFoundNotification = async (
     {
       pictureUrl: game.iconUrl,
       url: `/game/${game.shop}/${game.objectId}?options=save_import`,
+    }
+  );
+};
+
+export const publishGameUpdatesNotification = async (games: Game[]) => {
+  const title = t("game_updates_available", {
+    ns: "notifications",
+    count: games.length,
+  });
+  const body = t("game_updates_available_description", {
+    ns: "notifications",
+    titles: games
+      .slice(0, 3)
+      .map((game) => game.title)
+      .join(", "),
+    count: games.length,
+  });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "GAME_UPDATES_AVAILABLE",
+    title,
+    body,
+    {
+      pictureUrl: games.length === 1 ? games[0].iconUrl : null,
+      url: "/downloads",
+    }
+  );
+};
+
+export const publishGameUpdatedNotification = async (
+  game: Game,
+  release: string | null
+) => {
+  const title = t("game_updated", { ns: "notifications", title: game.title });
+  const body = release
+    ? t("game_updated_description", { ns: "notifications", release })
+    : t("game_updated_description_unknown", { ns: "notifications" });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "GAME_UPDATED",
+    title,
+    body,
+    {
+      pictureUrl: game.iconUrl,
+      url: `/game/${game.shop}/${game.objectId}`,
+    }
+  );
+};
+
+export const publishGameUpdateFailedNotification = async (
+  game: Game,
+  code: GameUpdateFailure
+) => {
+  const title = t("game_update_failed", {
+    ns: "notifications",
+    title: game.title,
+  });
+  const body = t(`game_update_failed_${code.replaceAll("-", "_")}`, {
+    ns: "notifications",
+  });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "GAME_UPDATED",
+    title,
+    body,
+    {
+      pictureUrl: game.iconUrl,
+      url: "/downloads",
     }
   );
 };

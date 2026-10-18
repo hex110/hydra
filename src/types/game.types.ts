@@ -4,6 +4,7 @@ export type GameSetupReason =
   | "download-complete"
   | "executable-changed"
   | "library-scan"
+  | "update"
   | "manual";
 
 export type GameSetupStatus =

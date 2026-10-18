@@ -63,6 +63,9 @@ export function LocalNotificationItem({
         return <SyncIcon size={24} />;
       case "SAVES_FOUND":
         return <HistoryIcon size={24} />;
+      case "GAME_UPDATES_AVAILABLE":
+      case "GAME_UPDATED":
+        return <SyncIcon size={24} />;
       default:
         return <DownloadIcon size={24} />;
     }

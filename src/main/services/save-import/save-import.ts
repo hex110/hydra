@@ -6,6 +6,11 @@ import { logger } from "@main/services/logger";
 import { UserNotLoggedInError } from "@shared";
 import { SystemPath } from "@main/services/system-path";
 import { WindowManager } from "@main/services/window-manager";
+import {
+  SaveBackups,
+  getGameBackupsDirectory,
+  newBackupStamp,
+} from "@main/services/save-backups";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { parseAchievementFile } from "@main/services/achievements/parse-achievement-file";
 import { mergeAchievements } from "@main/services/achievements/merge-achievements";
@@ -257,13 +262,9 @@ export class SaveImport {
       (target) => !options.overwriteNewer && isNewerThanSource(target)
     ).length;
 
-    const stamp = new Date().toISOString().replaceAll(":", "-");
     const backupRoot = path.join(
-      SystemPath.getPath("userData"),
-      "save-import",
-      "backups",
-      `${shop}-${objectId}`,
-      stamp
+      getGameBackupsDirectory(shop, objectId),
+      newBackupStamp()
     );
     let backedUp = 0;
     const tempDirectory = path.join(
@@ -312,6 +313,12 @@ export class SaveImport {
         );
         importedFiles = result.restoredFiles.length;
         failedFiles = result.failedFiles.length;
+      }
+
+      if (backedUp > 0) {
+        await SaveBackups.prune(shop, objectId).catch((error) =>
+          logger.warn("[SaveImport] Could not prune backups", { error })
+        );
       }
 
       let achievements = 0;

@@ -38,6 +38,7 @@ const buildForm = (preferences: UserPreferences | null) => ({
   deleteArchiveFilesAfterExtractionByDefault:
     preferences?.deleteArchiveFilesAfterExtractionByDefault ?? false,
   torrentNetworkInterface: preferences?.torrentNetworkInterface ?? "",
+  checkGameUpdates: preferences?.checkGameUpdates ?? true,
 });
 
 export function SettingsContextDownloads() {
@@ -221,6 +222,17 @@ export function SettingsContextDownloads() {
             })
           }
         />
+
+        <CheckboxField
+          label={t("check_game_updates")}
+          checked={form.checkGameUpdates}
+          onChange={() =>
+            handleChange({ checkGameUpdates: !form.checkGameUpdates })
+          }
+        />
+        <small className="settings-general__network-interface-hint">
+          {t("check_game_updates_hint")}
+        </small>
 
         <CheckboxField
           label={t("extract_files_by_default")}

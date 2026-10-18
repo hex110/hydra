@@ -67,7 +67,8 @@ export interface DownloadSettingsModalProps {
     fileIndices?: number[],
     selectedFilesSize?: number | null,
     automaticallyDeleteArchiveFiles?: boolean,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    updateInPlace?: boolean
   ) => Promise<{ ok: boolean; error?: string }>;
   repack: GameRepack | null;
   /** Start as soon as the defaults are ready (browser add-on downloads). */
@@ -276,7 +277,9 @@ export function DownloadSettingsModal({
 }: Readonly<DownloadSettingsModalProps>) {
   const { t } = useTranslation("game_details");
 
-  const { game, shopDetails, shop } = useContext(gameDetailsContext);
+  const { game, downloadGame, shopDetails, shop } =
+    useContext(gameDetailsContext);
+  const installedGame = downloadGame ?? game;
 
   const emulatorSystem = useMemo(() => {
     if (shop !== "launchbox") return null;
@@ -311,6 +314,19 @@ export function DownloadSettingsModal({
   ] = useState(
     userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? false
   );
+  const isInstalled =
+    !!installedGame?.executablePath &&
+    !installedGame.hasActiveSteamImport &&
+    !installedGame.epicInstallation &&
+    shop !== "launchbox";
+  const [updateInPlace, setUpdateInPlace] = useState(false);
+  useEffect(() => {
+    setUpdateInPlace(
+      isInstalled &&
+        !!repack &&
+        repack.title === installedGame?.availableUpdate?.release.title
+    );
+  }, [isInstalled, repack, installedGame?.availableUpdate?.release.title]);
   const [selectedDownloader, setSelectedDownloader] =
     useState<Downloader | null>(null);
   const [hasWritePermission, setHasWritePermission] = useState<boolean | null>(
@@ -1070,7 +1086,8 @@ export function DownloadSettingsModal({
           selectedFileIndices,
           totalSelectedSize,
           deleteArchiveFilesAfterExtraction,
-          abortController.signal
+          abortController.signal,
+          updateInPlace
         );
 
         if (
@@ -1608,6 +1625,21 @@ export function DownloadSettingsModal({
             )
           }
         />
+
+        {isInstalled && (
+          <div>
+            <CheckboxField
+              label={t("update_in_place")}
+              checked={updateInPlace}
+              onChange={() => setUpdateInPlace(!updateInPlace)}
+            />
+            <p className="download-settings-modal__hint-text">
+              {updateInPlace
+                ? t("update_in_place_hint")
+                : t("update_in_place_off_hint")}
+            </p>
+          </div>
+        )}
 
         <Button onClick={handlePrimaryButtonClick} disabled={!canStartDownload}>
           {getButtonContent()}

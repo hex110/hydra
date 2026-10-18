@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 
 import type {
   GameSetupStatusEvent,
+  GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
   SaveImportBulkProgress,
@@ -1131,6 +1132,36 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("on-save-import-found", listener);
     return () => ipcRenderer.removeListener("on-save-import-found", listener);
   },
+  checkGameUpdates: () => ipcRenderer.invoke("checkGameUpdates"),
+  isCheckingGameUpdates: () => ipcRenderer.invoke("isCheckingGameUpdates"),
+  dismissGameUpdate: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("dismissGameUpdate", shop, objectId),
+  onGameUpdatesChecking: (cb: (checking: boolean) => void) => {
+    const onStart = () => cb(true);
+    const onEnd = () => cb(false);
+    ipcRenderer.on("on-game-updates-checking", onStart);
+    ipcRenderer.on("on-game-updates-checked", onEnd);
+    return () => {
+      ipcRenderer.removeListener("on-game-updates-checking", onStart);
+      ipcRenderer.removeListener("on-game-updates-checked", onEnd);
+    };
+  },
+  onGameUpdateFailed: (cb: (event: GameUpdateFailedEvent) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: GameUpdateFailedEvent
+    ) => cb(payload);
+    ipcRenderer.on("on-game-update-failed", listener);
+    return () => ipcRenderer.removeListener("on-game-update-failed", listener);
+  },
+  listSaveBackups: () => ipcRenderer.invoke("listSaveBackups"),
+  getGameSaveBackups: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameSaveBackups", shop, objectId),
+  deleteGameSaveBackups: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("deleteGameSaveBackups", shop, objectId),
+  pruneSaveBackups: () => ipcRenderer.invoke("pruneSaveBackups"),
+  openGameSaveBackups: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("openGameSaveBackups", shop, objectId),
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),

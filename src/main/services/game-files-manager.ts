@@ -40,6 +40,7 @@ import { SystemPath } from "./system-path";
 import { WindowManager } from "./window-manager";
 import { runAutomaticCloudSaveSync } from "./cloud-save";
 import { GameSetup } from "./game-setup";
+import { GameUpdater } from "./game-updates";
 
 const PROGRESS_THROTTLE_MS = 1000;
 
@@ -520,6 +521,11 @@ export class GameFilesManager {
         downloadsSublevel.get(this.gameKey),
         gamesSublevel.get(this.gameKey),
       ]);
+
+      if (download?.update) {
+        await GameUpdater.applyDownloadedUpdate(this.shop, this.objectId);
+        return;
+      }
 
       if (
         !download?.folderName ||

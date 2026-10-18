@@ -1,4 +1,5 @@
 import { registerEvent } from "../register-event";
+import { getDownloadUpdateFields } from "@main/services/game-updates/installed-version";
 import type { Download, StartGameDownloadPayload } from "@types";
 import {
   DownloadManager,
@@ -32,6 +33,8 @@ const addGameToQueue = async (
     fileSize,
     fileIndices,
     selectedFilesSize,
+    release,
+    updateInPlace,
   } = payload;
 
   const parsedFileSize = parseBytes(fileSize ?? null);
@@ -63,6 +66,7 @@ const addGameToQueue = async (
       fileIndices,
       selectedFilesSize,
       customTrackers: globalTrackers,
+      ...(await getDownloadUpdateFields(gameKey, release, updateInPlace)),
     };
 
     if (!DownloadOrchestrator.preparesRealDebridInBackground(download)) {

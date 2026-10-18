@@ -34,6 +34,7 @@ import "./retroarch";
 import "./epic";
 import "./optiscaler";
 import "./save-import";
+import "./game-updates";
 
 ipcMain.handle("ping", () => "pong");
 ipcMain.handle("getVersion", () => appVersion);

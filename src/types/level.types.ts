@@ -54,6 +54,36 @@ export interface LibraryCatalogueMetadata {
   availableShops?: GameShop[];
 }
 
+/** The download source release a download came from. */
+export interface DownloadRelease {
+  title: string;
+  downloadSourceId: string | null;
+  downloadSourceName: string | null;
+  uploadDate: string | null;
+  fileSize: string | null;
+  uris: string[];
+}
+
+/** Which release of a game is installed; the title carries its version. */
+export interface GameInstalledVersion extends DownloadRelease {
+  /** Folder the game is installed in. */
+  directory: string | null;
+  /** "folder": read from the install folder's name (scanned or older installs). */
+  origin: "download" | "update" | "folder";
+  recordedAt: string;
+}
+
+export interface GameAvailableUpdate {
+  release: DownloadRelease;
+  detectedAt: string;
+}
+
+/** Set on a download that updates an installed game in place. */
+export interface DownloadUpdateTarget {
+  installDirectory: string;
+  executablePath: string;
+}
+
 export interface GameOnlineFix {
   directory: string;
   /** Proxy DLLs (without ".dll") Wine must load from the game folder. */
@@ -106,6 +136,10 @@ export interface Game extends LibraryCatalogueMetadata {
   launchOptions?: string | null;
   ignoreDefaultLaunchOptions?: boolean;
   postInstallCommandRanAt?: Date | null;
+  installedVersion?: GameInstalledVersion | null;
+  availableUpdate?: GameAvailableUpdate | null;
+  /** Release titles the user chose not to update to. */
+  dismissedUpdateTitles?: string[];
   optiScaler?: GameOptiScalerInstallation | null;
   /** OnlineFix found in the game folder; null when checked and absent. */
   onlineFix?: GameOnlineFix | null;
@@ -181,6 +215,8 @@ export interface Download {
   debridQueuePosition?: number;
   debridPreparationDeadline?: number;
   customTrackers?: string[];
+  release?: DownloadRelease | null;
+  update?: DownloadUpdateTarget | null;
 }
 
 export interface DownloadLayoutState {
@@ -278,6 +314,10 @@ export interface UserPreferences {
   saveImportCustomSources?: SaveImportCustomSource[];
   /** Ids of detected sources the user turned off. */
   saveImportDisabledSources?: string[];
+  /** Backups kept per game (save import and updates); unset keeps all. */
+  saveBackupsToKeep?: number | null;
+  /** Look for newer releases of installed games in the download sources. */
+  checkGameUpdates?: boolean;
   /** Download source ids, most preferred first, for choosing a repack automatically. */
   preferredDownloadSourceIds?: string[];
   repackSortPreference?: "newest" | "smallest";

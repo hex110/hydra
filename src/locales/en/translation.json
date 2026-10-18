@@ -1176,7 +1176,20 @@
     "save_import_done_toast": "Imported save files: {{files}}, achievements: {{achievements}}",
     "save_import_failed": "Import failed: {{message}}",
     "save_import_backup_hint": "The files the import replaced were backed up.",
-    "save_import_open_backup": "Open backup"
+    "save_import_open_backup": "Open backup",
+    "update_in_place": "Install over the current version",
+    "update_in_place_hint": "Once extracted, the new files replace the installed game's files in its current folder. Saves are backed up first; the Wine prefix, launch options and setup are kept.",
+    "update_in_place_off_hint": "The game is installed. Without this, the download goes into its own folder and the game keeps running the current version until you pick the new executable.",
+    "installed_release": "Installed",
+    "update_release": "Update",
+    "update_release_not_found": "The update is no longer listed by your download sources.",
+    "save_backups_summary_one": "Hydra keeps {{count}} backup of this game's saves ({{size}}).",
+    "save_backups_summary_other": "Hydra keeps {{count}} backups of this game's saves ({{size}}).",
+    "save_backups_open": "Open backups",
+    "save_backups_delete": "Delete backups",
+    "installed_release_from": "Installed release: {{title}} ({{source}}).",
+    "installed_release_folder": "Installed from the folder {{title}}.",
+    "installed_release_update": "Update available: {{title}}."
   },
   "activation": {
     "title": "Activate Hydra",
@@ -1242,7 +1255,14 @@
     "peak": "PEAK",
     "files": "FILES",
     "move_up": "Move up",
-    "move_down": "Move down"
+    "move_down": "Move down",
+    "game_updates": "Updates",
+    "check_game_updates": "Check for updates",
+    "checking_game_updates": "Checking…",
+    "no_game_updates": "Your installed games are up to date with your download sources.",
+    "game_update_versions": "{{installed}} → {{available}}",
+    "ignore_game_update": "Ignore",
+    "update_game": "Update"
   },
   "settings": {
     "rpcs3_config_title": "RPCS3 configuration folder",
@@ -2131,7 +2151,21 @@
     "save_import_bulk_already_running": "An import is already running",
     "save_import_bulk_running": "Importing… {{processed}} of {{total}} games checked",
     "save_import_bulk_completed": "Done. Games imported: {{imported}}, failed: {{failed}}",
-    "save_import_backups_hint": "Files an import replaces are kept in Hydra's data folder under save-import/backups."
+    "save_import_backups_hint": "Files an import replaces are kept in Hydra's data folder under save-import/backups.",
+    "check_game_updates": "Look for updates to installed games",
+    "check_game_updates_hint": "After Hydra starts and after the download sources sync, newer releases of your installed games are listed on the Downloads page.",
+    "save_backups": "Backups",
+    "save_backups_description": "Hydra copies save files before it changes them: the files a save import replaces, and the game's saves before an update is installed.",
+    "save_backups_keep": "Backups to keep per game",
+    "save_backups_keep_hint": "Older backups are deleted when a new one is made. Leave empty to keep all.",
+    "save_backups_keep_all": "All",
+    "save_backups_prune": "Delete older backups now",
+    "save_backups_pruned": "Deleted {{count}} old backups",
+    "save_backups_none": "No backups yet.",
+    "save_backups_total": "{{count}} games, {{size}} in total",
+    "save_backups_game": "{{count}} backups · {{size}}",
+    "save_backups_open": "Open folder",
+    "save_backups_delete": "Delete backups"
   },
   "notifications": {
     "download_complete": "Download complete",
@@ -2169,7 +2203,21 @@
     "scan_games_no_results_title": "Scanning for games finished",
     "scan_games_no_results_description": "No installed games were found",
     "saves_found": "Saves found for {{title}}",
-    "saves_found_description": "Save files: {{files}}, achievements: {{achievements}}, on {{source}}. Open the game's options to import them."
+    "saves_found_description": "Save files: {{files}}, achievements: {{achievements}}, on {{source}}. Open the game's options to import them.",
+    "game_updates_available_one": "An update is available",
+    "game_updates_available_other": "{{count}} updates are available",
+    "game_updates_available_description_one": "{{titles}} has a newer release in your download sources.",
+    "game_updates_available_description_other": "{{titles}} and others have newer releases in your download sources.",
+    "game_updated": "{{title}} was updated",
+    "game_updated_description": "Installed {{release}} over the previous version.",
+    "game_updated_description_unknown": "Installed the new version over the previous one.",
+    "game_update_failed": "Could not update {{title}}",
+    "game_update_failed_game_running": "The game is running. Close it and restart the extraction from the Downloads page.",
+    "game_update_failed_install_missing": "The game's folder no longer exists.",
+    "game_update_failed_not_extracted": "The update was not extracted. Extract it from the Downloads page.",
+    "game_update_failed_installer": "This release is an installer. Run it from the Downloads page and install into the game's current folder.",
+    "game_update_failed_layout_mismatch": "The update's files do not match the installed game's folder. It was left where it was downloaded.",
+    "game_update_failed_failed": "Something went wrong while installing the update. See the logs for details."
   },
   "system_tray": {
     "open": "Open Hydra",

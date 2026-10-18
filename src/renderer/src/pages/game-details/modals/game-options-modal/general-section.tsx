@@ -787,6 +787,28 @@ export function GeneralSettingsSection({
             </div>
           </div>
 
+          {game.executablePath && game.installedVersion && (
+            <p className="game-options-modal__header-description">
+              {t(
+                game.installedVersion.downloadSourceName
+                  ? "installed_release_from"
+                  : "installed_release_folder",
+                {
+                  title: game.installedVersion.title,
+                  source: game.installedVersion.downloadSourceName,
+                }
+              )}
+              {game.availableUpdate && (
+                <>
+                  {" "}
+                  {t("installed_release_update", {
+                    title: game.availableUpdate.release.title,
+                  })}
+                </>
+              )}
+            </p>
+          )}
+
           {supportsTrackingExecutables(game.executablePath) && (
             <div className="game-options-modal__tracking-executable">
               {isBatchExecutable(game.executablePath) && (

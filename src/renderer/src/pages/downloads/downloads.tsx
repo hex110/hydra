@@ -12,6 +12,7 @@ import { BinaryNotFoundModal } from "../shared-modals/binary-not-found-modal";
 import "./downloads.scss";
 import { DeleteGameModal } from "./delete-game-modal";
 import { DownloadGroup } from "./download-group";
+import { GameUpdatesSection } from "./game-updates-section";
 import {
   getDownloadId,
   getRendererDownloadBucket,
@@ -23,9 +24,16 @@ import { orderBy } from "lodash-es";
 import { ArrowDownIcon } from "@primer/octicons-react";
 
 export default function Downloads() {
-  const { downloadLibrary: library, updateLibrary } = useLibrary();
+  const {
+    downloadLibrary: library,
+    library: fullLibrary,
+    updateLibrary,
+  } = useLibrary();
   const { layoutState } = useDownloadLayout();
   const extraction = useAppSelector((state) => state.download.extraction);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
 
   const { t } = useTranslation("downloads");
 
@@ -184,6 +192,10 @@ export default function Downloads() {
         onClose={() => setShowDeleteModal(false)}
         deleteGame={handleDeleteGame}
       />
+
+      {userPreferences?.checkGameUpdates !== false && (
+        <GameUpdatesSection library={fullLibrary} />
+      )}
 
       {hasItemsInLibrary ? (
         <section className="downloads__container">
