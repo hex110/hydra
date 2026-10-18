@@ -3,16 +3,16 @@
  * same snapshot shape as Hydra Cloud, so future cloud sources plug into the
  * same import.
  */
-export type SaveImportSourceKind = "windows-install";
+export type SaveImportSourceKind = "windows-install" | "hydra-launcher";
 
 export interface SaveImportSourceInfo {
   id: string;
   kind: SaveImportSourceKind;
   /** e.g. "Windows on /mnt/Windows (moonlight)". */
   label: string;
-  /** Windows drive root, for Windows installs. */
+  /** Windows drive root, or upstream Hydra's data folder. */
   rootPath: string;
-  /** Windows user profile name, for Windows installs. */
+  /** Windows user profile name, for Windows installs; empty otherwise. */
   userProfile: string;
   /** Detected automatically rather than added by the user. */
   detected: boolean;

@@ -4,6 +4,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { NativeAddon } from "@main/services/native-addon";
 import { SystemPath } from "@main/services/system-path";
+import { Wine } from "@main/services/wine";
 import { findAchievementFiles } from "@main/services/achievements/find-achievement-files";
 import type {
   AchievementFile,
@@ -20,6 +21,12 @@ import {
   readWindowsInstall,
   type WindowsInstall,
 } from "./windows-install";
+import {
+  findHydraLauncherDataPath,
+  getHydraLauncherPrefix,
+  readHydraLauncherLibrary,
+  type HydraLauncherLibrary,
+} from "./hydra-launcher";
 
 /** A game's saves at a source, in Hydra Cloud's snapshot shape. */
 export interface SourceSnapshot {
@@ -33,8 +40,8 @@ export interface SourceAchievementFile extends AchievementFile {
 }
 
 /**
- * Somewhere saves and achievements can be imported from. Windows installs
- * read files from a drive; a cloud source would list a remote snapshot and
+ * Somewhere saves and achievements can be imported from. Upstream Hydra and
+ * Windows installs read files from disk; a cloud source would list a remote snapshot and
  * download its files, behind the same three operations.
  */
 export interface SaveImportSource {
@@ -49,49 +56,61 @@ const STEAM_USERDATA_RAW_PATH = "<root>/userdata/";
 
 const linuxUsername = () => os.userInfo().username;
 
-const mirrorsDirectory = () =>
-  path.join(SystemPath.getPath("userData"), "save-import", "mirrors");
-
 /** Built once per source and run; sources are re-created for every request. */
 const mirrors = new Map<string, Promise<string>>();
+const hydraLauncherLibraries = new Map<string, Promise<HydraLauncherLibrary>>();
 
-class WindowsInstallSource implements SaveImportSource {
+const cached = <T>(
+  cache: Map<string, Promise<T>>,
+  key: string,
+  build: () => Promise<T>
+) => {
+  let value = cache.get(key);
+  if (!value) {
+    value = build();
+    value.catch(() => cache.delete(key));
+    cache.set(key, value);
+  }
+  return value;
+};
+
+const workDirectory = (kind: string, sourceId: string) =>
+  path.join(
+    SystemPath.getPath("userData"),
+    "save-import",
+    kind,
+    createHash("sha256").update(sourceId).digest("hex").slice(0, 16)
+  );
+
+/**
+ * A source that reads a game's saves from something shaped like a Wine
+ * prefix, which Hydra's save discovery and achievement lookup understand.
+ */
+abstract class PrefixSource implements SaveImportSource {
   private readonly absolutePaths = new Map<string, string>();
 
-  constructor(
-    public readonly info: SaveImportSourceInfo,
-    private readonly install: WindowsInstall
-  ) {}
+  constructor(public readonly info: SaveImportSourceInfo) {}
 
-  private getMirror() {
-    let mirror = mirrors.get(this.info.id);
-    if (!mirror) {
-      mirror = buildWindowsInstallMirror(
-        this.install,
-        this.info.userProfile,
-        linuxUsername(),
-        path.join(
-          mirrorsDirectory(),
-          createHash("sha256").update(this.info.id).digest("hex").slice(0, 16)
-        )
-      );
-      mirror.catch(() => mirrors.delete(this.info.id));
-      mirrors.set(this.info.id, mirror);
-    }
-    return mirror;
+  /** The prefix holding the game's saves, or null when there is none. */
+  protected abstract getPrefix(game: Game): Promise<string | null>;
+
+  protected getSteamPath(): string | undefined {
+    return undefined;
   }
 
   public async discoverSaves(game: Game): Promise<SourceSnapshot> {
-    const mirror = await this.getMirror();
+    const prefix = await this.getPrefix(game);
+    if (!prefix) return { variants: [], files: [] };
+
     const result = await NativeAddon.buildLocalGameSnapshotPipeline({
       shop: game.shop,
       objectId: game.objectId,
       platform: "linux",
       homeDir: SystemPath.getPath("home"),
       // Windows compatibility is decided by an .exe; the path itself is unused.
-      executablePath: path.join(mirror, "drive_c", "game", "game.exe"),
-      winePrefixPath: mirror,
-      steamPath: this.install.steamPath ?? undefined,
+      executablePath: path.join(prefix, "drive_c", "game", "game.exe"),
+      winePrefixPath: prefix,
+      steamPath: this.getSteamPath(),
       storeUserContext: { known: [] },
       title: game.title,
       remoteId: game.remoteId ?? undefined,
@@ -116,11 +135,12 @@ class WindowsInstallSource implements SaveImportSource {
   public async findAchievementFiles(
     game: Game
   ): Promise<SourceAchievementFile[]> {
-    const mirror = await this.getMirror();
-    return findAchievementFiles({ ...game, winePrefixPath: mirror }).map(
+    const prefix = await this.getPrefix(game);
+    if (!prefix) return [];
+    return findAchievementFiles({ ...game, winePrefixPath: prefix }).map(
       (file) => ({
         ...file,
-        prefixRelativePath: path.relative(mirror, file.filePath),
+        prefixRelativePath: path.relative(prefix, file.filePath),
       })
     );
   }
@@ -137,15 +157,80 @@ class WindowsInstallSource implements SaveImportSource {
   }
 }
 
+class WindowsInstallSource extends PrefixSource {
+  constructor(
+    info: SaveImportSourceInfo,
+    private readonly install: WindowsInstall
+  ) {
+    super(info);
+  }
+
+  protected getPrefix() {
+    return cached(mirrors, this.info.id, () =>
+      buildWindowsInstallMirror(
+        this.install,
+        this.info.userProfile,
+        linuxUsername(),
+        workDirectory("mirrors", this.info.id)
+      )
+    );
+  }
+
+  protected getSteamPath() {
+    return this.install.steamPath ?? undefined;
+  }
+}
+
+/** Upstream Hydra on the same machine: the prefixes it ran games in. */
+class HydraLauncherSource extends PrefixSource {
+  protected async getPrefix(game: Game) {
+    const library = await cached(hydraLauncherLibraries, this.info.id, () =>
+      readHydraLauncherLibrary(
+        this.info.rootPath,
+        workDirectory("hydra-launcher-db", this.info.id)
+      )
+    );
+    const prefix = getHydraLauncherPrefix(library, game);
+    const own = Wine.getEffectivePrefixPath(game.winePrefixPath, game.objectId);
+    if (own && path.resolve(own) === path.resolve(prefix)) return null;
+    return fs.existsSync(path.join(prefix, "drive_c")) ? prefix : null;
+  }
+}
+
 const windowsSourceId = (rootPath: string, userProfile: string) =>
   `windows:${rootPath}:${userProfile}`;
 
-/** Every source: detected Windows installs, then ones the user added. */
+/**
+ * Every source: upstream Hydra, detected Windows installs, then ones the
+ * user added.
+ */
 export const listSaveImportSources = (
   preferences: UserPreferences | null
 ): SaveImportSource[] => {
   const disabled = new Set(preferences?.saveImportDisabledSources ?? []);
   const sources = new Map<string, SaveImportSource>();
+
+  const hydraDataPath = findHydraLauncherDataPath(
+    SystemPath.getPath("appData")
+  );
+  if (
+    hydraDataPath &&
+    path.resolve(hydraDataPath) !== path.resolve(SystemPath.getPath("userData"))
+  ) {
+    const id = `hydra-launcher:${hydraDataPath}`;
+    sources.set(
+      id,
+      new HydraLauncherSource({
+        id,
+        kind: "hydra-launcher",
+        label: `Hydra Launcher (${hydraDataPath})`,
+        rootPath: hydraDataPath,
+        userProfile: "",
+        detected: true,
+        enabled: !disabled.has(id),
+      })
+    );
+  }
 
   const addInstall = (
     install: WindowsInstall,

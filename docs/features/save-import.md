@@ -1,19 +1,37 @@
 # Save and achievement import
 
 When a Windows game is added on Linux, Hydra can bring over its saves and the
-achievements its crack recorded from a Windows install on another drive or
-partition, such as a dual-boot Windows. Settings live in
+achievements its crack recorded from upstream Hydra Launcher on the same
+computer, or from a Windows install on another drive or partition, such as a
+dual-boot Windows. Settings live in
 **Settings → Saves & achievements**; each game has a **Saves & achievements**
 section in its options.
 
 ## Sources
+
+### Upstream Hydra Launcher
+
+Hydra Plus keeps its data apart from upstream Hydra, Wine prefixes included,
+so a game you played in upstream Hydra starts with an empty prefix here. When
+upstream's data folder (`~/.config/hydralauncher`) exists, it is a source,
+shown as `Hydra Launcher (<folder>)`.
+
+Each game is matched by store and id, and its saves are read from the prefix
+upstream runs it in: the game's own prefix if one was set, otherwise
+`<id>` under upstream's default prefix folder (`wine-prefixes` in its data
+folder unless changed in its settings). Hydra reads these settings from a
+copy of upstream's database, so upstream can stay open; nothing in upstream's
+folder is changed. A game whose prefix in Hydra Plus is the same folder is
+skipped. Custom games have their own id in each app and are not matched.
+
+### Windows installs
 
 Hydra looks for Windows installs in the folders mounted under `/mnt`, `/media`
 and `/run/media/<user>`. A folder counts as a Windows drive when it has a
 `Users` folder with at least one profile that has `AppData`. Each profile is a
 separate source, shown as e.g. `Windows on /mnt/Windows (moonlight)`.
 
-- Untick a source to stop importing from it.
+- Untick a source, upstream Hydra included, to stop importing from it.
 - **Add Windows drive** adds a drive Hydra did not find; pick the folder that
   contains `Users`. Each of its profiles is added.
 
@@ -26,6 +44,7 @@ The drive can be mounted read-only; imports only read from it.
 path mapping Hydra Cloud uses. That covers saves in the profile
 (`AppData`, `Documents`, `Saved Games`, …), in `ProgramData` and in `Public`.
 Paths are mapped into the game's Wine prefix (`drive_c/users/steamuser/…`).
+From upstream Hydra, that is the same place in the other prefix.
 Saves Steam keeps in its own `userdata` folder are left out: Steam Cloud
 syncs those, and a game run from a Wine prefix does not read them.
 

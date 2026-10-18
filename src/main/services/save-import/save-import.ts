@@ -98,8 +98,8 @@ const getGame = async (shop: GameShop, objectId: string) => {
 };
 
 /**
- * Imports saves and achievements from Windows installs (and, later, cloud
- * sources) into a game's Wine prefix. Discovery, path mapping and file
+ * Imports saves and achievements from upstream Hydra and Windows installs
+ * (and, later, cloud sources) into a game's Wine prefix. Discovery, path mapping and file
  * replacement reuse Hydra Cloud's snapshot and restore code, so every source
  * only has to describe a snapshot and provide its files.
  */

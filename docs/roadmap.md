@@ -45,6 +45,8 @@ What we plan to add or fix, in order. Shipped features are documented in
 
 All of these plug into the `SaveImportSource` interface.
 
+- [x] **Upstream Hydra Launcher.** Reads each game's prefix from
+      `~/.config/hydralauncher`, so switching to Hydra Plus keeps saves.
 - [ ] **Steam Cloud.** Download cloud saves for every owned game, installed or
       not. Needs a Steam login inside Hydra.
 - [ ] **Hydra cloud account.** Import from it once it exists.
