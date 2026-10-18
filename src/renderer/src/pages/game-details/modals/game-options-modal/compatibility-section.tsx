@@ -1,4 +1,6 @@
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { gameDetailsContext } from "@renderer/context";
 
 import {
   Button,
@@ -11,6 +13,7 @@ import type { LibraryGame, ProtonVersion } from "@types";
 import { FileDirectoryIcon, LinkExternalIcon } from "@primer/octicons-react";
 import { Tooltip } from "react-tooltip";
 import { GameSetupButton } from "./game-setup-button";
+import { SetupLogSection } from "./setup-log-section";
 
 interface CompatibilitySettingsSectionProps {
   game: LibraryGame;
@@ -60,6 +63,7 @@ export function CompatibilitySettingsSection({
   onChangeProtonVersion,
 }: Readonly<CompatibilitySettingsSectionProps>) {
   const { t } = useTranslation("game_details");
+  const { updateGame } = useContext(gameDetailsContext);
 
   const showWinetricksUnavailableTooltip = !winetricksAvailable;
   const gamemodeToggleDisabled = !gamemodeAvailable || globalAutoRunGamemode;
@@ -172,7 +176,23 @@ export function CompatibilitySettingsSection({
             })}
           </p>
         )}
+        {(game.onlineFix || game.onlineFixDisabled) && (
+          <CheckboxField
+            label={t("online_fix_enabled_for_game")}
+            checked={!game.onlineFixDisabled}
+            onChange={async () => {
+              await window.electron.setGameOnlineFixDisabled(
+                game.shop,
+                game.objectId,
+                !game.onlineFixDisabled
+              );
+              await updateGame();
+            }}
+          />
+        )}
       </div>
+
+      <SetupLogSection game={game} />
 
       <div className="game-options-modal__section">
         <div className="game-options-modal__header">

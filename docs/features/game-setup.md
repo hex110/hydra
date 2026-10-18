@@ -31,6 +31,33 @@ Prefix creation shares a lock with game launches, so launching a game while its
 prefix is still being created waits for that instead of starting a second
 `umu-run`.
 
+## Setup log
+
+Each game's **Compatibility** options show a **Setup log**: every step, what
+it did the last time it ran or why it was skipped, when, and how long it took.
+For example "OnlineFix found (proxy DLLs: winmm). Copied 5 Steam client files
+into the prefix", or "Skipped: automatic installation is turned off in
+Settings → OptiScaler". A failed step shows its error. When setup did not run
+at all, the log says why (no executable yet, or the game belongs to Steam or
+Epic).
+
+The log keeps the latest result of each step, so re-running one step leaves
+the others' entries alone. It is stored with the game (`setupLog`).
+
+### Running one step again
+
+**Run again** next to a step runs only that step, as a manual run:
+
+- **Wine prefix** creates the prefix even when automatic prefix creation is
+  off.
+- **OnlineFix** detects the files again and copies any missing Steam client
+  files.
+- **OptiScaler** checks the game even when automatic installation is off,
+  and installs it if the game qualifies. Opt-outs still apply.
+- **Post-install command** runs the command again even if it already ran.
+
+**Run game setup** runs every step this way.
+
 ## Preparing prefixes for existing games
 
 **Prepare missing prefixes** queues setup for every library game that has a

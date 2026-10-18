@@ -1,6 +1,7 @@
 import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
+  GameLaunchPreview,
   GameSaveBackups,
   GameUpdateCheckResult,
   GameUpdateFailedEvent,
@@ -407,7 +408,20 @@ declare global {
       objectId: string,
       autoRunGamemode: boolean
     ) => Promise<void>;
-    runGameSetup: (shop: GameShop, objectId: string) => Promise<void>;
+    runGameSetup: (
+      shop: GameShop,
+      objectId: string,
+      stepId?: string
+    ) => Promise<void>;
+    setGameOnlineFixDisabled: (
+      shop: GameShop,
+      objectId: string,
+      disabled: boolean
+    ) => Promise<void>;
+    getGameLaunchPreview: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameLaunchPreview | null>;
     countGamesMissingPrefix: () => Promise<number>;
     prepareMissingGamePrefixes: () => Promise<number>;
     onGameSetupStatus: (

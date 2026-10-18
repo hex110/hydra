@@ -1,7 +1,7 @@
 import { logger } from "@main/services/logger";
 import { Umu } from "@main/services/umu";
 import { Wine } from "@main/services/wine";
-import type { GameSetupStep } from "./game-setup";
+import { done, skipped, type GameSetupStep } from "./game-setup";
 
 export const WINE_PREFIX_STEP_ID = "wine-prefix";
 
@@ -17,9 +17,16 @@ export const winePrefixStep: GameSetupStep = {
   id: WINE_PREFIX_STEP_ID,
   order: 100,
   run: async (context) => {
-    if (!context.winePrefixPath) return;
-    if (context.userPreferences?.prepareWinePrefixOnInstall === false) return;
-    if (isPrefixValid(context.winePrefixPath)) return;
+    if (!context.winePrefixPath) return skipped("not-wine");
+    if (
+      context.userPreferences?.prepareWinePrefixOnInstall === false &&
+      !context.force
+    ) {
+      return skipped("disabled");
+    }
+    if (isPrefixValid(context.winePrefixPath)) {
+      return done("exists", { path: context.winePrefixPath });
+    }
 
     logger.info("[GameSetup] Creating Wine prefix", {
       gameKey: context.gameKey,
@@ -32,5 +39,6 @@ export const winePrefixStep: GameSetupStep = {
       protonPath: context.protonPath,
       gameId: context.objectId,
     });
+    return done("created", { path: context.winePrefixPath });
   },
 };

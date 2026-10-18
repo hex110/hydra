@@ -1,5 +1,5 @@
 import type { Downloader } from "@shared";
-import type { GameShop } from "./game.types";
+import type { GameSetupLog, GameShop } from "./game.types";
 import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
 import type { LaunchRule } from "./launch-rule.types";
@@ -136,6 +136,7 @@ export interface Game extends LibraryCatalogueMetadata {
   launchOptions?: string | null;
   ignoreDefaultLaunchOptions?: boolean;
   postInstallCommandRanAt?: Date | null;
+  setupLog?: GameSetupLog | null;
   installedVersion?: GameInstalledVersion | null;
   availableUpdate?: GameAvailableUpdate | null;
   /** Release titles the user chose not to update to. */
@@ -143,6 +144,8 @@ export interface Game extends LibraryCatalogueMetadata {
   optiScaler?: GameOptiScalerInstallation | null;
   /** OnlineFix found in the game folder; null when checked and absent. */
   onlineFix?: GameOnlineFix | null;
+  /** Skip OnlineFix preparation and its DLL overrides for this game. */
+  onlineFixDisabled?: boolean;
   saveImport?: GameSaveImportState;
   /** Per-rule choices that replace a launch rule's global setting for this game. */
   launchRuleOverrides?: Record<string, boolean>;

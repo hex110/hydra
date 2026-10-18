@@ -1004,8 +1004,15 @@ contextBridge.exposeInMainWorld("electron", {
     autoRunGamemode: boolean
   ) =>
     ipcRenderer.invoke("toggleGameGamemode", shop, objectId, autoRunGamemode),
-  runGameSetup: (shop: GameShop, objectId: string) =>
-    ipcRenderer.invoke("runGameSetup", shop, objectId),
+  runGameSetup: (shop: GameShop, objectId: string, stepId?: string) =>
+    ipcRenderer.invoke("runGameSetup", shop, objectId, stepId),
+  setGameOnlineFixDisabled: (
+    shop: GameShop,
+    objectId: string,
+    disabled: boolean
+  ) => ipcRenderer.invoke("setGameOnlineFixDisabled", shop, objectId, disabled),
+  getGameLaunchPreview: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameLaunchPreview", shop, objectId),
   countGamesMissingPrefix: () => ipcRenderer.invoke("countGamesMissingPrefix"),
   prepareMissingGamePrefixes: () =>
     ipcRenderer.invoke("prepareMissingGamePrefixes"),

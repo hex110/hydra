@@ -103,3 +103,17 @@ export interface SaveImportBulkProgress {
   importedGames: number;
   failedGames: number;
 }
+
+export interface SaveImportCheckOutcome {
+  code:
+    | "disabled"
+    | "not-windows"
+    | "already-imported"
+    | "dismissed"
+    | "nothing-found"
+    | "imported"
+    | "offered";
+  source?: string;
+  files?: number;
+  achievements?: number;
+}

@@ -14,6 +14,38 @@ export type GameSetupStatus =
   | "failed"
   | "skipped";
 
+export interface GameSetupStepResult {
+  status: "done" | "skipped";
+  /** What happened, as a translation key suffix ("created", "exists", …). */
+  code: string;
+  params?: Record<string, string | number>;
+}
+
+export interface GameSetupLogEntry {
+  stepId: string;
+  status: "done" | "skipped" | "failed";
+  code: string | null;
+  params?: Record<string, string | number>;
+  error?: string;
+  reason: GameSetupReason;
+  at: string;
+  durationMs: number;
+}
+
+/** Why setup did not run for a game at all. */
+export type GameSetupSkipReason =
+  | "no-executable"
+  | "other-launcher"
+  | "steam-install";
+
+export interface GameSetupLog {
+  lastRunAt: string;
+  reason: GameSetupReason;
+  skipped: GameSetupSkipReason | null;
+  /** The latest result of each step, in step order. */
+  steps: GameSetupLogEntry[];
+}
+
 export interface GameSetupStatusEvent {
   shop: GameShop;
   objectId: string;

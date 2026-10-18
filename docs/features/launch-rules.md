@@ -46,6 +46,23 @@ instead:
 3. The [default launch options](default-launch-options.md).
 4. The game's own launch options.
 
+## Launch command preview
+
+**Show launch command** under a game's launch options shows what launching it
+would run right now, without starting it:
+
+- the full command line, with every environment variable, the `umu-run`
+  invocation (or the native executable) and the wrappers (`gamemoderun`),
+  ready to copy into a terminal;
+- the Proton build and where it comes from (picked for the game, a launch
+  rule, the default from settings, or umu-run's own default);
+- the Wine prefix, the combined launch options, the rules that applied and the
+  working folder.
+
+It uses the same code as a real launch, so it is the way to check what a rule
+or default actually changes. Games inside a Steam library are launched by
+Steam with Steam's own launch options; the preview says so.
+
 ## Built-in rules
 
 A new install starts with these. They can be edited, disabled or removed;

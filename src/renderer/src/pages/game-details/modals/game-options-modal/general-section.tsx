@@ -25,6 +25,7 @@ import type {
 import { DotIcon, FileIcon } from "@primer/octicons-react";
 import { HardDrive, X, FolderOpen, ChevronDown } from "lucide-react";
 import { gameDetailsContext } from "@renderer/context";
+import { LaunchPreview } from "./launch-preview";
 import { useAppSelector } from "@renderer/hooks";
 import {
   getSkuRegion,
@@ -1127,6 +1128,7 @@ export function GeneralSettingsSection({
           />
           <DefaultLaunchOptionsToggle game={game} />
           <LaunchAdditionsSummary game={game} />
+          <LaunchPreview game={game} />
         </div>
       )}
     </>

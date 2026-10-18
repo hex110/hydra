@@ -39,10 +39,7 @@ import { resolveSteamProtocolLaunch } from "@main/services/steam-integration/ste
 import { CommonRedistManager } from "@main/services/common-redist-manager";
 import { runAchievementMetadataExport } from "@main/services/achievements/metadata-export";
 import { parseExecutablePath } from "../events/helpers/parse-executable-path";
-import { isGamemodeAvailable } from "./is-gamemode-available";
-import { isMangohudAvailable } from "./is-mangohud-available";
 import { resolveLaunchCommand } from "./resolve-launch-command";
-import { applyDefaultLaunchOptions } from "./default-launch-options";
 import { resolveProtonPath } from "./resolve-proton-path";
 import {
   buildWindowsBatchCommand,
@@ -57,7 +54,11 @@ import {
 } from "@main/services/epic/launch";
 import type { EpicLaunchParameters } from "@main/services/epic/launch-protocol";
 import { EpicSaveFailure } from "@main/services/epic/cloud-save-protocol";
-import { getLaunchAdditions } from "./launch-additions";
+import {
+  combineLaunchOptions,
+  getLaunchAdditions,
+  getLaunchTools,
+} from "./launch-additions";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 
 export interface LaunchGameOptions {
@@ -696,7 +697,7 @@ const launchGameWithCloudSaveChecks = async (
     })
     .catch(() => null);
 
-  const effectiveLaunchOptions = applyDefaultLaunchOptions(
+  const effectiveLaunchOptions = combineLaunchOptions(
     (
       await getLaunchAdditions({
         objectId,
@@ -706,22 +707,12 @@ const launchGameWithCloudSaveChecks = async (
         userPreferences,
       })
     ).launchOptions,
-    applyDefaultLaunchOptions(
-      userPreferences?.defaultLaunchOptions,
-      launchOptions,
-      game?.ignoreDefaultLaunchOptions === true
-    )
+    userPreferences,
+    game,
+    launchOptions
   );
 
-  const useMangohud =
-    (userPreferences?.autoRunMangohud === true ||
-      game?.autoRunMangohud === true) &&
-    isMangohudAvailable();
-
-  const useGamemode =
-    (userPreferences?.autoRunGamemode === true ||
-      game?.autoRunGamemode === true) &&
-    isGamemodeAvailable();
+  const { useMangohud, useGamemode } = getLaunchTools(userPreferences, game);
 
   const steamCompatibilityPrefixPath =
     process.platform === "linux" &&

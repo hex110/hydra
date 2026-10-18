@@ -18,6 +18,7 @@ import type {
   GameOptiScalerStatus,
   GameShop,
   OptiScalerBulkProgress,
+  OptiScalerAutoInstallOutcome,
   OptiScalerEligibility,
   OptiScalerOverview,
   UserPreferences,
@@ -271,27 +272,30 @@ export class OptiScaler {
   }
 
   /** Installs OptiScaler into a newly set up game when the user opted in and it qualifies. */
+  /** Installs OptiScaler when the game qualifies; returns why it did or did not. */
   public static async installIfEligible(
     game: Game,
     options: { ignoreAutoInstallSetting?: boolean } = {}
-  ): Promise<boolean> {
+  ): Promise<OptiScalerAutoInstallOutcome> {
     const settings = await loadSettings();
     if (!settings.autoInstall && !options.ignoreAutoInstallSetting) {
-      return false;
+      return "auto-install-off";
     }
-    if (game.optiScaler || game.optiScalerAutoInstallDisabled) return false;
+    if (game.optiScaler) return "already-installed";
+    if (game.optiScalerAutoInstallDisabled) return "opted-out";
 
     const executablePath = getWindowsExecutable(game);
-    if (!executablePath || isManagedElsewhere(game, executablePath)) {
-      return false;
-    }
+    if (!executablePath) return "not-windows";
+    if (isManagedElsewhere(game, executablePath)) return "other-launcher";
 
     const installDirectory =
       await resolveOptiScalerInstallDirectory(executablePath);
-    if (await hasExternalOptiScaler(installDirectory)) return false;
+    if (await hasExternalOptiScaler(installDirectory)) return "external";
 
     const eligibility = await this.evaluate(game, installDirectory, settings);
-    if (!eligibility.eligible) return false;
+    if (!eligibility.eligible) {
+      return eligibility.blocked ? "blocked" : "not-eligible";
+    }
 
     logger.info("[OptiScaler] Game qualifies for OptiScaler", {
       title: game.title,
@@ -299,7 +303,7 @@ export class OptiScaler {
     });
 
     await this.install(game.shop, game.objectId);
-    return true;
+    return "installed";
   }
 
   private static async listLibraryGames() {
@@ -408,9 +412,9 @@ export class OptiScaler {
         const installed =
           mode === "update-installed"
             ? (await this.install(game.shop, game.objectId), true)
-            : await this.installIfEligible(game, {
+            : (await this.installIfEligible(game, {
                 ignoreAutoInstallSetting: true,
-              });
+              })) === "installed";
         if (installed) progress.installed++;
       } catch (error) {
         progress.failed++;

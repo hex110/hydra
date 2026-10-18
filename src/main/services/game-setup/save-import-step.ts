@@ -3,7 +3,7 @@ import {
   SaveImport,
   SaveImportFailure,
 } from "@main/services/save-import/save-import";
-import type { GameSetupStep } from "./game-setup";
+import { done, skipped, type GameSetupStep } from "./game-setup";
 
 export const SAVE_IMPORT_STEP_ID = "save-import";
 
@@ -16,17 +16,30 @@ export const saveImportStep: GameSetupStep = {
   id: SAVE_IMPORT_STEP_ID,
   order: 300,
   run: async (context) => {
-    if (!context.winePrefixPath) return;
+    if (!context.winePrefixPath) return skipped("not-wine");
 
     try {
-      await SaveImport.checkNewGame(context.shop, context.objectId);
+      const outcome = await SaveImport.checkNewGame(
+        context.shop,
+        context.objectId
+      );
+      const params = {
+        source: outcome.source ?? "",
+        files: outcome.files ?? 0,
+        achievements: outcome.achievements ?? 0,
+      };
+      return outcome.code === "imported" ||
+        outcome.code === "offered" ||
+        outcome.code === "nothing-found"
+        ? done(outcome.code, params)
+        : skipped(outcome.code, params);
     } catch (error) {
       if (error instanceof SaveImportFailure) {
         logger.info("[GameSetup] Save import skipped", {
           gameKey: context.gameKey,
           reason: error.code,
         });
-        return;
+        return skipped(`failure-${error.code}`);
       }
       throw error;
     }

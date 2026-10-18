@@ -1,6 +1,7 @@
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
 import { getLaunchAdditions } from "@main/helpers/launch-additions";
+import { getLaunchPreview } from "@main/helpers/launch-preview";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import type { GameLaunchAdditions, GameShop, UserPreferences } from "@types";
 import { registerEvent } from "../register-event";
@@ -49,3 +50,11 @@ const setGameLaunchRuleOverride = async (
 
 registerEvent("getGameLaunchAdditions", getGameLaunchAdditions);
 registerEvent("setGameLaunchRuleOverride", setGameLaunchRuleOverride);
+
+const getGameLaunchPreview = (
+  _event: Electron.IpcMainInvokeEvent,
+  shop: GameShop,
+  objectId: string
+) => getLaunchPreview(shop, objectId);
+
+registerEvent("getGameLaunchPreview", getGameLaunchPreview);

@@ -16,11 +16,14 @@ in the sections below.
    3. [x] Update detection
    4. [x] Update a game in place
    5. [x] Backup cleanup, with backup sizes
-2. **Setup you can see and fix.**
-   1. [ ] Per-game OnlineFix switch
-   2. [ ] Setup log per game
-   3. [ ] Run a setup step again
-   4. [ ] Launch command preview
+2. **Setup you can see and fix.** Shipped: setup log and per-step re-runs in
+   [Game setup](features/game-setup.md#setup-log), the per-game switch in
+   [OnlineFix](features/online-fix.md), the preview in
+   [Launch rules](features/launch-rules.md#launch-command-preview).
+   1. [x] Per-game OnlineFix switch
+   2. [x] Setup log per game
+   3. [x] Run a setup step again
+   4. [x] Launch command preview
 3. **Proton and launch options.**
    1. [ ] Proton manager
    2. [ ] Proton version in launch rules
@@ -81,17 +84,6 @@ Why this order:
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
-
-## Setup and launch
-
-- [ ] **Per-game OnlineFix switch.** Turn the automatic OnlineFix
-      preparation off for a single game.
-- [ ] **Setup log per game.** Show what each setup step did, or why it was
-      skipped.
-- [ ] **Run a setup step again.** From the setup log, re-run prefix creation,
-      OnlineFix preparation or OptiScaler install for one game.
-- [ ] **Launch command preview.** For one game, show the final command,
-      environment and Proton build after all launch rules apply.
 
 ## Linux gaming
 

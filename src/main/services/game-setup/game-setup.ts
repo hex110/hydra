@@ -1,5 +1,6 @@
 import path from "node:path";
 import { db, gamesSublevel, levelKeys } from "@main/level";
+import { updateGameRecord } from "@main/services/game-record-updater";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
 import { resolveProtonPath } from "@main/helpers/resolve-proton-path";
 import { logger } from "@main/services/logger";
@@ -7,8 +8,11 @@ import { WindowManager } from "@main/services/window-manager";
 import { Wine } from "@main/services/wine";
 import type {
   Game,
+  GameSetupLogEntry,
   GameSetupReason,
+  GameSetupSkipReason,
   GameSetupStatus,
+  GameSetupStepResult,
   GameShop,
   UserPreferences,
 } from "@types";
@@ -32,14 +36,27 @@ export interface GameSetupStep {
   id: string;
   /** Lower runs first. The Wine prefix step is 100. */
   order: number;
-  run: (context: GameSetupContext) => Promise<void>;
+  /** Returns what the step did for the setup log; nothing means "done". */
+  run: (context: GameSetupContext) => Promise<GameSetupStepResult | void>;
 }
 
 export interface GameSetupRequest {
   reason: GameSetupReason;
   /** Re-run steps that normally only run once per game. */
   force?: boolean;
+  /** Run only these steps; the others keep their last log entry. */
+  steps?: string[];
 }
+
+export const skipped = (
+  code: string,
+  params?: GameSetupStepResult["params"]
+): GameSetupStepResult => ({ status: "skipped", code, params });
+
+export const done = (
+  code: string,
+  params?: GameSetupStepResult["params"]
+): GameSetupStepResult => ({ status: "done", code, params });
 
 const isWindowsExecutable = (executablePath: string) =>
   path.extname(executablePath).toLowerCase() === ".exe";
@@ -77,6 +94,11 @@ export class GameSetup {
 
     if (waiting) {
       waiting.force ||= request.force === true;
+      // A full run covers any single step asked for meanwhile.
+      waiting.steps =
+        waiting.steps && request.steps
+          ? [...new Set([...waiting.steps, ...request.steps])]
+          : undefined;
       return this.queue;
     }
 
@@ -103,39 +125,95 @@ export class GameSetup {
     objectId: string,
     request: GameSetupRequest
   ) {
-    const context = await this.createContext(shop, objectId, request);
+    const gameKey = levelKeys.game(shop, objectId);
+    const created = await this.createContext(shop, objectId, request);
 
-    if (!context) {
+    if ("skipped" in created) {
+      if (created.skipped) {
+        await updateGameRecord(gameKey, {
+          setupLog: {
+            lastRunAt: new Date().toISOString(),
+            reason: request.reason,
+            skipped: created.skipped,
+            steps: [],
+          },
+        });
+      }
       this.sendStatus(shop, objectId, "skipped");
       return;
     }
+
+    const context = created;
+    const steps = request.steps
+      ? this.steps.filter((step) => request.steps!.includes(step.id))
+      : this.steps;
 
     logger.info("[GameSetup] Running setup", {
       gameKey: context.gameKey,
       reason: context.reason,
       force: context.force,
-      steps: this.steps.map((step) => step.id),
+      steps: steps.map((step) => step.id),
     });
 
     this.sendStatus(shop, objectId, "running");
     let failed = false;
+    const entries: GameSetupLogEntry[] = [];
 
-    for (const step of this.steps) {
+    for (const step of steps) {
       this.sendStatus(shop, objectId, "running", step.id);
+      const startedAt = Date.now();
+      const base = {
+        stepId: step.id,
+        reason: context.reason,
+        at: new Date(startedAt).toISOString(),
+      };
 
       try {
-        await step.run(context);
+        const result = (await step.run(context)) ?? done("done");
+        entries.push({
+          ...base,
+          status: result.status,
+          code: result.code,
+          ...(result.params ? { params: result.params } : {}),
+          durationMs: Date.now() - startedAt,
+        });
       } catch (error) {
         failed = true;
         logger.error(`[GameSetup] Step "${step.id}" failed`, {
           gameKey: context.gameKey,
           error,
         });
+        entries.push({
+          ...base,
+          status: "failed",
+          code: null,
+          error: error instanceof Error ? error.message : String(error),
+          durationMs: Date.now() - startedAt,
+        });
       }
 
       const refreshed = await gamesSublevel.get(context.gameKey);
       if (refreshed) context.game = refreshed;
     }
+
+    const order = new Map(this.steps.map((step, index) => [step.id, index]));
+    await updateGameRecord(context.gameKey, (game) => {
+      const kept = (game.setupLog?.steps ?? []).filter(
+        (entry) =>
+          order.has(entry.stepId) &&
+          !entries.some((item) => item.stepId === entry.stepId)
+      );
+      return {
+        setupLog: {
+          lastRunAt: new Date().toISOString(),
+          reason: context.reason,
+          skipped: null,
+          steps: [...kept, ...entries].sort(
+            (a, b) => order.get(a.stepId)! - order.get(b.stepId)!
+          ),
+        },
+      };
+    });
 
     this.sendStatus(shop, objectId, failed ? "failed" : "completed");
     WindowManager.sendToAppWindows("on-library-batch-complete");
@@ -145,17 +223,22 @@ export class GameSetup {
     shop: GameShop,
     objectId: string,
     request: GameSetupRequest
-  ): Promise<GameSetupContext | null> {
+  ): Promise<GameSetupContext | { skipped: GameSetupSkipReason | null }> {
     const gameKey = levelKeys.game(shop, objectId);
     const game = await gamesSublevel.get(gameKey);
 
-    if (!game || game.isDeleted || !game.executablePath) return null;
+    if (!game || game.isDeleted) return { skipped: null };
+    if (!game.executablePath) return { skipped: "no-executable" };
     // Hydra does not own the files of games managed by another launcher.
-    if (game.hasActiveSteamImport || game.epicInstallation) return null;
+    if (game.hasActiveSteamImport || game.epicInstallation) {
+      return { skipped: "other-launcher" };
+    }
 
     const executablePath = parseExecutablePath(game.executablePath);
     // Steam installs run through Steam with Steam's own prefix.
-    if (/[\\/]steamapps[\\/]common[\\/]/i.test(executablePath)) return null;
+    if (/[\\/]steamapps[\\/]common[\\/]/i.test(executablePath)) {
+      return { skipped: "steam-install" };
+    }
 
     const userPreferences = await db
       .get<string, UserPreferences | null>(levelKeys.userPreferences, {

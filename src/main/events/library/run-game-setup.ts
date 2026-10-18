@@ -1,17 +1,35 @@
 import path from "node:path";
-import { gamesSublevel } from "@main/level";
+import { gamesSublevel, levelKeys } from "@main/level";
+import { updateGameRecord } from "@main/services/game-record-updater";
 import { parseExecutablePath } from "../helpers/parse-executable-path";
 import { registerEvent } from "../register-event";
 import { GameSetup } from "@main/services/game-setup";
 import { Wine } from "@main/services/wine";
 import type { Game, GameShop } from "@types";
 
+/** Runs every setup step again, or only `stepId`. */
 const runGameSetup = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
-  objectId: string
+  objectId: string,
+  stepId?: string
 ) => {
-  await GameSetup.enqueue(shop, objectId, { reason: "manual", force: true });
+  await GameSetup.enqueue(shop, objectId, {
+    reason: "manual",
+    force: true,
+    ...(stepId ? { steps: [stepId] } : {}),
+  });
+};
+
+const setGameOnlineFixDisabled = async (
+  _event: Electron.IpcMainInvokeEvent,
+  shop: GameShop,
+  objectId: string,
+  disabled: boolean
+) => {
+  await updateGameRecord(levelKeys.game(shop, objectId), {
+    onlineFixDisabled: disabled,
+  });
 };
 
 const isMissingPrefix = async (game: Game) => {
@@ -59,5 +77,6 @@ const prepareMissingGamePrefixes = async () => {
 };
 
 registerEvent("runGameSetup", runGameSetup);
+registerEvent("setGameOnlineFixDisabled", setGameOnlineFixDisabled);
 registerEvent("countGamesMissingPrefix", countGamesMissingPrefix);
 registerEvent("prepareMissingGamePrefixes", prepareMissingGamePrefixes);

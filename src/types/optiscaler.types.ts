@@ -47,6 +47,17 @@ export type OptiScalerEligibilityReason =
   | "native-upscaler"
   | "compatibility-list";
 
+export type OptiScalerAutoInstallOutcome =
+  | "installed"
+  | "auto-install-off"
+  | "already-installed"
+  | "opted-out"
+  | "not-windows"
+  | "other-launcher"
+  | "external"
+  | "blocked"
+  | "not-eligible";
+
 export interface OptiScalerEligibility {
   eligible: boolean;
   reasons: OptiScalerEligibilityReason[];

@@ -38,7 +38,9 @@ Compatibility**), Hydra handles both on Linux.
 
 Games set up before this existed are checked the first time they are
 launched. The game's **Compatibility** options show when OnlineFix was
-detected.
+detected, and **Prepare OnlineFix for this game** turns both parts off for that
+game only: setup skips it and the DLL overrides are not added at launch. The
+setting is stored per game (`onlineFixDisabled`).
 
 This replaces the standalone `hydra-prep` script, which edited the prefix's
 `user.reg` instead and had to wait for Proton to create it.

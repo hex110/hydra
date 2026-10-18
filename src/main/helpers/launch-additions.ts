@@ -12,6 +12,8 @@ import type {
   UserPreferences,
 } from "@types";
 import { applyDefaultLaunchOptions } from "./default-launch-options";
+import { isGamemodeAvailable } from "./is-gamemode-available";
+import { isMangohudAvailable } from "./is-mangohud-available";
 import { buildLaunchEnvironment } from "./launch-environment";
 import { findLaunchRuleMatches } from "./launch-rule-matching";
 
@@ -34,7 +36,9 @@ const getLinuxLaunchEnvironment = async (
     return null;
   }
 
-  const onlineFixEnabled = userPreferences?.prepareOnlineFixGames !== false;
+  const onlineFixEnabled =
+    userPreferences?.prepareOnlineFixGames !== false &&
+    game?.onlineFixDisabled !== true;
   let onlineFix = game?.onlineFix;
   if (onlineFix === undefined && onlineFixEnabled && prepareMissing) {
     // Games set up before OnlineFix handling existed are checked once here.
@@ -44,10 +48,12 @@ const getLinuxLaunchEnvironment = async (
       winePrefixPath: await Wine.resolvePrefixPath(
         Wine.getEffectivePrefixPath(game?.winePrefixPath, objectId)
       ),
-    }).catch((error) => {
-      logger.error("Failed to prepare OnlineFix game", { gameKey, error });
-      return null;
-    });
+    })
+      .then((preparation) => preparation.detection)
+      .catch((error) => {
+        logger.error("Failed to prepare OnlineFix game", { gameKey, error });
+        return null;
+      });
   }
 
   const optiScalerDll = OptiScaler.getLaunchNativeDll(game);
@@ -120,3 +126,37 @@ export const getLaunchAdditions = async ({
 
   return { rules: matchedRules, launchOptions };
 };
+
+/**
+ * The launch options a game runs with: Hydra's additions, then the default
+ * launch options (unless the game opted out), then the game's own.
+ */
+export const combineLaunchOptions = (
+  additions: string | null,
+  userPreferences: UserPreferences | null,
+  game: Game | undefined,
+  gameLaunchOptions: string | null | undefined
+) =>
+  applyDefaultLaunchOptions(
+    additions,
+    applyDefaultLaunchOptions(
+      userPreferences?.defaultLaunchOptions,
+      gameLaunchOptions,
+      game?.ignoreDefaultLaunchOptions === true
+    )
+  );
+
+/** Whether MangoHud and GameMode wrap the game, per game or globally. */
+export const getLaunchTools = (
+  userPreferences: UserPreferences | null,
+  game: Game | undefined
+) => ({
+  useMangohud:
+    (userPreferences?.autoRunMangohud === true ||
+      game?.autoRunMangohud === true) &&
+    isMangohudAvailable(),
+  useGamemode:
+    (userPreferences?.autoRunGamemode === true ||
+      game?.autoRunGamemode === true) &&
+    isGamemodeAvailable(),
+});

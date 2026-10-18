@@ -35,3 +35,22 @@ export interface GameLaunchAdditions {
   /** Everything Hydra adds before the game's own launch options, or null. */
   launchOptions: string | null;
 }
+
+/** What launching a game would run, after every launch rule applies. */
+export interface GameLaunchPreview {
+  /** "steam": launched through the Steam client with Steam's options. */
+  runner: "proton" | "native" | "steam";
+  executablePath: string;
+  workingDirectory: string;
+  commandLine: string;
+  env: Record<string, string>;
+  /** Hydra's additions, the default launch options and the game's own, combined. */
+  launchOptions: string | null;
+  protonPath: string | null;
+  /** Where the Proton build comes from; "umu" when umu-run picks one itself. */
+  protonSource: "game" | "rule" | "default" | "umu" | null;
+  winePrefixPath: string | null;
+  rules: GameLaunchRuleMatch[];
+  useMangohud: boolean;
+  useGamemode: boolean;
+}

@@ -22,6 +22,7 @@ import type {
   SaveImportError,
   RestoreManifestResponse,
   SaveImportBulkProgress,
+  SaveImportCheckOutcome,
   SaveImportOptions,
   SaveImportPreview,
   SaveImportResult,
@@ -411,21 +412,31 @@ export class SaveImport {
    * Looks for saves of a newly set up game and, depending on the import mode,
    * imports them or remembers them for the user to confirm.
    */
-  public static async checkNewGame(shop: GameShop, objectId: string) {
+  /** Looks for a new game's saves; returns what it did, for the setup log. */
+  public static async checkNewGame(
+    shop: GameShop,
+    objectId: string
+  ): Promise<SaveImportCheckOutcome> {
     const preferences = await loadPreferences();
     const mode = preferences?.saveImportMode ?? "ask";
-    if (mode === "never") return;
+    if (mode === "never") return { code: "disabled" };
 
     const game = await gamesSublevel.get(levelKeys.game(shop, objectId));
-    if (!game || !isWindowsGameOnLinux(game)) return;
-    if (game.saveImport?.lastImport || game.saveImport?.dismissedAt) return;
+    if (!game || !isWindowsGameOnLinux(game)) return { code: "not-windows" };
+    if (game.saveImport?.lastImport) return { code: "already-imported" };
+    if (game.saveImport?.dismissedAt) return { code: "dismissed" };
 
     const best = pickBestPreview(await this.preview(shop, objectId));
-    if (!best) return;
+    if (!best) return { code: "nothing-found" };
 
     if (mode === "automatic") {
-      await this.apply(shop, objectId, best.sourceId);
-      return;
+      const result = await this.apply(shop, objectId, best.sourceId);
+      return {
+        code: "imported",
+        source: best.sourceLabel,
+        files: result.importedFiles,
+        achievements: result.achievements,
+      };
     }
 
     await updateGameRecord(levelKeys.game(shop, objectId), (current) => ({
@@ -453,6 +464,12 @@ export class SaveImport {
       objectId,
       title: game.title,
     });
+    return {
+      code: "offered",
+      source: best.sourceLabel,
+      files: countImportableFiles(best),
+      achievements: best.achievements,
+    };
   }
 
   public static async dismissPending(shop: GameShop, objectId: string) {

@@ -4,7 +4,12 @@ import { spawn } from "node:child_process";
 import { logsPath } from "@main/constants";
 import { logger } from "@main/services/logger";
 import { updateGameRecord } from "@main/services/game-record-updater";
-import type { GameSetupContext, GameSetupStep } from "./game-setup";
+import {
+  done,
+  skipped,
+  type GameSetupContext,
+  type GameSetupStep,
+} from "./game-setup";
 
 export const POST_INSTALL_COMMAND_STEP_ID = "post-install-command";
 
@@ -28,14 +33,17 @@ export const getPostInstallCommandEnvironment = (
   ...(context.protonPath ? { PROTONPATH: context.protonPath } : {}),
 });
 
+const getPostInstallLogPath = (context: GameSetupContext) =>
+  path.join(
+    logsPath,
+    `post-install-${context.objectId.replaceAll(/[^\w.-]/g, "_")}.log`
+  );
+
 const runCommand = (
   command: string,
   context: GameSetupContext
 ): Promise<number | null> => {
-  const logPath = path.join(
-    logsPath,
-    `post-install-${context.objectId.replaceAll(/[^\w.-]/g, "_")}.log`
-  );
+  const logPath = getPostInstallLogPath(context);
   fs.mkdirSync(logsPath, { recursive: true });
   const logFile = fs.openSync(logPath, "a");
   fs.writeSync(
@@ -85,8 +93,10 @@ export const postInstallCommandStep: GameSetupStep = {
   order: 900,
   run: async (context) => {
     const command = context.userPreferences?.postInstallCommand?.trim();
-    if (!command) return;
-    if (context.game.postInstallCommandRanAt && !context.force) return;
+    if (!command) return skipped("no-command");
+    if (context.game.postInstallCommandRanAt && !context.force) {
+      return skipped("already-ran");
+    }
 
     const exitCode = await runCommand(command, context);
 
@@ -97,5 +107,6 @@ export const postInstallCommandStep: GameSetupStep = {
     await updateGameRecord(context.gameKey, {
       postInstallCommandRanAt: new Date(),
     });
+    return done("ran", { log: getPostInstallLogPath(context) });
   },
 };

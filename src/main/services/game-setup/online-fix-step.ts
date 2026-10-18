@@ -5,7 +5,7 @@ import { SystemPath } from "@main/services/system-path";
 import { Wine } from "@main/services/wine";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
 import type { GameOnlineFix } from "@types";
-import type { GameSetupStep } from "./game-setup";
+import { done, skipped, type GameSetupStep } from "./game-setup";
 import {
   copySteamClientFiles,
   detectOnlineFix,
@@ -26,6 +26,13 @@ const isPrefixValid = (winePrefixPath: string) => {
  * Records whether a game uses OnlineFix and gives its prefix the Steam client
  * files OnlineFix loads. The proxy DLL overrides are applied at launch.
  */
+export interface OnlineFixPreparation {
+  detection: GameOnlineFix | null;
+  copied: string[];
+  missing: string[];
+  prefixReady: boolean;
+}
+
 export const prepareOnlineFixGame = async ({
   gameKey,
   executablePath,
@@ -34,7 +41,7 @@ export const prepareOnlineFixGame = async ({
   gameKey: string;
   executablePath: string;
   winePrefixPath: string | null;
-}): Promise<GameOnlineFix | null> => {
+}): Promise<OnlineFixPreparation> => {
   const detection = await detectOnlineFix(
     resolveGameRootForDetection(path.dirname(executablePath))
   );
@@ -42,7 +49,7 @@ export const prepareOnlineFixGame = async ({
 
   // Files copied into a prefix Proton has not created yet would be lost.
   if (!detection || !winePrefixPath || !isPrefixValid(winePrefixPath)) {
-    return detection;
+    return { detection, copied: [], missing: [], prefixReady: false };
   }
 
   const sources = await getSteamClientSourceDirectories([
@@ -63,20 +70,38 @@ export const prepareOnlineFixGame = async ({
     missing,
   });
 
-  return detection;
+  return { detection, copied, missing, prefixReady: true };
 };
 
 export const onlineFixStep: GameSetupStep = {
   id: ONLINE_FIX_STEP_ID,
   order: 200,
   run: async (context) => {
-    if (context.userPreferences?.prepareOnlineFixGames === false) return;
-    if (path.extname(context.executablePath).toLowerCase() !== ".exe") return;
+    if (path.extname(context.executablePath).toLowerCase() !== ".exe") {
+      return skipped("not-windows");
+    }
+    if (context.userPreferences?.prepareOnlineFixGames === false) {
+      return skipped("disabled");
+    }
+    if (context.game.onlineFixDisabled) return skipped("disabled-for-game");
 
-    await prepareOnlineFixGame({
-      gameKey: context.gameKey,
-      executablePath: context.executablePath,
-      winePrefixPath: context.winePrefixPath,
+    const { detection, copied, missing, prefixReady } =
+      await prepareOnlineFixGame({
+        gameKey: context.gameKey,
+        executablePath: context.executablePath,
+        winePrefixPath: context.winePrefixPath,
+      });
+
+    if (!detection) return done("not-detected");
+    if (!prefixReady) {
+      return done("detected-no-prefix", {
+        dlls: detection.proxyDlls.join(", ") || "-",
+      });
+    }
+    return done(missing.length > 0 ? "prepared-missing" : "prepared", {
+      dlls: detection.proxyDlls.join(", ") || "-",
+      copied: copied.length,
+      missing: missing.join(", "),
     });
   },
 };
