@@ -1,0 +1,55 @@
+# Hydra Plus
+
+Fork of Hydra Launcher: GitHub `hex110/hydra`, `main` = fork features on top of
+upstream. It is a **separate app** from upstream Hydra — app id
+`io.github.hex110.hydraplus`, user data `~/.config/hydra-plus/`, installed to
+`/opt/Hydra Plus`. Never touch upstream's `~/.config/hydralauncher/` while testing.
+
+Feature docs live in `docs/features/` — keep them in step with the code.
+
+Upstream's coding rules (logger not console, i18n for every user-facing string,
+named exports, …):
+
+@.cursorrules
+
+## Release
+
+Bump `package.json` to `X.Y.Z-plus.N`, push tag `vX.Y.Z-plus.N`;
+`.github/workflows/plus-release.yml` builds the AppImage + `.pacman` and
+publishes. The updater runs with `allowPrerelease = false`, which is what lets
+`-plus.N` versions update normally.
+
+## Local build
+
+Needs `binaries/epic-prerequisite-runner/x64/`, which can't be built here (no
+Windows Rust target / mingw). Copying `/opt/Hydra/resources/epic/*` from an
+upstream install works as long as the runner source is unchanged.
+
+Build with the production env vars from `plus-release.yml`. `/tmp` is a RAM
+tmpfs, and fpm's `.pacman` staging overflows it (ENOSPC); set `TMPDIR` to a
+folder on disk, e.g. `--linux pacman --prepackaged dist/linux-unpacked`.
+Don't run a sandboxed dev instance from `/tmp` and scan real library folders:
+game setup fills the sandbox with Wine prefixes (24 GB once).
+
+## Dev testing
+
+- Run sandboxed: `MAIN_VITE_USER_DATA_PATH=<sandbox> npx electron-vite dev --remoteDebuggingPort 9333`.
+- Main process and preload are **not** hot-reloaded. Kill the
+  `electron . --remote-debugging-port=9333` process and relaunch — the
+  single-instance lock keeps stale instances alive.
+- Killing instances: Hydra ignores SIGTERM (tray), so use explicit PIDs and
+  `kill -KILL`. Never `pkill -f` a pattern that appears in your own command
+  line (it kills the tool shell, exit 144); find them with a bracketed first
+  letter, e.g. `pgrep -f "[e]lectron-vite dev"`.
+- Hydra API array params need `downloadSourceIds[]=` encoding when testing with curl.
+- A dev build writes app-launcher `.desktop` entries only when
+  `HYDRA_PLUS_APPLICATIONS_DIR` is set; point it at a scratch folder.
+
+## Code pitfalls
+
+- Save import (`src/main/services/save-import/`) reuses the cloud-save restore
+  code. `resolveRestoreManifestTargets` throws when signed out unless you pass
+  empty custom-path bindings, and `mergeAchievements` throws
+  `UserNotLoggedInError` when signed out (files are copied anyway). Steam
+  `<root>/userdata/` saves are deliberately skipped.
+- New save sources go behind the `SaveImportSource` interface.

@@ -6,8 +6,7 @@ import { DownloadManager, GameFilesManager, logger } from "@main/services";
 import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { Downloader, FILE_EXTENSIONS_TO_EXTRACT } from "@shared";
 
-const extractGameDownload = async (
-  _event: Electron.IpcMainInvokeEvent,
+export const startGameExtraction = async (
   shop: GameShop,
   objectId: string
 ): Promise<boolean> => {
@@ -112,5 +111,11 @@ const extractGameDownload = async (
 
   return true;
 };
+
+const extractGameDownload = async (
+  _event: Electron.IpcMainInvokeEvent,
+  shop: GameShop,
+  objectId: string
+) => startGameExtraction(shop, objectId);
 
 registerEvent("extractGameDownload", extractGameDownload);

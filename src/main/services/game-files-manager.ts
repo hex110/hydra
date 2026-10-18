@@ -1,7 +1,7 @@
 import { ASSETS_PATH } from "@main/constants";
 import { getGameAssets } from "@main/events/catalogue/get-game-assets";
 import { getDirectorySize } from "@main/events/helpers/get-directory-size";
-import { findGameExecutableInFolder } from "@main/helpers/find-game-executable";
+import { findOrGuessGameExecutable } from "@main/helpers/find-game-executable";
 import { updateGameExecutablePath } from "@main/helpers/update-executable-path";
 import { runAchievementMetadataExport } from "@main/services/achievements/metadata-export";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
@@ -521,17 +521,12 @@ export class GameFilesManager {
         gamesSublevel.get(this.gameKey),
       ]);
 
-      if (!download || !game || game.executablePath) {
-        return;
-      }
-
-      const executables = GameExecutables.getExecutablesForGame(this.objectId);
-
-      if (!executables || executables.length === 0) {
-        return;
-      }
-
-      if (!download.folderName) {
+      if (
+        !download?.folderName ||
+        !game ||
+        game.executablePath ||
+        this.shop === "launchbox"
+      ) {
         return;
       }
 
@@ -544,9 +539,10 @@ export class GameFilesManager {
         return;
       }
 
-      const foundExePath = await findGameExecutableInFolder(
+      const foundExePath = await findOrGuessGameExecutable(
         gameFolderPath,
-        executables
+        GameExecutables.getExecutablesForGame(this.objectId),
+        game.title
       );
 
       if (foundExePath) {

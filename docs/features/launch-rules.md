@@ -51,12 +51,12 @@ instead:
 A new install starts with these. They can be edited, disabled or removed;
 **Restore built-in rules** brings back removed ones.
 
-| Rule                         | Applies to                                                          | Adds                                                               | Default |
-| ---------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
-| HDR                          | Every game                                                          | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
-| ReShade                      | `ReShade.ini`                                                       | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
-| Unity games: Vulkan renderer | `UnityPlayer.dll`                                                   | `%command% -force-vulkan`                                          | Off     |
-| Denuvo bypass (linuwux)      | `artifact.dll`, `artifact.json`, `DenuvOwO.dll`, `DenuvOwO.ini`, `Reflex.ini` | `linuwux %command%`                                    | On      |
+| Rule                         | Applies to                                                                    | Adds                                                               | Default |
+| ---------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
+| HDR                          | Every game                                                                    | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
+| ReShade                      | `ReShade.ini`                                                                 | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
+| Unity games: Vulkan renderer | `UnityPlayer.dll`                                                             | `%command% -force-vulkan`                                          | Off     |
+| Denuvo bypass (linuwux)      | `artifact.dll`, `artifact.json`, `DenuvOwO.dll`, `DenuvOwO.ini`, `Reflex.ini` | `linuwux %command%`                                                | On      |
 
 ### HDR
 

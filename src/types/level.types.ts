@@ -254,6 +254,8 @@ export interface UserPreferences {
   hideToTrayOnGameStart?: boolean;
   enableNewDownloadOptionsBadges?: boolean;
   createStartMenuShortcut?: boolean;
+  /** Linux: a desktop entry per installed game, for app launchers. */
+  addGamesToAppLauncher?: boolean;
   bigPictureSoundsEnabled?: boolean;
   bigPictureVirtualKeyboardEnabled?: boolean;
   bigPictureDiagnosticsEnabled?: boolean;

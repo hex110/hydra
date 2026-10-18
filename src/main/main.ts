@@ -45,6 +45,7 @@ import { migrateGameVisibilityFields } from "./services/library-sync/game-visibi
 import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migration";
 import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
+import { AppLauncherEntries } from "./services/app-launcher-entries";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -123,6 +124,7 @@ export const loadState = async () => {
   }
 
   void watchSteamLibraries();
+  AppLauncherEntries.watch();
 
   await HydraApi.setupApi().then(async () => {
     await initializeEpicIntegration();
@@ -152,6 +154,16 @@ export const loadState = async () => {
       void startEpicSyncOnStartup();
     }
   });
+
+  // Startup clears the extracting flag, so note which extractions the last
+  // session left unfinished before that happens.
+  const interruptedExtractions = (
+    await downloadsSublevel.values().all()
+  ).filter(
+    (download) =>
+      download.extracting &&
+      (download.status === "complete" || download.status === "seeding")
+  );
 
   const downloadToResume =
     await DownloadOrchestrator.bootstrapDownloadsOnStartup();
@@ -226,6 +238,21 @@ export const loadState = async () => {
   }
 
   WindowManager.sendDownloadsUpdated();
+
+  if (interruptedExtractions.length > 0) {
+    const { startGameExtraction } = await import(
+      "./events/library/extract-game-download"
+    );
+
+    for (const download of interruptedExtractions) {
+      logger.info(
+        `[Startup] Resuming interrupted extraction for ${download.shop}:${download.objectId}`
+      );
+      await startGameExtraction(download.shop, download.objectId).catch(
+        (error) => logger.error("Failed to resume extraction", error)
+      );
+    }
+  }
 
   startMainLoop();
 

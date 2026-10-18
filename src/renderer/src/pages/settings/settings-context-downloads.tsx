@@ -26,6 +26,7 @@ const buildForm = (preferences: UserPreferences | null) => ({
     preferences?.showDownloadSpeedInMegabytes ?? false,
   extractFilesByDefault: preferences?.extractFilesByDefault ?? true,
   createStartMenuShortcut: preferences?.createStartMenuShortcut ?? true,
+  addGamesToAppLauncher: preferences?.addGamesToAppLauncher ?? true,
   maxDownloadSpeedMegabytes:
     typeof preferences?.maxDownloadSpeedBytesPerSecond === "number" &&
     preferences.maxDownloadSpeedBytesPerSecond > 0
@@ -256,6 +257,18 @@ export function SettingsContextDownloads() {
             onChange={() =>
               handleChange({
                 createStartMenuShortcut: !form.createStartMenuShortcut,
+              })
+            }
+          />
+        )}
+
+        {window.electron.platform === "linux" && (
+          <CheckboxField
+            label={t("add_games_to_app_launcher")}
+            checked={form.addGamesToAppLauncher}
+            onChange={() =>
+              handleChange({
+                addGamesToAppLauncher: !form.addGamesToAppLauncher,
               })
             }
           />
