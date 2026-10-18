@@ -33,6 +33,20 @@ export const LAUNCH_RULE_PRESETS: LaunchRule[] = [
     files: ["UnityPlayer.dll"],
     launchOptions: "%command% -force-vulkan",
   },
+  {
+    id: "preset-denuvo-bypass",
+    presetId: "denuvo-bypass",
+    name: "Denuvo bypass (linuwux)",
+    enabled: true,
+    files: [
+      "artifact.dll",
+      "artifact.json",
+      "DenuvOwO.dll",
+      "DenuvOwO.ini",
+      "Reflex.ini",
+    ],
+    launchOptions: "linuwux %command%",
+  },
 ];
 
 const patternCache = new Map<string, RegExp>();

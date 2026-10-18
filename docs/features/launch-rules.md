@@ -51,11 +51,12 @@ instead:
 A new install starts with these. They can be edited, disabled or removed;
 **Restore built-in rules** brings back removed ones.
 
-| Rule                         | Applies to        | Adds                                                               | Default |
-| ---------------------------- | ----------------- | ------------------------------------------------------------------ | ------- |
-| HDR                          | Every game        | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
-| ReShade                      | `ReShade.ini`     | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
-| Unity games: Vulkan renderer | `UnityPlayer.dll` | `%command% -force-vulkan`                                          | Off     |
+| Rule                         | Applies to                                                          | Adds                                                               | Default |
+| ---------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
+| HDR                          | Every game                                                          | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
+| ReShade                      | `ReShade.ini`                                                       | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
+| Unity games: Vulkan renderer | `UnityPlayer.dll`                                                   | `%command% -force-vulkan`                                          | Off     |
+| Denuvo bypass (linuwux)      | `artifact.dll`, `artifact.json`, `DenuvOwO.dll`, `DenuvOwO.ini`, `Reflex.ini` | `linuwux %command%`                                    | On      |
 
 ### HDR
 
@@ -69,6 +70,17 @@ and anti-cheat) can turn the rule off and use
 
 Installs that used the earlier HDR switch are moved onto this rule
 automatically, keeping the global setting and each game's choice.
+
+### Denuvo bypass (linuwux)
+
+The Denuvo bypass rule wraps games that contain DenuvOwO or ARTIFACT crack
+files with [linuwux](https://github.com/brcly/linuwux-runtime), a small
+LD_PRELOAD runtime that makes these cracks work under Proton on Linux without
+a patched Proton build. `linuwux` must be installed separately — run the
+installer from the repository's README. Your CPU must also support or emulate
+`cpuid_fault`, and UMIP must be disabled (`clearcpuid=514` kernel parameter)
+on Intel 9th gen+ and AMD Ryzen 3000+. If `linuwux` is not in PATH, edit the
+rule to use the full path (e.g. `/home/user/.local/bin/linuwux %command%`).
 
 ## Sharing rules
 
