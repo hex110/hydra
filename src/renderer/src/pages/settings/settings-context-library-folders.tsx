@@ -19,6 +19,7 @@ export function SettingsContextLibraryFolders() {
   );
 
   const folders = userPreferences?.libraryScanDirectories ?? [];
+  const ignoredFolders = userPreferences?.libraryScanIgnoredFolders ?? [];
   const scanOnStartup = userPreferences?.scanLibraryOnStartup === true;
   const identifyByFolderName =
     userPreferences?.identifyGamesByFolderName !== false;
@@ -107,6 +108,37 @@ export function SettingsContextLibraryFolders() {
           {t("library_folders_identify_by_name_description")}
         </p>
       </div>
+
+      {ignoredFolders.length > 0 && (
+        <div className="settings-context-panel__group">
+          <h3>{t("library_folders_ignored")}</h3>
+          <p className="settings-library-folders__hint">
+            {t("library_folders_ignored_description")}
+          </p>
+          <ul className="settings-library-folders__list">
+            {ignoredFolders.map((folder) => (
+              <li key={folder} className="settings-library-folders__item">
+                <span className="settings-library-folders__path">{folder}</span>
+                <button
+                  type="button"
+                  className="settings-library-folders__remove"
+                  onClick={() =>
+                    updateUserPreferences({
+                      libraryScanIgnoredFolders: ignoredFolders.filter(
+                        (item) => item !== folder
+                      ),
+                    })
+                  }
+                  aria-label={t("library_folders_unignore")}
+                  title={t("library_folders_unignore")}
+                >
+                  <XIcon size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="settings-library-folders__actions">
         <Button

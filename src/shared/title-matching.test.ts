@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import {
+  parseSteamStoreLink,
   cleanReleaseName,
   comparableTitle,
   isSameTitle,
@@ -99,5 +100,29 @@ describe("titleSimilarity", () => {
 
   it("scores unrelated titles as 0", () => {
     assert.strictEqual(titleSimilarity("Celeste", "Hollow Knight"), 0);
+  });
+});
+
+describe("parseSteamStoreLink", () => {
+  it("reads store, community and steam:// links", () => {
+    assert.strictEqual(
+      parseSteamStoreLink(
+        "https://store.steampowered.com/app/1145350/Hades_II/?snr=1"
+      ),
+      "1145350"
+    );
+    assert.strictEqual(
+      parseSteamStoreLink("steamcommunity.com/app/620"),
+      "620"
+    );
+    assert.strictEqual(parseSteamStoreLink("steam://store/400"), "400");
+  });
+
+  it("ignores other text", () => {
+    assert.strictEqual(parseSteamStoreLink("Hades II"), null);
+    assert.strictEqual(
+      parseSteamStoreLink("see https://store.steampowered.com/app/1"),
+      null
+    );
   });
 });

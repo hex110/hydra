@@ -238,3 +238,14 @@ export const titleSimilarity = (a: string, b: string): number => {
 
   return (2 * shared) / (left.length + right.length);
 };
+
+/** The app id in a Steam store, community or `steam://` link; null otherwise. */
+export const parseSteamStoreLink = (text: string): string | null => {
+  const value = text.trim();
+  if (!value || /\s/.test(value)) return null;
+  const match =
+    /^(?:https?:\/\/)?(?:store\.steampowered\.com|steamcommunity\.com|steamdb\.info)\/app\/(\d+)/i.exec(
+      value
+    ) ?? /^steam:\/\/(?:store|run|rungameid|install)\/(\d+)/i.exec(value);
+  return match?.[1] ?? null;
+};

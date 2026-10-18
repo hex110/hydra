@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SearchIcon } from "@primer/octicons-react";
+import { SearchIcon, XIcon } from "@primer/octicons-react";
 import cn from "classnames";
 
 import { TextField } from "@renderer/components";
@@ -21,6 +21,8 @@ export interface ScanGamePickerProps {
   match: ScannedFolderMatch;
   pickedObjectId: string | undefined;
   onPick: (match: ScannedFolderMatch, objectId: string) => void;
+  /** Marks the folder as not a game; only offered for folder matches. */
+  onIgnore?: (match: ScannedFolderMatch) => void;
 }
 
 /**
@@ -31,6 +33,7 @@ export function ScanGamePicker({
   match,
   pickedObjectId,
   onPick,
+  onIgnore,
 }: Readonly<ScanGamePickerProps>) {
   const { t } = useTranslation("header");
 
@@ -139,6 +142,17 @@ export function ScanGamePicker({
             >
               <SearchIcon size={12} />
               <span>{t("scan_games_not_listed")}</span>
+            </button>
+          )}
+          {onIgnore && match.folderPath && (
+            <button
+              type="button"
+              className="scan-games-modal__choice scan-games-modal__choice--search"
+              onClick={() => onIgnore(match)}
+              title={t("scan_games_not_a_game_hint")}
+            >
+              <XIcon size={12} />
+              <span>{t("scan_games_not_a_game")}</span>
             </button>
           )}
         </div>

@@ -402,7 +402,8 @@ export function GameDetailsContextProvider({
     setAutoDownloadRequest(
       isUpdate
         ? "update"
-        : userPreferences?.startBrowserDownloadsImmediately
+        : userPreferences?.startBrowserDownloadsImmediately &&
+            search.get("source") !== "paste"
           ? "start"
           : "select"
     );

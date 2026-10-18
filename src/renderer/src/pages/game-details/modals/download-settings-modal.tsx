@@ -1616,6 +1616,16 @@ export function DownloadSettingsModal({
           }
         />
 
+        {automaticExtractionEnabled &&
+          hasEnoughDiskSpace &&
+          diskFreeSpace !== null &&
+          requiredSpace !== null &&
+          diskFreeSpace < requiredSpace * 2 && (
+            <p className="download-settings-modal__hint-text">
+              {t("extraction_space_hint")}
+            </p>
+          )}
+
         <CheckboxField
           label={t("delete_archive_files_after_extraction")}
           checked={deleteArchiveFilesAfterExtraction}

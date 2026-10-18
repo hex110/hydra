@@ -933,5 +933,6 @@ export * from "./linux-gaming.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }
-  | { reason: "file-not-found" };
+  | { reason: "file-not-found" }
+  | { reason: "not-enough-space"; required: number; available: number };
 export type { SystemPowerAction } from "./system-power";

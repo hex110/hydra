@@ -12,7 +12,7 @@ import {
   SteamLibraryBadge,
   useGameActions,
 } from "..";
-import { HeartFillIcon } from "@primer/octicons-react";
+import { AlertIcon, HeartFillIcon } from "@primer/octicons-react";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { useCollectionContextMenu } from "@renderer/context";
 import { getLibraryPresentationBadgeSource } from "@renderer/pages/library/library-category";
@@ -173,6 +173,15 @@ export function SidebarGameItem({
                 +{game.newDownloadOptionsCount}
               </span>
             )}
+
+          {game.executableStatus && (
+            <span
+              className="sidebar__game-missing-icon"
+              title={t(`executable_status_${game.executableStatus}`)}
+            >
+              <AlertIcon size={12} />
+            </span>
+          )}
 
           {game.favorite && (
             <HeartFillIcon size={12} className="sidebar__game-favorite-icon" />

@@ -12,6 +12,7 @@ export function updateGameExecutablePath<TGame extends Game>(
     ...game,
     executablePath,
     executablePathUpdatedAt: executablePath ? new Date() : null,
+    executableStatus: null,
   };
 }
 

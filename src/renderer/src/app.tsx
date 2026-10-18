@@ -15,6 +15,8 @@ import {
   useUserDetails,
 } from "@renderer/hooks";
 import { useDownloadOptionsListener } from "@renderer/hooks/use-download-options-listener";
+import { useMiddleClickAutoscroll } from "@renderer/hooks/use-middle-click-autoscroll";
+import { useSteamLinkPaste } from "@renderer/hooks/use-steam-link-paste";
 import i18n from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WorkWonders } from "workwonders-sdk";
@@ -39,6 +41,7 @@ import {
   updateRetroArchScanProgress,
 } from "@renderer/features";
 import { useTranslation } from "react-i18next";
+import { formatBytes } from "@shared";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSubscription } from "./hooks/use-subscription";
 import { ArchiveDeletionModal } from "./pages/downloads/archive-deletion-error-modal";
@@ -76,6 +79,8 @@ export function App() {
 
   // Listen for new download options updates
   useDownloadOptionsListener();
+  useSteamLinkPaste();
+  useMiddleClickAutoscroll();
 
   const { t } = useTranslation("app");
 
@@ -495,6 +500,18 @@ export function App() {
             t("extraction_unsupported_format_description", {
               ns: "downloads",
               format: failure.format,
+            })
+          );
+          return;
+        }
+
+        if (failure?.reason === "not-enough-space") {
+          showErrorToast(
+            t("extraction_not_enough_space_title", { ns: "downloads" }),
+            t("extraction_not_enough_space_description", {
+              ns: "downloads",
+              required: formatBytes(failure.required),
+              available: formatBytes(failure.available),
             })
           );
           return;

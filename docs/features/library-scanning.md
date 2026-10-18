@@ -66,8 +66,19 @@ under the results with an **Identify them** button. They are not counted in
 the scan notification, so the startup scan stays quiet about launcher and
 mod-manager folders.
 
-Folders without any `.exe` (archives, unfinished downloads, native Linux games)
-are skipped, as are folders that already hold a library game.
+Folders without any `.exe` (archives, unfinished downloads, empty folder
+skeletons, native Linux games) are skipped, as are folders that already hold a
+library game. The scan results list the skipped folders under **N folders were
+skipped**, so a game that seems missed can be told apart from an empty folder.
+
+## Ignoring folders
+
+Launchers and mod managers (`Prism Launcher`, `r2modman`, `Vortex Mods`)
+contain executables but are not games. **Not a game** next to a folder in the
+scan dialog ignores it for good: later scans skip the folder and everything
+inside it, including executable-name matches. Ignored folders are listed in
+**Settings → Library folders → Ignored folders**, where they can be scanned
+again. The list is stored as `libraryScanIgnoredFolders`.
 
 ## After a game is added
 

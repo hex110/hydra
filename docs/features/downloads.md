@@ -7,6 +7,27 @@ downloaded there and extracted next to themselves, into a folder named after
 the archive, so the game ends up in the same place. The download dialog can
 pick a different folder for a single game.
 
+## Free space
+
+The download dialog refuses a download that does not fit on the drive, as
+upstream does, and warns when the drive has less than twice the download's
+size free while automatic extraction is on: the unpacked game needs room too.
+
+Before extracting an archive, Hydra lists its contents with 7-Zip and stops
+with **Not enough space to extract** when the unpacked size (plus a 512 MB
+margin) does not fit. Nothing is written in that case; free up space and
+extract again from the Downloads page. Archives whose file list is encrypted
+cannot be listed and are extracted without the check.
+
+## Pasting a Steam link
+
+Pasting a Steam store link (`https://store.steampowered.com/app/<id>/…`, a
+Steam community or SteamDB app link, or `steam://store/<id>`) anywhere outside
+a text field, or into the header search, opens that game with its download
+options and the best repack preselected, as the
+[browser add-on](browser-addon.md) does. It never starts the download on its
+own.
+
 ## Interrupted extraction
 
 If Hydra Plus quits while it is extracting a download, the extraction starts

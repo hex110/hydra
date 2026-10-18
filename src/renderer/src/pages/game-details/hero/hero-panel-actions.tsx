@@ -1,10 +1,7 @@
 import {
+  AlertIcon,
   DownloadIcon,
   GearIcon,
-  HeartFillIcon,
-  HeartIcon,
-  PinIcon,
-  PinSlashIcon,
   PlayIcon,
   PlusCircleIcon,
 } from "@primer/octicons-react";
@@ -33,6 +30,7 @@ import {
 import { DiscSelectionModal } from "../modals/disc-selection-modal";
 import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-modal";
 
+import { GameMoreMenu } from "./game-more-menu";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
@@ -87,6 +85,13 @@ export function HeroPanelActions() {
   const officialMembers = getOfficialStoreMembers(
     presentation?.members ?? (game ? [game] : [])
   );
+  const steamAppId =
+    officialMembers.steam?.objectId ??
+    (game?.catalogueGame?.shop === "steam"
+      ? game.catalogueGame.objectId
+      : shop === "steam"
+        ? (objectId ?? null)
+        : null);
   const [pendingClassicsLaunch, setPendingClassicsLaunch] = useState<{
     discPath: string | undefined;
   } | null>(null);
@@ -449,6 +454,30 @@ export function HeroPanelActions() {
     const isPlayableClassics =
       game?.shop === "launchbox" && (game?.discs?.length ?? 0) > 0;
 
+    if (game?.executablePath && game.executableStatus) {
+      return (
+        <Button
+          onClick={async () => {
+            const status = await window.electron.checkGameExecutable(
+              game.shop,
+              game.objectId
+            );
+            await updateGame();
+            if (!status) return;
+            setGameOptionsInitialCategory("locations");
+            setShowGameOptionsModal(true);
+          }}
+          theme="outline"
+          disabled={deleting}
+          className="hero-panel-actions__action"
+          title={`${t(`executable_status_${game.executableStatus}`)} ${game.executablePath}`}
+        >
+          <AlertIcon />
+          {t(`executable_status_${game.executableStatus}_short`)}
+        </Button>
+      );
+    }
+
     if (game?.executablePath || isPlayableClassics) {
       return (
         <Button
@@ -481,6 +510,7 @@ export function HeroPanelActions() {
       <>
         {addGameToLibraryButton}
         {showDownloadOptionsButton}
+        <GameMoreMenu title={gameTitle} steamAppId={steamAppId} />
       </>
     );
   }
@@ -525,34 +555,6 @@ export function HeroPanelActions() {
         {gameActionButton()}
         <div className="hero-panel-actions__separator" />
         <Button
-          onClick={toggleGameFavorite}
-          theme="outline"
-          disabled={deleting}
-          className="hero-panel-actions__action"
-        >
-          {(presentation?.favorite ?? game.favorite) ? (
-            <HeartFillIcon />
-          ) : (
-            <HeartIcon />
-          )}
-        </Button>
-
-        {userDetails && game.shop !== "custom" && (
-          <Button
-            onClick={toggleGamePinned}
-            theme="outline"
-            disabled={deleting}
-            className="hero-panel-actions__action"
-          >
-            {(presentation?.isPinned ?? game.isPinned) ? (
-              <PinSlashIcon />
-            ) : (
-              <PinIcon />
-            )}
-          </Button>
-        )}
-
-        <Button
           onClick={() => {
             setGameOptionsInitialCategory("general");
             setShowGameOptionsModal(true);
@@ -564,6 +566,18 @@ export function HeroPanelActions() {
           <GearIcon />
           {t("options")}
         </Button>
+
+        <GameMoreMenu
+          title={game.title}
+          steamAppId={steamAppId}
+          favorite={presentation?.favorite ?? game.favorite}
+          pinned={presentation?.isPinned ?? game.isPinned}
+          onToggleFavorite={toggleGameFavorite}
+          onTogglePinned={
+            userDetails && game.shop !== "custom" ? toggleGamePinned : undefined
+          }
+          disabled={deleting}
+        />
 
         {game.shop === "launchbox" && (
           <DiscSelectionModal

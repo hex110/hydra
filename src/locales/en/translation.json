@@ -202,7 +202,12 @@
     "scan_games_remove_folder": "Remove folder",
     "scan_games_folders_hint_manual": "Add at least one folder to scan for games.",
     "scan_games_folders_hint_automatic": "Your Steam libraries and Hydra's downloads folder are always scanned too.",
-    "scan_games_manage_folders": "Manage folders"
+    "scan_games_manage_folders": "Manage folders",
+    "scan_games_not_a_game": "Not a game",
+    "scan_games_not_a_game_hint": "Never offer this folder again. Undo in Settings → Library folders.",
+    "scan_games_skipped_title_one": "{{count}} folder was skipped",
+    "scan_games_skipped_title_other": "{{count}} folders were skipped",
+    "scan_games_skipped_hint": "These folders contain no .exe, so they can't be a Windows game: archives, unfinished downloads, empty folders or native Linux games."
   },
   "bottom_panel": {
     "reconnecting": "Reconnecting {{title}}…",
@@ -388,7 +393,7 @@
     "remove_from_library_title": "Are you sure?",
     "remove_from_library_description": "This will remove {{game}} from your library",
     "options": "Options",
-    "properties": "Properties",
+    "properties": "Options",
     "edit_game_modal_title": "Title",
     "edit_game_modal_enter_title": "Enter title",
     "edit_game_modal_fill_required": "Please fill in all required fields",
@@ -1292,7 +1297,18 @@
     "mangohud_layout_description": "Applies when the game runs with MangoHud (above, globally, or through a launch rule).",
     "mangohud_layout_default": "Use the layout from Settings → Compatibility",
     "mangohud_layout_mangohud_config": "Use MangoHud's own config file",
-    "mangohud_layout_custom": "Use a layout for this game"
+    "mangohud_layout_custom": "Use a layout for this game",
+    "more_actions": "More",
+    "open_on_steam": "Open on Steam",
+    "open_on_steamdb": "Open on SteamDB",
+    "open_on_protondb": "Open on ProtonDB",
+    "open_on_pcgamingwiki": "Open on PCGamingWiki",
+    "open_on_howlongtobeat": "Open on HowLongToBeat",
+    "executable_status_missing": "The game's files are missing: its executable is no longer where Hydra expects it.",
+    "executable_status_offline": "The drive with the game's files is not mounted.",
+    "executable_status_missing_short": "Files missing",
+    "executable_status_offline_short": "Drive not mounted",
+    "extraction_space_hint": "Extracting needs room for the unpacked game too, often more than the download itself."
   },
   "activation": {
     "title": "Activate Hydra",
@@ -1365,7 +1381,9 @@
     "no_game_updates": "Your installed games are up to date with your download sources.",
     "game_update_versions": "{{installed}} → {{available}}",
     "ignore_game_update": "Ignore",
-    "update_game": "Update"
+    "update_game": "Update",
+    "extraction_not_enough_space_title": "Not enough space to extract",
+    "extraction_not_enough_space_description": "The archive unpacks to {{required}}, but only {{available}} is free on that drive. Free up space, then extract it again from the Downloads page."
   },
   "settings": {
     "rpcs3_config_title": "RPCS3 configuration folder",
@@ -2342,7 +2360,10 @@
     "launch_rules_gamescope_fps_limit": "FPS limit",
     "launch_rules_gamescope_fullscreen": "Fullscreen",
     "launch_rules_gamescope_hdr": "HDR",
-    "launch_rules_gamescope_extra": "Extra gamescope arguments"
+    "launch_rules_gamescope_extra": "Extra gamescope arguments",
+    "library_folders_ignored": "Ignored folders",
+    "library_folders_ignored_description": "Folders you marked as not a game in the scan dialog. Scans skip them and everything inside.",
+    "library_folders_unignore": "Scan this folder again"
   },
   "notifications": {
     "download_complete": "Download complete",

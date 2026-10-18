@@ -12,6 +12,8 @@ import { logger } from "@main/services/logger";
 import { ProtonManager } from "@main/services/proton-manager";
 import { Umu } from "@main/services/umu";
 import { Wine } from "@main/services/wine";
+import { WindowManager } from "@main/services/window-manager";
+import { refreshExecutableStatus } from "@main/services/executable-status";
 import type {
   GameShop,
   MangoHudSettings,
@@ -167,3 +169,18 @@ registerEvent("getGameWinePrefixInfo", getGameWinePrefixInfo);
 registerEvent("openGameWinecfg", openGameWinecfg);
 registerEvent("resetGameWinePrefix", resetGameWinePrefix);
 registerEvent("setGameMangoHud", setGameMangoHud);
+
+/** Checks the game's executable again; returns the new status. */
+const checkGameExecutable = async (
+  _event: Electron.IpcMainInvokeEvent,
+  shop: GameShop,
+  objectId: string
+) => {
+  const game = await getGame(shop, objectId);
+  if (await refreshExecutableStatus(game)) {
+    WindowManager.sendToAppWindows("on-library-batch-complete");
+  }
+  return (await getGame(shop, objectId)).executableStatus ?? null;
+};
+
+registerEvent("checkGameExecutable", checkGameExecutable);

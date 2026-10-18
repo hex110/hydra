@@ -102,10 +102,14 @@ const pickExecutable = async (
 const identifyFolder = async (
   folderPath: string,
   libraryObjectIds: Set<string>,
-  isCancelled: () => boolean
+  isCancelled: () => boolean,
+  onSkipped: (folderPath: string) => void
 ): Promise<IdentifiedFolder | null> => {
   const candidates = await listExecutableCandidates(folderPath, isCancelled);
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    if (!isCancelled()) onSkipped(folderPath);
+    return null;
+  }
 
   const folderTitle = cleanReleaseName(path.basename(folderPath));
   if (!folderTitle) return null;
@@ -169,11 +173,15 @@ const identifyFolder = async (
 export const identifyUnclaimedFolders = async (options: {
   roots: string[];
   occupiedPaths: string[];
+  /** Folders the user marked as not a game. */
+  ignoredFolders: string[];
   libraryObjectIds: Set<string>;
   isCancelled: () => boolean;
-}): Promise<IdentifiedFolder[]> => {
+}): Promise<{ identified: IdentifiedFolder[]; skipped: string[] }> => {
   const occupied = options.occupiedPaths.map(normalize);
+  const ignored = new Set(options.ignoredFolders.map(normalize));
   const folders: string[] = [];
+  const skipped: string[] = [];
 
   for (const root of new Set(options.roots.map((r) => path.resolve(r)))) {
     const entries = await fs.promises
@@ -186,6 +194,7 @@ export const identifyUnclaimedFolders = async (options: {
       const folderPath = path.join(root, entry.name);
       const normalizedFolder = normalize(folderPath);
 
+      if (ignored.has(normalizedFolder)) continue;
       if (occupied.some((p) => isInside(p, normalizedFolder))) continue;
       folders.push(folderPath);
     }
@@ -200,7 +209,8 @@ export const identifyUnclaimedFolders = async (options: {
       const result = await identifyFolder(
         folderPath,
         options.libraryObjectIds,
-        options.isCancelled
+        options.isCancelled,
+        (skippedFolder) => skipped.push(skippedFolder)
       ).catch((error) => {
         logger.error("[IdentifyFolders] Failed to identify folder", {
           folderPath,
@@ -216,10 +226,13 @@ export const identifyUnclaimedFolders = async (options: {
 
   // Two folders can resolve to the same game; only the first one is added.
   const seen = new Set<string>();
-  return identified.filter((folder) => {
-    if (!folder.match) return true;
-    if (seen.has(folder.match.objectId)) return false;
-    seen.add(folder.match.objectId);
-    return true;
-  });
+  return {
+    identified: identified.filter((folder) => {
+      if (!folder.match) return true;
+      if (seen.has(folder.match.objectId)) return false;
+      seen.add(folder.match.objectId);
+      return true;
+    }),
+    skipped: skipped.sort((a, b) => a.localeCompare(b)),
+  };
 };

@@ -13,8 +13,10 @@ import cn from "classnames";
 import { useNavigate } from "react-router-dom";
 
 import { Button, CheckboxField, Modal } from "@renderer/components";
-import { useAppSelector } from "@renderer/hooks";
-import type { ScannedFolderMatch } from "@types";
+import { setUserPreferences } from "@renderer/features";
+import { useAppDispatch, useAppSelector } from "@renderer/hooks";
+import { levelDBService } from "@renderer/services/leveldb.service";
+import type { ScannedFolderMatch, UserPreferences } from "@types";
 
 import { ScanGamePicker } from "./scan-game-picker";
 import "./scan-games-modal.scss";
@@ -32,6 +34,7 @@ export interface ScanResult {
   addedGames: FoundGame[];
   ambiguousMatches: ScannedFolderMatch[];
   unidentifiedFolders: ScannedFolderMatch[];
+  skippedFolders?: string[];
   total: number;
 }
 
@@ -96,6 +99,11 @@ export function ScanGamesModal({
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [isResolving, setIsResolving] = useState(false);
   const [resolvedGames, setResolvedGames] = useState<FoundGame[]>([]);
+  const [isSkippedOpen, setIsSkippedOpen] = useState(false);
+  const ignoredFolders = useAppSelector(
+    (state) => state.userPreferences.value?.libraryScanIgnoredFolders ?? []
+  );
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (visible) setScanMode(defaultScanMode);
@@ -151,6 +159,36 @@ export function ScanGamesModal({
       }));
     },
     []
+  );
+
+  const handleIgnore = useCallback(
+    async (match: ScannedFolderMatch) => {
+      if (!match.folderPath) return;
+      const folderPath = match.folderPath;
+      await window.electron.updateUserPreferences({
+        libraryScanIgnoredFolders: [
+          ...ignoredFolders.filter((folder) => folder !== folderPath),
+          folderPath,
+        ],
+      });
+      const preferences = await levelDBService.get(
+        "userPreferences",
+        null,
+        "json"
+      );
+      dispatch(setUserPreferences(preferences as UserPreferences | null));
+
+      const remaining = (list: ScannedFolderMatch[]) =>
+        list.filter((item) => item.folderPath !== folderPath);
+      setPending(remaining);
+      setUnidentified(remaining);
+      setPicks((prev) => {
+        const next = { ...prev };
+        delete next[match.executablePath];
+        return next;
+      });
+    },
+    [dispatch, ignoredFolders]
   );
 
   const handleStopPicking = () => {
@@ -401,6 +439,7 @@ export function ScanGamesModal({
                       match={match}
                       pickedObjectId={picks[match.executablePath]?.objectId}
                       onPick={handlePick}
+                      onIgnore={handleIgnore}
                     />
                   ))}
                 </ul>
@@ -437,6 +476,7 @@ export function ScanGamesModal({
                           match={match}
                           pickedObjectId={picks[match.executablePath]?.objectId}
                           onPick={handlePick}
+                          onIgnore={handleIgnore}
                         />
                       ))}
                     </ul>
@@ -470,6 +510,45 @@ export function ScanGamesModal({
                 <Button theme="outline" onClick={handleIdentifyFolders}>
                   {t("scan_games_identify_folders")}
                 </Button>
+              </div>
+            )}
+
+            {(scanResult.skippedFolders?.length ?? 0) > 0 && (
+              <div>
+                <button
+                  type="button"
+                  className="scan-games-modal__unidentified-toggle"
+                  onClick={() => setIsSkippedOpen((prev) => !prev)}
+                  aria-expanded={isSkippedOpen}
+                >
+                  {isSkippedOpen ? (
+                    <ChevronDownIcon size={14} />
+                  ) : (
+                    <ChevronRightIcon size={14} />
+                  )}
+                  {t("scan_games_skipped_title", {
+                    count: scanResult.skippedFolders!.length,
+                  })}
+                </button>
+                {isSkippedOpen && (
+                  <>
+                    <p className="scan-games-modal__ambiguous-hint">
+                      {t("scan_games_skipped_hint")}
+                    </p>
+                    <ul className="scan-games-modal__folders-list">
+                      {scanResult.skippedFolders!.map((folder) => (
+                        <li
+                          key={folder}
+                          className="scan-games-modal__folder-item"
+                        >
+                          <span className="scan-games-modal__folder-path">
+                            {folder}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
             )}
           </div>

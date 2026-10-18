@@ -132,6 +132,8 @@ export interface Game extends LibraryCatalogueMetadata {
   protonPath?: string | null;
   executablePath?: string | null;
   executablePathUpdatedAt?: Date | null;
+  /** Set when the executable is gone ("missing") or its drive is not mounted ("offline"). */
+  executableStatus?: "missing" | "offline" | null;
   trackingExecutablePaths?: string[] | null;
   trackingExecutablePathsUpdatedAt?: Date | null;
   launchOptions?: string | null;
@@ -313,6 +315,8 @@ export interface UserPreferences {
   prepareWinePrefixOnInstall?: boolean;
   postInstallCommand?: string | null;
   libraryScanDirectories?: string[];
+  /** Folders the scan should never offer as games (launchers, mod managers). */
+  libraryScanIgnoredFolders?: string[];
   scanLibraryOnStartup?: boolean;
   identifyGamesByFolderName?: boolean;
   /** What game setup does when a source has saves for a new game. */

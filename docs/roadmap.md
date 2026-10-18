@@ -37,16 +37,19 @@ in the sections below.
    6. [x] Upscaler and frame-gen indicator
    7. [x] OptiScaler per game
    8. [x] Prefix tools
-4. **Small fixes.** Cheap items batched into one release.
-   1. [ ] One name for the options dialog
-   2. [ ] Move pin and favourite
-   3. [ ] Open elsewhere
-   4. [ ] Ignore a folder
-   5. [ ] Explain skipped folders
-   6. [ ] Mark missing games
-   7. [ ] Check free space
-   8. [ ] Paste a Steam link
-   9. [ ] Middle-click autoscroll
+4. **Small fixes.** Cheap items batched into one release. Shipped:
+   [Game page and interface](features/game-page.md), ignored and skipped
+   folders in [Library scanning](features/library-scanning.md), free space
+   and Steam links in [Downloads](features/downloads.md).
+   1. [x] One name for the options dialog
+   2. [x] Move pin and favourite
+   3. [x] Open elsewhere
+   4. [x] Ignore a folder
+   5. [x] Explain skipped folders
+   6. [x] Mark missing games
+   7. [x] Check free space
+   8. [x] Paste a Steam link
+   9. [x] Middle-click autoscroll
 5. **Library.**
    1. [ ] Play status
    2. [ ] Genres
@@ -91,25 +94,8 @@ Why this order:
 
 ## Library scanning
 
-- [ ] **Ignore a folder.** Unrecognised folders such as launchers and mod
-      managers (`Prism Launcher`, `r2modman`, `Vortex Mods`) show up after
-      every scan. Add "this is not a game" to hide them for good.
-- [ ] **Explain skipped folders.** A folder without any `.exe` is skipped
-      silently. `~/Downloads/Cult of the lamb` looked like a missed game but
-      was an empty folder skeleton; the game itself lives in
-      `/mnt/Multimedia/home-offload/Downloads/`. A "skipped: no executable"
-      list would have made that obvious.
-- [ ] **Mark missing games.** When an installed game's folder is gone, mark
-      it missing instead of failing at launch.
 - [ ] **Rescan automatically.** Watch library folders and pick up changes
       without a manual scan.
-
-## Downloads
-
-- [ ] **Paste a Steam link.** Paste a store URL in Hydra to open the game and
-      start the download choice. The browser add-on already covers this from
-      the Steam store page.
-- [ ] **Check free space** before downloading and before extracting.
 
 ## Library
 
@@ -142,20 +128,6 @@ Why this order:
       similar services, falling back to Hydra's own play history. Needs
       research: Backloggd has no public API, and a free recommendations API
       still has to be found.
-
-## Game page
-
-- [ ] **One name for the options dialog.** The right-click menu (library and
-      sidebar) calls it "Properties"; the game page button calls it "Options".
-- [ ] **Move pin and favourite.** They are rarely used but sit in the most
-      prominent spot on the game page.
-- [ ] **Open elsewhere.** Buttons to open the game's Steam page,
-      PCGamingWiki page, and similar.
-
-## Interface
-
-- [ ] **Middle-click autoscroll** (hold middle button and move to scroll), if
-      it is easy.
 
 ## Mods
 

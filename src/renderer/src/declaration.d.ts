@@ -466,6 +466,10 @@ declare global {
     onProtonInstallProgress: (
       cb: (progress: ProtonInstallProgress) => void
     ) => () => Electron.IpcRenderer;
+    checkGameExecutable: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<"missing" | "offline" | null>;
     getGameWinePrefixInfo: (
       shop: GameShop,
       objectId: string

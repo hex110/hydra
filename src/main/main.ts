@@ -48,6 +48,7 @@ import { LocalSources } from "@main/services/local-sources/local-sources";
 import { AppLauncherEntries } from "./services/app-launcher-entries";
 import { GameUpdates } from "./services/game-updates";
 import { ProtonManager } from "./services/proton-manager";
+import { scheduleExecutableStatusCheck } from "./services/executable-status";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -128,6 +129,7 @@ export const loadState = async () => {
 
   void watchSteamLibraries();
   AppLauncherEntries.watch();
+  scheduleExecutableStatusCheck();
 
   await HydraApi.setupApi().then(async () => {
     await initializeEpicIntegration();

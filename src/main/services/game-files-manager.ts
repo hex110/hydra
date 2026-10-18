@@ -8,6 +8,7 @@ import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import {
   Downloader,
   FILE_EXTENSIONS_TO_EXTRACT,
+  MINIMUM_FREE_DISK_SPACE_BYTES,
   removeSymbolsFromName,
 } from "@shared";
 import type {
@@ -31,6 +32,7 @@ import * as retroarch from "./retroarch";
 import { getPathType } from "./extraction-path";
 import { listArchiveFiles } from "./archive-entry";
 import { GameExecutables } from "./game-executables";
+import { getDiskUsage } from "./disk-usage";
 import { logger } from "./logger";
 import { platformToRetroArchPlatform, platformToSystem } from "@main/helpers";
 import { getWindowsVbsPath } from "@main/helpers/shortcut-launch";
@@ -165,6 +167,34 @@ export class GameFilesManager {
     this.updateExtractionProgress(progress.percent / 100);
   };
 
+  /**
+   * Fails the extraction early when the archive's listed contents do not fit
+   * on the target drive. Archives that cannot be listed (encrypted headers)
+   * are extracted as before.
+   */
+  private async ensureSpaceForExtraction(
+    archivePath: string,
+    targetPath: string
+  ): Promise<boolean> {
+    const entries = await SevenZip.listEntries(archivePath).catch(() => null);
+    if (!entries || entries.length === 0) return true;
+
+    const required = entries.reduce((sum, entry) => sum + entry.size, 0);
+    const usage = await getDiskUsage(targetPath);
+    if (!usage || usage.free >= required + MINIMUM_FREE_DISK_SPACE_BYTES) {
+      return true;
+    }
+
+    await this.setExtractionFailedState(
+      new Error(
+        `Extracting needs ${required} bytes but ${usage.free} are free`
+      ),
+      archivePath,
+      { reason: "not-enough-space", required, available: usage.free }
+    );
+    return false;
+  }
+
   private async extractArchivePass(
     directoryPath: string,
     filesToExtract: string[],
@@ -174,6 +204,9 @@ export class GameFilesManager {
     let completedFiles = 0;
     for (const file of filesToExtract) {
       const filePath = path.join(directoryPath, file);
+      if (!(await this.ensureSpaceForExtraction(filePath, directoryPath))) {
+        return false;
+      }
       try {
         const result = await SevenZip.extractFile(
           {
@@ -907,6 +940,12 @@ export class GameFilesManager {
       download.downloadPath,
       extractedFolderName
     );
+
+    if (
+      !(await this.ensureSpaceForExtraction(filePath, download.downloadPath))
+    ) {
+      return false;
+    }
 
     this.updateExtractionProgress(0, true);
 

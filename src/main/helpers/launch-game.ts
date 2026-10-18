@@ -61,6 +61,7 @@ import {
   withMangoHudConfig,
 } from "./launch-additions";
 import { prepareMangoHudConfig } from "./mangohud-config";
+import { refreshExecutableStatus } from "@main/services/executable-status";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 
 export interface LaunchGameOptions {
@@ -1060,6 +1061,13 @@ export const launchGame = async (options: LaunchGameOptions) => {
       options.shop,
       options.objectId
     );
+    void gamesSublevel
+      .get(levelKeys.game(options.shop, options.objectId))
+      .then((game) => game && refreshExecutableStatus(game))
+      .then((changed) => {
+        if (changed)
+          WindowManager.sendToAppWindows("on-library-batch-complete");
+      });
 
     if (options.shop === "steam") {
       void import(
@@ -1077,6 +1085,14 @@ export const launchGame = async (options: LaunchGameOptions) => {
 
     return null;
   }
+
+  // The drive may be back since the game was marked.
+  void gamesSublevel
+    .get(levelKeys.game(options.shop, options.objectId))
+    .then((game) => game?.executableStatus && refreshExecutableStatus(game))
+    .then((changed) => {
+      if (changed) WindowManager.sendToAppWindows("on-library-batch-complete");
+    });
 
   return runWithCloudSaveLaunchGate(options.objectId, options.shop, () =>
     launchGameWithCloudSaveChecks(options)

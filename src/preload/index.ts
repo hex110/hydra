@@ -1080,6 +1080,8 @@ contextBridge.exposeInMainWorld("electron", {
     return () =>
       ipcRenderer.removeListener("on-proton-install-progress", listener);
   },
+  checkGameExecutable: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("checkGameExecutable", shop, objectId),
   getGameWinePrefixInfo: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameWinePrefixInfo", shop, objectId),
   openGameWinecfg: (shop: GameShop, objectId: string) =>

@@ -76,6 +76,8 @@ interface ScanResult {
   ambiguousMatches: AmbiguousMatch[];
   /** Folders with a game executable whose name the catalogue doesn't know. */
   unidentifiedFolders: AmbiguousMatch[];
+  /** Folders inside a library folder that hold no `.exe`. */
+  skippedFolders: string[];
   total: number;
 }
 
@@ -216,6 +218,7 @@ const loadScanPreferences = async () => {
   return {
     libraryFolders: userPreferences?.libraryScanDirectories ?? [],
     identifyByFolderName: userPreferences?.identifyGamesByFolderName !== false,
+    ignoredFolders: userPreferences?.libraryScanIgnoredFolders ?? [],
   };
 };
 
@@ -1223,7 +1226,25 @@ const runScan = async (
   const identificationDownloadsPath = includeDefaultDirectories
     ? await getDownloadsPathForScan()
     : null;
-  const identifiedFolders =
+  const isIgnored = (filePath: string) =>
+    scanPreferences.ignoredFolders.some((folder) => {
+      const normalizedFolder = normalizePath(path.resolve(folder));
+      const normalizedFile = normalizePath(path.resolve(filePath));
+      return (
+        normalizedFile === normalizedFolder ||
+        normalizedFile.startsWith(`${normalizedFolder}/`)
+      );
+    });
+  for (const [objectId, executablePath] of outsideLibrary.pathByObjectId) {
+    if (isIgnored(executablePath)) {
+      outsideLibrary.pathByObjectId.delete(objectId);
+    }
+  }
+  outsideLibrary.ambiguousMatches = outsideLibrary.ambiguousMatches.filter(
+    (match) => !isIgnored(match.executablePath)
+  );
+
+  const folderIdentification =
     addGamesToLibrary &&
     scanPreferences.identifyByFolderName &&
     !signal.cancelled
@@ -1255,9 +1276,11 @@ const runScan = async (
             ...steamPathByObjectId.keys(),
             ...outsideLibrary.pathByObjectId.keys(),
           ]),
+          ignoredFolders: scanPreferences.ignoredFolders,
           isCancelled: () => signal.cancelled,
         })
-      : [];
+      : { identified: [], skipped: [] };
+  const identifiedFolders = folderIdentification.identified;
 
   const pathByObjectIdFromFolders = new Map(
     identifiedFolders.flatMap((folder) =>
@@ -1318,6 +1341,7 @@ const runScan = async (
     addedGames,
     ambiguousMatches: ambiguousMatches,
     unidentifiedFolders,
+    skippedFolders: folderIdentification.skipped,
     total: gamesToScan.length,
   };
 };
