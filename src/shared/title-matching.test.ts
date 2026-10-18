@@ -37,6 +37,10 @@ describe("cleanReleaseName", () => {
     ["Way of the Hunter 2 – Build: 25630108", "Way of the Hunter 2"],
     ["Rocky V - Remastered", "Rocky V Remastered"],
     ["DMD.CH4-1.01-pc", "DMD CH4"],
+    [
+      "Hades II [P] [RUS + ENG + 13 / ENG] (2025, TPS) (1.143476) [Portable]",
+      "Hades II",
+    ],
     ["Some.Game.1.2.3", "Some Game"],
     ["Spider-Man.2", "Spider-Man 2"],
     ["Game Name-v1.0.4-Win64", "Game Name"],

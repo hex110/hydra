@@ -1,6 +1,7 @@
 @use "../../scss/globals.scss";
 
 .game-updates {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: calc(globals.$spacing-unit * 2);

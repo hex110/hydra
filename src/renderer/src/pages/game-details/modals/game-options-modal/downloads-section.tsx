@@ -41,6 +41,28 @@ export function DownloadsSettingsSection({
         </h4>
       </div>
 
+      {game.executablePath && game.installedVersion && (
+        <p className="game-options-modal__header-description">
+          {t(
+            game.installedVersion.downloadSourceName
+              ? "installed_release_from"
+              : "installed_release_folder",
+            {
+              title: game.installedVersion.title,
+              source: game.installedVersion.downloadSourceName,
+            }
+          )}
+          {game.availableUpdate && (
+            <>
+              {" "}
+              {t("installed_release_update", {
+                title: game.availableUpdate.release.title,
+              })}
+            </>
+          )}
+        </p>
+      )}
+
       <div className="game-options-modal__row">
         <Button
           onClick={onOpenRepacks}

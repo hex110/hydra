@@ -24,6 +24,10 @@ describe("parseReleaseVersion", () => {
       "22802494",
     ],
     ["Game_v1_2_3", "1.2.3", null],
+    ["Hades II [v 1.139251] (2025) PC | Portable", "1.139251", null],
+    ["Stray [v 1.5#368] (2022) PC | RePack", "1.5", null],
+    ["Dyson Sphere Program [v23350 | Early Access] (2021) PC", "23350", null],
+    ["Mists of Noyah [P] [ENG + 8] (2022) (1.0.2) [Scene]", "1.0.2", null],
   ];
 
   for (const [name, version, build] of cases) {
@@ -103,6 +107,24 @@ describe("isNewerRelease", () => {
       isNewerRelease(repack("Hades II [DODI Repack] Update", "dodi"), current)
     );
     assert.ok(!isNewerRelease(repack("Hades II [Other]", "other"), current));
+  });
+
+  it("does not compare differently shaped versions across sources", () => {
+    const current = installed("Dyson Sphere Program – V 0.10.35.29104", {
+      downloadSourceId: "anker",
+    });
+    assert.ok(
+      !isNewerRelease(
+        repack("Dyson Sphere Program [v23350 | Early Access]", "rutracker"),
+        current
+      )
+    );
+    assert.ok(
+      isNewerRelease(
+        repack("Dyson Sphere Program – V 0.10.36.1", "anker"),
+        current
+      )
+    );
   });
 
   it("never treats the installed release as an update", () => {

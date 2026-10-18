@@ -16,8 +16,8 @@ Each installed game records the release it came from:
   one still lets Hydra notice later updates from a source by upload date.
 
 The record is made by [game setup](game-setup.md) (its first step) and
-refreshed when the game moves to another folder. The game's **General**
-options show it next to the executable.
+refreshed when the game moves to another folder. The game's **Downloads**
+options show it.
 
 The game's folder is the download's folder when the executable is inside it,
 otherwise the folder directly inside a library folder (or the downloads
@@ -39,7 +39,9 @@ picks a newer release:
    out (soundtracks, DLC packs).
 2. When both names carry a version, the versions are compared part by part
    (`1.10` > `1.9`). Build numbers (`Build 25933619`) are compared when both
-   names have one, since they are more precise.
+   names have one, since they are more precise. Versions from different sources only compare when they have the same
+   number of parts: sources number the same game differently
+   (`v23350` vs `0.10.35.29104`).
 3. When the names cannot be compared, a release from the same source with a
    different name and a later upload date counts as newer: sources replace an
    entry when they publish a new version.

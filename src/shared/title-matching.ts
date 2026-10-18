@@ -116,9 +116,10 @@ export const cleanReleaseName = (name: string): string => {
   // Before NFKC, which would turn "™" into "TM".
   let value = name.replaceAll(/[™®©]/g, "").normalize("NFKC");
 
-  // Everything after a "+" (DLC lists, bonus content) or a " - Group" suffix.
-  value = value.replace(/\s\+\s.*$/, "");
+  // Bracketed tags, then everything after a "+" (DLC lists, bonus content).
+  // Brackets go first: "[RUS + ENG]" is a tag, not a DLC list.
   value = value.replaceAll(/[[({][^\])}]*[\])}]/g, " ");
+  value = value.replace(/\s\+\s.*$/, "");
 
   const isSpaceless = !/\s/.test(value.trim());
 

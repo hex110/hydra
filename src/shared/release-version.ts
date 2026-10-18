@@ -62,12 +62,22 @@ const compareVersionStrings = (left: string, right: string) => {
  */
 export const compareReleaseVersions = (
   candidate: ReleaseVersion,
-  installed: ReleaseVersion
+  installed: ReleaseVersion,
+  { requireSameShape = false }: { requireSameShape?: boolean } = {}
 ): number | null => {
   if (candidate.build && installed.build) {
     return Number(candidate.build) - Number(installed.build);
   }
   if (candidate.version && installed.version) {
+    // Sources number the same game differently ("v23350" vs "0.10.35"), so
+    // versions from different sources only compare when they look alike.
+    if (
+      requireSameShape &&
+      candidate.version.split(".").length !==
+        installed.version.split(".").length
+    ) {
+      return null;
+    }
     return compareVersionStrings(candidate.version, installed.version);
   }
   return null;
@@ -94,17 +104,17 @@ export const isNewerRelease = (
   // Sources reuse a link for a new version, so only the name tells them apart.
   if (repack.title === installed.title) return false;
 
+  const sameSource =
+    !!installed.downloadSourceId &&
+    repack.downloadSourceId === installed.downloadSourceId;
   const comparison = compareReleaseVersions(
     parseReleaseVersion(repack.title),
-    parseReleaseVersion(installed.title)
+    parseReleaseVersion(installed.title),
+    { requireSameShape: !sameSource }
   );
   if (comparison !== null) return comparison > 0;
 
-  return (
-    !!installed.downloadSourceId &&
-    repack.downloadSourceId === installed.downloadSourceId &&
-    isLater(repack.uploadDate, installed.uploadDate)
-  );
+  return sameSource && isLater(repack.uploadDate, installed.uploadDate);
 };
 
 /**
@@ -143,7 +153,9 @@ export const findAvailableUpdate = <T extends ReleaseLike>(
     if (a.sameSource !== b.sameSource) {
       return a.sameSource > b.sameSource ? repack : best;
     }
-    const comparison = compareReleaseVersions(a.version, b.version);
+    const comparison = compareReleaseVersions(a.version, b.version, {
+      requireSameShape: repack.downloadSourceId !== best.downloadSourceId,
+    });
     if (comparison !== null && comparison !== 0) {
       return comparison > 0 ? repack : best;
     }
