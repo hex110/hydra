@@ -94,7 +94,9 @@ installed into a game. Releases are cached in `<userData>/optiscaler/releases`;
 
 Installed games are not updated on their own. The settings page shows how many
 have an older version and **Update N games** reinstalls them; a single game
-can be updated from its options.
+can be updated from its options. A game's options can also install an older
+release that is still downloaded (**Version**), for going back when a new
+OptiScaler breaks a game; the newest one is the default.
 
 ## Removing and restoring
 

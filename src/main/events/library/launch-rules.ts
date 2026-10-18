@@ -14,7 +14,16 @@ const getGameLaunchAdditions = async (
 ): Promise<GameLaunchAdditions> => {
   const gameKey = levelKeys.game(shop, objectId);
   const game = await gamesSublevel.get(gameKey);
-  if (!game?.executablePath) return { rules: [], launchOptions: null };
+  if (!game?.executablePath) {
+    return {
+      rules: [],
+      launchOptions: null,
+      protonPath: null,
+      mangohud: false,
+      gamemode: false,
+      gamescope: null,
+    };
+  }
 
   const userPreferences = await db
     .get<string, UserPreferences | null>(levelKeys.userPreferences, {

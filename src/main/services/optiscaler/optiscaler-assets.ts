@@ -189,6 +189,18 @@ export class OptiScalerAssets {
     );
   }
 
+  /** A release that is already downloaded, for installing an older version. */
+  public static async getCachedRelease(
+    channel: OptiScalerChannel,
+    version: string
+  ): Promise<{ version: string; directory: string }> {
+    const directory = await findReleaseRoot(
+      path.join(getReleasesDirectory(channel), version)
+    );
+    if (!directory) throw new Error(`OptiScaler ${version} is not downloaded`);
+    return { version, directory };
+  }
+
   /** Returns the newest release of a channel on disk, downloading it when needed. */
   public static ensureRelease(
     channel: OptiScalerChannel

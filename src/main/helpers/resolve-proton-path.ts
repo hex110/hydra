@@ -1,4 +1,10 @@
+import path from "node:path";
 import { db, levelKeys } from "@main/level";
+import {
+  compareProtonNamesNewestFirst,
+  getProtonFlavor,
+  parseProtonChoice,
+} from "@shared";
 import { Umu } from "@main/services/umu";
 import type { Game, UserPreferences } from "@types";
 
@@ -25,16 +31,48 @@ export const resolveProtonPath = async (
   return null;
 };
 
-/** The Proton build a game launches with, and where that choice comes from. */
+/**
+ * A launch rule's Proton choice as a build path: the path itself when it is a
+ * valid build, or the newest installed build of a flavor.
+ */
+export const resolveProtonChoice = async (
+  choice: string | null | undefined
+): Promise<string | null> => {
+  const parsed = parseProtonChoice(choice);
+  if (!parsed) return null;
+  if ("path" in parsed) {
+    return Umu.isValidProtonPath(parsed.path) ? parsed.path : null;
+  }
+
+  const [newest] = (await Umu.getInstalledProtonVersions())
+    .filter(
+      (version) =>
+        getProtonFlavor(path.basename(version.path)) === parsed.flavor
+    )
+    .sort((a, b) =>
+      compareProtonNamesNewestFirst(
+        path.basename(a.path),
+        path.basename(b.path)
+      )
+    );
+  return newest?.path ?? null;
+};
+
+/**
+ * The Proton build a game launches with, and where that choice comes from:
+ * the game's own pick, then a launch rule's, then the default from settings.
+ */
 export const resolveGameProton = async (
-  game: Pick<Game, "protonPath">
+  game: Pick<Game, "protonPath"> | undefined,
+  ruleProtonPath?: string | null
 ): Promise<{
   path: string | null;
-  source: "game" | "default" | null;
+  source: "game" | "rule" | "default" | null;
 }> => {
-  if (game.protonPath && Umu.isValidProtonPath(game.protonPath)) {
+  if (game?.protonPath && Umu.isValidProtonPath(game.protonPath)) {
     return { path: game.protonPath, source: "game" };
   }
-  const path = await resolveProtonPath(null);
-  return { path, source: path ? "default" : null };
+  if (ruleProtonPath) return { path: ruleProtonPath, source: "rule" };
+  const defaultPath = await resolveProtonPath(null);
+  return { path: defaultPath, source: defaultPath ? "default" : null };
 };

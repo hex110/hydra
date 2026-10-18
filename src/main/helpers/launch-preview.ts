@@ -8,7 +8,9 @@ import {
   combineLaunchOptions,
   getLaunchAdditions,
   getLaunchTools,
+  withMangoHudConfig,
 } from "./launch-additions";
+import { prepareMangoHudConfig } from "./mangohud-config";
 import { resolveLaunchCommand } from "./resolve-launch-command";
 import { resolveGameProton } from "./resolve-proton-path";
 
@@ -44,13 +46,20 @@ export const getLaunchPreview = async (
     userPreferences,
     prepareMissing: false,
   });
+  const { useMangohud, useGamemode } = getLaunchTools(
+    userPreferences,
+    game,
+    additions
+  );
+  const mangoHudConfigPath = useMangohud
+    ? await prepareMangoHudConfig(game, userPreferences, { write: false })
+    : null;
   const launchOptions = combineLaunchOptions(
-    additions.launchOptions,
+    withMangoHudConfig(additions.launchOptions, mangoHudConfigPath),
     userPreferences,
     game,
     game.launchOptions
   );
-  const { useMangohud, useGamemode } = getLaunchTools(userPreferences, game);
   const workingDirectory = path.dirname(executablePath);
   const base = {
     executablePath,
@@ -81,7 +90,7 @@ export const getLaunchPreview = async (
     path.extname(executablePath).toLowerCase() === ".exe";
 
   if (isProton) {
-    const proton = await resolveGameProton(game);
+    const proton = await resolveGameProton(game, additions.protonPath);
     const winePrefixPath = await Wine.resolvePrefixPath(
       Wine.getEffectivePrefixPath(game.winePrefixPath, objectId)
     );

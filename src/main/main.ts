@@ -47,6 +47,7 @@ import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
 import { AppLauncherEntries } from "./services/app-launcher-entries";
 import { GameUpdates } from "./services/game-updates";
+import { ProtonManager } from "./services/proton-manager";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -122,6 +123,7 @@ export const loadState = async () => {
   if (process.platform === "linux") {
     DeckyPlugin.checkAndUpdateIfOutdated();
     void UmuUpdater.checkForUpdates();
+    void ProtonManager.updateAutomatically();
   }
 
   void watchSteamLibraries();

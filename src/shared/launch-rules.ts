@@ -108,6 +108,9 @@ export const parseLaunchRulesExport = (text: string): LaunchRule[] | null => {
       files: rule.files,
       launchOptions: rule.launchOptions,
       ...(rule.presetId ? { presetId: rule.presetId } : {}),
+      ...(rule.actions && typeof rule.actions === "object"
+        ? { actions: rule.actions }
+        : {}),
     }));
   } catch {
     return null;

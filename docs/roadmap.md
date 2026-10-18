@@ -24,15 +24,19 @@ in the sections below.
    2. [x] Setup log per game
    3. [x] Run a setup step again
    4. [x] Launch command preview
-3. **Proton and launch options.**
-   1. [ ] Proton manager
-   2. [ ] Proton version in launch rules
-   3. [ ] GOverlay vs a built-in MangoHud editor (decision)
-   4. [ ] GameMode and MangoHud settings
-   5. [ ] Gamescope as a launch-rule action
-   6. [ ] Upscaler and frame-gen indicator
-   7. [ ] OptiScaler per game
-   8. [ ] Prefix tools
+3. **Proton and launch options.** Shipped:
+   [Proton builds and launch tools](features/proton-and-launch-tools.md)
+   (built-in MangoHud editor chosen over GOverlay; the upscaler line covers
+   OptiScaler games), per-game OptiScaler versions in
+   [OptiScaler](features/optiscaler.md).
+   1. [x] Proton manager
+   2. [x] Proton version in launch rules
+   3. [x] GOverlay vs a built-in MangoHud editor (decision)
+   4. [x] GameMode and MangoHud settings
+   5. [x] Gamescope as a launch-rule action
+   6. [x] Upscaler and frame-gen indicator
+   7. [x] OptiScaler per game
+   8. [x] Prefix tools
 4. **Small fixes.** Cheap items batched into one release.
    1. [ ] One name for the options dialog
    2. [ ] Move pin and favourite
@@ -84,29 +88,6 @@ Why this order:
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
-
-## Linux gaming
-
-- [ ] **Proton manager.** Download and update GE-Proton and Proton-CachyOS
-      into `compatibilitytools.d`. Upstream's per-game Proton picker only
-      lists builds that are already installed.
-- [ ] **Proton version in launch rules.** Let a rule pick GE-Proton or
-      Proton-CachyOS.
-- [ ] **GameMode and MangoHud settings.** Upstream already has per-game and
-      global on/off toggles. Missing: a MangoHud config editor (position,
-      metrics, FPS limit), per game and as defaults, and both as launch-rule
-      actions.
-- [ ] **GOverlay vs a built-in MangoHud editor.** Decide whether to launch
-      GOverlay or build our own editor before starting the item above.
-- [ ] **Gamescope as a launch-rule action.** Resolution, FPS limit and HDR.
-- [ ] **Upscaler and frame-gen indicator.** A clear overlay line saying which
-      upscaler is active and whether frame generation is on, and which one.
-      OptiScaler's overlay shows this, but only for games it is installed in,
-      and it is hard to read. Look at what MangoHud can show first.
-- [ ] **OptiScaler per game.** Update a game's OptiScaler to a newer version,
-      or uninstall it.
-- [ ] **Prefix tools.** Upstream has Winetricks and a reset on Proton switch.
-      Add winecfg, a plain "reset prefix", and each prefix's size on disk.
 
 ## Library scanning
 

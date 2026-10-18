@@ -1,3 +1,8 @@
+import type {
+  GamescopeSettings,
+  LaunchRuleActions,
+} from "./linux-gaming.types";
+
 /**
  * Adds launch options to every game, or to every game whose folder contains
  * a matching file. Each game can override whether a rule applies to it.
@@ -15,6 +20,7 @@ export interface LaunchRule {
   launchOptions: string;
   /** Set for rules that came from a built-in preset. */
   presetId?: string;
+  actions?: LaunchRuleActions;
 }
 
 export interface GameLaunchRuleMatch {
@@ -34,6 +40,11 @@ export interface GameLaunchAdditions {
   rules: GameLaunchRuleMatch[];
   /** Everything Hydra adds before the game's own launch options, or null. */
   launchOptions: string | null;
+  /** Proton build chosen by the last applied rule that picks one. */
+  protonPath: string | null;
+  mangohud: boolean;
+  gamemode: boolean;
+  gamescope: GamescopeSettings | null;
 }
 
 /** What launching a game would run, after every launch rule applies. */

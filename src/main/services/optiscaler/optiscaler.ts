@@ -167,9 +167,11 @@ export class OptiScaler {
     };
   }
 
+  /** Installs the newest release, or `version` when it is downloaded already. */
   public static async install(
     shop: GameShop,
-    objectId: string
+    objectId: string,
+    version?: string
   ): Promise<GameOptiScalerInstallation> {
     const game = await this.getGame(shop, objectId);
     const executablePath = getWindowsExecutable(game);
@@ -199,7 +201,9 @@ export class OptiScaler {
       : null;
 
     try {
-      const release = await OptiScalerAssets.ensureRelease(settings.channel);
+      const release = version
+        ? await OptiScalerAssets.getCachedRelease(settings.channel, version)
+        : await OptiScalerAssets.ensureRelease(settings.channel);
       const optiPatcher = compatibility?.optiPatcherSupported
         ? await OptiScalerAssets.ensureOptiPatcher()
         : null;

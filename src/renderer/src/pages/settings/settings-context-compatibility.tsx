@@ -1,4 +1,11 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { debounce } from "lodash-es";
 import { Trans, useTranslation } from "react-i18next";
 import { GAMEMODE_SITE_URL, MANGOHUD_SITE_URL } from "@shared";
@@ -17,6 +24,8 @@ import { DesktopDownloadIcon, LinkExternalIcon } from "@primer/octicons-react";
 import { logger } from "@renderer/logger";
 import { Tooltip } from "react-tooltip";
 
+import { SettingsMangoHud } from "./settings-mangohud";
+import { SettingsProtonManager } from "./settings-proton-manager";
 import "./settings-behavior.scss";
 import "./settings-general.scss";
 
@@ -239,7 +248,7 @@ export function SettingsContextCompatibility() {
       });
   }, []);
 
-  useEffect(() => {
+  const loadProtonVersions = useCallback(() => {
     if (window.electron.platform !== "linux") return;
 
     window.electron
@@ -248,6 +257,8 @@ export function SettingsContextCompatibility() {
       .catch(() => setProtonVersions([]))
       .finally(() => setProtonVersionsLoaded(true));
   }, []);
+
+  useEffect(loadProtonVersions, [loadProtonVersions]);
 
   useEffect(() => {
     if (!protonVersionsLoaded || !selectedDefaultProtonPath) return;
@@ -485,6 +496,13 @@ export function SettingsContextCompatibility() {
             </div>
           </div>
         </div>
+      )}
+
+      {window.electron.platform === "linux" && (
+        <>
+          <SettingsProtonManager onChange={loadProtonVersions} />
+          <SettingsMangoHud />
+        </>
       )}
 
       <div className="settings-context-panel__group">

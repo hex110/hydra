@@ -35,6 +35,7 @@ export * from "./title-matching";
 export * from "./optiscaler";
 export * from "./local-source-matching";
 export * from "./release-version";
+export * from "./linux-launch";
 export * from "./launch-rules";
 export * from "./launch-rules-migration";
 export * from "./repack-ranking";

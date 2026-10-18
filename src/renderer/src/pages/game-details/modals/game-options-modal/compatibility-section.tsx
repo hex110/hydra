@@ -14,6 +14,8 @@ import { FileDirectoryIcon, LinkExternalIcon } from "@primer/octicons-react";
 import { Tooltip } from "react-tooltip";
 import { GameSetupButton } from "./game-setup-button";
 import { SetupLogSection } from "./setup-log-section";
+import { PrefixTools } from "./prefix-tools";
+import { GameMangoHud } from "./game-mangohud";
 
 interface CompatibilitySettingsSectionProps {
   game: LibraryGame;
@@ -193,6 +195,8 @@ export function CompatibilitySettingsSection({
       </div>
 
       <SetupLogSection game={game} />
+      <PrefixTools game={game} />
+      <GameMangoHud game={game} />
 
       <div className="game-options-modal__section">
         <div className="game-options-modal__header">

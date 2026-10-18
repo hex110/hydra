@@ -15,7 +15,7 @@ import {
   parseLaunchRulesExport,
   resolveLaunchRules,
 } from "@shared";
-import type { LaunchRule } from "@types";
+import type { LaunchRule, ProtonVersion } from "@types";
 
 import {
   Badge,
@@ -27,6 +27,7 @@ import {
 import { settingsContext } from "@renderer/context";
 import { useAppSelector, useToast } from "@renderer/hooks";
 
+import { LaunchRuleActionsEditor } from "./settings-launch-rule-actions";
 import "./settings-launch-rules.scss";
 
 /** Rules as edited: the file list stays raw text until saved. */
@@ -42,6 +43,7 @@ const toDraft = (rule: LaunchRule): RuleDraft => ({
   launchOptions: rule.launchOptions,
   filesText: rule.files.join(", "),
   ...(rule.presetId ? { presetId: rule.presetId } : {}),
+  ...(rule.actions ? { actions: rule.actions } : {}),
 });
 
 const fromDraft = ({ filesText, ...rule }: RuleDraft): LaunchRule => ({
@@ -62,6 +64,15 @@ export function SettingsContextLaunchRules() {
   const [drafts, setDrafts] = useState<RuleDraft[]>(() =>
     resolveLaunchRules(savedRules).map(toDraft)
   );
+  const [protonVersions, setProtonVersions] = useState<ProtonVersion[]>([]);
+
+  useEffect(() => {
+    if (window.electron.platform !== "linux") return;
+    window.electron
+      .getInstalledProtonVersions()
+      .then(setProtonVersions)
+      .catch(() => setProtonVersions([]));
+  }, []);
 
   const save = useMemo(
     () =>
@@ -237,6 +248,13 @@ export function SettingsContextLaunchRules() {
                 updateRule(rule.id, { launchOptions: event.target.value })
               }
             />
+            {window.electron.platform === "linux" && (
+              <LaunchRuleActionsEditor
+                actions={rule.actions}
+                protonVersions={protonVersions}
+                onChange={(actions) => updateRule(rule.id, { actions })}
+              />
+            )}
           </li>
         ))}
       </ul>

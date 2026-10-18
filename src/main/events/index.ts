@@ -35,6 +35,7 @@ import "./epic";
 import "./optiscaler";
 import "./save-import";
 import "./game-updates";
+import "./linux-gaming";
 
 ipcMain.handle("ping", () => "pong");
 ipcMain.handle("getVersion", () => appVersion);

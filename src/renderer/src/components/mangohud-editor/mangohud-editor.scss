@@ -1,0 +1,41 @@
+@use "../../scss/globals.scss";
+
+.mangohud-editor {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: globals.$spacing-unit;
+  }
+
+  &__label {
+    font-size: 14px;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 12px;
+    color: globals.$muted-color;
+  }
+
+  &__extra {
+    width: 100%;
+    resize: vertical;
+    padding: globals.$spacing-unit;
+    background-color: globals.$dark-background-color;
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    color: globals.$body-color;
+    font-family: monospace;
+    font-size: 12px;
+  }
+}

@@ -33,10 +33,11 @@ const getGameOptiScalerStatus = (
 const installGameOptiScaler = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
-  objectId: string
+  objectId: string,
+  version?: string
 ) => {
   try {
-    const installation = await OptiScaler.install(shop, objectId);
+    const installation = await OptiScaler.install(shop, objectId, version);
     return { ok: true as const, installation };
   } catch (error) {
     return {

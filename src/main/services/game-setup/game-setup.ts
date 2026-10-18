@@ -2,7 +2,8 @@ import path from "node:path";
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
-import { resolveProtonPath } from "@main/helpers/resolve-proton-path";
+import { resolveGameProton } from "@main/helpers/resolve-proton-path";
+import { getLaunchAdditions } from "@main/helpers/launch-additions";
 import { logger } from "@main/services/logger";
 import { WindowManager } from "@main/services/window-manager";
 import { Wine } from "@main/services/wine";
@@ -264,7 +265,21 @@ export class GameSetup {
       gameDirectory: path.dirname(executablePath),
       winePrefixPath,
       protonPath: usesCompatibilityLayer
-        ? await resolveProtonPath(game.protonPath)
+        ? (
+            await resolveGameProton(
+              game,
+              (
+                await getLaunchAdditions({
+                  objectId,
+                  gameKey,
+                  game,
+                  executablePath,
+                  userPreferences,
+                  prepareMissing: false,
+                })
+              ).protonPath
+            )
+          ).path
         : null,
       userPreferences,
       reason: request.reason,

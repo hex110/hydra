@@ -38,6 +38,15 @@ export function OptiScalerSettingsSection({
 
   const [status, setStatus] = useState<GameOptiScalerStatus | null>(null);
   const [busy, setBusy] = useState<"install" | "uninstall" | null>(null);
+  const [cachedVersions, setCachedVersions] = useState<string[]>([]);
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    window.electron
+      .getOptiScalerOverview()
+      .then((overview) => setCachedVersions(overview.cachedVersions))
+      .catch(() => setCachedVersions([]));
+  }, []);
 
   const refresh = useCallback(() => {
     window.electron
@@ -56,7 +65,8 @@ export function OptiScalerSettingsSection({
     setBusy("install");
     const result = await window.electron.installGameOptiScaler(
       game.shop,
-      game.objectId
+      game.objectId,
+      version || undefined
     );
     setBusy(null);
 
@@ -179,6 +189,29 @@ export function OptiScalerSettingsSection({
           }
         />
 
+        {!status.externallyManaged && cachedVersions.length > 0 && (
+          <SelectField
+            label={t("optiscaler_version")}
+            value={version}
+            theme="dark"
+            options={[
+              {
+                key: "latest",
+                value: "",
+                label: t("optiscaler_version_latest", {
+                  version: status.latestVersion ?? "-",
+                }),
+              },
+              ...[...cachedVersions].reverse().map((item) => ({
+                key: item,
+                value: item,
+                label: item,
+              })),
+            ]}
+            onChange={(event) => setVersion(event.target.value)}
+          />
+        )}
+
         <div className="game-options-modal__row">
           {!status.externallyManaged && (
             <Button
@@ -189,11 +222,13 @@ export function OptiScalerSettingsSection({
             >
               {busy === "install"
                 ? t("optiscaler_installing")
-                : installation
-                  ? updateAvailable
-                    ? t("optiscaler_update")
-                    : t("optiscaler_reinstall")
-                  : t("optiscaler_install")}
+                : version
+                  ? t("optiscaler_install_version", { version })
+                  : installation
+                    ? updateAvailable
+                      ? t("optiscaler_update")
+                      : t("optiscaler_reinstall")
+                    : t("optiscaler_install")}
             </Button>
           )}
           {installation && (

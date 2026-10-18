@@ -929,6 +929,7 @@ export * from "./launch-rule.types";
 export * from "./save-import.types";
 export * from "./library-scan.types";
 export * from "./game-update.types";
+export * from "./linux-gaming.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }

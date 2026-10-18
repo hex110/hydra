@@ -4,9 +4,14 @@ import { Wine } from "@main/services/wine";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
-import { isLaunchRuleApplied, resolveLaunchRules } from "@shared";
+import {
+  buildGamescopeLaunchOptions,
+  isLaunchRuleApplied,
+  resolveLaunchRules,
+} from "@shared";
 import type {
   Game,
+  GamescopeSettings,
   GameLaunchAdditions,
   GameLaunchRuleMatch,
   UserPreferences,
@@ -16,6 +21,7 @@ import { isGamemodeAvailable } from "./is-gamemode-available";
 import { isMangohudAvailable } from "./is-mangohud-available";
 import { buildLaunchEnvironment } from "./launch-environment";
 import { findLaunchRuleMatches } from "./launch-rule-matching";
+import { resolveProtonChoice } from "./resolve-proton-path";
 
 const isWindowsExecutable = (executablePath: string) =>
   path.extname(executablePath).toLowerCase() === ".exe";
@@ -115,6 +121,11 @@ export const getLaunchAdditions = async ({
     prepareMissing
   );
 
+  let protonChoice: string | null = null;
+  let mangohud = false;
+  let gamemode = false;
+  let gamescope: GamescopeSettings | null = null;
+
   for (const match of matchedRules) {
     if (!match.applied) continue;
     const rule = rules.find((item) => item.id === match.ruleId)!;
@@ -122,9 +133,28 @@ export const getLaunchAdditions = async ({
       launchOptions,
       rule.launchOptions
     );
+
+    const actions = rule.actions;
+    if (!actions) continue;
+    if (actions.proton) protonChoice = actions.proton;
+    mangohud ||= actions.mangohud === true;
+    gamemode ||= actions.gamemode === true;
+    if (actions.gamescope) gamescope = actions.gamescope;
   }
 
-  return { rules: matchedRules, launchOptions };
+  launchOptions = applyDefaultLaunchOptions(
+    launchOptions,
+    buildGamescopeLaunchOptions(gamescope)
+  );
+
+  return {
+    rules: matchedRules,
+    launchOptions,
+    protonPath: await resolveProtonChoice(protonChoice),
+    mangohud,
+    gamemode,
+    gamescope,
+  };
 };
 
 /**
@@ -146,17 +176,33 @@ export const combineLaunchOptions = (
     )
   );
 
-/** Whether MangoHud and GameMode wrap the game, per game or globally. */
+/** Whether MangoHud and GameMode wrap the game: per game, globally or by a rule. */
 export const getLaunchTools = (
   userPreferences: UserPreferences | null,
-  game: Game | undefined
+  game: Game | undefined,
+  additions?: Pick<GameLaunchAdditions, "mangohud" | "gamemode">
 ) => ({
   useMangohud:
     (userPreferences?.autoRunMangohud === true ||
-      game?.autoRunMangohud === true) &&
+      game?.autoRunMangohud === true ||
+      additions?.mangohud === true) &&
     isMangohudAvailable(),
   useGamemode:
     (userPreferences?.autoRunGamemode === true ||
-      game?.autoRunGamemode === true) &&
+      game?.autoRunGamemode === true ||
+      additions?.gamemode === true) &&
     isGamemodeAvailable(),
 });
+
+/** Adds `MANGOHUD_CONFIGFILE` under everything else, so launch options can override it. */
+export const withMangoHudConfig = (
+  launchOptions: string | null,
+  configPath: string | null
+) =>
+  configPath
+    ? applyDefaultLaunchOptions(
+        // Whole-token quotes, as string-argv keeps quotes inside a token.
+        `"MANGOHUD_CONFIGFILE=${configPath}" %command%`,
+        launchOptions
+      )
+    : launchOptions;

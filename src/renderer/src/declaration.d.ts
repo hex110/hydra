@@ -2,6 +2,11 @@ import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
   GameLaunchPreview,
+  MangoHudSettings,
+  ProtonFlavor,
+  ProtonFlavorOverview,
+  ProtonInstallProgress,
+  WinePrefixInfo,
   GameSaveBackups,
   GameUpdateCheckResult,
   GameUpdateFailedEvent,
@@ -449,9 +454,39 @@ declare global {
       shop: GameShop,
       objectId: string
     ) => Promise<GameOptiScalerStatus>;
-    installGameOptiScaler: (
+    getProtonOverview: (force?: boolean) => Promise<ProtonFlavorOverview[]>;
+    installProton: (
+      flavor: ProtonFlavor,
+      tag?: string
+    ) => Promise<{ ok: true; path: string } | { ok: false; message: string }>;
+    getProtonUsage: (
+      protonPath: string
+    ) => Promise<{ games: string[]; isDefault: boolean }>;
+    removeProton: (protonPath: string) => Promise<void>;
+    onProtonInstallProgress: (
+      cb: (progress: ProtonInstallProgress) => void
+    ) => () => Electron.IpcRenderer;
+    getGameWinePrefixInfo: (
       shop: GameShop,
       objectId: string
+    ) => Promise<WinePrefixInfo>;
+    openGameWinecfg: (shop: GameShop, objectId: string) => Promise<boolean>;
+    resetGameWinePrefix: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<
+      | { ok: true }
+      | { ok: false; error: "no-prefix" | "game-running" | "not-a-prefix" }
+    >;
+    setGameMangoHud: (
+      shop: GameShop,
+      objectId: string,
+      settings: MangoHudSettings | null
+    ) => Promise<void>;
+    installGameOptiScaler: (
+      shop: GameShop,
+      objectId: string,
+      version?: string
     ) => Promise<
       | { ok: true; installation: GameOptiScalerInstallation }
       | {

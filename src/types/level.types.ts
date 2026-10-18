@@ -3,6 +3,7 @@ import type { GameSetupLog, GameShop } from "./game.types";
 import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
 import type { LaunchRule } from "./launch-rule.types";
+import type { MangoHudSettings, ProtonFlavor } from "./linux-gaming.types";
 import type {
   GameSaveImportState,
   SaveImportCustomSource,
@@ -159,6 +160,8 @@ export interface Game extends LibraryCatalogueMetadata {
   optiScalerProxyDll?: OptiScalerProxyDll | null;
   autoRunMangohud?: boolean | null;
   autoRunGamemode?: boolean | null;
+  /** This game's MangoHud layout; the default from settings applies when unset. */
+  mangoHud?: MangoHudSettings | null;
   favorite?: boolean;
   isHiddenFromOthers?: boolean;
   isConcealed?: boolean;
@@ -347,6 +350,10 @@ export interface UserPreferences {
   optiScalerIniOverrides?: string;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
+  /** MangoHud layout for every game; unset leaves MangoHud's own config alone. */
+  mangoHud?: MangoHudSettings | null;
+  /** Proton builds Hydra installs new releases of when it starts. */
+  protonAutoUpdate?: ProtonFlavor[];
   hideClassicsBookmark?: boolean;
   classicsUseHeroLayout?: boolean;
   hideLibraryGameBadges?: boolean;

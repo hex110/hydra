@@ -40,7 +40,7 @@ import { CommonRedistManager } from "@main/services/common-redist-manager";
 import { runAchievementMetadataExport } from "@main/services/achievements/metadata-export";
 import { parseExecutablePath } from "../events/helpers/parse-executable-path";
 import { resolveLaunchCommand } from "./resolve-launch-command";
-import { resolveProtonPath } from "./resolve-proton-path";
+import { resolveGameProton } from "./resolve-proton-path";
 import {
   buildWindowsBatchCommand,
   isWindowsBatchFile,
@@ -58,7 +58,9 @@ import {
   combineLaunchOptions,
   getLaunchAdditions,
   getLaunchTools,
+  withMangoHudConfig,
 } from "./launch-additions";
+import { prepareMangoHudConfig } from "./mangohud-config";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 
 export interface LaunchGameOptions {
@@ -502,6 +504,7 @@ class ManagedEpicLaunchBlockedError extends Error {}
 const prepareLinuxCompatibilityForLaunch = async (
   parsedPath: string,
   game: Game | undefined,
+  ruleProtonPath: string | null,
   objectId: string,
   shop: GameShop,
   shouldPrepareForCloudSave: boolean
@@ -519,7 +522,7 @@ const prepareLinuxCompatibilityForLaunch = async (
     objectId
   );
   let context: LinuxCompatibilityLaunchContext = {
-    protonPath: await resolveProtonPath(game?.protonPath),
+    protonPath: (await resolveGameProton(game, ruleProtonPath)).path,
     winePrefixPath: await Wine.resolvePrefixPath(requestedWinePrefixPath),
   };
   logger.info("[Cloud Save] Resolved authoritative launch prefix", {
@@ -697,22 +700,29 @@ const launchGameWithCloudSaveChecks = async (
     })
     .catch(() => null);
 
+  const launchAdditions = await getLaunchAdditions({
+    objectId,
+    gameKey,
+    game,
+    executablePath: parsedPath,
+    userPreferences,
+  });
+  const { useMangohud, useGamemode } = getLaunchTools(
+    userPreferences,
+    game,
+    launchAdditions
+  );
+  const mangoHudConfigPath =
+    useMangohud && game
+      ? await prepareMangoHudConfig(game, userPreferences)
+      : null;
+
   const effectiveLaunchOptions = combineLaunchOptions(
-    (
-      await getLaunchAdditions({
-        objectId,
-        gameKey,
-        game,
-        executablePath: parsedPath,
-        userPreferences,
-      })
-    ).launchOptions,
+    withMangoHudConfig(launchAdditions.launchOptions, mangoHudConfigPath),
     userPreferences,
     game,
     launchOptions
   );
-
-  const { useMangohud, useGamemode } = getLaunchTools(userPreferences, game);
 
   const steamCompatibilityPrefixPath =
     process.platform === "linux" &&
@@ -756,6 +766,7 @@ const launchGameWithCloudSaveChecks = async (
     preparedCompatibility = await prepareLinuxCompatibilityForLaunch(
       parsedPath,
       launchGameRecord,
+      launchAdditions.protonPath,
       objectId,
       shop,
       shouldRunV2AutomaticSync || managedEpic

@@ -14,6 +14,7 @@ into each game. They are edited in **Settings → Launch rules**.
 | Applies to            | **Every game**, or **Games containing these files**.                                                                                            |
 | Files                 | For file-based rules: file or folder names, comma-separated. Case is ignored and `*` matches anything (`*protected*.exe`). One match is enough. |
 | Launch options to add | Launch options in the usual format: `VARIABLE=1 %command% -argument`.                                                                           |
+| Actions               | Linux: a Proton build, MangoHud, GameMode and gamescope. See [Proton builds and launch tools](proton-and-launch-tools.md#launch-rule-actions).  |
 
 Hydra looks for the files in the game folder and up to six levels below it.
 For Unreal Engine games started from `<Project>/Binaries/Win64`, the game
@@ -42,7 +43,9 @@ instead:
 1. The DLL overrides [OptiScaler](optiscaler.md) and
    [OnlineFix games](online-fix.md) need on Linux. These two stay separate
    features because they also install or copy files.
-2. The launch rules that apply to the game, in the order they are listed.
+2. The launch rules that apply to the game, in the order they are listed,
+   then the gamescope wrapper of the last rule that runs the game in
+   gamescope.
 3. The [default launch options](default-launch-options.md).
 4. The game's own launch options.
 

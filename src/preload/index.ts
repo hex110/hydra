@@ -4,6 +4,9 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  MangoHudSettings,
+  ProtonFlavor,
+  ProtonInstallProgress,
   GameSetupStatusEvent,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
@@ -1058,8 +1061,36 @@ contextBridge.exposeInMainWorld("electron", {
   },
   getGameOptiScalerStatus: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameOptiScalerStatus", shop, objectId),
-  installGameOptiScaler: (shop: GameShop, objectId: string) =>
-    ipcRenderer.invoke("installGameOptiScaler", shop, objectId),
+  installGameOptiScaler: (shop: GameShop, objectId: string, version?: string) =>
+    ipcRenderer.invoke("installGameOptiScaler", shop, objectId, version),
+  getProtonOverview: (force?: boolean) =>
+    ipcRenderer.invoke("getProtonOverview", force),
+  installProton: (flavor: ProtonFlavor, tag?: string) =>
+    ipcRenderer.invoke("installProton", flavor, tag),
+  getProtonUsage: (protonPath: string) =>
+    ipcRenderer.invoke("getProtonUsage", protonPath),
+  removeProton: (protonPath: string) =>
+    ipcRenderer.invoke("removeProton", protonPath),
+  onProtonInstallProgress: (cb: (progress: ProtonInstallProgress) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: ProtonInstallProgress
+    ) => cb(payload);
+    ipcRenderer.on("on-proton-install-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-proton-install-progress", listener);
+  },
+  getGameWinePrefixInfo: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameWinePrefixInfo", shop, objectId),
+  openGameWinecfg: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("openGameWinecfg", shop, objectId),
+  resetGameWinePrefix: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("resetGameWinePrefix", shop, objectId),
+  setGameMangoHud: (
+    shop: GameShop,
+    objectId: string,
+    settings: MangoHudSettings | null
+  ) => ipcRenderer.invoke("setGameMangoHud", shop, objectId, settings),
   uninstallGameOptiScaler: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("uninstallGameOptiScaler", shop, objectId),
   setGameOptiScalerAutoInstallDisabled: (

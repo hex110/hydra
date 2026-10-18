@@ -46,3 +46,30 @@
     gap: globals.$spacing-unit;
   }
 }
+
+.settings-launch-rules__actions-editor {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+
+  summary {
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: globals.$spacing-unit;
+  }
+
+  &[open] {
+    padding-bottom: globals.$spacing-unit;
+  }
+
+  > * + * {
+    margin-top: globals.$spacing-unit;
+  }
+}
+
+.settings-launch-rules__gamescope {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: globals.$spacing-unit calc(globals.$spacing-unit * 2);
+  align-items: end;
+}

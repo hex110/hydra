@@ -433,6 +433,34 @@ export class Umu {
     });
   }
 
+  /** Starts a Wine tool such as `winecfg` in a game's prefix, detached. */
+  public static async runTool(
+    tool: string,
+    options: {
+      winePrefixPath: string;
+      protonPath?: string | null;
+      gameId?: string | null;
+    }
+  ) {
+    const { command, args, env } = this.buildLaunchCommand(tool, [], options);
+    ensureExecutablePermission(getUmuBinaryPath());
+
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn(command, args, {
+        detached: true,
+        stdio: "ignore",
+        shell: false,
+        cwd: options.winePrefixPath,
+        env: { ...process.env, ...env },
+      });
+      child.once("spawn", () => {
+        child.unref();
+        resolve();
+      });
+      child.once("error", reject);
+    });
+  }
+
   /** The command, arguments and environment `launchExecutable` runs. */
   public static buildLaunchCommand(
     executablePath: string,
