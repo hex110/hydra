@@ -52,11 +52,12 @@ in the sections below.
    9. [x] Middle-click autoscroll
 5. **Launch tool conflicts.** Outside wrappers that manage the same game
    folder as Hydra. Shipped: the launch check and wrapper warnings in
-   [OptiScaler](features/optiscaler.md#files-removed-outside-hydra).
+   [OptiScaler](features/optiscaler.md#files-removed-outside-hydra),
+   [launcher redirects](features/proton-and-launch-tools.md#launcher-redirects).
+   vkBasalt and lsfg-vk moved to "Not scheduled yet" (not used, 2026-10-19).
    1. [x] Check OptiScaler files at launch
    2. [x] Warn about wrappers that manage OptiScaler
-   3. [ ] vkBasalt and lsfg-vk (only if wanted)
-   4. [ ] Launcher redirects
+   3. [x] Launcher redirects
 6. **Fixes from other forks.** Bugs other forks fixed that are confirmed on
    our code ([fork survey](fork-survey.md)), plus cheap improvements.
    Shipped: [Steam shortcuts](features/proton-and-launch-tools.md#steam-shortcuts),
@@ -139,6 +140,10 @@ it's wanted.
       a finished download. Compare with the exe guess after extraction
       first.
 - [ ] **`--no-tray`.** Quit when the window closes.
+- [ ] **vkBasalt and lsfg-vk.** Per-game toggles written like the MangoHud
+      layout (`ENABLE_VKBASALT=1` plus a config path; lsfg-vk's profile or
+      environment). Not used as of 2026-10-19. vkBasalt is only installed
+      inside `proton-cachyos-slr`; lsfg-vk is installed as a user layer.
 
 ## Launch tool conflicts
 
@@ -155,17 +160,8 @@ setting turns the cleanup off. `bgmod` also exports its own
 
 Rule going forward: a tool that only writes config files Hydra points at is
 fine to use. Anything that copies files into game folders, wraps the
-executable or exports launch environment belongs to Hydra.
-
-- [ ] **vkBasalt and lsfg-vk.** Only if they get used: per-game toggles
-      written like the MangoHud layout (`ENABLE_VKBASALT=1` plus a config
-      path; lsfg-vk's environment). Replaces the remaining reason to keep
-      `bgmod`.
-- [ ] **Launcher redirects.** A table that maps a launcher exe to the real
-      game exe (Cyberpunk's `REDprelauncher.exe` → `bin/x64/Cyberpunk2077.exe`
-      and similar). `bgmod`'s `[Launchers]` section is a starting list; `bgmod`
-      is MIT, so it can be reused. GOverlay itself is GPL-3.0, so borrow ideas
-      from it, not code.
+executable or exports launch environment belongs to Hydra. With launcher
+redirects shipped, nothing in use still needs `bgmod`.
 
 ## Library scanning
 

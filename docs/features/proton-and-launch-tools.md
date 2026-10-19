@@ -118,6 +118,35 @@ folder, next to upstream's Winetricks and Proton-switch reset:
   Hydra refuses when the game is running, or when the folder does not look
   like a prefix (no `drive_c` or `pfx`).
 
+## Launcher redirects
+
+Some games start a publisher launcher first, such as Cyberpunk's
+`REDprelauncher.exe` or Baldur's Gate 3's Larian launcher. Under Proton these
+are often slow or broken, and wrappers, MangoHud and OptiScaler end up on the
+launcher instead of the game. When a game's executable is a known launcher and
+the game it starts is in the folder, Hydra runs the game directly:
+
+| Launcher                      | Game                                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------ |
+| `REDprelauncher.exe`          | `bin/x64/Cyberpunk2077.exe`, or Witcher 3's `bin/x64_dx12/witcher3.exe` / `bin/x64/witcher3.exe` |
+| `Launcher/LariLauncher.exe`   | `bin/bg3_dx11.exe`                                                                               |
+| `Launcher.exe`                | `Retail/HITMAN3.exe`                                                                             |
+| `Launcher/sop_launcher.exe`   | `SYNCED.exe`                                                                                     |
+| `launcher/Launcher.exe`       | `binaries/Darktide.exe`, `binaries_dx12/vermintide2_dx12.exe`                                    |
+| `FactoryGameSteam.exe`        | `Engine/Binaries/Win64/FactoryGameSteam-Win64-Shipping.exe`                                      |
+| `boot/ffxivboot.exe`          | `game/ffxiv_dx11.exe`                                                                            |
+| `Launcher/FuncomLauncher.exe` | `DuneSandbox/Binaries/Win64/DuneSandbox-Win64-Shipping.exe`                                      |
+
+Paths are relative to the folder the launcher path starts in, and names match
+regardless of case. The list comes from GOverlay's `bgmod` (MIT); its 2K
+launcher entry is left out because it has no fixed game executable.
+
+- The game's executable setting keeps the launcher; only what runs changes.
+  The game's **Executable** options say so and have **Start through the
+  launcher** for games that need it; the launch preview shows the redirect.
+- Playtime tracking looks for the game as well as the launcher, OptiScaler
+  installs next to the game, and Steam shortcuts point at the game.
+
 ## Steam shortcuts
 
 **Add to Steam** on Linux makes a shortcut that runs the game with Steam's

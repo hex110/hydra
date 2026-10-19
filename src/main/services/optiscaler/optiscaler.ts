@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
+import { getLaunchExecutable } from "@main/helpers/launcher-redirects";
 import { logger } from "@main/services/logger";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { WindowManager } from "@main/services/window-manager";
@@ -71,7 +72,11 @@ const loadSettings = async (): Promise<OptiScalerSettings> =>
 
 const getWindowsExecutable = (game: Game) => {
   if (!game.executablePath) return null;
-  const executablePath = parseExecutablePath(game.executablePath);
+  // OptiScaler belongs next to the game, not a launcher that starts it.
+  const executablePath = getLaunchExecutable(
+    game,
+    parseExecutablePath(game.executablePath)
+  );
   return path.extname(executablePath).toLowerCase() === ".exe"
     ? executablePath
     : null;

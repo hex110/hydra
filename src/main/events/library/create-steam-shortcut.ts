@@ -197,13 +197,16 @@ const createSteamShortcut = async (
     ? buildRunDeepLink(game.shop, game.objectId)
     : null;
   const shortcutTarget = deepLink ? getHydraShortcutTarget(deepLink) : null;
-  const executablePath = shortcutTarget?.executablePath ?? game.executablePath!;
   // On Linux Steam runs the game itself, so it gets Hydra's prefix and
   // launch options instead of a Steam prefix of its own.
   const linuxLaunch =
     process.platform === "linux" && !isClassicsGame
       ? await getSteamShortcutLaunch(game)
       : null;
+  const executablePath =
+    shortcutTarget?.executablePath ??
+    linuxLaunch?.executablePath ??
+    game.executablePath!;
   const launchOptions =
     shortcutTarget?.arguments ?? linuxLaunch?.launchOptions ?? "";
 

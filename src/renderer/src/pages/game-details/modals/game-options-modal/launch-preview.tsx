@@ -51,6 +51,14 @@ export function LaunchPreview({ game }: Readonly<{ game: LibraryGame }>) {
           <p className="game-options-modal__header-description">
             {t(`launch_preview_runner_${preview.runner}`)}
           </p>
+          {preview.redirectedFrom && (
+            <p className="game-options-modal__optiscaler-hint">
+              {t("launch_preview_redirected", {
+                launcher: preview.redirectedFrom,
+                game: preview.executablePath,
+              })}
+            </p>
+          )}
           {preview.conflictingWrappers.length > 0 && (
             <p className="game-options-modal__optiscaler-hint game-options-modal__optiscaler-warning">
               {t("launch_preview_conflicting_wrapper", {

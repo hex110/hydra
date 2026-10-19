@@ -53,6 +53,7 @@ import "./toggle-game-mangohud";
 import "./toggle-game-default-launch-options";
 import "./launch-rules";
 import "./run-game-setup";
+import "./launcher-redirect";
 import "./toggle-game-pin";
 import "./update-custom-game";
 import "./update-executable-path";

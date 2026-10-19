@@ -257,6 +257,10 @@ function fixture() {
         "./process-watcher-scan": {},
         "./linux-process-match": {},
         "@main/helpers/windows-batch-command": {},
+        "@main/helpers/launcher-redirects": {
+          getLaunchExecutable: (_game: unknown, executablePath: string) =>
+            executablePath,
+        },
         "./steam-integration/steam-library-executable": {
           isSteamAppExecutable: async () => false,
         },

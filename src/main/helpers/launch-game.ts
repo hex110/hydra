@@ -55,6 +55,7 @@ import {
 import type { EpicLaunchParameters } from "@main/services/epic/launch-protocol";
 import { EpicSaveFailure } from "@main/services/epic/cloud-save-protocol";
 import { resolveGameLaunchOptions } from "./launch-additions";
+import { getLaunchExecutable } from "./launcher-redirects";
 import { refreshExecutableStatus } from "@main/services/executable-status";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 import { checkOptiScalerBeforeLaunch } from "@main/services/game-setup/optiscaler-step";
@@ -668,10 +669,18 @@ const launchGameWithCloudSaveChecks = async (
 ): Promise<number | null> => {
   const { shop, objectId, executablePath, launchOptions } = options;
 
-  const parsedPath = parseExecutablePath(executablePath);
+  const recordedPath = parseExecutablePath(executablePath);
 
   const gameKey = levelKeys.game(shop, objectId);
   const game = await gamesSublevel.get(gameKey);
+  // A known publisher launcher stays the game's executable; its game runs.
+  const parsedPath = getLaunchExecutable(game, recordedPath);
+  if (parsedPath !== recordedPath) {
+    logger.log("Running the game instead of its launcher", {
+      launcher: recordedPath,
+      game: parsedPath,
+    });
+  }
   clearCloudSaveLaunchGuard(objectId, shop);
 
   const steamProtocolLaunch =
@@ -721,7 +730,7 @@ const launchGameWithCloudSaveChecks = async (
 
   const updatedGame = game
     ? await updateGameRecord(gameKey, (currentGame) => ({
-        ...updateGameExecutablePath(currentGame, parsedPath),
+        ...updateGameExecutablePath(currentGame, recordedPath),
         launchOptions,
         ...(steamCompatibilityPrefixPath
           ? { winePrefixPath: steamCompatibilityPrefixPath }

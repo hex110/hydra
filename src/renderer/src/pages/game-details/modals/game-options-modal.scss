@@ -134,6 +134,13 @@ $disc-menu-transition-duration: 0.15s;
     margin-top: globals.$spacing-unit;
   }
 
+  &__launcher-redirect {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin-top: globals.$spacing-unit;
+  }
+
   &__warning {
     margin: 0;
     color: #f5a623;

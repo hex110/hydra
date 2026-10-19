@@ -149,6 +149,8 @@ export interface Game extends LibraryCatalogueMetadata {
   onlineFix?: GameOnlineFix | null;
   /** Skip OnlineFix preparation and its DLL overrides for this game. */
   onlineFixDisabled?: boolean;
+  /** Run the publisher launcher instead of the game it starts (see launcher redirects). */
+  useGameLauncher?: boolean;
   saveImport?: GameSaveImportState;
   /** Per-rule choices that replace a launch rule's global setting for this game. */
   launchRuleOverrides?: Record<string, boolean>;

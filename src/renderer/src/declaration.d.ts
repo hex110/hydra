@@ -431,6 +431,15 @@ declare global {
       shop: GameShop,
       objectId: string
     ) => Promise<GameLaunchPreview | null>;
+    getGameLauncherRedirect: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<{ launcherPath: string; gamePath: string } | null>;
+    setGameUseLauncher: (
+      shop: GameShop,
+      objectId: string,
+      useLauncher: boolean
+    ) => Promise<void>;
     countGamesMissingPrefix: () => Promise<number>;
     prepareMissingGamePrefixes: () => Promise<number>;
     onGameSetupStatus: (

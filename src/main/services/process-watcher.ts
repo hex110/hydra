@@ -34,6 +34,7 @@ import {
   type LinuxProcessInfo,
 } from "./linux-process-match";
 import { isWindowsBatchFile } from "@main/helpers/windows-batch-command";
+import { getLaunchExecutable } from "@main/helpers/launcher-redirects";
 import { HydraApi } from "./hydra-api";
 import { isSteamAppExecutable } from "./steam-integration/steam-library-executable";
 import {
@@ -371,6 +372,10 @@ export const watchProcesses = async () => {
     }
 
     const trackingPaths = game.trackingExecutablePaths?.filter(Boolean) ?? [];
+
+    // Hydra runs the game a known launcher starts, so look for both.
+    const launchedPath = getLaunchExecutable(game, executablePath);
+    if (launchedPath !== executablePath) trackingPaths.unshift(launchedPath);
 
     let matchPaths: string[];
     if (isWindowsBatchFile(executablePath)) {

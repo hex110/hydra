@@ -52,6 +52,8 @@ export interface GameLaunchPreview {
   /** "steam": launched through the Steam client with Steam's options. */
   runner: "proton" | "native" | "steam";
   executablePath: string;
+  /** The game's own executable when it is a launcher Hydra runs past. */
+  redirectedFrom: string | null;
   workingDirectory: string;
   commandLine: string;
   env: Record<string, string>;

@@ -1016,6 +1016,13 @@ contextBridge.exposeInMainWorld("electron", {
   ) => ipcRenderer.invoke("setGameOnlineFixDisabled", shop, objectId, disabled),
   getGameLaunchPreview: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameLaunchPreview", shop, objectId),
+  getGameLauncherRedirect: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameLauncherRedirect", shop, objectId),
+  setGameUseLauncher: (
+    shop: GameShop,
+    objectId: string,
+    useLauncher: boolean
+  ) => ipcRenderer.invoke("setGameUseLauncher", shop, objectId, useLauncher),
   countGamesMissingPrefix: () => ipcRenderer.invoke("countGamesMissingPrefix"),
   prepareMissingGamePrefixes: () =>
     ipcRenderer.invoke("prepareMissingGamePrefixes"),

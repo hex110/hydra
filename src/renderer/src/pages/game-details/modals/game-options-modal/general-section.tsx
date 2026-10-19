@@ -26,6 +26,7 @@ import { DotIcon, FileIcon } from "@primer/octicons-react";
 import { HardDrive, X, FolderOpen, ChevronDown } from "lucide-react";
 import { gameDetailsContext } from "@renderer/context";
 import { LaunchPreview } from "./launch-preview";
+import { LauncherRedirect } from "./launcher-redirect";
 import { useAppSelector } from "@renderer/hooks";
 import {
   getSkuRegion,
@@ -787,6 +788,8 @@ export function GeneralSettingsSection({
                 )}
             </div>
           </div>
+
+          <LauncherRedirect game={game} />
 
           {supportsTrackingExecutables(game.executablePath) && (
             <div className="game-options-modal__tracking-executable">

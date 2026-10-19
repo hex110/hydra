@@ -5,6 +5,7 @@ import { Wine } from "@main/services/wine";
 import type { GameLaunchPreview, GameShop, UserPreferences } from "@types";
 import { parseExecutablePath } from "../events/helpers/parse-executable-path";
 import { resolveGameLaunchOptions } from "./launch-additions";
+import { getLaunchExecutable } from "./launcher-redirects";
 import { findConflictingWrappers } from "./launch-wrappers";
 import { resolveLaunchCommand } from "./resolve-launch-command";
 import { resolveGameProton } from "./resolve-proton-path";
@@ -26,7 +27,8 @@ export const getLaunchPreview = async (
   const game = await gamesSublevel.get(gameKey);
   if (!game?.executablePath) return null;
 
-  const executablePath = parseExecutablePath(game.executablePath);
+  const recordedPath = parseExecutablePath(game.executablePath);
+  const executablePath = getLaunchExecutable(game, recordedPath);
   const userPreferences = await db
     .get<string, UserPreferences | null>(levelKeys.userPreferences, {
       valueEncoding: "json",
@@ -47,6 +49,7 @@ export const getLaunchPreview = async (
   const workingDirectory = path.dirname(executablePath);
   const base = {
     executablePath,
+    redirectedFrom: executablePath === recordedPath ? null : recordedPath,
     workingDirectory,
     launchOptions,
     rules: additions.rules,

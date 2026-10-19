@@ -5,6 +5,7 @@ import { Wine } from "@main/services/wine";
 import type { Game, UserPreferences } from "@types";
 import { parseExecutablePath } from "../events/helpers/parse-executable-path";
 import { resolveGameLaunchOptions } from "./launch-additions";
+import { getLaunchExecutable } from "./launcher-redirects";
 import { resolveLaunchCommand } from "./resolve-launch-command";
 import { resolveGameProton } from "./resolve-proton-path";
 import {
@@ -40,7 +41,10 @@ const prepareCompatDataPath = async (winePrefixPath: string) => {
  * follow later changes to launch rules.
  */
 export const getSteamShortcutLaunch = async (game: Game) => {
-  const executablePath = parseExecutablePath(game.executablePath!);
+  const executablePath = getLaunchExecutable(
+    game,
+    parseExecutablePath(game.executablePath!)
+  );
   const gameKey = levelKeys.game(game.shop, game.objectId);
   const userPreferences = await db
     .get<string, UserPreferences | null>(levelKeys.userPreferences, {
@@ -84,6 +88,7 @@ export const getSteamShortcutLaunch = async (game: Game) => {
     : null;
 
   return {
+    executablePath,
     launchOptions: formatSteamLaunchOptions({
       ...command,
       env: {
