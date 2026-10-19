@@ -4,6 +4,7 @@ import { levelDBService } from "@renderer/services/leveldb.service";
 import type { DownloadSource } from "@types";
 import { useAppDispatch } from "./redux";
 import { setGenres, setTags } from "@renderer/features";
+import { logger } from "@renderer/logger";
 
 const SUPPORTED_STEAM_METADATA_LANGUAGES = new Set([
   "en",
@@ -44,32 +45,43 @@ export function useCatalogue() {
   const [steamDevelopers, setSteamDevelopers] = useState<string[]>([]);
   const [downloadSources, setDownloadSources] = useState<DownloadSource[]>([]);
 
+  // Filter metadata is optional: without it the filters are just empty.
   const getSteamFilters = useCallback(async () => {
-    const [tags, genres] = await Promise.all([
-      getLocalizedSteamMetadata<Record<string, number>>(
-        "/catalogue/steam/tags",
-        i18n.language
-      ),
-      getLocalizedSteamMetadata<string[]>(
-        "/catalogue/steam/genres",
-        i18n.language
-      ),
-    ]);
+    try {
+      const [tags, genres] = await Promise.all([
+        getLocalizedSteamMetadata<Record<string, number>>(
+          "/catalogue/steam/tags",
+          i18n.language
+        ),
+        getLocalizedSteamMetadata<string[]>(
+          "/catalogue/steam/genres",
+          i18n.language
+        ),
+      ]);
 
-    dispatch(setTags(tags));
-    dispatch(setGenres(genres));
+      dispatch(setTags(tags));
+      dispatch(setGenres(genres));
+    } catch (error) {
+      logger.error("Failed to load catalogue tags and genres", error);
+    }
   }, [dispatch, i18n.language]);
 
   const getSteamPublishers = useCallback(() => {
     window.electron.hydraApi
       .get<string[]>("/catalogue/steam/publishers", { needsAuth: false })
-      .then(setSteamPublishers);
+      .then(setSteamPublishers)
+      .catch((error: unknown) => {
+        logger.error("Failed to load catalogue publishers", error);
+      });
   }, []);
 
   const getSteamDevelopers = useCallback(() => {
     window.electron.hydraApi
       .get<string[]>("/catalogue/steam/developers", { needsAuth: false })
-      .then(setSteamDevelopers);
+      .then(setSteamDevelopers)
+      .catch((error: unknown) => {
+        logger.error("Failed to load catalogue developers", error);
+      });
   }, []);
 
   const getDownloadSources = useCallback(() => {

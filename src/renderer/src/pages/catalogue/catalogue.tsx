@@ -22,6 +22,7 @@ import { SelectField } from "@renderer/components/select-field/select-field";
 import { setFilters, setPage } from "@renderer/features";
 import { useCatalogue } from "@renderer/hooks/use-catalogue";
 import { useLaunchboxFilters } from "@renderer/hooks/use-launchbox-filters";
+import { logger } from "@renderer/logger";
 import { debounce } from "lodash-es";
 import { useTranslation } from "react-i18next";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
@@ -151,6 +152,7 @@ export default function Catalogue() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [results, setResults] = useState<CatalogueSearchResult[]>([]);
+  const [searchFailed, setSearchFailed] = useState(false);
   const [resultsMode, setResultsMode] = useState(mode);
 
   const [itemsCount, setItemsCount] = useState(0);
@@ -205,19 +207,25 @@ export default function Catalogue() {
               }
             : baseRequest;
 
-        const response = await window.electron.hydraApi.post<{
-          edges: CatalogueSearchResult[];
-          count: number;
-        }>("/catalogue/search", {
-          data: requestData,
-          needsAuth: false,
-        });
+        const response = await window.electron.hydraApi
+          .post<{
+            edges: CatalogueSearchResult[];
+            count: number;
+          }>("/catalogue/search", {
+            data: requestData,
+            needsAuth: false,
+          })
+          .catch((error: unknown) => {
+            logger.error("Catalogue search failed", error);
+            return null;
+          });
 
         if (requestId !== requestSequenceRef.current) return;
 
-        setResults(response.edges);
+        setResults(response?.edges ?? []);
         setResultsMode(mode);
-        setItemsCount(response.count);
+        setItemsCount(response?.count ?? 0);
+        setSearchFailed(response === null);
         setIsLoading(false);
       },
       500
@@ -748,6 +756,8 @@ export default function Catalogue() {
                 />
               ))}
             </SkeletonTheme>
+          ) : searchFailed ? (
+            <p className="catalogue__search-error">{t("search_failed")}</p>
           ) : mode === "classics" ? (
             results.map((game) => (
               <GameItemClassics key={game.id} game={game} />

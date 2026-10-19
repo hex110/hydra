@@ -41,3 +41,14 @@ Chromium has no middle-click autoscroll on Linux, so Hydra adds it: press the
 middle mouse button over a scrollable area (not on a link or button) and move
 the mouse. A quick click keeps scrolling until the next click, Escape or the
 mouse wheel; holding the button scrolls until it is released.
+
+## Fixes
+
+Behaviour that differs from upstream because of a fix (several found in other
+forks, see the [fork survey](../fork-survey.md)):
+
+- Changing or resetting a game's playtime updates the library and sidebar
+  right away, not only the game page.
+- When a catalogue search fails, the catalogue says so instead of showing
+  loading placeholders forever. Failing tag, genre, publisher and developer
+  lists only leave those filters empty.

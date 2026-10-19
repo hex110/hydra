@@ -243,6 +243,7 @@
     "deck_playable_plus": "Playable+",
     "deck_verified_only": "Verified only",
     "result_count": "{{resultCount}} results",
+    "search_failed": "Couldn't load the catalogue. Check your connection and try again.",
     "filter_count": "{{filterCount}} available",
     "clear_filters": "Clear",
     "release_year": "Release Year",

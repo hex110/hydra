@@ -157,6 +157,12 @@
     gap: 12px;
   }
 
+  &__search-error {
+    padding: calc(globals.$spacing-unit * 4) 0;
+    color: globals.$muted-color;
+    text-align: center;
+  }
+
   &__skeleton {
     height: 105px;
     border-radius: 4px;
