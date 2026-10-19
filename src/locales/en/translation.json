@@ -439,6 +439,7 @@
     "create_steam_shortcut": "Create Steam Shortcut",
     "create_shortcut_success": "Shortcut created successfully",
     "you_might_need_to_restart_steam": "You might need to restart Steam to see the changes",
+    "steam_shortcut_proton_hint": "Restart Steam, then pick {{proton}} under the shortcut's Properties → Compatibility. It runs in Hydra's prefix with Hydra's launch options as they are now.",
     "create_shortcut_error": "Error creating shortcut",
     "add_to_favorites": "Add to favorites",
     "remove_from_favorites": "Remove from favorites",

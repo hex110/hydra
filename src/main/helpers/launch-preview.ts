@@ -4,14 +4,8 @@ import { Umu } from "@main/services/umu";
 import { Wine } from "@main/services/wine";
 import type { GameLaunchPreview, GameShop, UserPreferences } from "@types";
 import { parseExecutablePath } from "../events/helpers/parse-executable-path";
-import {
-  combineLaunchOptions,
-  getLaunchAdditions,
-  getLaunchTools,
-  withMangoHudConfig,
-} from "./launch-additions";
+import { resolveGameLaunchOptions } from "./launch-additions";
 import { findConflictingWrappers } from "./launch-wrappers";
-import { prepareMangoHudConfig } from "./mangohud-config";
 import { resolveLaunchCommand } from "./resolve-launch-command";
 import { resolveGameProton } from "./resolve-proton-path";
 
@@ -39,28 +33,17 @@ export const getLaunchPreview = async (
     })
     .catch(() => null);
 
-  const additions = await getLaunchAdditions({
-    objectId,
-    gameKey,
-    game,
-    executablePath,
-    userPreferences,
-    prepareMissing: false,
-  });
-  const { useMangohud, useGamemode } = getLaunchTools(
-    userPreferences,
-    game,
-    additions
-  );
-  const mangoHudConfigPath = useMangohud
-    ? await prepareMangoHudConfig(game, userPreferences, { write: false })
-    : null;
-  const launchOptions = combineLaunchOptions(
-    withMangoHudConfig(additions.launchOptions, mangoHudConfigPath),
-    userPreferences,
-    game,
-    game.launchOptions
-  );
+  const { additions, useMangohud, useGamemode, launchOptions } =
+    await resolveGameLaunchOptions({
+      objectId,
+      gameKey,
+      game,
+      executablePath,
+      userPreferences,
+      gameLaunchOptions: game.launchOptions,
+      prepareMissing: false,
+      writeMangoHudConfig: false,
+    });
   const workingDirectory = path.dirname(executablePath);
   const base = {
     executablePath,

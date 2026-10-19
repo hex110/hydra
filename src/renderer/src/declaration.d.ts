@@ -1183,7 +1183,7 @@ declare global {
       shop: GameShop,
       objectId: string,
       options?: CreateSteamShortcutOptions
-    ) => Promise<void>;
+    ) => Promise<{ protonName: string | null } | undefined>;
     deleteSteamShortcut: (shop: GameShop, objectId: string) => Promise<void>;
     checkSteamShortcut: (shop: GameShop, objectId: string) => Promise<boolean>;
 

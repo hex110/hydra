@@ -9,7 +9,6 @@ import {
   getSteamShortcuts,
   getSteamUsersIds,
   logger,
-  SystemPath,
   writeSteamShortcuts,
 } from "@main/services";
 import fs from "node:fs";
@@ -25,6 +24,7 @@ import {
   buildRunDeepLink,
   getHydraShortcutTarget,
 } from "@main/helpers/shortcut-launch";
+import { getSteamShortcutLaunch } from "@main/helpers/steam-shortcut-launch-options";
 
 const downloadAsset = async (
   downloadPath: string,
@@ -156,34 +156,6 @@ const addShortcutForSteamUser = async (
   await writeSteamShortcuts(steamUserId, steamShortcuts);
 };
 
-const configureLinuxWinePrefix = async (game: Game, appId: number) => {
-  if (
-    process.platform !== "linux" ||
-    game.shop === "launchbox" ||
-    game.winePrefixPath
-  ) {
-    return;
-  }
-
-  const winePrefixPath = path.join(
-    SystemPath.getPath("home"),
-    ".local",
-    "share",
-    "Steam",
-    "steamapps",
-    "compatdata",
-    appId.toString(),
-    "pfx"
-  );
-  await fs.promises.mkdir(winePrefixPath, { recursive: true });
-
-  const gameKey = levelKeys.game(game.shop, game.objectId);
-  await updateGameRecord(gameKey, {
-    steamShortcutAppId: appId,
-    winePrefixPath,
-  });
-};
-
 const createSteamShortcut = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
@@ -226,7 +198,14 @@ const createSteamShortcut = async (
     : null;
   const shortcutTarget = deepLink ? getHydraShortcutTarget(deepLink) : null;
   const executablePath = shortcutTarget?.executablePath ?? game.executablePath!;
-  const launchOptions = shortcutTarget?.arguments ?? "";
+  // On Linux Steam runs the game itself, so it gets Hydra's prefix and
+  // launch options instead of a Steam prefix of its own.
+  const linuxLaunch =
+    process.platform === "linux" && !isClassicsGame
+      ? await getSteamShortcutLaunch(game)
+      : null;
+  const launchOptions =
+    shortcutTarget?.arguments ?? linuxLaunch?.launchOptions ?? "";
 
   const newShortcut = composeSteamShortcut(
     game.title,
@@ -252,7 +231,7 @@ const createSteamShortcut = async (
     steamShortcutAppId: newShortcut.appid,
   });
 
-  await configureLinuxWinePrefix(game, newShortcut.appid);
+  return { protonName: linuxLaunch?.protonName ?? null };
 };
 
 registerEvent("createSteamShortcut", createSteamShortcut);

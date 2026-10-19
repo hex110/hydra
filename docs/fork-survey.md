@@ -38,8 +38,10 @@ in the roadmap's "Fixes from other forks" phase unless noted.
   game has no explicit prefix. Games set up by Hydra use the default
   per-game prefix (`Wine.getEffectivePrefixPath`), so adding a game to Steam
   points Hydra at a prefix without its setup or saves. CappyT also routes
-  Linux Steam shortcuts through the `run` deep link (`route steam shortcuts
-through deep link`), so launches keep Hydra's launch rules.
+  Linux Steam shortcuts through the `run` deep link, so launches keep
+  Hydra's launch rules. Fixed 2026-10-19 the other way, by choice: Steam's
+  Proton runs the game in Hydra's prefix, keeping the Steam overlay and
+  Steam Input.
 - **Library doesn't refresh after a playtime change** (entitybtw
   `7fbafec88`). `handleChangePlaytime` and the reset only call
   `updateGame()`, and neither main-process event notifies the library.

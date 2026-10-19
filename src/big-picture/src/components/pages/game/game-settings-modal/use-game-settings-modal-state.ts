@@ -587,11 +587,12 @@ export function useGameSettingsModalState({
     if (!game || game.shop === "custom") return;
 
     await executeSteamShortcutAction(
-      () =>
-        globalThis.window.electron.createSteamShortcut(
+      async () => {
+        await globalThis.window.electron.createSteamShortcut(
           game.shop,
           game.objectId
-        ),
+        );
+      },
       t("create_shortcut_success"),
       t("create_shortcut_error"),
       true

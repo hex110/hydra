@@ -21,6 +21,7 @@ import { isGamemodeAvailable } from "./is-gamemode-available";
 import { isMangohudAvailable } from "./is-mangohud-available";
 import { buildLaunchEnvironment } from "./launch-environment";
 import { findLaunchRuleMatches } from "./launch-rule-matching";
+import { prepareMangoHudConfig } from "./mangohud-config";
 import { resolveProtonChoice } from "./resolve-proton-path";
 
 const isWindowsExecutable = (executablePath: string) =>
@@ -206,3 +207,59 @@ export const withMangoHudConfig = (
         launchOptions
       )
     : launchOptions;
+
+/**
+ * The launch options and tools a launch of the game uses: its additions and
+ * MangoHud layout, then the default and per-game launch options.
+ */
+export const resolveGameLaunchOptions = async ({
+  objectId,
+  gameKey,
+  game,
+  executablePath,
+  userPreferences,
+  gameLaunchOptions,
+  prepareMissing = true,
+  writeMangoHudConfig = true,
+}: {
+  objectId: string;
+  gameKey: string;
+  game: Game | undefined;
+  executablePath: string;
+  userPreferences: UserPreferences | null;
+  gameLaunchOptions: string | null | undefined;
+  prepareMissing?: boolean;
+  writeMangoHudConfig?: boolean;
+}) => {
+  const additions = await getLaunchAdditions({
+    objectId,
+    gameKey,
+    game,
+    executablePath,
+    userPreferences,
+    prepareMissing,
+  });
+  const { useMangohud, useGamemode } = getLaunchTools(
+    userPreferences,
+    game,
+    additions
+  );
+  const mangoHudConfigPath =
+    useMangohud && game
+      ? await prepareMangoHudConfig(game, userPreferences, {
+          write: writeMangoHudConfig,
+        })
+      : null;
+
+  return {
+    additions,
+    useMangohud,
+    useGamemode,
+    launchOptions: combineLaunchOptions(
+      withMangoHudConfig(additions.launchOptions, mangoHudConfigPath),
+      userPreferences,
+      game,
+      gameLaunchOptions
+    ),
+  };
+};

@@ -225,11 +225,16 @@ export function useGameActions(requestedGame: GameContextMenuGame) {
   const handleCreateSteamShortcut = async () => {
     try {
       setCreatingSteamShortcut(true);
-      await window.electron.createSteamShortcut(game.shop, game.objectId);
+      const result = await window.electron.createSteamShortcut(
+        game.shop,
+        game.objectId
+      );
 
       showSuccessToast(
         t("create_shortcut_success"),
-        t("you_might_need_to_restart_steam")
+        result?.protonName
+          ? t("steam_shortcut_proton_hint", { proton: result.protonName })
+          : t("you_might_need_to_restart_steam")
       );
     } catch (error) {
       logger.error("Failed to create Steam shortcut", error);

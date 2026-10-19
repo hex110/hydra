@@ -573,14 +573,16 @@ export function GameOptionsModal({
   ) => {
     try {
       setCreatingSteamShortcut(true);
-      await globalThis.window.electron.createSteamShortcut(
+      const result = await globalThis.window.electron.createSteamShortcut(
         game.shop,
         game.objectId,
         options ?? {}
       );
       showSuccessToast(
         t("create_shortcut_success"),
-        t("you_might_need_to_restart_steam")
+        result?.protonName
+          ? t("steam_shortcut_proton_hint", { proton: result.protonName })
+          : t("you_might_need_to_restart_steam")
       );
       const exists = await globalThis.window.electron.checkSteamShortcut(
         game.shop,

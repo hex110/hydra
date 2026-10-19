@@ -59,7 +59,8 @@ in the sections below.
    4. [ ] Launcher redirects
 6. **Fixes from other forks.** Bugs other forks fixed that are confirmed on
    our code ([fork survey](fork-survey.md)), plus cheap improvements.
-   1. [ ] Add to Steam keeps Hydra's prefix
+   Shipped: [Steam shortcuts](features/proton-and-launch-tools.md#steam-shortcuts).
+   1. [x] Add to Steam keeps Hydra's prefix
    2. [ ] Sign-in returns reach Hydra Plus
    3. [ ] Library refreshes after a playtime change
    4. [ ] Catalogue survives failed requests
@@ -126,11 +127,6 @@ Found in other forks and confirmed on our code, 2026-10-19. The
 [fork survey](fork-survey.md) has the fork commit for each and what it
 changes.
 
-- [ ] **Add to Steam keeps Hydra's prefix.** `create-steam-shortcut.ts`
-      points a game without an explicit prefix at an empty Steam
-      `compatdata` prefix, away from the one Hydra set up. Keep the Hydra
-      prefix, and launch the shortcut through `hydraplus://run` so launch
-      rules apply too.
 - [ ] **Sign-in returns reach Hydra Plus.** With upstream Hydra installed,
       `hydralauncher://` links open upstream. Use `hydraplus://` for the
       Steam sign-in return; find a fix for the Hydra account's

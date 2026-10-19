@@ -110,3 +110,24 @@ folder, next to upstream's Winetricks and Proton-switch reset:
   prefix and OnlineFix steps). Saves stored in the prefix are deleted with it.
   Hydra refuses when the game is running, or when the folder does not look
   like a prefix (no `drive_c` or `pfx`).
+
+## Steam shortcuts
+
+**Add to Steam** on Linux makes a shortcut that runs the game with Steam's
+Proton, in Hydra's prefix, with the launch options Hydra would use:
+
+- The prefix goes in as `STEAM_COMPAT_DATA_PATH`. Steam's Proton runs the
+  prefix in that folder's `pfx` subfolder, and Hydra prefixes have a `pfx`
+  link back to themselves (Hydra adds it if it's missing), so Hydra and Steam
+  share one prefix and its saves. Upstream instead pointed the game at a new,
+  empty `compatdata` prefix.
+- Hydra's DLL overrides (OptiScaler, OnlineFix), launch rules, default and
+  per-game launch options, MangoHud and GameMode are written into the
+  shortcut's launch options, quoted for the shell Steam runs them in. They are
+  a snapshot: remove and add the shortcut again after changing them.
+- Steam picks the Proton build, not Hydra. The success message names the
+  build Hydra uses for the game; choose it under the shortcut's
+  **Properties → Compatibility**, since a different version upgrades or
+  downgrades the shared prefix.
+- Hydra's launch-time steps (OptiScaler file check, cloud saves, playtime)
+  don't run when Steam starts the game.

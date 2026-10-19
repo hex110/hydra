@@ -54,13 +54,7 @@ import {
 } from "@main/services/epic/launch";
 import type { EpicLaunchParameters } from "@main/services/epic/launch-protocol";
 import { EpicSaveFailure } from "@main/services/epic/cloud-save-protocol";
-import {
-  combineLaunchOptions,
-  getLaunchAdditions,
-  getLaunchTools,
-  withMangoHudConfig,
-} from "./launch-additions";
-import { prepareMangoHudConfig } from "./mangohud-config";
+import { resolveGameLaunchOptions } from "./launch-additions";
 import { refreshExecutableStatus } from "@main/services/executable-status";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
 import { checkOptiScalerBeforeLaunch } from "@main/services/game-setup/optiscaler-step";
@@ -702,29 +696,19 @@ const launchGameWithCloudSaveChecks = async (
     })
     .catch(() => null);
 
-  const launchAdditions = await getLaunchAdditions({
+  const {
+    additions: launchAdditions,
+    useMangohud,
+    useGamemode,
+    launchOptions: effectiveLaunchOptions,
+  } = await resolveGameLaunchOptions({
     objectId,
     gameKey,
     game,
     executablePath: parsedPath,
     userPreferences,
+    gameLaunchOptions: launchOptions,
   });
-  const { useMangohud, useGamemode } = getLaunchTools(
-    userPreferences,
-    game,
-    launchAdditions
-  );
-  const mangoHudConfigPath =
-    useMangohud && game
-      ? await prepareMangoHudConfig(game, userPreferences)
-      : null;
-
-  const effectiveLaunchOptions = combineLaunchOptions(
-    withMangoHudConfig(launchAdditions.launchOptions, mangoHudConfigPath),
-    userPreferences,
-    game,
-    launchOptions
-  );
 
   if (game) await checkOptiScalerBeforeLaunch(game, effectiveLaunchOptions);
 
