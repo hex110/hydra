@@ -57,7 +57,19 @@ in the sections below.
    2. [x] Warn about wrappers that manage OptiScaler
    3. [ ] vkBasalt and lsfg-vk (only if wanted)
    4. [ ] Launcher redirects
-6. **Library.**
+6. **Fixes from other forks.** Bugs other forks fixed that are confirmed on
+   our code ([fork survey](fork-survey.md)), plus cheap improvements.
+   1. [ ] Add to Steam keeps Hydra's prefix
+   2. [ ] Sign-in returns reach Hydra Plus
+   3. [ ] Library refreshes after a playtime change
+   4. [ ] Catalogue survives failed requests
+   5. [ ] Achievements without metadata
+   6. [ ] Cap achievement bursts
+   7. [ ] Pause videos while hidden
+   8. [ ] Gamescope follows the display
+   9. [ ] Keep files when cancelling
+   10. [ ] Open the window sooner (measure first)
+7. **Library.**
    1. [ ] Play status
    2. [ ] Genres
    3. [ ] Source tabs
@@ -65,21 +77,25 @@ in the sections below.
    5. [ ] Library filters
    6. [ ] Rescan automatically
    7. [ ] Collections
-7. **Home page.**
+   8. [ ] Download state on cards
+   9. [ ] Hide duplicates
+   10. [ ] Edit metadata
+8. **Home page.**
    1. [ ] Redesign around your own games
-   2. [ ] Personalised suggestions (research first)
-8. **More save sources.**
+   2. [ ] Play heatmap and streaks
+   3. [ ] Personalised suggestions (research first)
+9. **More save sources.**
    1. [ ] Heroic and Lutris
    2. [ ] Ludusavi backups
    3. [ ] Steam's own prefixes
    4. [ ] Steam Cloud
    5. [ ] Hydra cloud account
-9. **Distribution.**
-   1. [ ] Export and import settings
-   2. [ ] pacman updates
-   3. [ ] Sign the browser add-on
-   4. [ ] Translations
-10. **Mods.** Native mod support, after a design.
+10. **Distribution.**
+    1. [ ] Export and import settings
+    2. [ ] pacman updates
+    3. [ ] Sign the browser add-on
+    4. [ ] Translations
+11. **Mods.** Native mod support, after a design.
 
 Why this order:
 
@@ -92,6 +108,8 @@ Why this order:
 - Launch tool conflicts come next because they break games that already work:
   GOverlay's `bgmod` wrapper silently deleted Hydra's OptiScaler files
   (2026-10-18). The integrity check is cheap and catches any future cause.
+- Fixes from other forks are bugs that already bite (Add to Steam swapping
+  the prefix loses a game's setup and saves), so they go before new features.
 - Play status leads the library phase because filters, sorting and the home
   page's "Clear your backlog" all read it. The home redesign needs the library
   data, so it follows.
@@ -101,6 +119,60 @@ Why this order:
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
+
+## Fixes from other forks
+
+Found in other forks and confirmed on our code, 2026-10-19. The
+[fork survey](fork-survey.md) has the fork commit for each and what it
+changes.
+
+- [ ] **Add to Steam keeps Hydra's prefix.** `create-steam-shortcut.ts`
+      points a game without an explicit prefix at an empty Steam
+      `compatdata` prefix, away from the one Hydra set up. Keep the Hydra
+      prefix, and launch the shortcut through `hydraplus://run` so launch
+      rules apply too.
+- [ ] **Sign-in returns reach Hydra Plus.** With upstream Hydra installed,
+      `hydralauncher://` links open upstream. Use `hydraplus://` for the
+      Steam sign-in return; find a fix for the Hydra account's
+      `hydralauncher://auth`, which Hydra's website sends.
+- [ ] **Library refreshes after a playtime change.** Changing or resetting
+      playtime only refreshes the game page.
+- [ ] **Catalogue survives failed requests.** A failed search leaves the
+      skeleton up forever; the filter metadata fetches have no error
+      handling.
+- [ ] **Achievements without metadata.** Unlocks missing from the catalogue
+      get no notification; show the raw name instead.
+- [ ] **Cap achievement bursts.** While signed out, or right after turning on
+      Steam achievements, a game's whole unlock history can play as new
+      popups. Treat the first read as the baseline, and collapse more than
+      ten at once into one notification.
+- [ ] **Pause videos while hidden.** Game page videos fast-forward to catch
+      up after the window was minimised.
+- [ ] **Gamescope follows the display.** Fill in output size and refresh
+      rate from the current display when the action leaves them empty
+      (gamescope otherwise runs nested at 60 Hz), and skip gamescope inside
+      a gamescope session.
+- [ ] **Keep files when cancelling.** Cancelling or removing a download
+      always deletes what was downloaded; offer to keep it.
+- [ ] **Open the window sooner.** Startup waits for the Hydra API setup and
+      Epic init before showing a window. Measure how long that takes
+      offline before changing anything.
+
+## Not scheduled yet
+
+From the [fork survey](fork-survey.md); each needs a decision on whether
+it's wanted.
+
+- [ ] **Storage page.** Disk use per game, with a breakdown bar, and freeing
+      space from there.
+- [ ] **FSR4 DLLs for OptiScaler.** Download FSR4 override DLLs for GPUs
+      without native FSR4 (RDNA3, integrated graphics). Not needed on RDNA4.
+- [ ] **Anti-cheat scan for OptiScaler.** Look for anti-cheat files in the
+      game folder, on top of the compatibility list.
+- [ ] **Installer detection.** Offer to run a `setup`/`install` exe found in
+      a finished download. Compare with the exe guess after extraction
+      first.
+- [ ] **`--no-tray`.** Quit when the window closes.
 
 ## Launch tool conflicts
 
@@ -143,15 +215,26 @@ executable or exports launch environment belongs to Hydra.
       genre. The most wanted item in this section.
 - [ ] **Source tabs.** Replace the `All / PC / Classics` buttons with
       `All / Local / Steam / Epic / Classics`, so local and Steam games can be
-      told apart without a hand-kept collection.
-- [ ] **Library filters.** The catalogue already has filters and tags; the
-      library has none. Add genre, install source, play status, ProtonDB tier
+      told apart without a hand-kept collection. Upstream now has a
+      Hydra / Steam / Epic source dropdown; build on that.
+- [ ] **Library filters.** Upstream's library has installed, source, platform
+      and collection filters. Add genre, play status, ProtonDB tier
       (the catalogue has this filter already), installed size, How Long to
       Beat ranges (under 2 h, 2–6 h, 6–15 h, …), OpenCritic/Metacritic score
       ranges, and the other usual ones.
 - [ ] **Sorting.** The sort options a game library is expected to have (name,
       last played, play time, added, release date, score, installed size, …).
+      Upstream has name (both ways), recently played, most played,
+      achievements and installed first.
 - [ ] **Collections.** A better way to manage them. Low priority.
+- [ ] **Download state on cards.** Show downloading, extracting and setup
+      progress on library cards (abrahampo1).
+- [ ] **Hide duplicates.** One entry per title when a game is in the library
+      twice, preferring the Steam copy, then the one with more playtime
+      (chimaera).
+- [ ] **Edit metadata.** Edit a game's title, description and images, with a
+      language choice for the metadata search, and search every artwork
+      provider at once (atxoxx).
 
 ## Home page
 
@@ -159,7 +242,10 @@ executable or exports launch environment belongs to Hydra.
       instead of the current hot game. Below it come "Continue playing" (last
       few played) and "Clear your backlog" (installed games never played, or
       not in a long time). "Hot now", "Top games of the week" and "Games to
-      beat" move further down.
+      beat" move further down. References: abrahampo1's cover-art home and
+      atxoxx's activity page ([fork survey](fork-survey.md)).
+- [ ] **Play heatmap and streaks.** Record play per day; show a 13-week
+      heatmap and a streak badge (abrahampo1, GameOneDev).
 - [ ] **Personalised suggestions.** Suggest what to play next from what you
       played. Ideally through a Backloggd integration (what the user uses) and
       similar services, falling back to Hydra's own play history. Needs
@@ -204,7 +290,9 @@ All of these plug into the `SaveImportSource` interface.
 
 - Built-in download sources, and why the laptop gets different server source
   ids for the same URL.
-- Self-hosted cloud saves on Cloudflare.
+- Self-hosted cloud saves on Cloudflare. CappyT's local and rclone backup
+  stores, per-device conflict detection and restore-on-first-launch are a
+  reference ([fork survey](fork-survey.md)).
 - Installing on the laptop (offline in Tailscale). Leave the HDR rule off
   there.
 
