@@ -1149,7 +1149,7 @@ export function GameOptionsModal({
         game.objectId,
         sec
       );
-      await updateGame();
+      await Promise.all([updateGame(), updateLibrary()]);
       showSuccessToast(t("update_playtime_success"));
     } catch {
       showErrorToast(t("update_playtime_error"));
@@ -1162,7 +1162,7 @@ export function GameOptionsModal({
         game.shop,
         game.objectId
       );
-      await updateGame();
+      await Promise.all([updateGame(), updateLibrary()]);
       showSuccessToast(t("reset_playtime_success"));
     } catch {
       showErrorToast(t("reset_playtime_error"));
