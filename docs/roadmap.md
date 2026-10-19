@@ -68,7 +68,7 @@ in the sections below.
    4. [x] Catalogue survives failed requests
    5. [x] Achievements without metadata
    6. [x] Cap achievement bursts
-   7. [ ] Pause videos while hidden
+   7. [x] Pause videos while hidden
    8. [ ] Gamescope follows the display
    9. [ ] Keep files when cancelling
    10. [ ] Open the window sooner (measure first)
@@ -129,8 +129,6 @@ Found in other forks and confirmed on our code, 2026-10-19. The
 [fork survey](fork-survey.md) has the fork commit for each and what it
 changes.
 
-- [ ] **Pause videos while hidden.** Game page videos fast-forward to catch
-      up after the window was minimised.
 - [ ] **Gamescope follows the display.** Fill in output size and refresh
       rate from the current display when the action leaves them empty
       (gamescope otherwise runs nested at 60 Hz), and skip gamescope inside

@@ -16,6 +16,7 @@ import {
 } from "@renderer/hooks";
 import { useDownloadOptionsListener } from "@renderer/hooks/use-download-options-listener";
 import { useMiddleClickAutoscroll } from "@renderer/hooks/use-middle-click-autoscroll";
+import { usePauseVideosWhenHidden } from "@renderer/hooks/use-pause-videos-when-hidden";
 import { useSteamLinkPaste } from "@renderer/hooks/use-steam-link-paste";
 import i18n from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -81,6 +82,7 @@ export function App() {
   useDownloadOptionsListener();
   useSteamLinkPaste();
   useMiddleClickAutoscroll();
+  usePauseVideosWhenHidden();
 
   const { t } = useTranslation("app");
 

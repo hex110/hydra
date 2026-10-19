@@ -57,3 +57,5 @@ forks, see the [fork survey](../fork-survey.md)):
 - More than ten new achievements from one file (a Steam cache or imported
   save seen for the first time) show one combined notification instead of a
   popup each.
+- Videos pause while the window is minimised or hidden and resume after,
+  instead of fast-forwarding to catch up.
