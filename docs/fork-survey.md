@@ -59,7 +59,10 @@ in the roadmap's "Fixes from other forks" phase unless noted.
   returns nothing, so the whole file reads as new), turning on Steam
   achievements (the Steam cache holds the account's full history), and no
   cap on a burst of popups. Port the cap (one combined notification above
-  ten) and the signed-out baseline.
+  ten) and the signed-out baseline. (Checked further 2026-10-19: upstream
+  rescans after sign-in and reports that as one combined notification, and
+  signed out the merge fails before notifying. The remaining case is a file
+  the watcher sees for the first time; the cap covers it.)
 - **Videos fast-forward after the window was hidden** (CappyT
   `68c80d853`). The game page autoplays muted videos and nothing pauses them
   on `visibilitychange`.

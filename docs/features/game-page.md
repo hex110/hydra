@@ -52,3 +52,8 @@ forks, see the [fork survey](../fork-survey.md)):
 - When a catalogue search fails, the catalogue says so instead of showing
   loading placeholders forever. Failing tag, genre, publisher and developer
   lists only leave those filters empty.
+- An achievement the catalogue has no entry for still notifies, under its
+  raw name with the game's icon. Upstream dropped it silently.
+- More than ten new achievements from one file (a Steam cache or imported
+  save seen for the first time) show one combined notification instead of a
+  popup each.

@@ -574,7 +574,7 @@ export class AchievementWatcherManager {
     );
   }
 
-  private static async notifyCombinedAchievementsUnlocked(
+  public static async notifyCombinedAchievementsUnlocked(
     totalNewGamesWithAchievements: number,
     totalNewAchievements: number
   ) {

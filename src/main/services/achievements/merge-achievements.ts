@@ -1,5 +1,4 @@
 import type {
-  AchievementNotificationInfo,
   Game,
   GameShop,
   SteamAchievement,
@@ -28,14 +27,14 @@ import { ScreenshotService } from "../screenshot";
 import { PendingAchievementSouvenirStore } from "./pending-achievement-souvenir-store";
 import { PendingGroupedSouvenirStore } from "./grouped-souvenir-store";
 import { groupedSouvenirWorker } from "./grouped-souvenir-worker";
+import { buildAchievementNotificationInfo } from "./achievement-notification-info";
 import { launchedGamePids } from "../launched-game-pids";
 import { Wine } from "../wine";
 
-const isRareAchievement = (points: number) => {
-  const rawPercentage = (50 - Math.sqrt(points)) * 2;
-
-  return rawPercentage < 10;
-};
+// More unlocks than this in one merge are almost always old history (a Steam
+// cache or imported save seen for the first time), so they get one combined
+// notification instead of a popup each.
+const MAX_INDIVIDUAL_ACHIEVEMENT_NOTIFICATIONS = 10;
 
 const captureAchievementSouvenirs = async (
   game: Game,
@@ -193,36 +192,27 @@ const publishAchievementUnlockNotifications = ({
     return;
   }
 
-  const filteredAchievements = newAchievements
-    .toSorted((a, b) => {
-      return a.unlockTime - b.unlockTime;
-    })
-    .map((achievement) => {
-      return achievementsData.find((steamAchievement) => {
-        return (
-          achievement.name.toUpperCase() === steamAchievement.name.toUpperCase()
-        );
-      });
-    })
-    .filter((achievement) => !!achievement);
+  if (newAchievements.length > MAX_INDIVIDUAL_ACHIEVEMENT_NOTIFICATIONS) {
+    achievementsLogger.log(
+      "Combining a large batch of new achievements",
+      game.objectId,
+      newAchievements.length
+    );
+    void AchievementWatcherManager.notifyCombinedAchievementsUnlocked(
+      1,
+      newAchievements.length
+    ).catch((error) =>
+      achievementsLogger.error("Failed to notify achievements", error)
+    );
+    return;
+  }
 
-  const achievementsInfo: AchievementNotificationInfo[] =
-    filteredAchievements.map((achievement, index) => {
-      return {
-        title: achievement.displayName,
-        description: achievement.description,
-        points: achievement.points,
-        isHidden: achievement.hidden,
-        isRare: achievement.points
-          ? isRareAchievement(achievement.points)
-          : false,
-        isPlatinum:
-          index === filteredAchievements.length - 1 &&
-          newAchievements.length + unlockedAchievements.length ===
-            achievementsData.length,
-        iconUrl: achievement.icon,
-      };
-    });
+  const achievementsInfo = buildAchievementNotificationInfo({
+    newAchievements,
+    achievementsData,
+    previouslyUnlockedCount: unlockedAchievements.length,
+    fallbackIconUrl: game.iconUrl,
+  });
 
   achievementsLogger.log(
     "Publishing achievement notification",

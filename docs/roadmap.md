@@ -66,8 +66,8 @@ in the sections below.
    2. [x] Hydra links reach Hydra Plus
    3. [x] Library refreshes after a playtime change
    4. [x] Catalogue survives failed requests
-   5. [ ] Achievements without metadata
-   6. [ ] Cap achievement bursts
+   5. [x] Achievements without metadata
+   6. [x] Cap achievement bursts
    7. [ ] Pause videos while hidden
    8. [ ] Gamescope follows the display
    9. [ ] Keep files when cancelling
@@ -129,12 +129,6 @@ Found in other forks and confirmed on our code, 2026-10-19. The
 [fork survey](fork-survey.md) has the fork commit for each and what it
 changes.
 
-- [ ] **Achievements without metadata.** Unlocks missing from the catalogue
-      get no notification; show the raw name instead.
-- [ ] **Cap achievement bursts.** While signed out, or right after turning on
-      Steam achievements, a game's whole unlock history can play as new
-      popups. Treat the first read as the baseline, and collapse more than
-      ten at once into one notification.
 - [ ] **Pause videos while hidden.** Game page videos fast-forward to catch
       up after the window was minimised.
 - [ ] **Gamescope follows the display.** Fill in output size and refresh
