@@ -15,6 +15,20 @@ reach Hydra Plus. The browser asks once before opening the app.
 Any web page can open these links, so Hydra Plus only accepts Steam app ids
 and never downloads without either your confirmation or the setting below.
 
+## `hydralauncher://` links
+
+Other websites link to upstream's `hydralauncher://` scheme, such as a
+download source's "Add to Hydra" button. Hydra Plus claims both schemes each
+time it starts. Electron registers handlers through `xdg-settings`, which
+reads the binary from the desktop file's `Exec` line up to the first space and
+so rejects `/opt/Hydra Plus/hydra-plus`; Hydra Plus then writes the same entry
+with `xdg-mime default`. Upstream Hydra claims `hydralauncher://` again
+whenever it starts, so with both installed these links open whichever started
+last.
+
+Hydra account and Steam sign-in don't depend on this: their return links are
+caught inside Hydra's own sign-in windows and never reach the system.
+
 ## Choosing the download
 
 A download link opens the game's download options and picks the best one for

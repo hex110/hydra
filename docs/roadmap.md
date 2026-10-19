@@ -59,9 +59,10 @@ in the sections below.
    4. [ ] Launcher redirects
 6. **Fixes from other forks.** Bugs other forks fixed that are confirmed on
    our code ([fork survey](fork-survey.md)), plus cheap improvements.
-   Shipped: [Steam shortcuts](features/proton-and-launch-tools.md#steam-shortcuts).
+   Shipped: [Steam shortcuts](features/proton-and-launch-tools.md#steam-shortcuts),
+   [`hydralauncher://` links](features/browser-addon.md#hydralauncher-links).
    1. [x] Add to Steam keeps Hydra's prefix
-   2. [ ] Sign-in returns reach Hydra Plus
+   2. [x] Hydra links reach Hydra Plus
    3. [ ] Library refreshes after a playtime change
    4. [ ] Catalogue survives failed requests
    5. [ ] Achievements without metadata
@@ -127,10 +128,6 @@ Found in other forks and confirmed on our code, 2026-10-19. The
 [fork survey](fork-survey.md) has the fork commit for each and what it
 changes.
 
-- [ ] **Sign-in returns reach Hydra Plus.** With upstream Hydra installed,
-      `hydralauncher://` links open upstream. Use `hydraplus://` for the
-      Steam sign-in return; find a fix for the Hydra account's
-      `hydralauncher://auth`, which Hydra's website sends.
 - [ ] **Library refreshes after a playtime change.** Changing or resetting
       playtime only refreshes the game page.
 - [ ] **Catalogue survives failed requests.** A failed search leaves the

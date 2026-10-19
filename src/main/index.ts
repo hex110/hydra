@@ -29,6 +29,7 @@ import { db, gamesSublevel, levelKeys } from "./level";
 import { GameShop, UserPreferences } from "@types";
 import { launchGame, openClassicsGame } from "./helpers";
 import { refreshPortableShortcutLauncher } from "./helpers/shortcut-launch";
+import { registerLinuxSchemeHandler } from "./helpers/linux-scheme-handler";
 import { lookupCachedPlatform } from "./events/library/get-library";
 import { loadState } from "./main";
 import {
@@ -109,8 +110,11 @@ for (const scheme of [PROTOCOL, PLUS_PROTOCOL]) {
         path.resolve(process.argv[1]),
       ]);
     }
-  } else {
-    app.setAsDefaultProtocolClient(scheme);
+  } else if (
+    !app.setAsDefaultProtocolClient(scheme) &&
+    process.platform === "linux"
+  ) {
+    registerLinuxSchemeHandler(scheme);
   }
 }
 

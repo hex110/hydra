@@ -80,14 +80,12 @@ in the roadmap's "Fixes from other forks" phase unless noted.
 
 Found along the way, not from a fork:
 
-- **`hydralauncher://` returns go to upstream Hydra.** With both apps
-  installed, `xdg-mime` resolves `x-scheme-handler/hydralauncher` to
-  `hydralauncher.desktop`. Steam sign-in returns to
-  `hydralauncher://steam-connected` (`start-steam-oauth.ts`), which we
-  choose and can switch to `hydraplus://`. Hydra account sign-in returns to
-  `hydralauncher://auth`, which Hydra's website sends, so it may need a
-  different fix. Desktop shortcuts are unaffected: they pass the link to our
-  binary as an argument.
+- **`hydralauncher://` links open upstream Hydra.** With both apps
+  installed, `x-scheme-handler/hydralauncher` resolved to
+  `hydralauncher.desktop`, because Hydra Plus never managed to register:
+  `xdg-settings` rejects its desktop file, whose `Exec` path has a space.
+  Sign-in returns were never affected; they are caught in Hydra's own
+  windows. Fixed 2026-10-19 (`features/browser-addon.md`).
 
 ## Features worth porting
 
