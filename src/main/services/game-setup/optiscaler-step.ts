@@ -1,5 +1,15 @@
+import { findConflictingWrappers } from "@main/helpers/launch-wrappers";
+import { logger } from "@main/services/logger";
+import { publishOptiScalerFilesMissingNotification } from "@main/services/notifications";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
-import { done, skipped, type GameSetupStep } from "./game-setup";
+import type { Game } from "@types";
+import {
+  GameSetup,
+  done,
+  skipped,
+  warning,
+  type GameSetupStep,
+} from "./game-setup";
 
 export const OPTISCALER_STEP_ID = "optiscaler";
 
@@ -16,4 +26,39 @@ export const optiScalerStep: GameSetupStep = {
       ? done("installed", { version: context.game.optiScaler?.version ?? "" })
       : skipped(outcome);
   },
+};
+
+/**
+ * Restores OptiScaler files removed outside Hydra before a launch, or warns
+ * when they can't be restored. Never blocks the launch.
+ */
+export const checkOptiScalerBeforeLaunch = async (
+  game: Game,
+  launchOptions: string | null
+) => {
+  try {
+    const wrappers = findConflictingWrappers(launchOptions);
+    const check = await OptiScaler.checkFilesBeforeLaunch(game, wrappers);
+    if (!check) return;
+
+    const params = {
+      files: check.missingFiles.join(", "),
+      wrappers: wrappers.join(", "),
+    };
+    await GameSetup.recordStepResult(
+      game.shop,
+      game.objectId,
+      OPTISCALER_STEP_ID,
+      "launch",
+      check.repaired
+        ? done("restored", { ...params, version: check.version })
+        : warning(`files-removed-${check.reason}`, params)
+    );
+    void publishOptiScalerFilesMissingNotification(game, check, wrappers);
+  } catch (error) {
+    logger.error("[OptiScaler] Launch check failed", {
+      title: game.title,
+      error,
+    });
+  }
 };

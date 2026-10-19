@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
+  findMissingOptiScalerFiles,
   findReleaseRoot,
   findUpscalerLibraries,
   hasExternalOptiScaler,
@@ -196,6 +197,24 @@ describe("installOptiScaler / uninstallOptiScaler", () => {
     await uninstallOptiScaler(path.join(root, "game"));
     assert.strictEqual(read("game/dxgi.dll"), "reshade");
     assert.strictEqual(read("game/libxess.dll"), "old xess");
+  });
+
+  it("lists installed files that were removed outside Hydra", async () => {
+    setup();
+    const manifest = await install();
+    const game = path.join(root, "game");
+    assert.deepStrictEqual(
+      await findMissingOptiScalerFiles(game, manifest),
+      []
+    );
+
+    // What GOverlay's bgmod deletes: everything but the proxy DLL.
+    fs.rmSync(path.join(game, "OptiScaler.ini"));
+    fs.rmSync(path.join(game, "plugins"), { recursive: true });
+    assert.deepStrictEqual(
+      (await findMissingOptiScalerFiles(game, manifest)).sort(),
+      ["OptiScaler.ini", path.join("plugins", "OptiPatcher.asi")].sort()
+    );
   });
 
   it("detects OptiScaler installed by another tool", async () => {

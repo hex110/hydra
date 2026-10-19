@@ -54,6 +54,11 @@ export const skipped = (
   params?: GameSetupStepResult["params"]
 ): GameSetupStepResult => ({ status: "skipped", code, params });
 
+export const warning = (
+  code: string,
+  params?: GameSetupStepResult["params"]
+): GameSetupStepResult => ({ status: "warning", code, params });
+
 export const done = (
   code: string,
   params?: GameSetupStepResult["params"]
@@ -197,27 +202,62 @@ export class GameSetup {
       if (refreshed) context.game = refreshed;
     }
 
-    const order = new Map(this.steps.map((step, index) => [step.id, index]));
-    await updateGameRecord(context.gameKey, (game) => {
-      const kept = (game.setupLog?.steps ?? []).filter(
-        (entry) =>
-          order.has(entry.stepId) &&
-          !entries.some((item) => item.stepId === entry.stepId)
-      );
-      return {
-        setupLog: {
-          lastRunAt: new Date().toISOString(),
-          reason: context.reason,
-          skipped: null,
-          steps: [...kept, ...entries].sort(
-            (a, b) => order.get(a.stepId)! - order.get(b.stepId)!
-          ),
-        },
-      };
-    });
+    await updateGameRecord(context.gameKey, (game) => ({
+      setupLog: {
+        lastRunAt: new Date().toISOString(),
+        reason: context.reason,
+        skipped: null,
+        steps: this.mergeLogEntries(game.setupLog?.steps, entries),
+      },
+    }));
 
     this.sendStatus(shop, objectId, failed ? "failed" : "completed");
     WindowManager.sendToAppWindows("on-library-batch-complete");
+  }
+
+  /** Replaces each step's previous entry, keeping the log in step order. */
+  private static mergeLogEntries(
+    existing: GameSetupLogEntry[] | undefined,
+    entries: GameSetupLogEntry[]
+  ) {
+    const order = new Map(this.steps.map((step, index) => [step.id, index]));
+    const kept = (existing ?? []).filter(
+      (entry) =>
+        order.has(entry.stepId) &&
+        !entries.some((item) => item.stepId === entry.stepId)
+    );
+    return [...kept, ...entries].sort(
+      (a, b) => order.get(a.stepId)! - order.get(b.stepId)!
+    );
+  }
+
+  /** Logs a step result produced outside a setup run, such as a check at launch. */
+  public static async recordStepResult(
+    shop: GameShop,
+    objectId: string,
+    stepId: string,
+    reason: GameSetupReason,
+    result: GameSetupStepResult
+  ) {
+    const now = new Date().toISOString();
+    const entry: GameSetupLogEntry = {
+      stepId,
+      reason,
+      at: now,
+      status: result.status,
+      code: result.code,
+      ...(result.params ? { params: result.params } : {}),
+      durationMs: 0,
+    };
+
+    await updateGameRecord(levelKeys.game(shop, objectId), (game) => ({
+      setupLog: {
+        lastRunAt: game.setupLog?.lastRunAt ?? now,
+        reason: game.setupLog?.reason ?? reason,
+        skipped: game.setupLog?.skipped ?? null,
+        steps: this.mergeLogEntries(game.setupLog?.steps, [entry]),
+      },
+    }));
   }
 
   private static async createContext(

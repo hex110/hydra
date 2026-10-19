@@ -739,7 +739,8 @@ export type LocalNotificationType =
   | "SCAN_GAMES_COMPLETE"
   | "SAVES_FOUND"
   | "GAME_UPDATES_AVAILABLE"
-  | "GAME_UPDATED";
+  | "GAME_UPDATED"
+  | "OPTISCALER_FILES_MISSING";
 
 export interface Notification {
   id: string;

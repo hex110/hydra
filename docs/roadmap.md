@@ -50,7 +50,14 @@ in the sections below.
    7. [x] Check free space
    8. [x] Paste a Steam link
    9. [x] Middle-click autoscroll
-5. **Library.**
+5. **Launch tool conflicts.** Outside wrappers that manage the same game
+   folder as Hydra. Shipped: the launch check and wrapper warnings in
+   [OptiScaler](features/optiscaler.md#files-removed-outside-hydra).
+   1. [x] Check OptiScaler files at launch
+   2. [x] Warn about wrappers that manage OptiScaler
+   3. [ ] vkBasalt and lsfg-vk (only if wanted)
+   4. [ ] Launcher redirects
+6. **Library.**
    1. [ ] Play status
    2. [ ] Genres
    3. [ ] Source tabs
@@ -58,21 +65,21 @@ in the sections below.
    5. [ ] Library filters
    6. [ ] Rescan automatically
    7. [ ] Collections
-6. **Home page.**
+7. **Home page.**
    1. [ ] Redesign around your own games
    2. [ ] Personalised suggestions (research first)
-7. **More save sources.**
+8. **More save sources.**
    1. [ ] Heroic and Lutris
    2. [ ] Ludusavi backups
    3. [ ] Steam's own prefixes
    4. [ ] Steam Cloud
    5. [ ] Hydra cloud account
-8. **Distribution.**
+9. **Distribution.**
    1. [ ] Export and import settings
    2. [ ] pacman updates
    3. [ ] Sign the browser add-on
    4. [ ] Translations
-9. **Mods.** Native mod support, after a design.
+10. **Mods.** Native mod support, after a design.
 
 Why this order:
 
@@ -82,6 +89,9 @@ Why this order:
   launch preview hang off, and the preview is the debugging tool for every
   launch-rule action in phase 3. Pick the Proton build before rules can use it.
 - Small fixes go before the library work so they don't wait behind it.
+- Launch tool conflicts come next because they break games that already work:
+  GOverlay's `bgmod` wrapper silently deleted Hydra's OptiScaler files
+  (2026-10-18). The integrity check is cheap and catches any future cause.
 - Play status leads the library phase because filters, sorting and the home
   page's "Clear your backlog" all read it. The home redesign needs the library
   data, so it follows.
@@ -91,6 +101,33 @@ Why this order:
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
+
+## Launch tool conflicts
+
+Found 2026-10-18: GOverlay's `bgmod` wrapper (v1.9.4, in
+`~/.local/share/goverlay/gameconfig/global/`) was in Hellraiser Revival's
+launch command. With `GOVERLAY_OPTISCALER=0` it treats any OptiScaler files as
+its own leftovers and deletes them on every launch: `OptiScaler.ini`,
+`OptiScaler/` and `plugins/OptiPatcher.asi`. It keeps `dxgi.dll` because it
+counts that as a third-party proxy DLL. OptiScaler then runs with defaults
+(menu on Insert, not the configured F9). `PRESERVE_INI` and the undocumented
+`OPT_UNMANAGED_INI` only apply when bgmod manages OptiScaler itself; no
+setting turns the cleanup off. `bgmod` also exports its own
+`MANGOHUD_CONFIGFILE`, which overrides Hydra's per-game layout.
+
+Rule going forward: a tool that only writes config files Hydra points at is
+fine to use. Anything that copies files into game folders, wraps the
+executable or exports launch environment belongs to Hydra.
+
+- [ ] **vkBasalt and lsfg-vk.** Only if they get used: per-game toggles
+      written like the MangoHud layout (`ENABLE_VKBASALT=1` plus a config
+      path; lsfg-vk's environment). Replaces the remaining reason to keep
+      `bgmod`.
+- [ ] **Launcher redirects.** A table that maps a launcher exe to the real
+      game exe (Cyberpunk's `REDprelauncher.exe` → `bin/x64/Cyberpunk2077.exe`
+      and similar). `bgmod`'s `[Launchers]` section is a starting list; `bgmod`
+      is MIT, so it can be reused. GOverlay itself is GPL-3.0, so borrow ideas
+      from it, not code.
 
 ## Library scanning
 

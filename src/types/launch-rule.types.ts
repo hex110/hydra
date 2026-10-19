@@ -64,4 +64,6 @@ export interface GameLaunchPreview {
   rules: GameLaunchRuleMatch[];
   useMangohud: boolean;
   useGamemode: boolean;
+  /** Wrappers in the launch options that manage OptiScaler and MangoHud themselves. */
+  conflictingWrappers: string[];
 }

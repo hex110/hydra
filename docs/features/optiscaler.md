@@ -109,5 +109,25 @@ backed-up files back, deletes the folders Hydra created if they are empty and
 opts the game out of automatic installation. Files you added yourself, for
 example other ASI plugins in `plugins/`, are kept.
 
-If the installed files are deleted outside Hydra, the game's OptiScaler page
-notices the missing manifest and shows it as not installed.
+## Files removed outside Hydra
+
+Before each launch, Hydra compares the manifest with the files on disk. When
+some are gone, it reinstalls the same version from the release cache and
+launches. If that release is no longer downloaded, or the reinstall fails, the
+game launches without them. Either way the
+[setup log](game-setup.md#setup-log) gets an OptiScaler entry ("before a
+launch"), a notification names the game, and the game's OptiScaler page lists
+the missing files until it is reinstalled.
+
+Tools that manage OptiScaler themselves conflict with Hydra's install.
+GOverlay's `bgmod` wrapper (also called `fgmod`) deletes every OptiScaler file
+it did not install on each launch, keeping only the proxy DLL, so OptiScaler
+then runs with its defaults. When `bgmod` or `fgmod` is in a game's launch
+command (its own launch options, the default launch options or a launch rule),
+Hydra does not reinstall the files, because the wrapper would delete them
+again. The OptiScaler page and the [launch command
+preview](launch-rules.md#launch-command-preview) both warn about the wrapper;
+remove it from the launch command.
+
+If the manifest itself is deleted, the game's OptiScaler page shows OptiScaler
+as not installed.

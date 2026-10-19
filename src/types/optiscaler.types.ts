@@ -72,6 +72,10 @@ export interface GameOptiScalerStatus {
   installation: GameOptiScalerInstallation | null;
   /** OptiScaler files that Hydra did not install are present. */
   externallyManaged: boolean;
+  /** Files of Hydra's installation that were removed outside Hydra. */
+  missingFiles: string[];
+  /** Wrappers in the launch command that manage OptiScaler files themselves. */
+  conflictingWrappers: string[];
   eligibility: OptiScalerEligibility | null;
   autoInstallDisabled: boolean;
   latestVersion: string | null;

@@ -5,7 +5,8 @@ export type GameSetupReason =
   | "executable-changed"
   | "library-scan"
   | "update"
-  | "manual";
+  | "manual"
+  | "launch";
 
 export type GameSetupStatus =
   | "queued"
@@ -15,7 +16,7 @@ export type GameSetupStatus =
   | "skipped";
 
 export interface GameSetupStepResult {
-  status: "done" | "skipped";
+  status: "done" | "skipped" | "warning";
   /** What happened, as a translation key suffix ("created", "exists", …). */
   code: string;
   params?: Record<string, string | number>;
@@ -23,7 +24,7 @@ export interface GameSetupStepResult {
 
 export interface GameSetupLogEntry {
   stepId: string;
-  status: "done" | "skipped" | "failed";
+  status: "done" | "skipped" | "warning" | "failed";
   code: string | null;
   params?: Record<string, string | number>;
   error?: string;

@@ -1,11 +1,16 @@
 import { isOptiScalerProxyDll } from "@shared";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { levelKeys } from "@main/level";
+import { getLaunchPreview } from "@main/helpers/launch-preview";
 import {
   OptiScaler,
   OptiScalerError,
 } from "@main/services/optiscaler/optiscaler";
-import type { GameShop, OptiScalerProxyDll } from "@types";
+import type {
+  GameOptiScalerStatus,
+  GameShop,
+  OptiScalerProxyDll,
+} from "@types";
 import { registerEvent } from "../register-event";
 
 const getOptiScalerOverview = () => OptiScaler.getOverview();
@@ -24,11 +29,20 @@ const runOptiScalerBulk = (
   mode: "install-eligible" | "update-installed"
 ) => OptiScaler.runBulk(mode);
 
-const getGameOptiScalerStatus = (
+const getGameOptiScalerStatus = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
   objectId: string
-) => OptiScaler.getGameStatus(shop, objectId);
+): Promise<GameOptiScalerStatus> => {
+  const [status, preview] = await Promise.all([
+    OptiScaler.getGameStatus(shop, objectId),
+    getLaunchPreview(shop, objectId),
+  ]);
+  return {
+    ...status,
+    conflictingWrappers: preview?.conflictingWrappers ?? [],
+  };
+};
 
 const installGameOptiScaler = async (
   _event: Electron.IpcMainInvokeEvent,

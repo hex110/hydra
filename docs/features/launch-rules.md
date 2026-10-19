@@ -62,6 +62,11 @@ would run right now, without starting it:
 - the Wine prefix, the combined launch options, the rules that applied and the
   working folder.
 
+The preview warns when the launch command contains a wrapper that manages
+OptiScaler and MangoHud itself (GOverlay's `bgmod`/`fgmod`): it deletes the
+OptiScaler files Hydra installed and replaces Hydra's MangoHud layout. See
+[OptiScaler](optiscaler.md#files-removed-outside-hydra).
+
 It uses the same code as a real launch, so it is the way to check what a rule
 or default actually changes. Games inside a Steam library are launched by
 Steam with Steam's own launch options; the preview says so.

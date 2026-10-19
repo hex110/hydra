@@ -10,6 +10,7 @@ import {
   getLaunchTools,
   withMangoHudConfig,
 } from "./launch-additions";
+import { findConflictingWrappers } from "./launch-wrappers";
 import { prepareMangoHudConfig } from "./mangohud-config";
 import { resolveLaunchCommand } from "./resolve-launch-command";
 import { resolveGameProton } from "./resolve-proton-path";
@@ -68,6 +69,7 @@ export const getLaunchPreview = async (
     rules: additions.rules,
     useMangohud,
     useGamemode,
+    conflictingWrappers: findConflictingWrappers(launchOptions),
   };
 
   if (

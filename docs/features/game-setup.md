@@ -44,6 +44,10 @@ Epic).
 The log keeps the latest result of each step, so re-running one step leaves
 the others' entries alone. It is stored with the game (`setupLog`).
 
+The OptiScaler entry can also come from the check before each launch: it
+records OptiScaler files that were removed outside Hydra and whether they were
+restored (see [OptiScaler](optiscaler.md#files-removed-outside-hydra)).
+
 ### Running one step again
 
 **Run again** next to a step runs only that step, as a manual run:

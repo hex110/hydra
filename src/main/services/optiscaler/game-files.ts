@@ -129,6 +129,17 @@ export const readOptiScalerManifest = async (
   }
 };
 
+/** Files of a Hydra installation that are no longer on disk. */
+export const findMissingOptiScalerFiles = async (
+  installDirectory: string,
+  manifest: OptiScalerManifest
+): Promise<string[]> => {
+  const present = await Promise.all(
+    manifest.files.map((file) => exists(path.join(installDirectory, file)))
+  );
+  return manifest.files.filter((_file, index) => !present[index]);
+};
+
 /** OptiScaler is present but was not installed by Hydra (OptiScaler Client, by hand). */
 export const hasExternalOptiScaler = async (installDirectory: string) =>
   (await exists(path.join(installDirectory, OPTISCALER_INI_FILE))) &&

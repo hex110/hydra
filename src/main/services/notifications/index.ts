@@ -21,6 +21,7 @@ import { restartAndInstallUpdate } from "@main/events/autoupdater/restart-and-in
 import { SystemPath } from "../system-path";
 import { getThemeSoundPath } from "@main/helpers";
 import { LocalNotificationManager } from "./local-notifications";
+import type { OptiScalerLaunchCheck } from "../optiscaler/optiscaler";
 import {
   buildDownloadFileName,
   transcodeNotificationIcon,
@@ -560,6 +561,38 @@ export const publishGameUpdateFailedNotification = async (
     {
       pictureUrl: game.iconUrl,
       url: "/downloads",
+    }
+  );
+};
+
+export const publishOptiScalerFilesMissingNotification = async (
+  game: Game,
+  check: OptiScalerLaunchCheck,
+  wrappers: string[]
+) => {
+  const title = t("optiscaler_files_missing", {
+    ns: "notifications",
+    title: game.title,
+  });
+  const body = t(
+    check.repaired
+      ? "optiscaler_files_missing_restored"
+      : `optiscaler_files_missing_${check.reason.replaceAll("-", "_")}`,
+    {
+      ns: "notifications",
+      wrappers: wrappers.join(", "),
+    }
+  );
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "OPTISCALER_FILES_MISSING",
+    title,
+    body,
+    {
+      pictureUrl: game.iconUrl,
+      url: `/game/${game.shop}/${game.objectId}?options=optiscaler`,
     }
   );
 };

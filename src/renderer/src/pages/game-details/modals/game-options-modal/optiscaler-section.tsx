@@ -169,6 +169,21 @@ export function OptiScalerSettingsSection({
           </h4>
         </div>
 
+        {status.conflictingWrappers.length > 0 && (
+          <p className="game-options-modal__optiscaler-hint game-options-modal__optiscaler-warning">
+            {t("optiscaler_conflicting_wrapper", {
+              wrappers: status.conflictingWrappers.join(", "),
+            })}
+          </p>
+        )}
+        {installation && status.missingFiles.length > 0 && (
+          <p className="game-options-modal__optiscaler-hint game-options-modal__optiscaler-warning">
+            {t("optiscaler_files_missing", {
+              files: status.missingFiles.join(", "),
+            })}
+          </p>
+        )}
+
         <TextField
           label={t("optiscaler_install_directory")}
           value={status.installDirectory}

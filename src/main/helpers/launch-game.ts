@@ -63,6 +63,7 @@ import {
 import { prepareMangoHudConfig } from "./mangohud-config";
 import { refreshExecutableStatus } from "@main/services/executable-status";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
+import { checkOptiScalerBeforeLaunch } from "@main/services/game-setup/optiscaler-step";
 
 export interface LaunchGameOptions {
   shop: GameShop;
@@ -724,6 +725,8 @@ const launchGameWithCloudSaveChecks = async (
     game,
     launchOptions
   );
+
+  if (game) await checkOptiScalerBeforeLaunch(game, effectiveLaunchOptions);
 
   const steamCompatibilityPrefixPath =
     process.platform === "linux" &&

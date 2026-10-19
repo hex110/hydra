@@ -51,6 +51,13 @@ export function LaunchPreview({ game }: Readonly<{ game: LibraryGame }>) {
           <p className="game-options-modal__header-description">
             {t(`launch_preview_runner_${preview.runner}`)}
           </p>
+          {preview.conflictingWrappers.length > 0 && (
+            <p className="game-options-modal__optiscaler-hint game-options-modal__optiscaler-warning">
+              {t("launch_preview_conflicting_wrapper", {
+                wrappers: preview.conflictingWrappers.join(", "),
+              })}
+            </p>
+          )}
           <pre className="game-options-modal__launch-preview-command">
             {preview.commandLine}
           </pre>

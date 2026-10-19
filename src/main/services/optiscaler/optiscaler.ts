@@ -18,6 +18,7 @@ import type {
   GameOptiScalerStatus,
   GameShop,
   OptiScalerBulkProgress,
+  OptiScalerChannel,
   OptiScalerAutoInstallOutcome,
   OptiScalerEligibility,
   OptiScalerOverview,
@@ -25,6 +26,7 @@ import type {
 } from "@types";
 import {
   OPTISCALER_MANIFEST_FILE,
+  findMissingOptiScalerFiles,
   findUpscalerLibraries,
   hasExternalOptiScaler,
   installOptiScaler,
@@ -40,6 +42,14 @@ export type OptiScalerInstallError =
   | "not-windows-game"
   | "external-install"
   | "failed";
+
+export type OptiScalerLaunchCheck =
+  | { repaired: true; missingFiles: string[]; version: string }
+  | {
+      repaired: false;
+      missingFiles: string[];
+      reason: "wrapper" | "not-downloaded" | "failed";
+    };
 
 export class OptiScalerError extends Error {
   constructor(
@@ -128,7 +138,7 @@ export class OptiScaler {
   public static async getGameStatus(
     shop: GameShop,
     objectId: string
-  ): Promise<GameOptiScalerStatus> {
+  ): Promise<Omit<GameOptiScalerStatus, "conflictingWrappers">> {
     const game = await this.getGame(shop, objectId);
     const settings = await loadSettings();
     const executablePath = getWindowsExecutable(game);
@@ -141,6 +151,7 @@ export class OptiScaler {
         installDirectory: null,
         installation: null,
         externallyManaged: false,
+        missingFiles: [],
         eligibility: null,
         autoInstallDisabled: game.optiScalerAutoInstallDisabled === true,
         latestVersion,
@@ -161,17 +172,24 @@ export class OptiScaler {
       installDirectory,
       installation: manifest ? (game.optiScaler ?? null) : null,
       externallyManaged: await hasExternalOptiScaler(installDirectory),
+      missingFiles: manifest
+        ? await findMissingOptiScalerFiles(installDirectory, manifest)
+        : [],
       eligibility: await this.evaluate(game, installDirectory, settings),
       autoInstallDisabled: game.optiScalerAutoInstallDisabled === true,
       latestVersion,
     };
   }
 
-  /** Installs the newest release, or `version` when it is downloaded already. */
+  /**
+   * Installs the newest release, or `version` when it is downloaded already.
+   * `channel` defaults to the release channel in settings.
+   */
   public static async install(
     shop: GameShop,
     objectId: string,
-    version?: string
+    version?: string,
+    channel?: OptiScalerChannel
   ): Promise<GameOptiScalerInstallation> {
     const game = await this.getGame(shop, objectId);
     const executablePath = getWindowsExecutable(game);
@@ -200,10 +218,12 @@ export class OptiScaler {
         )
       : null;
 
+    const releaseChannel = channel ?? settings.channel;
+
     try {
       const release = version
-        ? await OptiScalerAssets.getCachedRelease(settings.channel, version)
-        : await OptiScalerAssets.ensureRelease(settings.channel);
+        ? await OptiScalerAssets.getCachedRelease(releaseChannel, version)
+        : await OptiScalerAssets.ensureRelease(releaseChannel);
       const optiPatcher = compatibility?.optiPatcherSupported
         ? await OptiScalerAssets.ensureOptiPatcher()
         : null;
@@ -213,7 +233,7 @@ export class OptiScaler {
         releaseDirectory: release.directory,
         installDirectory,
         version: release.version,
-        channel: settings.channel,
+        channel: releaseChannel,
         proxyDll,
         iniOverrides: settings.iniOverrides,
         optiPatcher,
@@ -244,6 +264,56 @@ export class OptiScaler {
         "failed",
         error instanceof Error ? error.message : String(error)
       );
+    }
+  }
+
+  /**
+   * Reinstalls a Hydra installation whose files were removed outside Hydra,
+   * from the same cached release. Returns null when nothing is missing.
+   */
+  public static async checkFilesBeforeLaunch(
+    game: Game,
+    conflictingWrappers: string[]
+  ): Promise<OptiScalerLaunchCheck | null> {
+    if (!game.optiScaler) return null;
+    const { directory } = game.optiScaler;
+    const manifest = await readOptiScalerManifest(directory);
+    if (!manifest) return null;
+
+    const missingFiles = await findMissingOptiScalerFiles(directory, manifest);
+    if (missingFiles.length === 0) return null;
+
+    const gameKey = levelKeys.game(game.shop, game.objectId);
+    logger.warn("[OptiScaler] Files were removed outside Hydra", {
+      gameKey,
+      missingFiles,
+      conflictingWrappers,
+    });
+
+    // The wrapper runs after this check and would delete them again.
+    if (conflictingWrappers.length > 0) {
+      return { repaired: false, missingFiles, reason: "wrapper" };
+    }
+
+    const cached = await OptiScalerAssets.getCachedVersions(manifest.channel);
+    if (!cached.includes(manifest.version)) {
+      return { repaired: false, missingFiles, reason: "not-downloaded" };
+    }
+
+    try {
+      await this.install(
+        game.shop,
+        game.objectId,
+        manifest.version,
+        manifest.channel
+      );
+      return { repaired: true, missingFiles, version: manifest.version };
+    } catch (error) {
+      logger.error("[OptiScaler] Could not restore removed files", {
+        gameKey,
+        error,
+      });
+      return { repaired: false, missingFiles, reason: "failed" };
     }
   }
 
