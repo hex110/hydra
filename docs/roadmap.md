@@ -72,7 +72,7 @@ in the sections below.
    7. [x] Pause videos while hidden
    8. [x] Gamescope follows the display
    9. [x] Keep files when cancelling
-   10. [ ] Open the window sooner (measure first)
+   10. [x] Open the window sooner (measure first)
 7. **Library.**
    1. [ ] Play status
    2. [ ] Genres
@@ -124,15 +124,6 @@ Why this order:
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
 
-## Fixes from other forks
-
-Found in other forks and confirmed on our code, 2026-10-19. The
-[fork survey](fork-survey.md) has the fork commit for each and what it
-changes.
-
-- [ ] **Open the window sooner.** Startup waits for the Hydra API setup and
-      Epic init before showing a window. Measure how long that takes
-      offline before changing anything.
 
 ## Not scheduled yet
 

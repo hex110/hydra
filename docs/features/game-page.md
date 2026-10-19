@@ -59,3 +59,7 @@ forks, see the [fork survey](../fork-survey.md)):
   popup each.
 - Videos pause while the window is minimised or hidden and resume after,
   instead of fast-forwarding to catch up.
+- When Hydra's API doesn't answer at startup, the window opens after at most
+  8 seconds with the cached profile. Upstream waited for the connection to
+  time out, which took 134 seconds when measured (2026-10-19); without any
+  network it already opened at once.

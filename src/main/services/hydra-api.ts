@@ -135,6 +135,9 @@ export class HydraApi {
 
   private static readonly EXPIRATION_OFFSET_IN_MS = 1000 * 60 * 5; // 5 minutes
   private static readonly AUTH_REFRESH_TIMEOUT_MS = 20_000;
+  // The main window waits for setupApi; an unreachable API would otherwise
+  // hold it back until the TCP connect times out (over two minutes).
+  private static readonly STARTUP_PROFILE_TIMEOUT_MS = 8_000;
   private static readonly ADD_LOG_INTERCEPTOR = true;
 
   private static secondsToMilliseconds(seconds: number) {
@@ -470,7 +473,9 @@ export class HydraApi {
       () => generation === this.authContexts.generation
     );
 
-    const updatedUserData = await getUserData();
+    const updatedUserData = await getUserData({
+      timeout: this.STARTUP_PROFILE_TIMEOUT_MS,
+    });
     if (generation !== this.authContexts.generation) return;
     this.updateUserSubscription(updatedUserData?.subscription);
   }

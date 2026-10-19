@@ -45,6 +45,8 @@ const getCachedUserData = async (
 export const getUserData = async (options?: {
   allowCached?: boolean;
   triggerSouvenirSync?: boolean;
+  /** Falls back to the cached profile after this long. */
+  timeout?: number;
 }): Promise<UserDetails | null> => {
   const context = HydraApi.getAuthContext();
   if (!context || !HydraApi.isAuthContextCurrent(context)) return null;
@@ -53,6 +55,7 @@ export const getUserData = async (options?: {
   try {
     me = await HydraApi.get<UserDetails>("/profile/me", undefined, {
       authContext: context,
+      timeout: options?.timeout,
     });
   } catch (error) {
     if (
