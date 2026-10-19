@@ -1321,7 +1321,11 @@ export class DownloadOrchestrator {
     return true;
   }
 
-  static async cancelDownloadById(shop: GameShop, objectId: string) {
+  static async cancelDownloadById(
+    shop: GameShop,
+    objectId: string,
+    deleteFiles = true
+  ) {
     this.acceptedEpicActivations.delete(levelKeys.game(shop, objectId));
     this.invalidateBackgroundStart(levelKeys.game(shop, objectId));
     const download = await this.getDownload(shop, objectId);
@@ -1330,7 +1334,7 @@ export class DownloadOrchestrator {
     const downloadId = getDownloadId(download);
     const wasActive = isActiveLikeDownload(download);
 
-    await DownloadManager.cancelDownload(getGameKey(download));
+    await DownloadManager.cancelDownload(getGameKey(download), deleteFiles);
     WindowManager.sendToAppWindows("on-download-progress", null);
 
     await downloadsSublevel.put(getGameKey(download), {

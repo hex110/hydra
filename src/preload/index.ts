@@ -422,8 +422,8 @@ contextBridge.exposeInMainWorld("electron", {
     ) as Promise<void>,
   addGameToQueue: (payload: StartGameDownloadPayload) =>
     ipcRenderer.invoke("addGameToQueue", payload),
-  cancelGameDownload: (shop: GameShop, objectId: string) =>
-    ipcRenderer.invoke("cancelGameDownload", shop, objectId),
+  cancelGameDownload: (shop: GameShop, objectId: string, deleteFiles = true) =>
+    ipcRenderer.invoke("cancelGameDownload", shop, objectId, deleteFiles),
   pauseGameDownload: (shop: GameShop, objectId: string, confirmed?: boolean) =>
     ipcRenderer.invoke("pauseGameDownload", shop, objectId, confirmed),
   getDownloadPauseWarning: (shop: GameShop, objectId: string) =>

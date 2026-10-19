@@ -61,7 +61,8 @@ in the sections below.
    our code ([fork survey](fork-survey.md)), plus cheap improvements.
    Shipped: [Steam shortcuts](features/proton-and-launch-tools.md#steam-shortcuts),
    [`hydralauncher://` links](features/browser-addon.md#hydralauncher-links),
-   the rest in [Game page and interface](features/game-page.md#fixes).
+   [cancelling downloads](features/downloads.md#cancelling), the rest in
+   [Game page and interface](features/game-page.md#fixes).
    1. [x] Add to Steam keeps Hydra's prefix
    2. [x] Hydra links reach Hydra Plus
    3. [x] Library refreshes after a playtime change
@@ -70,7 +71,7 @@ in the sections below.
    6. [x] Cap achievement bursts
    7. [x] Pause videos while hidden
    8. [x] Gamescope follows the display
-   9. [ ] Keep files when cancelling
+   9. [x] Keep files when cancelling
    10. [ ] Open the window sooner (measure first)
 7. **Library.**
    1. [ ] Play status
@@ -129,8 +130,6 @@ Found in other forks and confirmed on our code, 2026-10-19. The
 [fork survey](fork-survey.md) has the fork commit for each and what it
 changes.
 
-- [ ] **Keep files when cancelling.** Cancelling or removing a download
-      always deletes what was downloaded; offer to keep it.
 - [ ] **Open the window sooner.** Startup waits for the Hydra API setup and
       Epic init before showing a window. Measure how long that takes
       offline before changing anything.

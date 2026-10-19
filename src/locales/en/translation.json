@@ -1342,6 +1342,8 @@
     "cancel": "Cancel",
     "cancel_download": "Cancel download?",
     "cancel_download_description": "Are you sure you want to cancel this download? All downloaded files will be deleted.",
+    "cancel_download_keep_files_description": "Are you sure you want to cancel this download? What was downloaded so far stays in the download folder.",
+    "keep_downloaded_files": "Keep the downloaded files",
     "keep_downloading": "No, keep downloading",
     "yes_cancel": "Yes, cancel",
     "filter": "Filter downloaded games",

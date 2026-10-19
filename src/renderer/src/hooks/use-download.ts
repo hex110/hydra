@@ -143,18 +143,22 @@ export function useDownload() {
     }
   };
 
-  const cancelDownload = async (shop: GameShop, objectId: string) => {
+  const cancelDownload = async (
+    shop: GameShop,
+    objectId: string,
+    keepFiles = false
+  ) => {
     const gameId = `${shop}:${objectId}`;
     const isActiveDownload = lastPacket?.gameId === gameId;
 
-    await window.electron.cancelGameDownload(shop, objectId);
+    await window.electron.cancelGameDownload(shop, objectId, !keepFiles);
 
     if (isActiveDownload) {
       dispatch(clearDownload());
     }
 
     updateLibrary();
-    removeGameInstaller(shop, objectId);
+    if (!keepFiles) removeGameInstaller(shop, objectId);
   };
 
   const removeGameFromLibrary = (shop: GameShop, objectId: string) =>

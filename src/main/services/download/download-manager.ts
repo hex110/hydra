@@ -1575,7 +1575,11 @@ export class DownloadManager {
     return true;
   }
 
-  static async cancelDownload(downloadKey = this.downloadingGameId) {
+  /** `deleteFiles: false` keeps a partial HTTP download on disk. */
+  static async cancelDownload(
+    downloadKey = this.downloadingGameId,
+    deleteFiles = true
+  ) {
     if (downloadKey) this.preparedRealDebridDownloads.delete(downloadKey);
     const isActiveDownload = downloadKey === this.downloadingGameId;
 
@@ -1602,7 +1606,7 @@ export class DownloadManager {
         }
         await downloader.waitForIdle();
         if (!isCurrent() || this.jsDownloader !== downloader) return;
-        downloader.cancelDownload();
+        downloader.cancelDownload(deleteFiles);
         this.jsDownloader = null;
         this.usingJsDownloader = false;
         this.jsBatch = null;

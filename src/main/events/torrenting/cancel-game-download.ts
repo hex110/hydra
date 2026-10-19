@@ -5,10 +5,11 @@ import type { GameShop } from "@types";
 const cancelGameDownload = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
-  objectId: string
+  objectId: string,
+  deleteFiles = true
 ) => {
   logger.log(`[Downloads] Cancel requested for ${shop}:${objectId}`);
-  return DownloadOrchestrator.cancelDownloadById(shop, objectId);
+  return DownloadOrchestrator.cancelDownloadById(shop, objectId, deleteFiles);
 };
 
 registerEvent("cancelGameDownload", cancelGameDownload);

@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import "./confirmation-modal.scss";
 
 export interface ConfirmationModalProps extends Omit<ModalProps, "children"> {
+  /** Extra content under the description, such as an option. */
+  children?: ReactNode;
   confirmButtonLabel: string;
   cancelButtonLabel: string;
   descriptionText: string;
@@ -26,6 +28,7 @@ export function ConfirmationModal({
   buttonsIsDisabled = false,
   confirmButtonIcon,
   confirmButtonTheme = "primary",
+  children,
   ...props
 }: ConfirmationModalProps) {
   const handleCancelClick = () => {
@@ -41,6 +44,7 @@ export function ConfirmationModal({
     <Modal {...props}>
       <div className="confirmation-modal">
         <p className="confirmation-modal__description">{descriptionText}</p>
+        {children}
 
         <div className="confirmation-modal__actions">
           <Button

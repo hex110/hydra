@@ -28,6 +28,13 @@ options and the best repack preselected, as the
 [browser add-on](browser-addon.md) does. It never starts the download on its
 own.
 
+## Cancelling
+
+Cancelling a download asks first, as upstream does, and the dialog has
+**Keep the downloaded files**. Checked, Hydra stops the download without
+deleting anything: the download folder stays, including a partly downloaded
+file (upstream always deleted both). The download leaves the list either way.
+
 ## Interrupted extraction
 
 If Hydra Plus quits while it is extracting a download, the extraction starts

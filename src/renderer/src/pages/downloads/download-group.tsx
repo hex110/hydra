@@ -3,6 +3,7 @@ import type { GameShop, LibraryGame, SeedingStatus } from "@types";
 import {
   Badge,
   Button,
+  CheckboxField,
   ConfirmationModal,
   GuideLink,
 } from "@renderer/components";
@@ -684,6 +685,7 @@ export function DownloadGroup({
     Record<string, boolean>
   >({});
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [keepCancelledFiles, setKeepCancelledFiles] = useState(false);
   const [pauseWarningTarget, setPauseWarningTarget] = useState<{
     shop: GameShop;
     objectId: string;
@@ -841,23 +843,56 @@ export function DownloadGroup({
   const handleCancelClick = useCallback((shop: GameShop, objectId: string) => {
     setGameToCancelShop(shop);
     setGameToCancelObjectId(objectId);
+    setKeepCancelledFiles(false);
     setCancelModalVisible(true);
   }, []);
 
   const handleConfirmCancel = useCallback(async () => {
     if (gameToCancelShop && gameToCancelObjectId) {
-      await cancelDownload(gameToCancelShop, gameToCancelObjectId);
+      await cancelDownload(
+        gameToCancelShop,
+        gameToCancelObjectId,
+        keepCancelledFiles
+      );
     }
     setCancelModalVisible(false);
     setGameToCancelShop(null);
     setGameToCancelObjectId(null);
-  }, [gameToCancelShop, gameToCancelObjectId, cancelDownload]);
+  }, [
+    gameToCancelShop,
+    gameToCancelObjectId,
+    keepCancelledFiles,
+    cancelDownload,
+  ]);
 
   const handleCancelModalClose = useCallback(() => {
     setCancelModalVisible(false);
     setGameToCancelShop(null);
     setGameToCancelObjectId(null);
   }, []);
+
+  const cancelDownloadModal = (
+    <ConfirmationModal
+      visible={cancelModalVisible}
+      title={t("cancel_download")}
+      descriptionText={
+        keepCancelledFiles
+          ? t("cancel_download_keep_files_description")
+          : t("cancel_download_description")
+      }
+      confirmButtonLabel={t("yes_cancel")}
+      cancelButtonLabel={t("keep_downloading")}
+      confirmButtonTheme="danger"
+      onConfirm={handleConfirmCancel}
+      onClose={handleCancelModalClose}
+    >
+      <CheckboxField
+        label={t("keep_downloaded_files")}
+        checked={keepCancelledFiles}
+        onChange={(event) => setKeepCancelledFiles(event.target.checked)}
+      />
+    </ConfirmationModal>
+  );
 
   const handleMoveInQueue = useCallback(
     async (shop: GameShop, objectId: string, direction: "up" | "down") => {
@@ -1123,16 +1158,7 @@ export function DownloadGroup({
     return (
       <>
         {pauseWarningModal}
-        <ConfirmationModal
-          visible={cancelModalVisible}
-          title={t("cancel_download")}
-          descriptionText={t("cancel_download_description")}
-          confirmButtonLabel={t("yes_cancel")}
-          cancelButtonLabel={t("keep_downloading")}
-          confirmButtonTheme="danger"
-          onConfirm={handleConfirmCancel}
-          onClose={handleCancelModalClose}
-        />
+        {cancelDownloadModal}
         <HeroDownloadView
           game={game}
           isGameDownloading={isGameDownloading}
@@ -1158,16 +1184,7 @@ export function DownloadGroup({
   return (
     <>
       {pauseWarningModal}
-      <ConfirmationModal
-        visible={cancelModalVisible}
-        title={t("cancel_download")}
-        descriptionText={t("cancel_download_description")}
-        confirmButtonLabel={t("yes_cancel")}
-        cancelButtonLabel={t("keep_downloading")}
-        confirmButtonTheme="danger"
-        onConfirm={handleConfirmCancel}
-        onClose={handleCancelModalClose}
-      />
+      {cancelDownloadModal}
       <div
         className={`download-group ${isQueuedGroup ? "download-group--queued" : ""} ${isCompletedGroup ? "download-group--completed" : ""}`}
       >
