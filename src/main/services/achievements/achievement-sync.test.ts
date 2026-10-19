@@ -76,6 +76,7 @@ async function fixture(
     "achievement-sync-coordinator",
     "achievement-sync-worker",
     "merge-unlocked-achievements",
+    "achievement-notification-info",
     "pending-achievement-souvenir-store",
     "game-request-queue",
   ]);
