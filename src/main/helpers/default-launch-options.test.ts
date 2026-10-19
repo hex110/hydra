@@ -77,6 +77,24 @@ describe("applyDefaultLaunchOptions", () => {
     ]);
   });
 
+  it("keeps environment values with spaces whole through a reparse", () => {
+    const once = applyDefaultLaunchOptions(
+      `"MANGOHUD_CONFIGFILE=/home/me/My Configs/game.conf" %command%`,
+      "WINEDLLOVERRIDES=dxgi=n,b %command%"
+    );
+    const twice = applyDefaultLaunchOptions(
+      once,
+      "PROTON_ENABLE_HDR=1 %command%"
+    );
+
+    assert.deepStrictEqual(stringArgv(twice ?? ""), [
+      "MANGOHUD_CONFIGFILE=/home/me/My Configs/game.conf",
+      "WINEDLLOVERRIDES=dxgi=n,b",
+      "PROTON_ENABLE_HDR=1",
+      "%command%",
+    ]);
+  });
+
   it("layers the OptiScaler DLL override over merged options", () => {
     const merged = applyDefaultLaunchOptions(
       "WINEDLLOVERRIDES=dxgi=n,b %command%",

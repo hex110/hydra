@@ -99,13 +99,14 @@ export const applyDefaultLaunchOptions = (
   const args = [...defaultParts.args, ...gameParts.args];
   const needsCommand = env.length > 0 || wrappers.length > 0;
 
-  // Env tokens keep the quoting string-argv left in them, so pass them as-is.
+  // string-argv drops whole-token quotes, so a value with spaces needs them
+  // back; quotes inside a value are kept as they are.
   return [
     ...env.map(([name, value]) => `${name}=${value}`),
-    ...[
-      ...wrappers,
-      ...(needsCommand ? [commandPlaceholder] : []),
-      ...args,
-    ].map(quoteToken),
-  ].join(" ");
+    ...wrappers,
+    ...(needsCommand ? [commandPlaceholder] : []),
+    ...args,
+  ]
+    .map(quoteToken)
+    .join(" ");
 };
