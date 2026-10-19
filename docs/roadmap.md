@@ -124,7 +124,6 @@ Why this order:
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
 
-
 ## Not scheduled yet
 
 From the [fork survey](fork-survey.md); each needs a decision on whether
