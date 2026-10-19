@@ -52,6 +52,13 @@ Gamescope is added as a wrapper (`gamescope -W 3440 -H 1440 -r 120 -f
 --hdr-enabled -- %command%`) after the rule's own launch options, so it
 combines with everything else like any other wrapper.
 
+Left empty, the output size and FPS limit come from the display Hydra's
+window is on (nested gamescope otherwise opens at 1280×720 and 60 Hz). The
+refresh rate comes from Electron, or `hyprctl monitors` / `xrandr` where
+Electron reports 0 Hz, as it does on Hyprland. Inside a gamescope session
+(SteamOS gaming mode) the action is skipped, as that session already runs
+gamescope.
+
 ## MangoHud layouts
 
 MangoHud can be turned on globally, per game, or by a rule. What it shows

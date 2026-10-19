@@ -69,7 +69,7 @@ in the sections below.
    5. [x] Achievements without metadata
    6. [x] Cap achievement bursts
    7. [x] Pause videos while hidden
-   8. [ ] Gamescope follows the display
+   8. [x] Gamescope follows the display
    9. [ ] Keep files when cancelling
    10. [ ] Open the window sooner (measure first)
 7. **Library.**
@@ -129,10 +129,6 @@ Found in other forks and confirmed on our code, 2026-10-19. The
 [fork survey](fork-survey.md) has the fork commit for each and what it
 changes.
 
-- [ ] **Gamescope follows the display.** Fill in output size and refresh
-      rate from the current display when the action leaves them empty
-      (gamescope otherwise runs nested at 60 Hz), and skip gamescope inside
-      a gamescope session.
 - [ ] **Keep files when cancelling.** Cancelling or removing a download
       always deletes what was downloaded; offer to keep it.
 - [ ] **Open the window sooner.** Startup waits for the Hydra API setup and

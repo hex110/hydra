@@ -21,6 +21,7 @@ import { isGamemodeAvailable } from "./is-gamemode-available";
 import { isMangohudAvailable } from "./is-mangohud-available";
 import { buildLaunchEnvironment } from "./launch-environment";
 import { findLaunchRuleMatches } from "./launch-rule-matching";
+import { isGamescopeSession, withDisplayDefaults } from "./gamescope-display";
 import { prepareMangoHudConfig } from "./mangohud-config";
 import { resolveProtonChoice } from "./resolve-proton-path";
 
@@ -143,10 +144,12 @@ export const getLaunchAdditions = async ({
     if (actions.gamescope) gamescope = actions.gamescope;
   }
 
-  launchOptions = applyDefaultLaunchOptions(
-    launchOptions,
-    buildGamescopeLaunchOptions(gamescope)
-  );
+  if (gamescope && !isGamescopeSession()) {
+    launchOptions = applyDefaultLaunchOptions(
+      launchOptions,
+      buildGamescopeLaunchOptions(await withDisplayDefaults(gamescope))
+    );
+  }
 
   return {
     rules: matchedRules,
