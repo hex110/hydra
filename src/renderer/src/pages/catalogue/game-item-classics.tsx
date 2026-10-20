@@ -2,6 +2,7 @@ import { QuestionIcon, PlusIcon, CheckIcon } from "@primer/octicons-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import cn from "classnames";
+import { logger } from "@renderer/logger";
 
 import { Badge } from "@renderer/components/badge/badge";
 import { Link } from "@renderer/components/link/link";
@@ -10,6 +11,8 @@ import { useAppSelector, useLibrary } from "@renderer/hooks";
 
 import type { CatalogueSearchResult } from "@types";
 
+import { CatalogueLibraryBadge } from "./catalogue-library-badge";
+import type { CatalogueLibraryState } from "./catalogue-library-state";
 import "./game-item-classics.scss";
 
 const BADGE_GAP = 8;
@@ -84,25 +87,21 @@ function SourceBadges({ sources }: Readonly<{ sources: string[] }>) {
 
 export interface GameItemClassicsProps {
   game: CatalogueSearchResult;
+  libraryState?: CatalogueLibraryState;
 }
 
-export function GameItemClassics({ game }: GameItemClassicsProps) {
+export function GameItemClassics({
+  game,
+  libraryState,
+}: GameItemClassicsProps) {
   const { i18n, t } = useTranslation("game_details");
   const language = i18n.language.split("-")[0];
 
   const { steamGenres } = useAppSelector((state) => state.catalogueSearch);
 
-  const { library, updateLibrary } = useLibrary();
+  const { updateLibrary } = useLibrary();
   const [isAddingToLibrary, setIsAddingToLibrary] = useState(false);
-  const [added, setAdded] = useState(false);
-
-  useEffect(() => {
-    const exists = library.some(
-      (libItem) =>
-        libItem.shop === game.shop && libItem.objectId === game.objectId
-    );
-    setAdded(exists);
-  }, [library, game.shop, game.objectId]);
+  const added = Boolean(libraryState);
 
   const addGameToLibrary = async () => {
     if (added || isAddingToLibrary) return;
@@ -118,7 +117,7 @@ export function GameItemClassics({ game }: GameItemClassicsProps) {
       );
       updateLibrary();
     } catch (error) {
-      console.error(error);
+      logger.error("Failed to add game to library", error);
     } finally {
       setIsAddingToLibrary(false);
     }
@@ -174,6 +173,11 @@ export function GameItemClassics({ game }: GameItemClassicsProps) {
           {game.platform && (
             <span className="game-item-classics__platform-chip">
               {game.platform}
+            </span>
+          )}
+          {libraryState && (
+            <span className="game-item-classics__library-state">
+              <CatalogueLibraryBadge state={libraryState} />
             </span>
           )}
         </div>

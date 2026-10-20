@@ -168,6 +168,21 @@
     padding: calc(globals.$spacing-unit * 2) 0;
   }
 
+  &__title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding-right: 32px;
+  }
+
+  &__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   &__genres {
     color: globals.$body-color;
     font-size: 12px;
@@ -184,5 +199,109 @@
     display: flex;
     gap: globals.$spacing-unit;
     flex-wrap: wrap;
+  }
+
+  &__preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: game-item-preview-in 0.3s ease;
+  }
+
+  &__facts {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 1.5);
+    font-size: 12px;
+    color: globals.$body-color;
+    margin-bottom: 4px;
+  }
+
+  &__fact {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__critic-score {
+    min-width: 24px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+
+    &--good {
+      background-color: #66cc33;
+    }
+
+    &--mixed {
+      background-color: #ffcc33;
+      color: #1c1c1c;
+    }
+
+    &--bad {
+      background-color: #ff0000;
+    }
+  }
+
+  &--grid {
+    min-height: 0;
+
+    .game-item__content-link {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      height: 100%;
+    }
+
+    .game-item__cover-wrapper {
+      width: 100%;
+      min-width: 0;
+      height: auto;
+      aspect-ratio: 460 / 215;
+      border-right: 0;
+      border-bottom: 1px solid globals.$border-color;
+    }
+
+    .game-item__cover,
+    .game-item__cover-placeholder {
+      width: 100%;
+      height: 100%;
+    }
+
+    .game-item__details {
+      padding: calc(globals.$spacing-unit * 1.5);
+      min-width: 0;
+    }
+
+    .game-item__title-row {
+      max-width: 100%;
+      padding-right: 0;
+    }
+
+    .game-item__genres {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .game-item__plus-wrapper {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 6px;
+    }
+  }
+}
+
+@keyframes game-item-preview-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

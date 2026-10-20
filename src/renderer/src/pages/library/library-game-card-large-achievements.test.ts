@@ -42,6 +42,7 @@ it("refreshes grouped progress on member changes and preserves known offline tot
     },
     "./library-category": { getLibraryPresentationBadgeSource: () => "steam" },
     "./library-card-activity": { LibraryCardActivity: () => null },
+    "./library-card-play-button": { LibraryCardPlayButton: () => null },
     "./play-status-badge": { PlayStatusBadge: () => null },
     "@shared": { getDisplayedPlayTimeInMilliseconds: () => 0 },
     "@renderer/helpers": {

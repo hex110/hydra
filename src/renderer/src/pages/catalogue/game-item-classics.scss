@@ -120,6 +120,13 @@
     justify-content: center;
   }
 
+  &__library-state {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 2;
+  }
+
   &__platform-chip {
     position: absolute;
     top: 8px;

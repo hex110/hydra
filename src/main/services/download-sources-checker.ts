@@ -11,6 +11,7 @@ import {
 } from "@main/level";
 import { logger } from "./logger";
 import { WindowManager } from "./window-manager";
+import { publishWishlistDownloadsNotification } from "./notifications";
 import type { Game, UserPreferences } from "@types";
 
 interface DownloadSourcesChangeResponse {
@@ -95,6 +96,25 @@ export class DownloadSourcesChecker {
 
     logger.info(
       `Found new download options for ${gamesWithNewOptions.length} games`
+    );
+  }
+
+  /** Wishlisted games that aren't installed yet and just got download options. */
+  private static async notifyWishlist(
+    nonCustomGames: Game[],
+    gamesWithNewOptions: { gameId: string; count: number }[]
+  ): Promise<void> {
+    const changed = new Set(gamesWithNewOptions.map(({ gameId }) => gameId));
+    const wishlisted = nonCustomGames.filter(
+      (game) =>
+        game.wishlisted &&
+        !game.executablePath &&
+        changed.has(`${game.shop}:${game.objectId}`)
+    );
+    if (wishlisted.length === 0) return;
+
+    await publishWishlistDownloadsNotification(wishlisted).catch((error) =>
+      logger.error("Failed to publish the wishlist notification", error)
     );
   }
 
@@ -194,6 +214,7 @@ export class DownloadSourcesChecker {
       );
 
       this.sendNewDownloadOptionsEvent(clearedPayload, gamesWithNewOptions);
+      await this.notifyWishlist(nonCustomGames, gamesWithNewOptions);
 
       logger.info("Download sources check completed successfully");
     } catch (error) {

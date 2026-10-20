@@ -57,12 +57,20 @@ interface CategoryFilterProps {
   onTabChange: (tab: LibraryTab) => void;
 }
 
-const TAB_ICONS: Record<LibraryTab, JSX.Element> = {
+export const TAB_ICONS: Record<LibraryTab, JSX.Element> = {
   all: <StackIcon size={14} />,
   local: <DeviceDesktopIcon size={14} />,
   steam: <SourceIcon source="steam" />,
   epic: <SourceIcon source="epic" />,
   classics: <ClassicsIcon size={16} />,
+};
+
+export const TAB_LABEL_KEYS: Record<LibraryTab, string> = {
+  all: "category_all",
+  local: "category_local",
+  steam: "library_steam",
+  epic: "library_epic",
+  classics: "category_classics",
 };
 
 export function CategoryFilter({
@@ -71,14 +79,6 @@ export function CategoryFilter({
   onTabChange,
 }: Readonly<CategoryFilterProps>) {
   const { t } = useTranslation("library");
-
-  const labels: Record<LibraryTab, string> = {
-    all: t("category_all"),
-    local: t("category_local"),
-    steam: t("library_steam"),
-    epic: t("library_epic"),
-    classics: t("category_classics"),
-  };
 
   return (
     <div className="library-category-filter__container" role="tablist">
@@ -92,7 +92,7 @@ export function CategoryFilter({
           onClick={() => onTabChange(option)}
         >
           {TAB_ICONS[option]}
-          <span>{labels[option]}</span>
+          <span>{t(TAB_LABEL_KEYS[option])}</span>
         </button>
       ))}
     </div>

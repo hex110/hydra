@@ -8,6 +8,9 @@ import {
   LockIcon,
   PlusIcon,
   ChecklistIcon,
+  FilterIcon,
+  StarFillIcon,
+  StarIcon,
 } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
 import type { GameCollection } from "@types";
@@ -24,6 +27,7 @@ interface CollectionsFilterProps {
   selectedCollectionId: string | null;
   favoritesCollectionId: string;
   hiddenCollectionId: string;
+  wishlistCollectionId: string;
   onSelect: (collectionId: string | null) => void;
   onCreate: () => void;
   onManageGames: (collection: GameCollection) => void;
@@ -33,26 +37,17 @@ interface CollectionsFilterProps {
   ) => void;
 }
 
-const getTriggerIcon = (
-  selectedCollection: GameCollection | undefined,
-  favoritesCollectionId: string,
-  hiddenCollectionId: string
-) => {
-  if (!selectedCollection) return FileDirectoryIcon;
-  if (selectedCollection.id === favoritesCollectionId) return HeartFillIcon;
-  if (selectedCollection.id === hiddenCollectionId) return LockIcon;
-  return FileDirectoryFillIcon;
-};
+type SpecialCollection = "favorites" | "hidden" | "wishlist" | null;
 
 const getCollectionIcon = (
-  isFavorites: boolean,
-  isHidden: boolean,
+  special: SpecialCollection,
+  collection: GameCollection,
   isActive: boolean
 ) => {
-  if (isFavorites) {
-    return isActive ? HeartFillIcon : HeartIcon;
-  }
-  if (isHidden) return LockIcon;
+  if (special === "favorites") return isActive ? HeartFillIcon : HeartIcon;
+  if (special === "wishlist") return isActive ? StarFillIcon : StarIcon;
+  if (special === "hidden") return LockIcon;
+  if (collection.savedFilter) return FilterIcon;
   return isActive ? FileDirectoryFillIcon : FileDirectoryIcon;
 };
 
@@ -61,6 +56,7 @@ export function CollectionsFilter({
   selectedCollectionId,
   favoritesCollectionId,
   hiddenCollectionId,
+  wishlistCollectionId,
   onSelect,
   onCreate,
   onManageGames,
@@ -74,11 +70,20 @@ export function CollectionsFilter({
     (collection) => collection.id === selectedCollectionId
   );
 
-  const TriggerIcon = getTriggerIcon(
-    selectedCollection,
-    favoritesCollectionId,
-    hiddenCollectionId
-  );
+  const getSpecial = (id: string): SpecialCollection => {
+    if (id === favoritesCollectionId) return "favorites";
+    if (id === hiddenCollectionId) return "hidden";
+    if (id === wishlistCollectionId) return "wishlist";
+    return null;
+  };
+
+  const TriggerIcon = selectedCollection
+    ? getCollectionIcon(
+        getSpecial(selectedCollection.id),
+        selectedCollection,
+        true
+      )
+    : FileDirectoryIcon;
 
   return (
     <DropdownMenuPrimitive.Root
@@ -119,13 +124,12 @@ export function CollectionsFilter({
         >
           <div className="collections-filter__list">
             {collections.map((collection) => {
-              const isFavorites = collection.id === favoritesCollectionId;
-              const isHidden = collection.id === hiddenCollectionId;
+              const special = getSpecial(collection.id);
               const isActive = collection.id === selectedCollectionId;
 
               const CollectionIcon = getCollectionIcon(
-                isFavorites,
-                isHidden,
+                special,
+                collection,
                 isActive
               );
 
@@ -135,10 +139,11 @@ export function CollectionsFilter({
                   className={`collections-filter__item${isActive ? " collections-filter__item--active" : ""}`}
                   onSelect={() => onSelect(isActive ? null : collection.id)}
                   onContextMenu={
-                    isFavorites || isHidden
+                    special
                       ? undefined
                       : (event) => onCollectionContextMenu(event, collection)
                   }
+                  title={collection.savedFilter ? t("saved_filter") : undefined}
                 >
                   <CollectionIcon size={16} />
                   <span className="collections-filter__item-label">
@@ -155,8 +160,8 @@ export function CollectionsFilter({
           <DropdownMenuPrimitive.Separator className="collections-filter__separator" />
 
           {selectedCollection &&
-            selectedCollection.id !== favoritesCollectionId &&
-            selectedCollection.id !== hiddenCollectionId && (
+            !getSpecial(selectedCollection.id) &&
+            !selectedCollection.savedFilter && (
               <DropdownMenuPrimitive.Item
                 className="collections-filter__item"
                 onSelect={() => onManageGames(selectedCollection)}

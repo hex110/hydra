@@ -17,6 +17,7 @@ export interface GameContextMenuGame {
   isConcealed?: boolean;
   collectionIds?: string[];
   playStatus?: PlayStatus | null;
+  wishlisted?: boolean;
   discs?: { path: string }[];
   selectedDiscPath?: string | null;
   dontAskDiscSelection?: boolean;

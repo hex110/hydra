@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
-import type { GameCollection, LibraryGame } from "@types";
+import type { GameCollection, LibraryGame, SavedLibraryFilter } from "@types";
+import { logger } from "@renderer/logger";
 import { useAppDispatch, useAppSelector } from "./redux";
 import {
   addCollection,
@@ -28,6 +29,9 @@ export function useGameCollections() {
   const hasLoaded = useAppSelector((state) => state.collections.hasLoaded);
   const hasFailed = useAppSelector((state) => state.collections.hasFailed);
   const library = useAppSelector((state) => state.library.downloadLibrary);
+  const isSignedIn = useAppSelector((state) =>
+    Boolean(state.userDetails.userDetails)
+  );
   const { updateLibrary } = useLibrary();
 
   const loadCollections = useCallback(async () => {
@@ -39,15 +43,35 @@ export function useGameCollections() {
       dispatch(setCollectionsLoading(true));
 
       try {
+        const listLocal = () =>
+          window.electron.listLocalCollections().catch((error: unknown) => {
+            logger.error("Failed to list local collections", error);
+            return [] as GameCollection[];
+          });
+
+        if (!isSignedIn) {
+          const collections = await listLocal();
+          dispatch(setCollections(collections));
+          return collections;
+        }
+
+        // Collections made while signed out move to the account first.
+        await window.electron.syncLocalCollections().catch((error: unknown) => {
+          logger.error("Failed to sync local collections", error);
+        });
+
         const response = await window.electron.hydraApi.get<GameCollection[]>(
           "/profile/games/collections",
           { needsAuth: true }
         );
 
-        const collections = ensureArray<GameCollection>(
-          response,
-          "/profile/games/collections"
-        );
+        const collections = [
+          ...ensureArray<GameCollection>(
+            response,
+            "/profile/games/collections"
+          ),
+          ...(await listLocal()),
+        ];
 
         dispatch(setCollections(collections));
         return collections;
@@ -64,7 +88,7 @@ export function useGameCollections() {
     loadCollectionsRequestRef.current = request;
 
     return request;
-  }, [dispatch]);
+  }, [dispatch, isSignedIn]);
 
   const assignGameToCollection = useCallback(
     async (
@@ -137,19 +161,33 @@ export function useGameCollections() {
         throw new Error("game/collection-name-already-in-use");
       }
 
-      const response = await window.electron.hydraApi.post<GameCollection>(
-        "/profile/games/collections",
-        {
-          data: { name },
-          needsAuth: true,
-        }
-      );
+      const response = isSignedIn
+        ? await window.electron.hydraApi.post<GameCollection>(
+            "/profile/games/collections",
+            {
+              data: { name },
+              needsAuth: true,
+            }
+          )
+        : await window.electron.createLocalCollection(name);
 
       dispatch(addCollection(response));
 
       return response;
     },
-    [collections, dispatch]
+    [collections, dispatch, isSignedIn]
+  );
+
+  const saveFilterAsCollection = useCallback(
+    async (name: string, savedFilter: SavedLibraryFilter) => {
+      const response = await window.electron.createLocalCollection(
+        name,
+        savedFilter
+      );
+      dispatch(addCollection(response));
+      return response;
+    },
+    [dispatch]
   );
 
   return {
@@ -160,5 +198,6 @@ export function useGameCollections() {
     loadCollections,
     assignGameToCollection,
     createCollection,
+    saveFilterAsCollection,
   };
 }

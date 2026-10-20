@@ -49,9 +49,19 @@ $card-hover-transition-duration: 0.2s;
   }
 
   &__slide {
+    position: relative;
     flex: 0 0 calc(100% / 3);
     min-width: 0;
     padding: 3px globals.$spacing-unit;
+
+    .catalogue-library-badge {
+      position: absolute;
+      top: 10px;
+      left: calc(globals.$spacing-unit + 6px);
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.75);
+      pointer-events: none;
+    }
   }
 
   &__card:hover {

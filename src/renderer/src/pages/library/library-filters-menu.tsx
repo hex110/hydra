@@ -41,6 +41,8 @@ interface LibraryFiltersMenuProps {
   genres: string[];
   showProtonDb: boolean;
   onFiltersChange: (filters: LibraryFilters) => void;
+  /** Saves the current view as a collection that fills itself. */
+  onSaveFilters?: () => void;
 }
 
 function CheckItem({
@@ -75,6 +77,7 @@ export function LibraryFiltersMenu({
   genres,
   showProtonDb,
   onFiltersChange,
+  onSaveFilters,
 }: Readonly<LibraryFiltersMenuProps>) {
   const { t } = useTranslation("library");
   const [open, setOpen] = useCloseOnLibraryScroll();
@@ -242,6 +245,16 @@ export function LibraryFiltersMenu({
           {activeCount > 0 && (
             <>
               <DropdownMenuPrimitive.Separator className="library-filters-menu__separator" />
+              {onSaveFilters && (
+                <DropdownMenuPrimitive.Item
+                  className="library-filters-menu__item"
+                  onSelect={onSaveFilters}
+                >
+                  <span className="library-filters-menu__item-label">
+                    {t("save_filter")}
+                  </span>
+                </DropdownMenuPrimitive.Item>
+              )}
               <DropdownMenuPrimitive.Item
                 className="library-filters-menu__item"
                 onSelect={() =>

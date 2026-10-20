@@ -24,3 +24,4 @@ export * from "./use-processed-image";
 export * from "./use-steam-link-paste";
 export * from "./use-middle-click-autoscroll";
 export * from "./use-active-game-setups";
+export * from "./use-library-view";

@@ -1,17 +1,16 @@
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import cn from "classnames";
-import type { ViewMode } from "./view-options";
 import "./library-games-skeleton.scss";
 
 interface LibraryGamesSkeletonProps {
-  viewMode: ViewMode;
+  large: boolean;
   columns: number;
   rows: number;
   gap: number;
 }
 
 export function LibraryGamesSkeleton({
-  viewMode,
+  large,
   columns,
   rows,
   gap,
@@ -28,7 +27,7 @@ export function LibraryGamesSkeleton({
             key={index}
             containerClassName="library-games-skeleton__item"
             className={cn("library-games-skeleton__card", {
-              "library-games-skeleton__card--large": viewMode === "large",
+              "library-games-skeleton__card--large": large,
             })}
           />
         ))}

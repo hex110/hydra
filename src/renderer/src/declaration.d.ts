@@ -1,6 +1,13 @@
-import type { AuthPage, Downloader } from "@shared";
+import type {
+  AuthPage,
+  CatalogueRowDetails,
+  Downloader,
+  GameNewsItem,
+} from "@shared";
 import type {
   GameSetupStatusEvent,
+  GameCollection,
+  SavedLibraryFilter,
   GameMetadataOverrides,
   PlayActivityEntry,
   PlayStatus,
@@ -415,6 +422,16 @@ declare global {
       objectId: string,
       playStatus: PlayStatus | null
     ) => Promise<void>;
+    setGameWishlisted: (
+      shop: GameShop,
+      objectId: string,
+      wishlisted: boolean
+    ) => Promise<void>;
+    setGameNotes: (
+      shop: GameShop,
+      objectId: string,
+      notes: string
+    ) => Promise<void>;
     updateGameMetadata: (
       shop: GameShop,
       objectId: string,
@@ -701,6 +718,14 @@ declare global {
       objectId: string,
       collectionIds: string[]
     ) => Promise<void>;
+    listLocalCollections: () => Promise<GameCollection[]>;
+    createLocalCollection: (
+      name: string,
+      savedFilter?: SavedLibraryFilter | null
+    ) => Promise<GameCollection>;
+    renameLocalCollection: (id: string, name: string) => Promise<void>;
+    deleteLocalCollection: (id: string) => Promise<void>;
+    syncLocalCollections: () => Promise<number>;
     clearNewDownloadOptions: (
       shop: GameShop,
       objectId: string
@@ -1640,6 +1665,13 @@ declare global {
     friendsWindowReady: () => Promise<void>;
     prefetchFriends: () => Promise<void>;
     getFriendsSnapshot: () => Promise<FriendsSnapshot | null>;
+    getGameNews: (
+      steamAppIds: string[],
+      countPerApp?: number
+    ) => Promise<GameNewsItem[]>;
+    getCatalogueRowDetails: (
+      games: { shop: GameShop; objectId: string; title: string }[]
+    ) => Promise<Record<string, CatalogueRowDetails>>;
     openFriendProfileInMainWindow: (userId: string) => Promise<void>;
     openAddFriendModalInMainWindow: () => Promise<void>;
 

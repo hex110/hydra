@@ -1,5 +1,36 @@
 @use "../../scss/globals.scss";
 
+.library-game-card-large__container {
+  position: relative;
+  width: 100%;
+
+  &--not-installed .library-game-card-large__background,
+  &--not-installed .library-game-card-large__classics-foreground {
+    filter: grayscale(0.7) brightness(0.6);
+    transition: filter ease 0.2s;
+  }
+
+  &--not-installed:hover .library-game-card-large__background,
+  &--not-installed:hover .library-game-card-large__classics-foreground {
+    filter: none;
+  }
+}
+
+.library-game-card-large__container--selected .library-game-card-large {
+  outline: 3px solid globals.$brand-teal;
+  outline-offset: 2px;
+}
+
+.library-game-card-large__container--focused .library-game-card-large {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.library-game-card-large__container--selected.library-game-card-large__container--focused
+  .library-game-card-large {
+  outline: 3px solid globals.$brand-teal;
+}
+
 .library-game-card-large {
   width: 100%;
   height: 300px;

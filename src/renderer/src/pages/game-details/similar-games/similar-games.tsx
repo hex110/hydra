@@ -1,14 +1,25 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 
 import type { GameShop } from "@types";
 import { VerticalCoverCard } from "@renderer/components";
-import { buildGameDetailsPath } from "@renderer/helpers";
-import { useSimilarGames } from "@renderer/hooks";
+import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
+import { useLibrary, useSimilarGames } from "@renderer/hooks";
+import { CatalogueLibraryBadge } from "@renderer/pages/catalogue/catalogue-library-badge";
+import {
+  catalogueKey,
+  getCatalogueLibraryStates,
+} from "@renderer/pages/catalogue/catalogue-library-state";
 import { getSimilarGamesSectionState } from "@renderer/hooks/similar-games";
 
 import "./similar-games.scss";
@@ -43,7 +54,29 @@ function SimilarGamesSkeleton() {
 export function SimilarGames({ objectId, shop }: Readonly<SimilarGamesProps>) {
   const navigate = useNavigate();
   const { t } = useTranslation("game_details");
-  const { games, isLoading, isEligible } = useSimilarGames({ objectId, shop });
+  const {
+    games: similarGames,
+    isLoading,
+    isEligible,
+  } = useSimilarGames({
+    objectId,
+    shop,
+  });
+  const { library } = useLibrary();
+  const libraryStates = useMemo(
+    () => getCatalogueLibraryStates(library, isGameReadyToPlay),
+    [library]
+  );
+  // Games you own first, so they sit next to the ones to discover.
+  const games = useMemo(
+    () =>
+      [...similarGames].sort(
+        (a, b) =>
+          Number(libraryStates.has(catalogueKey(b))) -
+          Number(libraryStates.has(catalogueKey(a)))
+      ),
+    [similarGames, libraryStates]
+  );
   const sectionState = getSimilarGamesSectionState(
     isEligible,
     isLoading,
@@ -102,6 +135,9 @@ export function SimilarGames({ objectId, shop }: Readonly<SimilarGamesProps>) {
                 <SimilarGamesSlide
                   key={`${similarGame.shop}:${similarGame.objectId}`}
                 >
+                  <CatalogueLibraryBadge
+                    state={libraryStates.get(catalogueKey(similarGame))}
+                  />
                   <VerticalCoverCard
                     className="similar-games__card"
                     gameTitle={similarGame.title}

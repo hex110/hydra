@@ -22,6 +22,8 @@ import { GameLogo } from "./game-logo";
 import { CloudSaveWidget } from "./cloud-save-v2";
 import { getCloudSaveVisibility } from "./cloud-save-visibility";
 import { SimilarGames } from "./similar-games/similar-games";
+import { YourStuff } from "./your-stuff/your-stuff";
+import { GameDlcAndNews } from "./dlc-and-news/game-dlc-and-news";
 
 import { AuthPage, getDisplayedPlayTimeInMilliseconds } from "@shared";
 import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
@@ -489,6 +491,8 @@ export function GameDetailsContent() {
               />
             )}
 
+            <YourStuff />
+
             <GallerySlider />
 
             {(customDescription || shopDetails?.about_the_game) && (
@@ -525,6 +529,14 @@ export function GameDetailsContent() {
               <SimilarGames
                 objectId={catalogueGame.objectId}
                 shop={catalogueGame.shop}
+              />
+            )}
+
+            {catalogueGame.shop === "steam" && (
+              <GameDlcAndNews
+                steamAppId={catalogueGame.objectId}
+                dlcIds={shopDetails?.dlc ?? []}
+                fallbackImageUrl={shopDetails?.assets?.libraryImageUrl}
               />
             )}
 

@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  SavedLibraryFilter,
   MangoHudSettings,
   ProtonFlavor,
   ProtonInstallProgress,
@@ -1002,6 +1003,10 @@ contextBridge.exposeInMainWorld("electron", {
     objectId: string,
     playStatus: PlayStatus | null
   ) => ipcRenderer.invoke("setGamePlayStatus", shop, objectId, playStatus),
+  setGameWishlisted: (shop: GameShop, objectId: string, wishlisted: boolean) =>
+    ipcRenderer.invoke("setGameWishlisted", shop, objectId, wishlisted),
+  setGameNotes: (shop: GameShop, objectId: string, notes: string) =>
+    ipcRenderer.invoke("setGameNotes", shop, objectId, notes),
   updateGameMetadata: (
     shop: GameShop,
     objectId: string,
@@ -1346,6 +1351,16 @@ contextBridge.exposeInMainWorld("electron", {
     collectionIds: string[]
   ) =>
     ipcRenderer.invoke("assignGameToCollection", shop, objectId, collectionIds),
+  listLocalCollections: () => ipcRenderer.invoke("listLocalCollections"),
+  createLocalCollection: (
+    name: string,
+    savedFilter: SavedLibraryFilter | null = null
+  ) => ipcRenderer.invoke("createLocalCollection", name, savedFilter),
+  renameLocalCollection: (id: string, name: string) =>
+    ipcRenderer.invoke("renameLocalCollection", id, name),
+  deleteLocalCollection: (id: string) =>
+    ipcRenderer.invoke("deleteLocalCollection", id),
+  syncLocalCollections: () => ipcRenderer.invoke("syncLocalCollections"),
   setGameVisibility: (
     shop: GameShop,
     objectId: string,
@@ -2359,6 +2374,11 @@ contextBridge.exposeInMainWorld("electron", {
   closeFriendsWindow: () => ipcRenderer.invoke("closeFriendsWindow"),
   friendsWindowReady: () => ipcRenderer.invoke("friendsWindowReady"),
   prefetchFriends: () => ipcRenderer.invoke("prefetchFriends"),
+  getGameNews: (steamAppIds: string[], countPerApp?: number) =>
+    ipcRenderer.invoke("getGameNews", steamAppIds, countPerApp),
+  getCatalogueRowDetails: (
+    games: { shop: GameShop; objectId: string; title: string }[]
+  ) => ipcRenderer.invoke("getCatalogueRowDetails", games),
   getFriendsSnapshot: () =>
     ipcRenderer.invoke("getFriendsSnapshot") as Promise<FriendsSnapshot | null>,
   openFriendProfileInMainWindow: (userId: string) =>

@@ -6,6 +6,8 @@ import {
   LinkExternalIcon,
   PinIcon,
   PinSlashIcon,
+  StarFillIcon,
+  StarIcon,
 } from "@primer/octicons-react";
 
 import { Button, DropdownMenu } from "@renderer/components";
@@ -16,9 +18,11 @@ export interface GameMoreMenuProps {
   steamAppId: string | null;
   favorite?: boolean;
   pinned?: boolean;
+  wishlisted?: boolean;
   /** Omitted when the game is not in the library or cannot be pinned. */
   onToggleFavorite?: () => void;
   onTogglePinned?: () => void;
+  onToggleWishlisted?: () => void;
   disabled?: boolean;
 }
 
@@ -57,11 +61,13 @@ export function GameMoreMenu({
   steamAppId,
   favorite,
   pinned,
+  wishlisted,
   onToggleFavorite,
   onTogglePinned,
+  onToggleWishlisted,
   disabled,
 }: Readonly<GameMoreMenuProps>) {
-  const { t } = useTranslation("game_details");
+  const { t } = useTranslation(["game_details", "library"]);
 
   const items: DropdownMenuItem[] = [
     ...(onToggleFavorite
@@ -81,6 +87,17 @@ export function GameMoreMenu({
             icon: pinned ? <PinSlashIcon /> : <PinIcon />,
             label: pinned ? t("unpin_game") : t("pin_game"),
             onClick: onTogglePinned,
+          },
+        ]
+      : []),
+    ...(onToggleWishlisted
+      ? [
+          {
+            icon: wishlisted ? <StarFillIcon /> : <StarIcon />,
+            label: wishlisted
+              ? t("remove_from_wishlist_action", { ns: "library" })
+              : t("add_to_wishlist", { ns: "library" }),
+            onClick: onToggleWishlisted,
           },
         ]
       : []),

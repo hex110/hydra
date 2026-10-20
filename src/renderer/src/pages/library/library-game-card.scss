@@ -1,6 +1,40 @@
 @use "../../scss/globals.scss";
 
 .library-game-card {
+  &__container {
+    position: relative;
+    width: 100%;
+  }
+
+  // Games that aren't installed fade back, as in Steam; hovering restores them.
+  &__container--not-installed &__game-image,
+  &__container--not-installed &__classics-cover,
+  &__container--not-installed &__cover-placeholder {
+    filter: grayscale(0.7) brightness(0.6);
+    transition: filter ease 0.2s;
+  }
+
+  &__container--not-installed:hover &__game-image,
+  &__container--not-installed:hover &__classics-cover,
+  &__container--not-installed:hover &__cover-placeholder {
+    filter: none;
+  }
+
+  &__container--selected &__wrapper {
+    outline: 3px solid globals.$brand-teal;
+    outline-offset: 2px;
+  }
+
+  &__container--focused &__wrapper {
+    outline: 2px solid rgba(255, 255, 255, 0.85);
+    outline-offset: 2px;
+  }
+
+  &__container--selected.library-game-card__container--focused &__wrapper {
+    outline-color: globals.$brand-teal;
+    outline-width: 3px;
+  }
+
   &__wrapper {
     cursor: pointer;
     transition: all ease 0.2s;

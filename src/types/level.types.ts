@@ -169,6 +169,10 @@ export interface Game extends LibraryCatalogueMetadata {
   mangoHud?: MangoHudSettings | null;
   favorite?: boolean;
   playStatus?: PlayStatus | null;
+  /** On the wishlist: notify when a download source adds the game. */
+  wishlisted?: boolean;
+  /** The user's own notes about the game. */
+  notes?: string | null;
   /** Replaces the store description on the game page. */
   customDescription?: string | null;
   /** Replaces the catalogue genres on the game page and in library filters. */
@@ -291,6 +295,8 @@ export interface UserPreferences {
   showDownloadSpeedInMegabits?: boolean;
   downloadNotificationsEnabled?: boolean;
   repackUpdatesNotificationsEnabled?: boolean;
+  /** Notify when a download source adds a wishlisted game; on by default. */
+  wishlistNotificationsEnabled?: boolean;
   achievementNotificationsEnabled?: boolean;
   achievementCustomNotificationsEnabled?: boolean;
   achievementCustomNotificationPosition?: AchievementCustomNotificationPosition;

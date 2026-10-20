@@ -1,0 +1,35 @@
+@use "../../scss/globals.scss";
+
+.game-notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+
+  &__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: globals.$body-color;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__input {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid globals.$border-color;
+    background: globals.$dark-background-color;
+    color: globals.$muted-color;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+
+    &:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+}

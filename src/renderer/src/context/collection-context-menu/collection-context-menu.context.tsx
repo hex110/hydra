@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import type { GameCollection } from "@types";
 import { useGameCollections, useLibrary, useToast } from "@renderer/hooks";
 import { getGameCollectionIds } from "@renderer/helpers";
+import { isLocalCollectionId } from "@shared";
 import {
   Button,
   ConfirmationModal,
@@ -151,13 +152,20 @@ export function CollectionContextMenuProvider({
     setIsRenamingCollection(true);
 
     try {
-      await window.electron.hydraApi.put(
-        `/profile/games/collections/${activeCollection.id}`,
-        {
-          data: { name: nextName },
-          needsAuth: true,
-        }
-      );
+      if (isLocalCollectionId(activeCollection.id)) {
+        await window.electron.renameLocalCollection(
+          activeCollection.id,
+          nextName
+        );
+      } else {
+        await window.electron.hydraApi.put(
+          `/profile/games/collections/${activeCollection.id}`,
+          {
+            data: { name: nextName },
+            needsAuth: true,
+          }
+        );
+      }
 
       await loadCollections();
       showSuccessToast(t("collection_renamed"));
@@ -218,15 +226,21 @@ export function CollectionContextMenuProvider({
     setIsDeletingCollection(true);
 
     try {
-      await window.electron.hydraApi.delete(
-        `/profile/games/collections/${activeCollection.id}`,
-        { needsAuth: true }
-      );
+      const isLocal = isLocalCollectionId(activeCollection.id);
+      if (isLocal) {
+        await window.electron.deleteLocalCollection(activeCollection.id);
+      } else {
+        await window.electron.hydraApi.delete(
+          `/profile/games/collections/${activeCollection.id}`,
+          { needsAuth: true }
+        );
+      }
 
       await Promise.all(
         library
           .filter(
             (game) =>
+              !isLocal &&
               game.shop === "custom" &&
               getGameCollectionIds(game).includes(activeCollection.id)
           )
@@ -273,13 +287,19 @@ export function CollectionContextMenuProvider({
     const isCollectionActionBusy = isRenamingCollection || isDeletingCollection;
 
     return [
-      {
-        id: "manage-collection-games",
-        label: t("manage_collection_games"),
-        icon: <ChecklistIcon size={16} />,
-        onClick: () => setManagedCollection(collectionContextMenu.collection),
-        disabled: isCollectionActionBusy,
-      },
+      // A saved filter fills itself, so there are no games to pick.
+      ...(collectionContextMenu.collection?.savedFilter
+        ? []
+        : [
+            {
+              id: "manage-collection-games",
+              label: t("manage_collection_games"),
+              icon: <ChecklistIcon size={16} />,
+              onClick: () =>
+                setManagedCollection(collectionContextMenu.collection),
+              disabled: isCollectionActionBusy,
+            },
+          ]),
       {
         id: "rename-collection",
         label: t("rename_collection"),

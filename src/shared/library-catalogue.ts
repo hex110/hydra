@@ -186,6 +186,8 @@ const projectGroup = (
     customGenres:
       customCandidates.find((member) => member.customGenres?.length)
         ?.customGenres ?? null,
+    wishlisted: members.some((member) => member.wishlisted),
+    notes: customCandidates.find((member) => member.notes)?.notes ?? null,
     metadata:
       customCandidates.find((member) => member.metadata)?.metadata ?? null,
     addedToLibraryAt: earliestDate(

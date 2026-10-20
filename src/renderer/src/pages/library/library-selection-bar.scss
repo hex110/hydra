@@ -1,0 +1,84 @@
+@use "../../scss/globals.scss";
+
+.library-selection-bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(globals.$spacing-unit * 3);
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: calc(globals.$spacing-unit * 2);
+  max-width: calc(100% - 32px);
+  padding: 8px 8px 8px 16px;
+  border-radius: 10px;
+  border: 1px solid globals.$border-color;
+  background: globals.$dark-background-color;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: library-selection-bar-in 0.15s ease-out;
+
+  &__count {
+    font-weight: 600;
+    white-space: nowrap;
+    color: #fff;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid globals.$border-color;
+    background: globals.$background-color;
+    color: globals.$muted-color;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    &--danger:hover:not(:disabled) {
+      border-color: globals.$danger-color;
+      color: #ff8a8a;
+    }
+  }
+
+  &__clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: globals.$muted-color;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+
+@keyframes library-selection-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}

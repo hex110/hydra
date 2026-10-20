@@ -51,6 +51,11 @@
     flex-shrink: 0;
   }
 
+  &__hide-owned {
+    margin-right: calc(globals.$spacing-unit * 2);
+    white-space: nowrap;
+  }
+
   &__sort-label {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
@@ -131,18 +136,72 @@
         grid-template-columns: minmax(0, 1fr);
       }
 
-      .catalogue__pagination-container,
+      .catalogue__load-more,
       .catalogue__result-count {
+        grid-column: 1 / -1;
+      }
+    }
+
+    &--grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      align-content: start;
+
+      .catalogue__load-more {
         grid-column: 1 / -1;
       }
     }
   }
 
-  &__pagination-container {
+  &__main {
     display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+    min-width: 0;
+  }
+
+  &__all-games {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__load-more {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
+    gap: globals.$spacing-unit;
     margin-top: 16px;
+  }
+
+  &__view-toggle {
+    display: inline-flex;
+    margin-right: calc(globals.$spacing-unit * 2);
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  &__view-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: 12px;
+    cursor: pointer;
+
+    &--active {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: globals.$muted-color;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
   }
 
   &__result-count {

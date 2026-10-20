@@ -1,0 +1,140 @@
+@use "../../../scss/globals.scss";
+
+.your-stuff {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 2);
+  margin-bottom: calc(globals.$spacing-unit * 3);
+  padding: calc(globals.$spacing-unit * 2);
+  border-radius: 8px;
+  border: 1px solid globals.$border-color;
+  background-color: globals.$dark-background-color;
+  width: 100%;
+  margin-inline: auto;
+
+  @media (min-width: 1280px) {
+    width: 60%;
+  }
+
+  @media (min-width: 1536px) {
+    width: 50%;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: calc(globals.$spacing-unit * 2);
+    margin: 0;
+
+    dt {
+      font-size: 12px;
+      color: globals.$body-color;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    dd {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 4px 0 0;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__progress {
+    width: 100%;
+    max-width: 160px;
+    height: 4px;
+    appearance: none;
+    border: 0;
+    border-radius: 2px;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.1);
+
+    &::-webkit-progress-bar {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &::-webkit-progress-value {
+      background-color: var(--color-primary, globals.$muted-color);
+    }
+  }
+
+  &__update {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+
+    h3 {
+      font-size: 12px;
+      color: globals.$body-color;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: globals.$spacing-unit;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid globals.$border-color;
+      font-size: 13px;
+    }
+  }
+
+  &__copy-source {
+    color: globals.$muted-color;
+    font-weight: 600;
+  }
+
+  &__copy-state {
+    color: globals.$body-color;
+  }
+
+  &__related li {
+    padding: 0;
+  }
+
+  &__related-link {
+    padding: 6px 10px;
+    border: 0;
+    background: none;
+    color: globals.$muted-color;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+  }
+}

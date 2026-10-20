@@ -4,12 +4,19 @@ import type {
   DownloadSource,
 } from "@types";
 
-import { useAppDispatch, useAppSelector, useFormat } from "@renderer/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useFormat,
+  useLibrary,
+} from "@renderer/hooks";
 import {
   lazy,
   Suspense,
+  useCallback,
   useDeferredValue,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -18,8 +25,10 @@ import {
 import "./catalogue.scss";
 
 import { Button } from "@renderer/components/button/button";
+import { CheckboxField } from "@renderer/components/checkbox-field/checkbox-field";
+import { isGameReadyToPlay } from "@renderer/helpers";
 import { SelectField } from "@renderer/components/select-field/select-field";
-import { setFilters, setPage } from "@renderer/features";
+import { setFilters } from "@renderer/features";
 import { useCatalogue } from "@renderer/hooks/use-catalogue";
 import { useLaunchboxFilters } from "@renderer/hooks/use-launchbox-filters";
 import { logger } from "@renderer/logger";
@@ -33,7 +42,22 @@ import { FilterItem } from "./filter-item";
 import { FilterSection } from "./filter-section";
 import { GameItem } from "./game-item";
 import { GameItemClassics } from "./game-item-classics";
-import { Pagination } from "./pagination";
+import { ListUnorderedIcon, TableIcon } from "@primer/octicons-react";
+import { CatalogueFrontPage } from "./catalogue-front-page";
+import {
+  appendCatalogueResults,
+  CATALOGUE_PAGE_SIZE,
+  CATALOGUE_VIEW_STORAGE_KEY,
+  catalogueResultsCache,
+  getCatalogueQueryKey,
+  type CatalogueView,
+} from "./catalogue-results-cache";
+import { useCatalogueRowDetails } from "./use-catalogue-row-details";
+import {
+  CATALOGUE_HIDE_OWNED_STORAGE_KEY,
+  catalogueKey,
+  getCatalogueLibraryStates,
+} from "./catalogue-library-state";
 import {
   ClassicsOnboardingModal,
   hasDismissedClassicsOnboarding,
@@ -76,7 +100,7 @@ const classicsPlatformGroups = [
   { label: "Other", value: "other" },
 ] as const;
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = CATALOGUE_PAGE_SIZE;
 
 const clearAllCategoryFilters = {
   genres: [],
@@ -136,7 +160,7 @@ export default function Catalogue() {
 
   const { steamDevelopers, steamPublishers, downloadSources } = useCatalogue();
 
-  const { steamGenres, steamUserTags, filters, page, mode } = useAppSelector(
+  const { steamGenres, steamUserTags, filters, mode } = useAppSelector(
     (state) => state.catalogueSearch
   );
   const launchboxFilters = useLaunchboxFilters(mode === "classics");
@@ -156,6 +180,56 @@ export default function Catalogue() {
   const [resultsMode, setResultsMode] = useState(mode);
 
   const [itemsCount, setItemsCount] = useState(0);
+  const [pagesLoaded, setPagesLoaded] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const pendingScrollRef = useRef<number | null>(null);
+
+  const [view, setView] = useState<CatalogueView>(() => {
+    try {
+      return localStorage.getItem(CATALOGUE_VIEW_STORAGE_KEY) === "grid"
+        ? "grid"
+        : "list";
+    } catch {
+      return "list";
+    }
+  });
+  const handleViewChange = (next: CatalogueView) => {
+    setView(next);
+    try {
+      localStorage.setItem(CATALOGUE_VIEW_STORAGE_KEY, next);
+    } catch {
+      /* not persisted */
+    }
+  };
+
+  const { library } = useLibrary();
+  const libraryStates = useMemo(
+    () => getCatalogueLibraryStates(library, isGameReadyToPlay),
+    [library]
+  );
+  const [hideOwned, setHideOwned] = useState(() => {
+    try {
+      return localStorage.getItem(CATALOGUE_HIDE_OWNED_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const handleHideOwnedChange = (next: boolean) => {
+    setHideOwned(next);
+    try {
+      localStorage.setItem(CATALOGUE_HIDE_OWNED_STORAGE_KEY, String(next));
+    } catch {
+      /* not persisted */
+    }
+  };
+  // The search API can't exclude games, so owned ones drop out of the page.
+  const visibleResults = useMemo(
+    () =>
+      hideOwned
+        ? results.filter((game) => !libraryStates.has(catalogueKey(game)))
+        : results,
+    [results, hideOwned, libraryStates]
+  );
 
   const [showClassicsOnboarding, setShowClassicsOnboarding] = useState(false);
   const classicsOnboardingTriggeredRef = useRef(false);
@@ -178,59 +252,101 @@ export default function Catalogue() {
   const { t, i18n } = useTranslation("catalogue");
   const shouldShowProtonFeatures = window.electron.platform === "linux";
 
+  const queryKey = useMemo(
+    () =>
+      getCatalogueQueryKey(
+        effectiveFilters,
+        mode,
+        downloadSources.map((source) => source.id)
+      ),
+    [effectiveFilters, mode, downloadSources]
+  );
+  // The search the shown results belong to; lags queryKey while one loads.
+  const resultsKeyRef = useRef<string | null>(null);
+
+  const fetchPage = useCallback(
+    async (
+      filters: CatalogueSearchPayload,
+      downloadSources: DownloadSource[],
+      offset: number,
+      mode: "modern" | "classics"
+    ) => {
+      const { platforms, ...restFilters } = filters;
+      const baseRequest = {
+        ...restFilters,
+        take: PAGE_SIZE,
+        skip: offset,
+        downloadSourceIds: downloadSources.map(
+          (downloadSource) => downloadSource.id
+        ),
+      };
+
+      const requestData =
+        mode === "classics"
+          ? {
+              ...baseRequest,
+              shops: ["launchbox"],
+              platforms: platforms ?? [],
+            }
+          : baseRequest;
+
+      return window.electron.hydraApi
+        .post<{
+          edges: CatalogueSearchResult[];
+          count: number;
+        }>("/catalogue/search", {
+          data: requestData,
+          needsAuth: false,
+        })
+        .catch((error: unknown) => {
+          logger.error("Catalogue search failed", error);
+          return null;
+        });
+    },
+    []
+  );
+
   const debouncedSearch = useRef(
     debounce(
       async (
         filters: CatalogueSearchPayload,
         downloadSources: DownloadSource[],
-        pageSize: number,
-        offset: number,
         requestId: number,
-        mode: "modern" | "classics"
+        mode: "modern" | "classics",
+        key: string
       ) => {
-        const { platforms, ...restFilters } = filters;
-        const baseRequest = {
-          ...restFilters,
-          take: pageSize,
-          skip: offset,
-          downloadSourceIds: downloadSources.map(
-            (downloadSource) => downloadSource.id
-          ),
-        };
-
-        const requestData =
-          mode === "classics"
-            ? {
-                ...baseRequest,
-                shops: ["launchbox"],
-                platforms: platforms ?? [],
-              }
-            : baseRequest;
-
-        const response = await window.electron.hydraApi
-          .post<{
-            edges: CatalogueSearchResult[];
-            count: number;
-          }>("/catalogue/search", {
-            data: requestData,
-            needsAuth: false,
-          })
-          .catch((error: unknown) => {
-            logger.error("Catalogue search failed", error);
-            return null;
-          });
+        const response = await fetchPage(filters, downloadSources, 0, mode);
 
         if (requestId !== requestSequenceRef.current) return;
 
+        resultsKeyRef.current = key;
         setResults(response?.edges ?? []);
         setResultsMode(mode);
         setItemsCount(response?.count ?? 0);
+        setPagesLoaded(1);
         setSearchFailed(response === null);
         setIsLoading(false);
       },
       500
     )
   ).current;
+
+  const loadMore = async () => {
+    const requestId = requestSequenceRef.current;
+    setIsLoadingMore(true);
+    const response = await fetchPage(
+      effectiveFilters,
+      downloadSources,
+      pagesLoaded * PAGE_SIZE,
+      mode
+    );
+    if (requestId === requestSequenceRef.current && response) {
+      setResults((current) => appendCatalogueResults(current, response.edges));
+      setItemsCount(response.count);
+      setPagesLoaded((current) => current + 1);
+    }
+    setIsLoadingMore(false);
+  };
 
   const decodeHTML = (s: string) =>
     s.replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
@@ -245,23 +361,68 @@ export default function Catalogue() {
   useEffect(() => {
     const requestId = ++requestSequenceRef.current;
 
+    // Coming back to the same search: show what was loaded, where you were.
+    const cached = catalogueResultsCache.get<CatalogueSearchResult>(queryKey);
+    if (cached) {
+      resultsKeyRef.current = queryKey;
+      setResults(cached.results);
+      setResultsMode(mode);
+      setItemsCount(cached.itemsCount);
+      setPagesLoaded(cached.pagesLoaded);
+      setSearchFailed(false);
+      setIsLoading(false);
+      pendingScrollRef.current = cached.scrollTop;
+      return;
+    }
+
     if (!hasResultsRef.current) {
       setIsLoading(true);
     }
+    cataloguePageRef.current?.scrollTo({ top: 0, behavior: "instant" });
 
     debouncedSearch(
       effectiveFilters,
       downloadSources,
-      PAGE_SIZE,
-      (page - 1) * PAGE_SIZE,
       requestId,
-      mode
+      mode,
+      queryKey
     );
 
     return () => {
       debouncedSearch.cancel();
     };
-  }, [effectiveFilters, downloadSources, page, debouncedSearch, mode]);
+    // The search is identified by queryKey.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryKey, debouncedSearch]);
+
+  useEffect(() => {
+    if (isLoading || searchFailed || !resultsKeyRef.current) return;
+    catalogueResultsCache.set({
+      key: resultsKeyRef.current,
+      results,
+      itemsCount,
+      pagesLoaded,
+      scrollTop: cataloguePageRef.current?.scrollTop ?? 0,
+    });
+  }, [results, itemsCount, pagesLoaded, isLoading, searchFailed]);
+
+  useLayoutEffect(() => {
+    if (pendingScrollRef.current === null || isLoading) return;
+    cataloguePageRef.current?.scrollTo({
+      top: pendingScrollRef.current,
+      behavior: "instant",
+    });
+    pendingScrollRef.current = null;
+  }, [results, isLoading]);
+
+  const handleScroll = () => {
+    if (cataloguePageRef.current && resultsKeyRef.current) {
+      catalogueResultsCache.setScrollTop(
+        resultsKeyRef.current,
+        cataloguePageRef.current.scrollTop
+      );
+    }
+  };
 
   const language = i18n.language.split("-")[0];
 
@@ -628,6 +789,21 @@ export default function Catalogue() {
 
   const selectedSortValue = `${filters.sortBy}:${filters.sortOrder}`;
 
+  const showFrontPage =
+    mode === "modern" &&
+    !filters.title.trim() &&
+    selectedFiltersCount === 0 &&
+    selectedSortValue === "popularity:desc";
+
+  const ownedKeys = useMemo(
+    () => new Set(libraryStates.keys()),
+    [libraryStates]
+  );
+  const rowDetails = useCatalogueRowDetails(
+    mode === "modern" && !showSkeleton ? visibleResults : []
+  );
+  const effectiveView = mode === "modern" ? view : "list";
+
   const protonThresholdValue =
     protonCompatibilityThresholds.find((threshold) =>
       areSameValues(threshold.values, filters.protondbSupportBadges)
@@ -638,7 +814,7 @@ export default function Catalogue() {
   ]);
 
   return (
-    <div className="catalogue" ref={cataloguePageRef}>
+    <div className="catalogue" ref={cataloguePageRef} onScroll={handleScroll}>
       <ClassicsOnboardingModal
         visible={showClassicsOnboarding}
         onClose={() => setShowClassicsOnboarding(false)}
@@ -659,6 +835,45 @@ export default function Catalogue() {
           </div>
 
           <div className="catalogue__sort-inline">
+            {mode === "modern" && (
+              <div
+                className="catalogue__view-toggle"
+                role="group"
+                aria-label={t("view_list") + " / " + t("view_grid")}
+              >
+                {(
+                  [
+                    ["list", ListUnorderedIcon, t("view_list")],
+                    ["grid", TableIcon, t("view_grid")],
+                  ] as const
+                ).map(([value, Icon, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={cn("catalogue__view-button", {
+                      "catalogue__view-button--active": view === value,
+                    })}
+                    aria-pressed={view === value}
+                    onClick={() => handleViewChange(value)}
+                  >
+                    <Icon size={14} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div
+              className="catalogue__hide-owned"
+              title={t("hide_owned_tooltip")}
+            >
+              <CheckboxField
+                label={t("hide_owned")}
+                checked={hideOwned}
+                onChange={(event) =>
+                  handleHideOwnedChange(event.target.checked)
+                }
+              />
+            </div>
             <span className="catalogue__sort-label">{t("sort_by")}</span>
             <SelectField
               theme="dark"
@@ -740,43 +955,75 @@ export default function Catalogue() {
       </div>
 
       <div className="catalogue__content">
-        <div
-          className={cn("catalogue__games-container", {
-            "catalogue__games-container--classics": mode === "classics",
-          })}
-        >
-          {showSkeleton ? (
-            <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
-              {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className={cn("catalogue__skeleton", {
-                    "catalogue__skeleton--classics": mode === "classics",
-                  })}
-                />
-              ))}
-            </SkeletonTheme>
-          ) : searchFailed ? (
-            <p className="catalogue__search-error">{t("search_failed")}</p>
-          ) : mode === "classics" ? (
-            results.map((game) => (
-              <GameItemClassics key={game.id} game={game} />
-            ))
-          ) : (
-            results.map((game) => <GameItem key={game.id} game={game} />)
+        <div className="catalogue__main">
+          {showFrontPage && (
+            <>
+              <CatalogueFrontPage
+                downloadSources={downloadSources}
+                ownedKeys={ownedKeys}
+              />
+              <h2 className="catalogue__all-games">{t("all_games")}</h2>
+            </>
           )}
+          <div
+            className={cn("catalogue__games-container", {
+              "catalogue__games-container--classics": mode === "classics",
+              "catalogue__games-container--grid": effectiveView === "grid",
+            })}
+          >
+            {showSkeleton ? (
+              <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
+                {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    className={cn("catalogue__skeleton", {
+                      "catalogue__skeleton--classics": mode === "classics",
+                    })}
+                  />
+                ))}
+              </SkeletonTheme>
+            ) : searchFailed ? (
+              <p className="catalogue__search-error">{t("search_failed")}</p>
+            ) : mode === "classics" ? (
+              visibleResults.map((game) => (
+                <GameItemClassics
+                  key={game.id}
+                  game={game}
+                  libraryState={libraryStates.get(catalogueKey(game))}
+                />
+              ))
+            ) : (
+              visibleResults.map((game) => (
+                <GameItem
+                  key={game.id}
+                  game={game}
+                  libraryState={libraryStates.get(catalogueKey(game))}
+                  details={rowDetails.get(catalogueKey(game))}
+                  view={effectiveView}
+                />
+              ))
+            )}
 
-          <div className="catalogue__pagination-container">
-            <Pagination
-              page={page}
-              totalPages={Math.ceil(itemsCount / PAGE_SIZE)}
-              onPageChange={(page) => {
-                dispatch(setPage(page));
-                if (cataloguePageRef.current) {
-                  cataloguePageRef.current.scrollTop = 0;
-                }
-              }}
-            />
+            {!showSkeleton && !searchFailed && results.length > 0 && (
+              <div className="catalogue__load-more">
+                <span className="catalogue__result-count">
+                  {t("showing_count", {
+                    shown: formatNumber(results.length),
+                    total: formatNumber(itemsCount),
+                  })}
+                </span>
+                {results.length < itemsCount && (
+                  <Button
+                    type="button"
+                    theme="outline"
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                  >
+                    {t("load_more")}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

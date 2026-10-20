@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AuthPage } from "@shared";
-import type { GameCollection } from "@types";
+import type { GameCollection, SavedLibraryFilter } from "@types";
 
 import { Button, Modal, TextField } from "@renderer/components";
-import { useGameCollections, useToast, useUserDetails } from "@renderer/hooks";
+import { useGameCollections, useToast } from "@renderer/hooks";
 
 import "./create-collection-modal.scss";
 
@@ -12,17 +11,19 @@ export interface CreateCollectionModalProps {
   visible: boolean;
   onClose: () => void;
   onCreated?: (collection: GameCollection) => void;
+  /** Saves this library view as a collection that fills itself. */
+  savedFilter?: SavedLibraryFilter | null;
 }
 
 export function CreateCollectionModal({
   visible,
   onClose,
   onCreated,
+  savedFilter = null,
 }: Readonly<CreateCollectionModalProps>) {
-  const { t } = useTranslation("sidebar");
+  const { t } = useTranslation(["sidebar", "library"]);
   const { showSuccessToast, showErrorToast } = useToast();
-  const { userDetails } = useUserDetails();
-  const { createCollection } = useGameCollections();
+  const { createCollection, saveFilterAsCollection } = useGameCollections();
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
@@ -83,12 +84,6 @@ export function CreateCollectionModal({
   };
 
   const handleCreate = async () => {
-    if (!userDetails) {
-      window.electron.openAuthWindow(AuthPage.SignIn);
-      handleClose();
-      return;
-    }
-
     const collectionName = name.trim();
 
     if (!collectionName) {
@@ -100,8 +95,14 @@ export function CreateCollectionModal({
     setIsCreating(true);
 
     try {
-      const createdCollection = await createCollection(collectionName);
-      showSuccessToast(t("collection_created"));
+      const createdCollection = savedFilter
+        ? await saveFilterAsCollection(collectionName, savedFilter)
+        : await createCollection(collectionName);
+      showSuccessToast(
+        savedFilter
+          ? t("saved_filter_created", { ns: "library" })
+          : t("collection_created")
+      );
 
       onCreated?.(createdCollection);
       setName("");
@@ -124,8 +125,16 @@ export function CreateCollectionModal({
   return (
     <Modal
       visible={visible}
-      title={t("create_collection")}
-      description={t("create_collection_description")}
+      title={
+        savedFilter
+          ? t("save_filter_title", { ns: "library" })
+          : t("create_collection")
+      }
+      description={
+        savedFilter
+          ? t("save_filter_description", { ns: "library" })
+          : t("create_collection_description")
+      }
       onClose={handleClose}
     >
       <div className="create-collection-modal__container">

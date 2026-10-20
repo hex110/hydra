@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AuthPage } from "@shared";
 import {
   PlayIcon,
   DownloadIcon,
@@ -21,6 +20,8 @@ import {
   EyeClosedIcon,
   LockIcon,
   BookmarkIcon,
+  StarIcon,
+  StarFillIcon,
   CheckIcon,
 } from "@primer/octicons-react";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
@@ -131,9 +132,9 @@ export function GameContextMenu({
   const selectedCollectionId = searchParams.get("collection");
 
   useEffect(() => {
-    if (!visible || !userDetails) return;
+    if (!visible) return;
     void loadCollections();
-  }, [visible, loadCollections, userDetails]);
+  }, [visible, loadCollections]);
 
   useEffect(() => {
     if (!visible) return;
@@ -189,6 +190,27 @@ export function GameContextMenu({
   };
 
   const currentPlayStatus = preferenceGame.playStatus ?? null;
+  const isWishlisted = Boolean(preferenceGame.wishlisted);
+
+  const handleToggleWishlist = async () => {
+    try {
+      await applyLibraryGroupAction(group?.members ?? [game], (member) =>
+        window.electron.setGameWishlisted(
+          member.shop,
+          member.objectId,
+          !isWishlisted
+        )
+      );
+      showSuccessToast(
+        t(isWishlisted ? "removed_from_wishlist" : "added_to_wishlist", {
+          ns: "library",
+        })
+      );
+      await updateLibrary();
+    } catch {
+      showErrorToast(t("failed_update_wishlist", { ns: "library" }));
+    }
+  };
 
   const playStatusSubmenu: ContextMenuItemData[] = [
     ...PLAY_STATUSES.map((playStatus) => ({
@@ -266,6 +288,11 @@ export function GameContextMenu({
     }
   };
 
+  // Saved filters fill themselves; games can't be put in them by hand.
+  const assignableCollections = collections.filter(
+    (collection) => !collection.savedFilter
+  );
+
   const collectionSubmenu: ContextMenuItemData[] = [
     {
       id: "favorite",
@@ -281,7 +308,24 @@ export function GameContextMenu({
       closeOnClick: false,
       disabled: isDeleting,
     },
-    ...collections.map((collection) => ({
+    ...(!canPlay || isWishlisted
+      ? [
+          {
+            id: "wishlist",
+            label: t("wishlist", { ns: "library" }),
+            icon: isWishlisted ? (
+              <StarFillIcon size={16} />
+            ) : (
+              <StarIcon size={16} />
+            ),
+            onClick: () => {
+              void handleToggleWishlist();
+            },
+            disabled: isDeleting,
+          },
+        ]
+      : []),
+    ...assignableCollections.map((collection) => ({
       id: `collection-${collection.id}`,
       label: collection.name,
       icon: localCollectionIds.includes(collection.id) ? (
@@ -306,13 +350,8 @@ export function GameContextMenu({
       id: "collection-create",
       label: t("create_collection"),
       icon: <PlusIcon size={16} />,
-      separator: collections.length > 0,
+      separator: assignableCollections.length > 0,
       onClick: () => {
-        if (!userDetails) {
-          window.electron.openAuthWindow(AuthPage.SignIn);
-          return;
-        }
-
         setShowCreateCollectionModal(true);
       },
       closeOnClick: false,
@@ -400,7 +439,7 @@ export function GameContextMenu({
 
     {
       id: "manage",
-      label: t("options"),
+      label: t("manage_game"),
       icon: <GearIcon size={16} />,
       disabled: isDeleting,
       submenu: [

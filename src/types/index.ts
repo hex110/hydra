@@ -135,6 +135,25 @@ export interface GameCollection {
   id: string;
   name: string;
   gamesCount: number;
+  /** Set on a saved filter: the library view the collection stands for. */
+  savedFilter?: SavedLibraryFilter | null;
+}
+
+/** A library view saved as a collection that updates itself. */
+export interface SavedLibraryFilter {
+  tab: string;
+  /** The library's Filters menu state, as stored by the library page. */
+  filters: Record<string, unknown>;
+  installedOnly: boolean;
+  platforms: string[];
+}
+
+/** A collection kept on this machine (signed out, or a saved filter). */
+export interface LocalCollection {
+  id: string;
+  name: string;
+  createdAt: string;
+  savedFilter?: SavedLibraryFilter | null;
 }
 
 export interface GameRunning {
@@ -740,6 +759,7 @@ export type LocalNotificationType =
   | "SCAN_GAMES_COMPLETE"
   | "SAVES_FOUND"
   | "GAME_UPDATES_AVAILABLE"
+  | "WISHLIST_DOWNLOAD_AVAILABLE"
   | "GAME_UPDATED"
   | "OPTISCALER_FILES_MISSING";
 

@@ -19,6 +19,8 @@ import { GameOptionsModalProvider } from "@renderer/context/game-options-modal/g
 import { App } from "./app";
 
 import { store } from "./store";
+import { setLibraryView } from "./features/library-view-slice";
+import { readStoredLibraryView } from "./hooks/use-library-view";
 
 import resources from "@locales";
 
@@ -82,6 +84,7 @@ const isStaging = await globalThis.electron.isStaging();
 addCookieInterceptor(isStaging);
 
 await clearStateFromPreviousSession();
+store.dispatch(setLibraryView(readStoredLibraryView()));
 
 const syncDocumentLanguage = (language: string) => {
   document.documentElement.lang = language;

@@ -16,25 +16,26 @@ import {
 } from "@renderer/helpers";
 import { AchievementProgress, SteamLibraryBadge } from "@renderer/components";
 import { GameVisibilityBadge } from "@renderer/components/game-visibility-badge/game-visibility-badge";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ClockIcon,
-  AlertFillIcon,
-  ImageIcon,
-  CheckCircleFillIcon,
-} from "@primer/octicons-react";
+import { ClockIcon, AlertFillIcon, ImageIcon } from "@primer/octicons-react";
 import {
   EMULATOR_ICONS,
   RETROARCH_EMULATOR_ICON,
 } from "@renderer/pages/settings/emulation/emulator-icons";
 import { LibraryCardActivity } from "./library-card-activity";
+import { LibraryCardPlayButton } from "./library-card-play-button";
 import { PlayStatusBadge } from "./play-status-badge";
 import "./library-game-card.scss";
 import { logger } from "@renderer/logger";
 
 interface LibraryGameCardProps {
   game: LibraryGame;
+  /** Return true to select the card instead of opening the game. */
+  onCardClick?: (game: LibraryGame, event: React.MouseEvent) => boolean;
+  onCardDoubleClick?: (game: LibraryGame) => void;
+  selected?: boolean;
+  focused?: boolean;
   onContextMenu: (
     game: LibraryGame,
     position: { x: number; y: number }
@@ -46,6 +47,10 @@ interface LibraryGameCardProps {
 export const LibraryGameCard = memo(function LibraryGameCard({
   game,
   onContextMenu,
+  onCardClick,
+  onCardDoubleClick,
+  selected = false,
+  focused = false,
 }: Readonly<LibraryGameCardProps>) {
   const { t } = useTranslation("library");
   const { formatPlayTime, handleCardClick, handleContextMenuClick } =
@@ -148,7 +153,21 @@ export const LibraryGameCard = memo(function LibraryGameCard({
 
   const showPlatformBadge =
     !hideClassicsBadges && Boolean(classicsPlatformLabel);
-  const showReadyBadge = !hideReadySizeBadges && isInstalled;
+  // Installed is the norm; only the emulator that runs a classic is shown.
+  const showEmulatorBadge =
+    !hideReadySizeBadges && isInstalled && Boolean(classicsEmulatorIcon);
+  const displayedPlayTime = getDisplayedPlayTimeInMilliseconds(game);
+  const showPlayTime =
+    !hideBadges &&
+    // Under a minute would read "0m".
+    (displayedPlayTime >= 60_000 || game.hasManuallyUpdatedPlaytime);
+
+  const [isPlayPending, setIsPlayPending] = useState(false);
+  const handlePlayPendingChange = useCallback(
+    (pending: boolean) => setIsPlayPending(pending),
+    []
+  );
+  const showPlayButton = isInstalled && (isCoverHovered || isPlayPending);
 
   const handleImageError = () => {
     logger.warn(`Image failed to load for ${game.title}`, {
@@ -223,129 +242,132 @@ export const LibraryGameCard = memo(function LibraryGameCard({
   };
 
   return (
-    <button
-      type="button"
+    <div
+      className={cn("library-game-card__container", {
+        "library-game-card__container--not-installed": !isInstalled,
+        "library-game-card__container--selected": selected,
+        "library-game-card__container--focused": focused,
+      })}
       onMouseEnter={() => setIsCoverHovered(true)}
       onMouseLeave={() => setIsCoverHovered(false)}
-      className="library-game-card__wrapper"
-      onClick={handleCardClick}
-      onContextMenu={handleContextMenuClick}
     >
-      <div
-        className={cn("library-game-card__overlay", {
-          "library-game-card__overlay--classics":
-            game.shop === "launchbox" && !isChosenCoverActive,
-          "library-game-card__overlay--no-fade":
-            hideAchievementProgress ||
-            ((game.achievementCount ?? 0) === 0 &&
-              (game.unlockedAchievementCount ?? 0) === 0),
-        })}
+      <button
+        type="button"
+        className="library-game-card__wrapper"
+        onClick={(event) => {
+          if (onCardClick?.(game, event)) return;
+          handleCardClick();
+        }}
+        onDoubleClick={() => onCardDoubleClick?.(game)}
+        onContextMenu={handleContextMenuClick}
+        aria-pressed={onCardClick ? selected : undefined}
       >
-        <div className="library-game-card__top-section">
-          <div className="library-game-card__top-left">
-            <GameVisibilityBadge
-              isHiddenFromOthers={game.isHiddenFromOthers}
-              isConcealed={game.isConcealed}
-            />
-            {!hideBadges && (
-              <div className="library-game-card__playtime">
-                {game.hasManuallyUpdatedPlaytime ? (
-                  <AlertFillIcon
-                    size={11}
-                    className="library-game-card__manual-playtime"
-                  />
-                ) : (
-                  <ClockIcon size={11} />
-                )}
-                <span className="library-game-card__playtime-long">
-                  {formatPlayTime(getDisplayedPlayTimeInMilliseconds(game))}
-                </span>
-                <span className="library-game-card__playtime-short">
-                  {formatPlayTime(
-                    getDisplayedPlayTimeInMilliseconds(game),
-                    true
+        <div
+          className={cn("library-game-card__overlay", {
+            "library-game-card__overlay--classics":
+              game.shop === "launchbox" && !isChosenCoverActive,
+            "library-game-card__overlay--no-fade":
+              hideAchievementProgress ||
+              ((game.achievementCount ?? 0) === 0 &&
+                (game.unlockedAchievementCount ?? 0) === 0),
+          })}
+        >
+          <div className="library-game-card__top-section">
+            <div className="library-game-card__top-left">
+              <GameVisibilityBadge
+                isHiddenFromOthers={game.isHiddenFromOthers}
+                isConcealed={game.isConcealed}
+              />
+              {showPlayTime && (
+                <div className="library-game-card__playtime">
+                  {game.hasManuallyUpdatedPlaytime ? (
+                    <AlertFillIcon
+                      size={11}
+                      className="library-game-card__manual-playtime"
+                    />
+                  ) : (
+                    <ClockIcon size={11} />
                   )}
-                </span>
-              </div>
-            )}
-            {!hideBadges && <PlayStatusBadge playStatus={game.playStatus} />}
-          </div>
-
-          {(showSteamLibraryBadge ||
-            showEpicLibraryBadge ||
-            showPlatformBadge ||
-            showReadyBadge) && (
-            <div className="library-game-card__top-right">
-              {showEpicLibraryBadge && (
-                <SteamLibraryBadge
-                  source="epic"
-                  availableShops={game.availableShops}
-                  hasActiveSteamImport={game.hasActiveSteamImport}
-                  hasActiveEpicImport={game.hasActiveEpicImport}
-                />
-              )}
-              {showSteamLibraryBadge && (
-                <SteamLibraryBadge
-                  availableShops={game.availableShops}
-                  hasActiveSteamImport={game.hasActiveSteamImport}
-                  hasActiveEpicImport={game.hasActiveEpicImport}
-                />
-              )}
-
-              {showPlatformBadge && (
-                <div className="library-game-card__classics-badges">
-                  <span className="library-game-card__platform-badge">
-                    {classicsPlatformLabel}
+                  <span className="library-game-card__playtime-long">
+                    {formatPlayTime(displayedPlayTime)}
+                  </span>
+                  <span className="library-game-card__playtime-short">
+                    {formatPlayTime(displayedPlayTime, true)}
                   </span>
                 </div>
               )}
+              {!hideBadges && <PlayStatusBadge playStatus={game.playStatus} />}
+            </div>
 
-              {showReadyBadge && (
-                <div
-                  className={cn("library-game-card__installed-badge", {
-                    "library-game-card__installed-badge--classics":
-                      classicsEmulatorIcon,
-                  })}
-                  title={t("installed_tooltip")}
-                >
-                  {classicsEmulatorIcon ? (
+            {(showSteamLibraryBadge ||
+              showEpicLibraryBadge ||
+              showPlatformBadge ||
+              showEmulatorBadge) && (
+              <div className="library-game-card__top-right">
+                {showEpicLibraryBadge && (
+                  <SteamLibraryBadge
+                    source="epic"
+                    availableShops={game.availableShops}
+                    hasActiveSteamImport={game.hasActiveSteamImport}
+                    hasActiveEpicImport={game.hasActiveEpicImport}
+                  />
+                )}
+                {showSteamLibraryBadge && (
+                  <SteamLibraryBadge
+                    availableShops={game.availableShops}
+                    hasActiveSteamImport={game.hasActiveSteamImport}
+                    hasActiveEpicImport={game.hasActiveEpicImport}
+                  />
+                )}
+
+                {showPlatformBadge && (
+                  <div className="library-game-card__classics-badges">
+                    <span className="library-game-card__platform-badge">
+                      {classicsPlatformLabel}
+                    </span>
+                  </div>
+                )}
+
+                {showEmulatorBadge && classicsEmulatorIcon && (
+                  <div
+                    className="library-game-card__installed-badge library-game-card__installed-badge--classics"
+                    title={t("installed_tooltip")}
+                  >
                     <img
                       src={classicsEmulatorIcon}
                       alt=""
                       className="library-game-card__installed-emulator-icon"
                     />
-                  ) : (
-                    <CheckCircleFillIcon
-                      size={11}
-                      className="library-game-card__installed-icon"
-                    />
-                  )}
-                  <span className="library-game-card__installed-text">
-                    {t("installed")}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {!hideAchievementProgress &&
+            ((game.achievementCount ?? 0) > 0 ||
+              (game.unlockedAchievementCount ?? 0) > 0) && (
+              <AchievementProgress
+                achievementCount={Math.max(
+                  game.achievementCount ?? 0,
+                  game.unlockedAchievementCount ?? 0
+                )}
+                unlockedAchievementCount={game.unlockedAchievementCount ?? 0}
+                classNamePrefix="library-game-card"
+                label={`${game.title} achievements`}
+              />
+            )}
         </div>
 
-        {!hideAchievementProgress &&
-          ((game.achievementCount ?? 0) > 0 ||
-            (game.unlockedAchievementCount ?? 0) > 0) && (
-            <AchievementProgress
-              achievementCount={Math.max(
-                game.achievementCount ?? 0,
-                game.unlockedAchievementCount ?? 0
-              )}
-              unlockedAchievementCount={game.unlockedAchievementCount ?? 0}
-              classNamePrefix="library-game-card"
-              label={`${game.title} achievements`}
-            />
-          )}
-      </div>
-
-      {renderCoverMedia()}
-      <LibraryCardActivity game={game} />
-    </button>
+        {renderCoverMedia()}
+        <LibraryCardActivity game={game} />
+      </button>
+      {showPlayButton && (
+        <LibraryCardPlayButton
+          game={game}
+          onPendingChange={handlePlayPendingChange}
+        />
+      )}
+    </div>
   );
 });

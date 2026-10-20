@@ -518,6 +518,43 @@ export const publishGameUpdatesNotification = async (games: Game[]) => {
   );
 };
 
+export const publishWishlistDownloadsNotification = async (games: Game[]) => {
+  const userPreferences = await db.get<string, UserPreferences | null>(
+    levelKeys.userPreferences,
+    { valueEncoding: "json" }
+  );
+  if (userPreferences?.wishlistNotificationsEnabled === false) return;
+
+  const title = t("wishlist_downloads_available", {
+    ns: "notifications",
+    count: games.length,
+    title: games[0].title,
+  });
+  const body = t("wishlist_downloads_available_description", {
+    ns: "notifications",
+    titles: games
+      .slice(0, 3)
+      .map((game) => game.title)
+      .join(", "),
+    count: games.length,
+  });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "WISHLIST_DOWNLOAD_AVAILABLE",
+    title,
+    body,
+    {
+      pictureUrl: games[0].iconUrl,
+      url:
+        games.length === 1
+          ? `/game/${games[0].shop}/${games[0].objectId}`
+          : "/library?collection=__wishlist__",
+    }
+  );
+};
+
 export const publishGameUpdatedNotification = async (
   game: Game,
   release: string | null

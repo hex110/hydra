@@ -41,6 +41,11 @@ export interface SteamAppDetails {
   publishers: string[];
   genres: SteamGenre[];
   movies?: SteamMovie[];
+  /** App ids of the game's DLC. */
+  dlc?: number[];
+  header_image?: string;
+  is_free?: boolean;
+  price_overview?: { final_formatted?: string };
   supported_languages: string;
   controller_support?: "full" | "partial";
   categories?: SteamCategory[];

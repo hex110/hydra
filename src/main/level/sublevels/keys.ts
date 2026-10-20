@@ -12,6 +12,7 @@ export const levelKeys = {
   gameShopCache: "gameShopCache",
   gameLibraryMetadata: "gameLibraryMetadata",
   playActivity: "playActivity",
+  localCollections: "localCollections",
   gameShopCacheItem: (shop: GameShop, objectId: string, language: string) =>
     `${shop}:${objectId}:${language}`,
   downloads: "downloads",

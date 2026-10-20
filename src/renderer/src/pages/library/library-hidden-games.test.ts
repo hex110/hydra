@@ -8,6 +8,16 @@ import * as React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import ts from "typescript";
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as libraryView from "./library-view.ts";
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as libraryCardSize from "./library-card-size.ts";
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as libraryGrouping from "./library-grouping.ts";
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as librarySelection from "./library-selection.ts";
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as libraryKeyboard from "./library-keyboard.ts";
 
 type TestGame = {
   id: string;
@@ -135,6 +145,10 @@ async function renderLibrary(
     },
     "@renderer/hooks": {
       useLibrary: () => ({ library, updateLibrary }),
+      useLibraryView: () => ({
+        view: libraryView.DEFAULT_LIBRARY_VIEW,
+        updateView: noop,
+      }),
       useUserDetails: () => ({ userDetails }),
       useAppDispatch: () => noop,
       useAppSelector: (select: (state: unknown) => unknown) =>
@@ -155,7 +169,12 @@ async function renderLibrary(
     },
     "@primer/octicons-react": Object.fromEntries(
       [
+        "ChevronDownIcon",
+        "ChevronRightIcon",
+        "GraphIcon",
         "HeartIcon",
+        "SidebarExpandIcon",
+        "StarIcon",
         "TelescopeIcon",
         "FileDirectoryIcon",
         "SearchIcon",
@@ -176,11 +195,14 @@ async function renderLibrary(
       useCollectionContextMenu: () => ({ openCollectionContextMenu: noop }),
     },
     "@renderer/helpers": {
+      buildGameDetailsPath: () => "/game",
       getGameCollectionIds: () => [],
       isGameInstalled: () => false,
+      isGameReadyToPlay: () => false,
       sortLibraryGames: (games: TestGame[]) => games,
     },
     "react-router-dom": {
+      useNavigate: () => noop,
       useSearchParams: () => [searchParams, noop],
     },
     "./library-game-card": { LibraryGameCard: gameCard },
@@ -189,6 +211,15 @@ async function renderLibrary(
     "./filter-options": { FilterOptions: () => null, SORT_OPTIONS: [] },
     "./category-filter": { CategoryFilter: () => null },
     "./installed-filter": { InstalledFilter: () => null },
+    "./group-by-select": { GroupBySelect: () => null },
+    "./library-selection-bar": { LibrarySelectionBar: () => null },
+    "./library-details-pane": { LibraryDetailsPane: () => null },
+    "./library-stats-modal": { LibraryStatsModal: () => null },
+    "./library-view": libraryView,
+    "./library-card-size": libraryCardSize,
+    "./library-grouping": libraryGrouping,
+    "./library-selection": librarySelection,
+    "./library-keyboard": libraryKeyboard,
     "./platform-filter": { PlatformFilter: () => null },
     "./library-filters-menu": { LibraryFiltersMenu: () => null },
     "./collections-filter": { CollectionsFilter: () => null },
@@ -266,7 +297,9 @@ async function renderLibrary(
       });
     },
     retry: async () => {
-      const button = dom.window.document.querySelector("button");
+      const button = Array.from(
+        dom.window.document.querySelectorAll("button")
+      ).find((element) => element.textContent === "retry_hidden_games");
       assert.ok(button, "the local hidden-library error offers a retry");
       await act(async () => button.click());
     },

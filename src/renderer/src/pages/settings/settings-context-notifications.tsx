@@ -24,6 +24,8 @@ const buildForm = (preferences: UserPreferences | null) => ({
     preferences?.downloadNotificationsEnabled ?? false,
   repackUpdatesNotificationsEnabled:
     preferences?.repackUpdatesNotificationsEnabled ?? false,
+  wishlistNotificationsEnabled:
+    preferences?.wishlistNotificationsEnabled ?? true,
   friendRequestNotificationsEnabled:
     preferences?.friendRequestNotificationsEnabled ?? false,
   friendStartGameNotificationsEnabled:
@@ -134,6 +136,16 @@ export function SettingsContextNotifications() {
             handleChange({
               repackUpdatesNotificationsEnabled:
                 !form.repackUpdatesNotificationsEnabled,
+            })
+          }
+        />
+
+        <CheckboxField
+          label={t("enable_wishlist_notifications")}
+          checked={form.wishlistNotificationsEnabled}
+          onChange={() =>
+            handleChange({
+              wishlistNotificationsEnabled: !form.wishlistNotificationsEnabled,
             })
           }
         />

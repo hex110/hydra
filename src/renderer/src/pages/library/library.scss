@@ -8,22 +8,90 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: calc(globals.$spacing-unit * 3);
+    gap: calc(globals.$spacing-unit * 2);
     align-items: flex-start;
-    transition: padding-top 0.25s ease;
+  }
 
-    &--header-hidden {
-      padding-top: globals.$spacing-unit;
-    }
+  &__body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
   }
 
   &__games-scroll {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     overflow-y: auto;
-    width: 100%;
     padding: 4px;
     margin: -4px;
+    outline: none;
+  }
+
+  &__group-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid globals.$border-color;
+  }
+
+  &__group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border: none;
+    background: none;
+    color: globals.$muted-color;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  &__group-count {
+    font-size: 12px;
+    font-weight: 400;
+    color: globals.$body-color;
+  }
+
+  &__tool-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid globals.$border-color;
+    background-color: globals.$background-color;
+    color: #dadbe1;
+    cursor: pointer;
+    font-size: globals.$body-font-size;
+    white-space: nowrap;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &--active {
+      border-color: #dadbe1;
+      color: #fff;
+    }
+  }
+
+  // Icons only when the window is narrow.
+  @container #{globals.$app-container} (max-width: 1500px) {
+    &__tool-label {
+      display: none;
+    }
   }
 
   &__scroll-shadow {
@@ -64,25 +132,9 @@
   }
 
   &__page-header {
-    display: grid;
-    grid-template-rows: 1fr;
+    flex-shrink: 0;
     width: 100%;
     padding-right: calc(globals.$spacing-unit * 2);
-    visibility: visible;
-    transition:
-      grid-template-rows 0.25s ease,
-      opacity 0.2s ease,
-      margin-bottom 0.25s ease,
-      visibility 0s;
-
-    &--hidden {
-      grid-template-rows: 0fr;
-      opacity: 0;
-      margin-bottom: calc(globals.$spacing-unit * -3);
-      pointer-events: none;
-      visibility: hidden;
-      transition-delay: 0s, 0s, 0s, 0.25s;
-    }
   }
 
   &__page-title {

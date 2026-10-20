@@ -1,0 +1,42 @@
+@use "../../scss/globals.scss";
+
+.library-card-play-button {
+  position: absolute;
+  bottom: 12px;
+  right: 8px;
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: solid 1px rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  color: globals.$muted-color;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+  animation: library-card-play-button-in 0.15s ease-out;
+  transition:
+    transform ease 0.15s,
+    background ease 0.15s;
+
+  &:hover {
+    transform: scale(1.1);
+    background: globals.$brand-teal;
+    color: #000;
+  }
+
+  &--running:hover {
+    background: globals.$danger-color;
+    color: globals.$muted-color;
+  }
+}
+
+@keyframes library-card-play-button-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}

@@ -2,46 +2,42 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
   CheckIcon,
   ClockIcon,
-  DeviceDesktopIcon,
+  FilterIcon,
   HeartIcon,
   HourglassIcon,
   SlidersIcon,
   SortDescIcon,
-  StackIcon,
   TrophyIcon,
 } from "@primer/octicons-react";
 import { useId, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "react-tooltip";
 import {
-  ClassicsIcon,
-  type LibraryCategory,
+  TAB_ICONS,
+  TAB_LABEL_KEYS,
 } from "@renderer/pages/library/category-filter";
-import {
-  LIBRARY_SOURCES,
-  type LibrarySource,
-} from "@renderer/pages/library/library-category";
+import type { LibraryTab } from "@renderer/pages/library/library-filters";
 import type { SortOption } from "@renderer/pages/library/filter-options";
-import { SourceIcon } from "@renderer/pages/library/source-icon";
 import "./sidebar-filter-menu.scss";
 
 const MENU_SIDE_OFFSET = 8;
 const MENU_COLLISION_PADDING = 16;
 
 interface SidebarFilterMenuProps {
-  category: LibraryCategory;
-  onCategoryChange: (category: LibraryCategory) => void;
+  tab: LibraryTab;
+  tabs: LibraryTab[];
+  onTabChange: (tab: LibraryTab) => void;
   sortBy: SortOption;
   onSortChange: (sortBy: SortOption) => void;
   showFavoritesFirst: boolean;
   onToggleFavoritesFirst: (next: boolean) => void;
-  showSources: boolean;
-  selectedSources: LibrarySource[];
-  onSourcesChange: (sources: LibrarySource[]) => void;
   showPlatforms: boolean;
   platforms: string[];
   selectedPlatforms: string[];
   onPlatformsChange: (platforms: string[]) => void;
+  /** Values selected in the library's Filters menu, which the list follows. */
+  libraryFilterCount: number;
+  onClearLibraryFilters: () => void;
 }
 
 interface FilterGroupOption {
@@ -137,46 +133,24 @@ function FilterGroup({
 }
 
 export function SidebarFilterMenu({
-  category,
-  onCategoryChange,
+  tab,
+  tabs,
+  onTabChange,
   sortBy,
   onSortChange,
   showFavoritesFirst,
   onToggleFavoritesFirst,
-  showSources,
-  selectedSources,
-  onSourcesChange,
   showPlatforms,
   platforms,
   selectedPlatforms,
   onPlatformsChange,
+  libraryFilterCount,
+  onClearLibraryFilters,
 }: Readonly<SidebarFilterMenuProps>) {
   const { t } = useTranslation(["sidebar", "library"]);
 
   const tooltipId = useId();
   const pointerInteractionRef = useRef(false);
-
-  const categoryOptions: {
-    value: LibraryCategory;
-    label: string;
-    icon: JSX.Element;
-  }[] = [
-    {
-      value: "all",
-      label: t("category_all", { ns: "library" }),
-      icon: <StackIcon size={14} />,
-    },
-    {
-      value: "pc",
-      label: t("category_pc", { ns: "library" }),
-      icon: <DeviceDesktopIcon size={14} />,
-    },
-    {
-      value: "classics",
-      label: t("category_classics", { ns: "library" }),
-      icon: <ClassicsIcon size={14} />,
-    },
-  ];
 
   const sortOptions: {
     value: SortOption;
@@ -246,20 +220,18 @@ export function SidebarFilterMenu({
               </DropdownMenuPrimitive.Label>
 
               <DropdownMenuPrimitive.RadioGroup
-                value={category}
-                onValueChange={(value) =>
-                  onCategoryChange(value as LibraryCategory)
-                }
+                value={tab}
+                onValueChange={(value) => onTabChange(value as LibraryTab)}
               >
-                {categoryOptions.map((option) => (
+                {tabs.map((option) => (
                   <DropdownMenuPrimitive.RadioItem
-                    key={option.value}
-                    value={option.value}
+                    key={option}
+                    value={option}
                     onSelect={(event) => event.preventDefault()}
                     className="sidebar-filter-menu__item"
                   >
-                    {option.icon}
-                    <span>{option.label}</span>
+                    {TAB_ICONS[option]}
+                    <span>{t(TAB_LABEL_KEYS[option], { ns: "library" })}</span>
                     <DropdownMenuPrimitive.ItemIndicator
                       forceMount
                       className="sidebar-filter-menu__item-indicator"
@@ -270,6 +242,21 @@ export function SidebarFilterMenu({
                 ))}
               </DropdownMenuPrimitive.RadioGroup>
             </DropdownMenuPrimitive.Group>
+
+            {libraryFilterCount > 0 && (
+              <DropdownMenuPrimitive.Item
+                className="sidebar-filter-menu__item"
+                onSelect={onClearLibraryFilters}
+              >
+                <FilterIcon size={14} />
+                <span>
+                  {t("library_filters_applied", {
+                    ns: "library",
+                    count: libraryFilterCount,
+                  })}
+                </span>
+              </DropdownMenuPrimitive.Item>
+            )}
 
             <DropdownMenuPrimitive.Separator className="sidebar-filter-menu__separator" />
 
@@ -319,47 +306,21 @@ export function SidebarFilterMenu({
             </DropdownMenuPrimitive.Group>
           </div>
 
-          {(showSources || showPlatforms) && (
+          {showPlatforms && (
             <>
               <div className="sidebar-filter-menu__divider" />
 
               <div className="sidebar-filter-menu__column">
-                {showSources && (
-                  <FilterGroup
-                    label={t("libraries_label")}
-                    allLabel={t("all_libraries", { ns: "library" })}
-                    options={LIBRARY_SOURCES.map((source) => ({
-                      value: source,
-                      label: t(`library_${source}`, { ns: "library" }),
-                      icon: <SourceIcon source={source} />,
-                    }))}
-                    selected={selectedSources}
-                    onChange={(sources) =>
-                      onSourcesChange(
-                        LIBRARY_SOURCES.filter((source) =>
-                          sources.includes(source)
-                        )
-                      )
-                    }
-                  />
-                )}
-
-                {showSources && showPlatforms && (
-                  <DropdownMenuPrimitive.Separator className="sidebar-filter-menu__separator" />
-                )}
-
-                {showPlatforms && (
-                  <FilterGroup
-                    label={t("consoles_label")}
-                    allLabel={t("all_consoles", { ns: "library" })}
-                    options={platforms.map((platform) => ({
-                      value: platform,
-                      label: platform,
-                    }))}
-                    selected={selectedPlatforms}
-                    onChange={onPlatformsChange}
-                  />
-                )}
+                <FilterGroup
+                  label={t("consoles_label")}
+                  allLabel={t("all_consoles", { ns: "library" })}
+                  options={platforms.map((platform) => ({
+                    value: platform,
+                    label: platform,
+                  }))}
+                  selected={selectedPlatforms}
+                  onChange={onPlatformsChange}
+                />
               </div>
             </>
           )}

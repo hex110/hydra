@@ -4,3 +4,5 @@ import "./get-game-stats";
 import "./get-random-game";
 import "./get-game-artwork";
 import "./get-cover-poster";
+import "./get-game-news";
+import "./get-catalogue-row-details";

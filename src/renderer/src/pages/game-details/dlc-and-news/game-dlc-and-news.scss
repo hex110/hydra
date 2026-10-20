@@ -1,0 +1,121 @@
+@use "../../../scss/globals.scss";
+
+.game-dlc-and-news {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 1.5);
+  width: 100%;
+  margin: calc(globals.$spacing-unit * 3) auto 0;
+
+  @media (min-width: 1280px) {
+    width: 60%;
+  }
+
+  @media (min-width: 1536px) {
+    width: 50%;
+  }
+
+  &__title {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  &__dlc {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: calc(globals.$spacing-unit * 1.5);
+  }
+
+  &__dlc-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 0 0 8px;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid globals.$border-color;
+    background-color: globals.$dark-background-color;
+    color: globals.$muted-color;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    img,
+    .game-dlc-and-news__dlc-placeholder {
+      display: block;
+      width: 100%;
+      aspect-ratio: 460 / 215;
+      object-fit: cover;
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  &__dlc-name {
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  &__dlc-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: globals.$body-color;
+  }
+
+  &__dlc-skeleton {
+    aspect-ratio: 460 / 260;
+    border-radius: 6px;
+  }
+
+  &__more {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: globals.$body-color;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  &__news {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+
+    // Rows here: the column is too narrow for the home page's tall cards.
+    .game-news-card {
+      flex-direction: row;
+
+      &:hover {
+        transform: none;
+      }
+    }
+
+    .game-news-card__media {
+      flex: 0 0 180px;
+      width: 180px;
+      aspect-ratio: 16 / 9;
+    }
+
+    .game-news-card__body {
+      min-width: 0;
+    }
+  }
+
+  &__news-skeleton {
+    height: 101px;
+    border-radius: 6px;
+  }
+}

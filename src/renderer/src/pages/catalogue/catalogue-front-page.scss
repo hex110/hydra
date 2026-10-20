@@ -1,0 +1,180 @@
+@use "../../scss/globals.scss";
+
+.catalogue-front-page {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 3);
+
+  &__shelf {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 1.5);
+
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  &__row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 220px;
+    gap: calc(globals.$spacing-unit * 1.5);
+    overflow-x: auto;
+    padding-bottom: globals.$spacing-unit;
+    scroll-snap-type: x proximity;
+  }
+
+  &__capsule {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: globals.$muted-color;
+    text-align: left;
+    cursor: pointer;
+    scroll-snap-align: start;
+
+    img,
+    .catalogue-front-page__capsule-placeholder {
+      width: 100%;
+      aspect-ratio: 460 / 215;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid globals.$border-color;
+      transition: filter 0.2s ease;
+    }
+
+    &:hover img,
+    &:focus-visible img {
+      filter: brightness(1.15);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__capsule-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: globals.$dark-background-color;
+    color: globals.$body-color;
+  }
+
+  &__capsule-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  &__capsule-reason {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: globals.$body-color;
+  }
+
+  &__capsule-skeleton {
+    width: 220px;
+    aspect-ratio: 460 / 215;
+    border-radius: 4px;
+  }
+
+  &__queue {
+    display: flex;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 2);
+    border-radius: 8px;
+    border: 1px solid globals.$border-color;
+    background-color: globals.$dark-background-color;
+  }
+
+  &__queue-cover {
+    flex: 0 0 auto;
+    width: min(460px, 45%);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    img,
+    .catalogue-front-page__capsule-placeholder {
+      width: 100%;
+      aspect-ratio: 460 / 215;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+  }
+
+  &__queue-details {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    min-width: 0;
+
+    h3 {
+      font-size: 20px;
+      color: globals.$muted-color;
+    }
+
+    p {
+      color: globals.$body-color;
+      font-size: 13px;
+    }
+  }
+
+  &__queue-position {
+    font-size: 12px;
+    color: globals.$body-color;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__queue-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: globals.$spacing-unit;
+    margin-top: auto;
+  }
+
+  &__genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: globals.$spacing-unit;
+  }
+
+  &__genre {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid globals.$border-color;
+    background-color: globals.$dark-background-color;
+    color: globals.$muted-color;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  @media (max-width: 768px) {
+    &__queue {
+      flex-direction: column;
+    }
+
+    &__queue-cover {
+      width: 100%;
+    }
+  }
+}

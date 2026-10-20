@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import {
   AlertIcon,
+  StarIcon,
   XIcon,
   DownloadIcon,
   PackageIcon,
@@ -66,6 +67,9 @@ export function LocalNotificationItem({
         return <HistoryIcon size={24} />;
       case "GAME_UPDATES_AVAILABLE":
       case "GAME_UPDATED":
+        return <SyncIcon size={24} />;
+      case "WISHLIST_DOWNLOAD_AVAILABLE":
+        return <StarIcon size={24} />;
         return <SyncIcon size={24} />;
       case "OPTISCALER_FILES_MISSING":
         return <AlertIcon size={24} />;

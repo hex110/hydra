@@ -1,0 +1,58 @@
+@use "../../scss/globals.scss";
+
+.home-customise {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 380px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  &__moves {
+    display: flex;
+    gap: 4px;
+  }
+
+  &__move {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid globals.$border-color;
+    background: transparent;
+    color: globals.$muted-color;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: calc(globals.$spacing-unit * 2);
+  }
+}

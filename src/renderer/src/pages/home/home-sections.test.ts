@@ -8,7 +8,12 @@ import type { HomeGame } from "./home-sections.ts";
 
 const {
   BACKLOG_IDLE_MS,
+  getAlmostDone,
   getBacklog,
+  getCompletionProgress,
+  getNewDownloads,
+  getRecentlyAdded,
+  getWishlist,
   getContinuePlaying,
   getOwnedKeys,
   getSuggestionSeeds,
@@ -152,5 +157,122 @@ describe("rankSuggestions", () => {
       return counts;
     }, {});
     assert.deepEqual(bySeed, { Big: 3, Small: 3 });
+  });
+});
+
+describe("getNewDownloads", () => {
+  it("lists games not installed with new download options, wishlisted first", () => {
+    const installed = new Set(["b"]);
+    const list = [
+      game("a", { newDownloadOptionsCount: 5 }),
+      game("b", { newDownloadOptionsCount: 1 }),
+      game("c"),
+      game("d", {
+        members: [
+          game("d1", { newDownloadOptionsCount: 2, wishlisted: true }),
+          game("d2", { newDownloadOptionsCount: 4 }),
+        ],
+      }),
+    ];
+    assert.deepEqual(
+      ids(getNewDownloads(list, (item) => installed.has(item.objectId))),
+      ["d", "a"]
+    );
+  });
+});
+
+describe("getWishlist", () => {
+  it("lists wishlisted games not installed, new downloads first", () => {
+    const list = [
+      game("old", { wishlisted: true, addedToLibraryAt: daysAgo(10) }),
+      game("new", { wishlisted: true, addedToLibraryAt: daysAgo(1) }),
+      game("found", { wishlisted: true, newDownloadOptionsCount: 1 }),
+      game("installed", { wishlisted: true }),
+      game("plain"),
+    ];
+    assert.deepEqual(
+      ids(getWishlist(list, (item) => item.objectId === "installed")),
+      ["found", "new", "old"]
+    );
+  });
+});
+
+describe("getRecentlyAdded", () => {
+  it("lists games added in the last 30 days that were never played", () => {
+    const list = [
+      game("old", { addedToLibraryAt: daysAgo(40) }),
+      game("played", {
+        addedToLibraryAt: daysAgo(2),
+        lastTimePlayed: daysAgo(1),
+      }),
+      game("older", { addedToLibraryAt: daysAgo(10) }),
+      game("newest", { addedToLibraryAt: daysAgo(1) }),
+      game("unknown"),
+    ];
+    assert.deepEqual(ids(getRecentlyAdded(list, new Set(), now)), [
+      "newest",
+      "older",
+    ]);
+  });
+});
+
+describe("getAlmostDone", () => {
+  it("measures progress by achievements or main story time", () => {
+    assert.equal(
+      getCompletionProgress(
+        game("a", { achievementCount: 10, unlockedAchievementCount: 9 })
+      ),
+      0.9
+    );
+    assert.equal(
+      getCompletionProgress(
+        game("b", {
+          playTimeInMilliseconds: 8 * HOUR,
+          metadata: { howLongToBeat: { mainStory: 10 } },
+        })
+      ),
+      0.8
+    );
+    assert.equal(
+      getCompletionProgress(
+        game("c", { achievementCount: 5, unlockedAchievementCount: 5 })
+      ),
+      null
+    );
+    assert.equal(getCompletionProgress(game("d")), null);
+  });
+
+  it("lists played games past 80 %, closest first, without finished ones", () => {
+    const list = [
+      game("close", {
+        playTimeInMilliseconds: HOUR,
+        achievementCount: 10,
+        unlockedAchievementCount: 9,
+      }),
+      game("closer", {
+        playTimeInMilliseconds: 19 * HOUR,
+        metadata: { howLongToBeat: { mainStory: 20 } },
+      }),
+      game("far", {
+        playTimeInMilliseconds: HOUR,
+        achievementCount: 10,
+        unlockedAchievementCount: 3,
+      }),
+      game("finished", {
+        playStatus: "finished",
+        playTimeInMilliseconds: HOUR,
+        achievementCount: 10,
+        unlockedAchievementCount: 9,
+      }),
+      game("excluded", {
+        playTimeInMilliseconds: HOUR,
+        achievementCount: 10,
+        unlockedAchievementCount: 9,
+      }),
+    ];
+    assert.deepEqual(ids(getAlmostDone(list, new Set(["steam:excluded"]))), [
+      "closer",
+      "close",
+    ]);
   });
 });

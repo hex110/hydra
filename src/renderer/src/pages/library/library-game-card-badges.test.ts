@@ -55,9 +55,13 @@ function renderCard(
       useAnimatedSourceWarmup: () => {},
       useFormat: () => ({ numberFormatter: new Intl.NumberFormat("en") }),
     },
-    "@shared": { getDisplayedPlayTimeInMilliseconds: () => 0 },
+    "@shared": {
+      getDisplayedPlayTimeInMilliseconds: (game: Record<string, unknown>) =>
+        (game.playTime as number | undefined) ?? 60_000,
+    },
     "./library-category": libraryCategory,
     "./library-card-activity": { LibraryCardActivity: () => null },
+    "./library-card-play-button": { LibraryCardPlayButton: () => null },
     "./play-status-badge": { PlayStatusBadge: () => null },
     "@renderer/helpers": {
       CLASSICS_PS_PLATFORM_LABELS: {},
@@ -468,8 +472,35 @@ describe("visibility and playtime badge layout", () => {
     assert.equal(dom.window.getComputedStyle(right).marginLeft, "auto");
     assert.match(right.textContent!, /Steam/);
     assert.match(right.textContent!, /SNES/);
-    assert.match(right.textContent!, /installed/);
+    assert.doesNotMatch(right.textContent!, /installed/);
     dom.window.close();
+  });
+
+  it("hides the playtime badge of a game never played", () => {
+    const dom = renderCard(layouts[0], { playTime: 0 });
+    assert.equal(
+      dom.window.document.querySelector(".library-game-card__playtime"),
+      null
+    );
+    dom.window.close();
+  });
+
+  it("dims a game that isn't installed", () => {
+    const installed = renderCard(layouts[0], { isInstalled: true });
+    const missing = renderCard(layouts[0], { isInstalled: false });
+    assert.equal(
+      installed.window.document.querySelector(
+        ".library-game-card__container--not-installed"
+      ),
+      null
+    );
+    assert.ok(
+      missing.window.document.querySelector(
+        ".library-game-card__container--not-installed"
+      )
+    );
+    installed.window.close();
+    missing.window.close();
   });
 
   it("preserves visibility badges when playtime and optional badges are disabled", () => {

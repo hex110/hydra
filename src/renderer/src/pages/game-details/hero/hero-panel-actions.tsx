@@ -4,9 +4,10 @@ import {
   GearIcon,
   PlayIcon,
   PlusCircleIcon,
+  StarIcon,
 } from "@primer/octicons-react";
 import { Button, ConfirmationModal, Modal } from "@renderer/components";
-import type { LibraryGame, PlayStatus } from "@types";
+import type { LibraryGame } from "@types";
 import {
   canRetryEpicLaunchWithLocalSaves,
   getEpicLaunchError,
@@ -31,7 +32,6 @@ import { DiscSelectionModal } from "../modals/disc-selection-modal";
 import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-modal";
 
 import { GameMoreMenu } from "./game-more-menu";
-import { PlayStatusMenu } from "./play-status-menu";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
@@ -200,6 +200,47 @@ export function HeroPanelActions() {
     }
   };
 
+  const addGameToWishlist = async () => {
+    setToggleLibraryGameDisabled(true);
+
+    try {
+      await window.electron.addGameToLibrary(
+        shop,
+        objectId!,
+        gameTitle,
+        shopDetails?.platform ?? null
+      );
+      await window.electron.setGameWishlisted(shop, objectId!, true);
+      showSuccessToast(t("added_to_wishlist", { ns: "library" }));
+    } catch {
+      showErrorToast(t("failed_update_wishlist", { ns: "library" }));
+    } finally {
+      updateLibrary();
+      updateGame();
+      setToggleLibraryGameDisabled(false);
+    }
+  };
+
+  const toggleGameWishlisted = async () => {
+    if (!game) return;
+    const members = presentation?.members ?? [game];
+    const wishlisted = members.some((member) => member.wishlisted);
+
+    try {
+      await applyLibraryGroupAction(members, (member) =>
+        window.electron.setGameWishlisted(
+          member.shop,
+          member.objectId,
+          !wishlisted
+        )
+      );
+    } catch {
+      showErrorToast(t("failed_update_wishlist", { ns: "library" }));
+    } finally {
+      await Promise.all([updateLibrary(), updateGame()]);
+    }
+  };
+
   const toggleGameFavorite = async () => {
     setToggleLibraryGameDisabled(true);
 
@@ -224,23 +265,6 @@ export function HeroPanelActions() {
     } finally {
       await Promise.all([updateLibrary(), updateGame()]);
       setToggleLibraryGameDisabled(false);
-    }
-  };
-
-  const setGamePlayStatus = async (playStatus: PlayStatus | null) => {
-    try {
-      if (!game) return;
-      await applyLibraryGroupAction(presentation?.members ?? [game], (member) =>
-        window.electron.setGamePlayStatus(
-          member.shop,
-          member.objectId,
-          playStatus
-        )
-      );
-    } catch {
-      showErrorToast(t("failed_update_play_status"));
-    } finally {
-      await Promise.all([updateLibrary(), updateGame()]);
     }
   };
 
@@ -427,6 +451,19 @@ export function HeroPanelActions() {
     </Button>
   );
 
+  const addToWishlistButton = (
+    <Button
+      theme="outline"
+      disabled={toggleLibraryGameDisabled}
+      onClick={addGameToWishlist}
+      className="hero-panel-actions__action"
+      title={t("empty_wishlist_description", { ns: "library" })}
+    >
+      <StarIcon />
+      {t("add_to_wishlist", { ns: "library" })}
+    </Button>
+  );
+
   const showDownloadOptionsButton = (
     <Button
       onClick={() => setShowRepacksModal(true)}
@@ -527,6 +564,7 @@ export function HeroPanelActions() {
     return (
       <>
         {addGameToLibraryButton}
+        {addToWishlistButton}
         {showDownloadOptionsButton}
         <GameMoreMenu title={gameTitle} steamAppId={steamAppId} />
       </>
@@ -585,17 +623,15 @@ export function HeroPanelActions() {
           {t("options")}
         </Button>
 
-        <PlayStatusMenu
-          playStatus={presentation?.playStatus ?? game.playStatus ?? null}
-          onChange={(playStatus) => void setGamePlayStatus(playStatus)}
-          disabled={deleting}
-        />
-
         <GameMoreMenu
           title={game.title}
           steamAppId={steamAppId}
           favorite={presentation?.favorite ?? game.favorite}
           pinned={presentation?.isPinned ?? game.isPinned}
+          wishlisted={(presentation?.members ?? [game]).some(
+            (member) => member.wishlisted
+          )}
+          onToggleWishlisted={toggleGameWishlisted}
           onToggleFavorite={toggleGameFavorite}
           onTogglePinned={
             userDetails && game.shop !== "custom" ? toggleGamePinned : undefined
@@ -633,5 +669,10 @@ export function HeroPanelActions() {
     );
   }
 
-  return addGameToLibraryButton;
+  return (
+    <>
+      {addGameToLibraryButton}
+      {addToWishlistButton}
+    </>
+  );
 }
