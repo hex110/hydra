@@ -1,0 +1,107 @@
+@use "../../scss/globals.scss";
+
+.play-activity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: calc(globals.$spacing-unit * 3);
+  padding: calc(globals.$spacing-unit * 2);
+  border: 1px solid globals.$border-color;
+  border-radius: 8px;
+  background-color: globals.$dark-background-color;
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(globals.$spacing-unit * 3);
+    min-width: 0;
+  }
+
+  &__streak {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+
+    .play-activity__flame {
+      width: 28px;
+      filter: grayscale(1);
+      opacity: 0.4;
+    }
+
+    &--active .play-activity__flame {
+      filter: none;
+      opacity: 1;
+    }
+  }
+
+  &__streak-count,
+  &__stat-value {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__hint {
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__heatmap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__months {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 14px;
+    gap: 3px;
+    color: globals.$body-color;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  &__grid {
+    display: flex;
+    gap: 3px;
+  }
+
+  &__week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  &__day {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.06);
+
+    &--level-1 {
+      background-color: rgba(22, 177, 149, 0.3);
+    }
+
+    &--level-2 {
+      background-color: rgba(22, 177, 149, 0.55);
+    }
+
+    &--level-3 {
+      background-color: rgba(22, 177, 149, 0.8);
+    }
+
+    &--level-4 {
+      background-color: globals.$brand-teal;
+    }
+
+    &--future {
+      visibility: hidden;
+    }
+  }
+}

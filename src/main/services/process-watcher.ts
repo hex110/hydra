@@ -65,6 +65,7 @@ import {
   stopLinuxGameCaptureSession,
 } from "./linux-game-capture-session";
 import { updateGameRecord } from "./game-record-updater";
+import { recordPlayActivity } from "./play-activity";
 import { GameExecutables } from "./game-executables";
 import {
   onManagedEpicClosed,
@@ -260,6 +261,7 @@ const persistGamePlaytime = async (
   hydraRevision = getHydraPlaytimeRevision(gameKey)
 ) => {
   if (context && !HydraApi.isAuthContextCurrent(context)) return;
+  let applied = false;
   await updateGameRecord(gameKey, (current) => {
     if (
       (context
@@ -268,6 +270,7 @@ const persistGamePlaytime = async (
       getHydraPlaytimeRevision(gameKey) !== hydraRevision
     )
       return {};
+    applied = true;
     return {
       ...update,
       ...(current.shop === "epic" &&
@@ -280,6 +283,7 @@ const persistGamePlaytime = async (
         : { playTimeInMilliseconds: current.playTimeInMilliseconds + delta }),
     };
   });
+  if (applied && delta) await recordPlayActivity(gameKey, delta);
 };
 
 const hasLinuxCompatibilityProcessMatch = (

@@ -26,3 +26,12 @@ export interface GameMetadataOverrides {
   customGenres?: string[] | null;
   metadataLanguage?: string | null;
 }
+
+/** Milliseconds played per game (`shop:objectId`) on one day. */
+export type PlayActivityDay = Record<string, number>;
+
+export interface PlayActivityEntry {
+  /** Local date, `YYYY-MM-DD`. */
+  date: string;
+  games: PlayActivityDay;
+}

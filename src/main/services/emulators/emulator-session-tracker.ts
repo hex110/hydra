@@ -10,6 +10,7 @@ import {
   setEmulatorGameRunning,
 } from "../game-running-state";
 import { logger } from "../logger";
+import { recordPlayActivity } from "../play-activity";
 import { syncRetroAchievements } from "../retro-achievements/retro-achievements-sync";
 import {
   startEmulatorSouvenirWatcher,
@@ -221,6 +222,7 @@ const finalizeEmulatorSession = async (gameKey: string): Promise<void> => {
   };
 
   await gamesSublevel.put(gameKey, updated);
+  await recordPlayActivity(gameKey, deltaMs);
 
   if (game.shop === "custom") return;
 

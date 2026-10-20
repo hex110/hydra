@@ -113,3 +113,56 @@
     }
   }
 }
+
+.home__activity {
+  padding: 0 calc(globals.$spacing-unit * 3);
+}
+
+.home__shelf {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 1.5);
+  padding: 0 calc(globals.$spacing-unit * 3);
+}
+
+.home__shelf-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: globals.$spacing-unit calc(globals.$spacing-unit * 2);
+}
+
+.home__shelf-description {
+  color: globals.$body-color;
+  font-size: globals.$small-font-size;
+}
+
+.home__shelf-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-rows: auto;
+  grid-auto-rows: 0;
+  column-gap: calc(globals.$spacing-unit * 2);
+  overflow: hidden;
+}
+
+.home__shelf-skeleton {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 4px;
+}
+
+.home__suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.home__suggestion-reason {
+  color: globals.$body-color;
+  font-size: globals.$small-font-size;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

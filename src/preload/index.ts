@@ -1008,6 +1008,8 @@ contextBridge.exposeInMainWorld("electron", {
     overrides: GameMetadataOverrides
   ) => ipcRenderer.invoke("updateGameMetadata", shop, objectId, overrides),
   getActiveGameSetups: () => ipcRenderer.invoke("getActiveGameSetups"),
+  getPlayActivity: (sinceDate: string) =>
+    ipcRenderer.invoke("getPlayActivity", sinceDate),
   toggleGameMangohud: (
     shop: GameShop,
     objectId: string,

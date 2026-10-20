@@ -2,6 +2,7 @@ import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
   GameMetadataOverrides,
+  PlayActivityEntry,
   PlayStatus,
   GameLaunchPreview,
   MangoHudSettings,
@@ -421,6 +422,8 @@ declare global {
     ) => Promise<void>;
     /** Game keys (`shop:objectId`) with game setup queued or running. */
     getActiveGameSetups: () => Promise<string[]>;
+    /** Days with play from `sinceDate` (`YYYY-MM-DD`, local) on. */
+    getPlayActivity: (sinceDate: string) => Promise<PlayActivityEntry[]>;
     toggleGameMangohud: (
       shop: GameShop,
       objectId: string,

@@ -1,0 +1,28 @@
+@use "../../scss/globals.scss";
+
+.last-played-hero {
+  display: block;
+  text-align: left;
+
+  &__eyebrow {
+    color: globals.$brand-teal;
+    font-size: globals.$small-font-size;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__title {
+    color: #fff;
+    font-size: 32px;
+  }
+
+  &__details {
+    color: globals.$muted-color;
+  }
+
+  &__actions {
+    display: flex;
+    gap: globals.$spacing-unit;
+  }
+}
