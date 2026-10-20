@@ -47,7 +47,7 @@ function load(t: TestContext, preferences: Record<string, unknown>) {
       },
       levelKeys: { userPreferences: "userPreferences" },
     },
-    "./logger": { logger: { info() {}, warn() {}, error() {} } },
+    "./logger": { logger: { info: () => {}, warn: () => {}, error: () => {} } },
     "./executable-status": {
       refreshAllExecutableStatuses: async () => {
         events.statusChecks++;
