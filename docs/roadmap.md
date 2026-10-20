@@ -74,17 +74,20 @@ in the sections below.
    8. [x] Gamescope follows the display
    9. [x] Keep files when cancelling
    10. [x] Open the window sooner (measure first)
-7. **Library.**
-   1. [ ] Play status
-   2. [ ] Genres
-   3. [ ] Source tabs
-   4. [ ] Sorting
-   5. [ ] Library filters
-   6. [ ] Rescan automatically
-   7. [ ] Collections
-   8. [ ] Download state on cards
-   9. [ ] Hide duplicates
-   10. [ ] Edit metadata
+7. **Library.** Shipped: [Library](features/library.md), automatic rescans
+   in [Library scanning](features/library-scanning.md#rescan-automatically),
+   details, genres and artwork in [Game page](features/game-page.md#details).
+   1. [x] Play status
+   2. [x] Genres
+   3. [x] Source tabs
+   4. [x] Sorting
+   5. [x] Library filters (OpenCritic dropped: the API has no source for
+          it; Metacritic comes from Steam's store data)
+   6. [x] Rescan automatically
+   7. [x] Collections
+   8. [x] Download state on cards
+   9. [x] Hide duplicates
+   10. [x] Edit metadata
 8. **Home page.**
    1. [ ] Redesign around your own games
    2. [ ] Play heatmap and streaks
@@ -162,41 +165,6 @@ Rule going forward: a tool that only writes config files Hydra points at is
 fine to use. Anything that copies files into game folders, wraps the
 executable or exports launch environment belongs to Hydra. With launcher
 redirects shipped, nothing in use still needs `bgmod`.
-
-## Library scanning
-
-- [ ] **Rescan automatically.** Watch library folders and pick up changes
-      without a manual scan.
-
-## Library
-
-- [ ] **Play status.** Playing, finished, dropped, backlog. Filters, sorting
-      and the home page's "Clear your backlog" read it; Backloggd suggestions
-      would too.
-- [ ] **Genres.** Show a game's genres on its page, and filter the library by
-      genre. The most wanted item in this section.
-- [ ] **Source tabs.** Replace the `All / PC / Classics` buttons with
-      `All / Local / Steam / Epic / Classics`, so local and Steam games can be
-      told apart without a hand-kept collection. Upstream now has a
-      Hydra / Steam / Epic source dropdown; build on that.
-- [ ] **Library filters.** Upstream's library has installed, source, platform
-      and collection filters. Add genre, play status, ProtonDB tier
-      (the catalogue has this filter already), installed size, How Long to
-      Beat ranges (under 2 h, 2–6 h, 6–15 h, …), OpenCritic/Metacritic score
-      ranges, and the other usual ones.
-- [ ] **Sorting.** The sort options a game library is expected to have (name,
-      last played, play time, added, release date, score, installed size, …).
-      Upstream has name (both ways), recently played, most played,
-      achievements and installed first.
-- [ ] **Collections.** A better way to manage them. Low priority.
-- [ ] **Download state on cards.** Show downloading, extracting and setup
-      progress on library cards (abrahampo1).
-- [ ] **Hide duplicates.** One entry per title when a game is in the library
-      twice, preferring the Steam copy, then the one with more playtime
-      (chimaera).
-- [ ] **Edit metadata.** Edit a game's title, description and images, with a
-      language choice for the metadata search, and search every artwork
-      provider at once (atxoxx).
 
 ## Home page
 

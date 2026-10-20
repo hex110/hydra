@@ -19,6 +19,36 @@ spot beside Play, and links to the game elsewhere:
 
 Games not in the library show the links only.
 
+## Play status and genres
+
+The **Play status** button next to **Options** sets the game's
+[play status](library.md#play-status). The sidebar lists the game's genres;
+clicking one opens the library filtered to that genre.
+
+## Details
+
+**Options → Details** replaces what the store shows for the game:
+
+- **Description**: plain text shown under "About this game" instead of the
+  store description. Line breaks are kept.
+- **Genres**: a comma-separated list used on the game page and by the
+  library's genre filter instead of the store's genres.
+- **Store details language**: the language the game page asks the store for
+  (description, requirements, …), for games whose store page is better in
+  another language. **Same as Hydra** follows the app language. Steam and
+  Epic fall back to English for languages they don't have.
+
+**Use store details** clears the description and genres. The title and
+images are edited as before, under **General** and **Customization**.
+
+## Artwork
+
+The artwork picker under **Customization** shows the stores' own cover,
+hero, logo and icon first, labelled Steam, Epic Games or LaunchBox, from
+every store the catalogue links the game to, followed by SteamGridDB's
+results. Store artwork needs no account, so the picker now opens while
+signed out too; SteamGridDB still needs a Hydra sign-in.
+
 ## Missing files
 
 Hydra checks every game's executable shortly after it starts, and when a

@@ -4,8 +4,25 @@ Hydra can scan folders where you keep installed games, add the games it finds
 to your library and fill in executables for library games that have none.
 
 Settings live in **Settings → Library folders**. The scan itself runs from the
-scan button in the header, from **Scan now** on the settings page, or on
-startup.
+scan button in the header, from **Scan now** on the settings page, on
+startup, or by itself when a library folder changes.
+
+## Rescan automatically
+
+With **Rescan automatically** on, Hydra watches the top level of each folder
+in **Library folders** (not Steam's libraries or the downloads folder, which
+are covered elsewhere). When a folder appears or disappears there, it waits
+15 seconds for things to settle, then until the new folder has stopped
+growing (its file count and size are unchanged for 20 seconds, which covers
+copies and extractions that take a while), and runs the same background scan
+as **Scan these folders when Hydra starts**. It then checks every game's
+executable again, so a game whose folder was removed is marked
+[missing](game-page.md#missing-files). Changes that arrive during a scan get
+another scan afterwards.
+
+The scan only posts a notification when it found something. The setting is
+off by default; a folder that can't be watched (an unmounted drive) is
+skipped until the setting or the folder list changes.
 
 ## Scan modes
 
