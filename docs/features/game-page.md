@@ -4,26 +4,55 @@
 
 The game page's **Options** button and the **Options** entry in the
 right-click menu of the library and sidebar open the same dialog. (Upstream
-calls the menu entry "Properties".)
+calls the menu entry "Properties".) The right-click submenu with hide, pin,
+folders and remove is called **Manage**, as on Steam, so the menu no longer
+shows two "Options" entries.
 
 ## More menu
 
 The **…** button next to Options holds what used to take the most prominent
 spot beside Play, and links to the game elsewhere:
 
-- **Add to favorites** / **Remove from favorites**, and **Pin game** /
-  **Unpin game** (signed in, store games only);
+- **Add to favorites** / **Remove from favorites**, **Add to wishlist** /
+  **Remove from wishlist**, and **Pin game** / **Unpin game** (signed in,
+  store games only);
 - **Open on Steam**, **SteamDB**, **ProtonDB** and **PCGamingWiki** for games
   with a Steam app id, and **PCGamingWiki** search otherwise;
 - **Open on HowLongToBeat** (a search for the title).
 
-Games not in the library show the links only.
+Games not in the library show the links only. Next to **Add to library**
+they get **Add to wishlist**, which adds the game and puts it on the
+[wishlist](library.md#wishlist), so Hydra tells you when a source adds it.
 
-## Play status and genres
+## Your game
 
-The **Play status** button next to **Options** sets the game's
-[play status](library.md#play-status). The sidebar lists the game's genres;
-clicking one opens the library filtered to that genre.
+For a game in the library, a card above the screenshots keeps your own data
+apart from the store's, like Steam's "Your stuff":
+
+- **Play status** (moved here from the button row), playtime, last played,
+  and achievement progress with a bar.
+- **Installed version**, and **Update to …** when a download source has a
+  newer release ([updates](updates.md)); it opens the update.
+- **Your copies**, when the game has copies from several stores or folders:
+  each one's source, whether it is installed and its playtime.
+- **Other versions in your library**: games whose title is this one's plus
+  more words, or the other way round ("Dark Souls" and "Dark Souls III"),
+  linking to their pages.
+- [Notes](library.md#notes).
+
+## DLC and news
+
+Steam games list their DLC (up to 24, with a link to Steam's full list when
+there are more) with picture and price; a DLC opens on Steam. Hydra's API
+has no store data for DLC ids, so each is looked up through the same Steam
+store request the game page uses, and cached with it. Below that, the
+game's three latest Steam announcements, as on the home page.
+
+## Genres and similar games
+
+The sidebar lists the game's genres; clicking one opens the library filtered
+to that genre. Under **Similar games**, the ones you own come first and are
+marked **In library** or **Installed**.
 
 ## Details
 

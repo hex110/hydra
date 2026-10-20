@@ -3,6 +3,32 @@
 The home page starts with your own games; the catalogue (Hot now, Top games
 of the week, Games to beat, Surprise me) follows below them.
 
+Below the hero, the page is a list of shelves. The gear button opens
+**Customise home**, where each shelf can be hidden and moved up or down
+(Steam's library home works the same way); **Reset** restores the default.
+The layout is kept per machine. Shelves with nothing to show are left out.
+In the default order:
+
+| Shelf               | Shows                                                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Play activity       | Streaks and the heatmap, see below.                                                                              |
+| Continue playing    | See below.                                                                                                       |
+| Downloading         | Games downloading, queued, paused, extracting or being set up, with a link to Downloads.                         |
+| Updates available   | Installed games with a newer release on a download source ([updates](updates.md)); the caption opens the update. |
+| Recently added      | Games added in the last 30 days and not played yet, newest first.                                                |
+| Almost done         | Games with at least 80 % of their achievements, or with playtime at 80 % of How Long to Beat's main story.       |
+| Clear your backlog  | See below.                                                                                                       |
+| Wishlist            | Games that aren't installed and got new download options, [wishlisted](library.md#wishlist) games first.         |
+| Friends playing now | Signed in: friends in a game right now, from the friends list.                                                   |
+| News for your games | Steam announcements for your recent and most played Steam games.                                                 |
+| Suggested for you   | See below.                                                                                                       |
+| Catalogue           | Upstream's Hot now / Top games of the week / Games to beat section.                                              |
+
+News comes from Steam's public `ISteamNews/GetNewsForApp` endpoint, which
+needs no key. Hydra asks for official announcements only (other feeds repost
+press articles), for up to eight games, and keeps them for half an hour.
+Clicking a post opens it in the browser.
+
 ## Last played
 
 The hero shows the game you played last, with when you played it, your total

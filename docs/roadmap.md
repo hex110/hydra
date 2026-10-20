@@ -93,18 +93,54 @@ in the sections below.
    2. [x] Play heatmap and streaks
    3. [x] Personalised suggestions (from Hydra's own play history and
           similar-games list; Backloggd and IGDB moved to "Not scheduled yet")
-9. **More save sources.**
-   1. [ ] Heroic and Lutris
-   2. [ ] Ludusavi backups
-   3. [ ] Steam's own prefixes
-   4. [ ] Steam Cloud
-   5. [ ] Hydra cloud account
-10. **Distribution.**
+9. **Design and QoL.** Library, home page, catalogue and game page,
+   compared with Steam and Playnite (2026-10-20). The first eight are the
+   cheapest fixes for the most friction; the rest follow by page.
+   1. [x] One name per context-menu entry
+   2. [x] Quieter cards
+   3. [x] Visible installed filter
+   4. [x] Play from the card
+   5. [x] Library state in the catalogue
+   6. [x] Updates and downloads on the home page
+   7. [x] Multi-select
+   8. [x] Wishlist with download alerts
+   9. [x] Steady library header
+   10. [x] One filter system for sidebar and library
+   11. [x] Card size slider
+   12. [x] Local collections
+   13. [x] Saved filters
+   14. [x] Group by
+   15. [x] Details pane
+   16. [x] Keyboard navigation
+   17. [x] Surprise me from your library
+   18. [x] Notes per game
+   19. [x] Library statistics
+   20. [x] Recently added shelf
+   21. [x] News for your games
+   22. [x] Almost done shelf
+   23. [x] Customisable home shelves
+   24. [x] Friends activity
+   25. [x] Catalogue grid view
+   26. [x] Hover previews
+   27. [x] Catalogue front page
+   28. [x] More data on catalogue rows
+   29. [x] Load more and keep your place
+   30. [x] Your stats on the game page
+   31. [x] DLC and news on the game page
+   32. [x] Your other copies on the game page
+   33. [x] Check slow covers while signed out
+10. **More save sources.**
+    1. [ ] Heroic and Lutris
+    2. [ ] Ludusavi backups
+    3. [ ] Steam's own prefixes
+    4. [ ] Steam Cloud
+    5. [ ] Hydra cloud account
+11. **Distribution.**
     1. [ ] Export and import settings
     2. [ ] pacman updates
     3. [ ] Sign the browser add-on
     4. [ ] Translations
-11. **Mods.** Native mod support, after a design.
+12. **Mods.** Native mod support, after a design.
 
 Why this order:
 
@@ -122,12 +158,127 @@ Why this order:
 - Play status leads the library phase because filters, sorting and the home
   page's "Clear your backlog" all read it. The home redesign needs the library
   data, so it follows.
+- Design and QoL comes before the backend phases because it is what is felt
+  every day, and it builds on the data phases 7–8 added (catalogue cache,
+  play status, play activity). It is large; split it over several releases
+  in the order listed.
 - Save sources are independent of everything else; Heroic/Lutris and
   Ludusavi are cheap, Steam Cloud needs a Steam login, Hydra cloud waits on
   the account existing.
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
+
+## Design and QoL
+
+Found by comparing the library, home page, catalogue and game page with
+Steam (the catalogue standing in for its store) and Playnite. Numbers match
+the list in the order above.
+
+### Fix first
+
+1. **One name per context-menu entry.** Renaming "Properties" to "Options"
+   (phase 4) clashed with the existing "Options ▸" submenu (hide, pin,
+   folders, remove), so the menu shows `Options ▸` and then `Options`.
+   Rename the submenu to "Manage", like Steam.
+2. **Quieter cards.** Every card shows a playtime badge, even "0 minutes",
+   and a "Ready" badge on installed games. Show playtime only when there is
+   some, drop "Ready", and dim the covers of games that aren't installed, as
+   Steam does.
+3. **Visible installed filter.** "Show installed only" is a lone
+   check-circle icon labelled only by a tooltip. Move it into the Filters
+   menu or make it a labelled toggle.
+4. **Play from the card.** Every click opens the game page; Steam shows a
+   Play button over the cover on hover.
+5. **Library state in the catalogue.** Mark catalogue rows "In library" or
+   "Installed" and add a filter that hides owned games. Today only the +
+   button turning into a check shows it.
+6. **Updates and downloads on the home page.** Shelves for games with an
+   update available (update detection only shows on the game page) and for
+   downloads in progress.
+7. **Multi-select.** Ctrl/Shift-click cards, then act on all of them from a
+   bar: add to a collection, set play status, hide, uninstall (Playnite).
+8. **Wishlist with download alerts.** Steam's wishlist alerts on sales;
+   Hydra's would alert when a download source adds the game or a newer
+   release appears. New download options are already tracked per source.
+
+### Library
+
+9. **Steady library header.** A wheel handler collapses the header on the
+   first downward scroll and swallows that scroll. Keep a slim sticky bar
+   with search, tabs and Filters instead.
+10. **One filter system for sidebar and library.** The sidebar has its own
+    filter and sort menu that looks like the library's but doesn't share its
+    state. Share it, or have the sidebar list follow the library's tab and
+    filters, as Steam's left list does.
+11. **Card size slider.** One slider instead of three unlabelled view icons
+    (grid, compact, large).
+12. **Local collections.** Collections need a Hydra account, Favorites
+    don't; signed out, "Create collection" opens sign-in. Keep collections
+    locally and sync them only when signed in.
+13. **Saved filters.** Save a filter combination as a collection that
+    updates itself, e.g. "Installed RPGs under 15 h" (Steam's dynamic
+    collections).
+14. **Group by** play status, genre, source or installed, with collapsible
+    headers (Playnite).
+15. **Details pane.** Selecting a game shows cover, Play, playtime, last
+    played, status and achievements next to the grid, without leaving the
+    library (Playnite).
+16. **Keyboard navigation.** Type to jump to a title, arrow keys between
+    cards, Enter to open or play.
+17. **Surprise me from your library**, picking among installed games. The
+    home page's version picks from the store.
+18. **Notes per game.** A free text field on the game record ("stuck at
+    chapter 3", "needs Proton 9").
+19. **Library statistics.** Playtime by genre and month, completion rate,
+    counts per status, from the play activity and catalogue cache.
+
+### Home page
+
+20. **Recently added shelf**, for games added or scanned but not opened.
+21. **News for your games.** Steam's `ISteamNews/GetNewsForApp` is public
+    and needs no key.
+22. **Almost done shelf.** Games above 80 % of their achievements, or with
+    playtime close to their How Long to Beat time.
+23. **Customisable home shelves.** Hide and reorder shelves, including the
+    heatmap and suggestions (Steam's library home).
+24. **Friends activity**, when signed in: what friends are playing.
+
+### Catalogue
+
+25. **Catalogue grid view** with covers, next to the list rows.
+26. **Hover previews.** A screenshot or trailer on hover, as on Steam's
+    store; the game page already loads them.
+27. **Catalogue front page.** The catalogue opens straight into search and
+    filters. Start with featured games, "Recommended because you played"
+    (the home page's ranking), new releases, tags to browse and a discovery
+    queue.
+28. **More data on catalogue rows.** Metacritic and How Long to Beat next to
+    the ProtonDB badge, and repack size.
+29. **Load more and keep your place.** Replace numbered pages with "Load
+    more" or infinite scroll, and keep the scroll position and filters when
+    coming back from a game page (check what is kept today first).
+
+### Game page
+
+30. **Your stats on the game page.** A "Your stuff" block like Steam's:
+    playtime, last played, achievement progress, play status, notes and
+    update status in one card, apart from the store details. The Play status
+    button moves there from the action row.
+31. **DLC and news on the game page.** The cached Steam details already
+    list DLC ids.
+32. **Your other copies on the game page.** Links to the game's other
+    copies and versions in the library, and similar games you own next to
+    the existing similar games.
+
+### To check
+
+33. **Check slow covers while signed out.** In a signed-out sandbox many
+    library covers stayed blank until artwork loaded. Find out whether that
+    happens on every start. Checked 2026-10-20 in a signed-out sandbox with an empty
+    image cache: covers showed on first start, and after a reload all 56
+    library covers on screen had loaded within two seconds. Not reproduced;
+    nothing changed.
 
 ## Not scheduled yet
 
