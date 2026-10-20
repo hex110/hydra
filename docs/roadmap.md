@@ -88,10 +88,11 @@ in the sections below.
    8. [x] Download state on cards
    9. [x] Hide duplicates
    10. [x] Edit metadata
-8. **Home page.**
-   1. [ ] Redesign around your own games
-   2. [ ] Play heatmap and streaks
-   3. [ ] Personalised suggestions (research first)
+8. **Home page.** Shipped: [Home page](features/home.md).
+   1. [x] Redesign around your own games
+   2. [x] Play heatmap and streaks
+   3. [x] Personalised suggestions (from Hydra's own play history and
+          similar-games list; Backloggd and IGDB moved to "Not scheduled yet")
 9. **More save sources.**
    1. [ ] Heroic and Lutris
    2. [ ] Ludusavi backups
@@ -143,6 +144,9 @@ it's wanted.
       a finished download. Compare with the exe guess after extraction
       first.
 - [ ] **`--no-tray`.** Quit when the window closes.
+- [ ] **Backloggd or IGDB suggestions.** Backloggd has no API or export and
+      sits behind a proof-of-work bot check; IGDB needs the user's own Twitch
+      client id and secret. See [Home page](features/home.md#other-sources).
 - [ ] **vkBasalt and lsfg-vk.** Per-game toggles written like the MangoHud
       layout (`ENABLE_VKBASALT=1` plus a config path; lsfg-vk's profile or
       environment). Not used as of 2026-10-19. vkBasalt is only installed
@@ -165,22 +169,6 @@ Rule going forward: a tool that only writes config files Hydra points at is
 fine to use. Anything that copies files into game folders, wraps the
 executable or exports launch environment belongs to Hydra. With launcher
 redirects shipped, nothing in use still needs `bgmod`.
-
-## Home page
-
-- [ ] **Redesign around your own games.** The hero shows the last game played
-      instead of the current hot game. Below it come "Continue playing" (last
-      few played) and "Clear your backlog" (installed games never played, or
-      not in a long time). "Hot now", "Top games of the week" and "Games to
-      beat" move further down. References: abrahampo1's cover-art home and
-      atxoxx's activity page ([fork survey](fork-survey.md)).
-- [ ] **Play heatmap and streaks.** Record play per day; show a 13-week
-      heatmap and a streak badge (abrahampo1, GameOneDev).
-- [ ] **Personalised suggestions.** Suggest what to play next from what you
-      played. Ideally through a Backloggd integration (what the user uses) and
-      similar services, falling back to Hydra's own play history. Needs
-      research: Backloggd has no public API, and a free recommendations API
-      still has to be found.
 
 ## Mods
 
