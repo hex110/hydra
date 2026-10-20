@@ -28,6 +28,8 @@ import {
   EMULATOR_ICONS,
   RETROARCH_EMULATOR_ICON,
 } from "@renderer/pages/settings/emulation/emulator-icons";
+import { LibraryCardActivity } from "./library-card-activity";
+import { PlayStatusBadge } from "./play-status-badge";
 import "./library-game-card.scss";
 import { logger } from "@renderer/logger";
 
@@ -266,6 +268,7 @@ export const LibraryGameCard = memo(function LibraryGameCard({
                 </span>
               </div>
             )}
+            {!hideBadges && <PlayStatusBadge playStatus={game.playStatus} />}
           </div>
 
           {(showSteamLibraryBadge ||
@@ -342,6 +345,7 @@ export const LibraryGameCard = memo(function LibraryGameCard({
       </div>
 
       {renderCoverMedia()}
+      <LibraryCardActivity game={game} />
     </button>
   );
 });

@@ -182,6 +182,7 @@ async function fixture(
     mergeLibraryCatalogueMetadata,
     isLibraryGameDownloading,
     applyLibraryGroupAction,
+    PLAY_STATUSES: ["playing", "backlog", "finished", "dropped"],
   };
   const presentation = loadModule(
     "src/renderer/src/hooks/use-library-game-presentation.ts",

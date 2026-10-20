@@ -181,6 +181,13 @@ const projectGroup = (
       new Set(members.flatMap(getLibraryCollectionIds))
     ),
     lastTimePlayed: latestDate(members.map((member) => member.lastTimePlayed)),
+    playStatus:
+      customCandidates.find((member) => member.playStatus)?.playStatus ?? null,
+    customGenres:
+      customCandidates.find((member) => member.customGenres?.length)
+        ?.customGenres ?? null,
+    metadata:
+      customCandidates.find((member) => member.metadata)?.metadata ?? null,
     addedToLibraryAt: earliestDate(
       members.map((member) => member.addedToLibraryAt)
     ),

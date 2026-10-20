@@ -109,6 +109,9 @@ function fixture(
     "@main/services/hydra-api": {
       HydraApi: { getAuthContext: () => null, isLoggedIn: () => true },
     },
+    "@main/services/library-metadata": {
+      LibraryMetadata: { getAll: async () => new Map() },
+    },
     "@main/services/epic/import-visibility": { getContextualEpicGame },
     "@main/services/library-sync/game-visibility": {
       belongsToLibraryCollection,

@@ -185,13 +185,15 @@ export function GameDetailsContextProvider({
       });
   }, [operationalShop, operationalObjectId]);
 
+  const detailsLanguage = game?.metadataLanguage || i18n.language;
+
   const fetchGameDetails = useCallback(async () => {
     if (abortControllerRef.current) abortControllerRef.current.abort();
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
     const shopDetailsPromise = window.electron
-      .getGameShopDetails(catalogueObjectId, catalogueShop, i18n.language, {
+      .getGameShopDetails(catalogueObjectId, catalogueShop, detailsLanguage, {
         artworkIdentity: {
           shop: operationalShop,
           objectId: operationalObjectId,
@@ -292,7 +294,7 @@ export function GameDetailsContextProvider({
         setIsLoading(false);
       });
   }, [
-    i18n.language,
+    detailsLanguage,
     objectId,
     shop,
     catalogueShop,

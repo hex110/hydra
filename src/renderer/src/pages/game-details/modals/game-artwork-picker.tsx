@@ -74,6 +74,7 @@ function ArtworkTile({
   onPick,
   onMediaSettled,
 }: Readonly<ArtworkTileProps>) {
+  const { t } = useTranslation("sidebar");
   const display = getArtworkDisplaySource(item);
   const [hasMediaFailed, setHasMediaFailed] = useState(false);
 
@@ -133,6 +134,11 @@ function ArtworkTile({
           height="100%"
           width="100%"
         />
+      )}
+      {item.provider && item.provider !== "steamgriddb" && (
+        <span className="game-artwork__provider">
+          {t(`artwork_provider_${item.provider}`)}
+        </span>
       )}
       {isPending && (
         <span className="game-artwork__item-spinner" aria-hidden="true" />
@@ -440,7 +446,7 @@ export function GameArtworkPicker({
     objectId: game.objectId,
     lookupIdentity,
     assetType,
-    enabled: Boolean(userDetails),
+    enabled: true,
     onChanged,
     onError,
     onPicked,
@@ -591,14 +597,6 @@ export function GameArtworkPicker({
     scrollRef.current?.scrollTo({ top: 0 });
   }, [assetType, game.objectId, game.shop]);
 
-  if (!userDetails) {
-    return (
-      <div className="game-artwork__hint">
-        {t("steamgriddb_sign_in_required")}
-      </div>
-    );
-  }
-
   const showReload = isStale || hasFailed;
   const isEmpty = !isLoading && items.length === 0;
 
@@ -606,7 +604,7 @@ export function GameArtworkPicker({
     <div className="game-artwork">
       <div className="game-artwork__header">
         <span className="game-artwork__title">
-          {t("steamgriddb_section_title")}
+          {t("artwork_section_title")}
         </span>
         <span className="game-artwork__divider" aria-hidden="true" />
 
@@ -625,6 +623,12 @@ export function GameArtworkPicker({
       {isStale && (
         <span className="game-artwork__hint">
           {t("steamgriddb_stale_cache")}
+        </span>
+      )}
+
+      {!userDetails && (
+        <span className="game-artwork__hint">
+          {t("steamgriddb_sign_in_required")}
         </span>
       )}
 

@@ -2,6 +2,7 @@ import type { Downloader } from "@shared";
 import type { GameSetupLog, GameShop } from "./game.types";
 import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
+import type { PlayStatus } from "./library-metadata.types";
 import type { LaunchRule } from "./launch-rule.types";
 import type { MangoHudSettings, ProtonFlavor } from "./linux-gaming.types";
 import type {
@@ -167,6 +168,13 @@ export interface Game extends LibraryCatalogueMetadata {
   /** This game's MangoHud layout; the default from settings applies when unset. */
   mangoHud?: MangoHudSettings | null;
   favorite?: boolean;
+  playStatus?: PlayStatus | null;
+  /** Replaces the store description on the game page. */
+  customDescription?: string | null;
+  /** Replaces the catalogue genres on the game page and in library filters. */
+  customGenres?: string[] | null;
+  /** Language of the store details shown for this game; the app language when unset. */
+  metadataLanguage?: string | null;
   isHiddenFromOthers?: boolean;
   isConcealed?: boolean;
   isPinned?: boolean;
@@ -320,6 +328,8 @@ export interface UserPreferences {
   /** Folders the scan should never offer as games (launchers, mod managers). */
   libraryScanIgnoredFolders?: string[];
   scanLibraryOnStartup?: boolean;
+  /** Scan again when a library folder gains or loses a game folder. */
+  watchLibraryFolders?: boolean;
   identifyGamesByFolderName?: boolean;
   /** What game setup does when a source has saves for a new game. */
   saveImportMode?: SaveImportMode;

@@ -30,6 +30,8 @@ import {
   EMULATOR_ICONS,
   RETROARCH_EMULATOR_ICON,
 } from "@renderer/pages/settings/emulation/emulator-icons";
+import { LibraryCardActivity } from "./library-card-activity";
+import { PlayStatusBadge } from "./play-status-badge";
 import "./library-game-card-large.scss";
 
 interface LibraryGameCardLargeProps {
@@ -449,6 +451,7 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
                 </span>
               </div>
             )}
+            {!hideBadges && <PlayStatusBadge playStatus={game.playStatus} />}
 
             {showEpicLibraryBadge && (
               <SteamLibraryBadge
@@ -508,6 +511,7 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
             )}
         </div>
       </div>
+      <LibraryCardActivity game={game} />
     </button>
   );
 });

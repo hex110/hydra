@@ -99,7 +99,15 @@ export function GameDetailsContent() {
     ? getCloudSaveVisibility(game.shop, game.platform)
     : null;
 
+  const customDescription = game?.customDescription?.trim();
+
   const aboutTheGame = useMemo(() => {
+    if (customDescription) {
+      const container = document.createElement("div");
+      container.textContent = customDescription;
+      return container.innerHTML.replaceAll("\n", "<br>");
+    }
+
     const aboutTheGame = shopDetails?.about_the_game;
     if (aboutTheGame) {
       const document = new DOMParser().parseFromString(
@@ -117,7 +125,7 @@ export function GameDetailsContent() {
     }
 
     return t("no_shop_details");
-  }, [shopDetails, t, game?.shop]);
+  }, [customDescription, shopDetails, t, game?.shop]);
 
   const [backdropOpacity, setBackdropOpacity] = useState(1);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
@@ -483,7 +491,7 @@ export function GameDetailsContent() {
 
             <GallerySlider />
 
-            {shopDetails?.about_the_game && (
+            {(customDescription || shopDetails?.about_the_game) && (
               <h2 className="game-details__description-title">
                 {t("about_this_game")}
               </h2>

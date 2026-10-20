@@ -77,12 +77,18 @@ export class GameSetup {
   private static readonly steps: GameSetupStep[] = [];
   private static readonly pending = new Map<string, GameSetupRequest>();
   private static queue: Promise<void> = Promise.resolve();
+  private static readonly active = new Set<string>();
 
   public static registerStep(step: GameSetupStep) {
     if (this.steps.some((existing) => existing.id === step.id)) return;
 
     this.steps.push(step);
     this.steps.sort((a, b) => a.order - b.order);
+  }
+
+  /** Game keys with setup queued or running. */
+  public static getActiveGameKeys(): string[] {
+    return [...this.active];
   }
 
   public static isPending(shop: GameShop, objectId: string) {
@@ -109,6 +115,7 @@ export class GameSetup {
     }
 
     this.pending.set(gameKey, { ...request });
+    this.active.add(gameKey);
     this.sendStatus(shop, objectId, "queued");
 
     this.queue = this.queue.then(async () => {
@@ -120,6 +127,8 @@ export class GameSetup {
       } catch (error) {
         logger.error("[GameSetup] Setup failed", { gameKey, error });
         this.sendStatus(shop, objectId, "failed");
+      } finally {
+        if (!this.pending.has(gameKey)) this.active.delete(gameKey);
       }
     });
 

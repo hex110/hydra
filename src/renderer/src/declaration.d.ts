@@ -1,6 +1,8 @@
 import type { AuthPage, Downloader } from "@shared";
 import type {
   GameSetupStatusEvent,
+  GameMetadataOverrides,
+  PlayStatus,
   GameLaunchPreview,
   MangoHudSettings,
   ProtonFlavor,
@@ -407,6 +409,18 @@ declare global {
       objectId: string,
       enabled: boolean
     ) => Promise<void>;
+    setGamePlayStatus: (
+      shop: GameShop,
+      objectId: string,
+      playStatus: PlayStatus | null
+    ) => Promise<void>;
+    updateGameMetadata: (
+      shop: GameShop,
+      objectId: string,
+      overrides: GameMetadataOverrides
+    ) => Promise<void>;
+    /** Game keys (`shop:objectId`) with game setup queued or running. */
+    getActiveGameSetups: () => Promise<string[]>;
     toggleGameMangohud: (
       shop: GameShop,
       objectId: string,

@@ -1,4 +1,4 @@
-import type { GameShop } from "@types";
+import type { GameShop, PlayStatus } from "@types";
 
 export interface GameContextMenuGame {
   id?: string;
@@ -16,6 +16,7 @@ export interface GameContextMenuGame {
   isHiddenFromOthers?: boolean;
   isConcealed?: boolean;
   collectionIds?: string[];
+  playStatus?: PlayStatus | null;
   discs?: { path: string }[];
   selectedDiscPath?: string | null;
   dontAskDiscSelection?: boolean;

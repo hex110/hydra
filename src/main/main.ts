@@ -49,6 +49,8 @@ import { AppLauncherEntries } from "./services/app-launcher-entries";
 import { GameUpdates } from "./services/game-updates";
 import { ProtonManager } from "./services/proton-manager";
 import { scheduleExecutableStatusCheck } from "./services/executable-status";
+import { LibraryMetadata } from "./services/library-metadata";
+import { LibraryFolderWatcher } from "./services/library-folder-watcher";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -129,6 +131,8 @@ export const loadState = async () => {
 
   void watchSteamLibraries();
   AppLauncherEntries.watch();
+  LibraryMetadata.watch();
+  LibraryFolderWatcher.watch();
   scheduleExecutableStatusCheck();
 
   await HydraApi.setupApi().then(async () => {

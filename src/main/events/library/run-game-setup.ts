@@ -77,6 +77,7 @@ const prepareMissingGamePrefixes = async () => {
 };
 
 registerEvent("runGameSetup", runGameSetup);
+registerEvent("getActiveGameSetups", () => GameSetup.getActiveGameKeys());
 registerEvent("setGameOnlineFixDisabled", setGameOnlineFixDisabled);
 registerEvent("countGamesMissingPrefix", countGamesMissingPrefix);
 registerEvent("prepareMissingGamePrefixes", prepareMissingGamePrefixes);

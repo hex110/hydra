@@ -1,8 +1,9 @@
 import { StackIcon, DeviceDesktopIcon } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
+import { SourceIcon } from "./source-icon";
+import type { LibraryTab } from "./library-filters";
 import "./category-filter.scss";
 
-import type { LibraryCategory } from "./library-category";
 export type { LibraryCategory } from "./library-category";
 
 export function ClassicsIcon({
@@ -51,45 +52,47 @@ export function ClassicsIcon({
 }
 
 interface CategoryFilterProps {
-  category: LibraryCategory;
-  onCategoryChange: (category: LibraryCategory) => void;
+  tab: LibraryTab;
+  tabs: LibraryTab[];
+  onTabChange: (tab: LibraryTab) => void;
 }
 
+const TAB_ICONS: Record<LibraryTab, JSX.Element> = {
+  all: <StackIcon size={14} />,
+  local: <DeviceDesktopIcon size={14} />,
+  steam: <SourceIcon source="steam" />,
+  epic: <SourceIcon source="epic" />,
+  classics: <ClassicsIcon size={16} />,
+};
+
 export function CategoryFilter({
-  category,
-  onCategoryChange,
+  tab,
+  tabs,
+  onTabChange,
 }: Readonly<CategoryFilterProps>) {
   const { t } = useTranslation("library");
 
-  const options: {
-    value: LibraryCategory;
-    label: string;
-    icon: JSX.Element;
-  }[] = [
-    { value: "all", label: t("category_all"), icon: <StackIcon size={14} /> },
-    {
-      value: "pc",
-      label: t("category_pc"),
-      icon: <DeviceDesktopIcon size={14} />,
-    },
-    {
-      value: "classics",
-      label: t("category_classics"),
-      icon: <ClassicsIcon size={16} />,
-    },
-  ];
+  const labels: Record<LibraryTab, string> = {
+    all: t("category_all"),
+    local: t("category_local"),
+    steam: t("library_steam"),
+    epic: t("library_epic"),
+    classics: t("category_classics"),
+  };
 
   return (
-    <div className="library-category-filter__container">
-      {options.map((option) => (
+    <div className="library-category-filter__container" role="tablist">
+      {tabs.map((option) => (
         <button
-          key={option.value}
+          key={option}
           type="button"
-          className={`library-category-filter__option ${category === option.value ? "library-category-filter__option--active" : ""}`}
-          onClick={() => onCategoryChange(option.value)}
+          role="tab"
+          aria-selected={tab === option}
+          className={`library-category-filter__option ${tab === option ? "library-category-filter__option--active" : ""}`}
+          onClick={() => onTabChange(option)}
         >
-          {option.icon}
-          <span>{option.label}</span>
+          {TAB_ICONS[option]}
+          <span>{labels[option]}</span>
         </button>
       ))}
     </div>

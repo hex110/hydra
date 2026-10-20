@@ -17,6 +17,7 @@ import {
 } from "@main/level";
 import { composeAssetsWithArtwork } from "@shared";
 import { HydraApi } from "@main/services/hydra-api";
+import { LibraryMetadata } from "@main/services/library-metadata";
 import { belongsToLibraryCollection } from "@main/services/library-sync/game-visibility";
 import {
   resolveAchievementCount,
@@ -47,6 +48,8 @@ export const lookupCachedPlatform = async (
 const getLibrary = async (
   collection: "visible" | "hidden" | "all" = "visible"
 ): Promise<LibraryGame[]> => {
+  const metadataByKey = await LibraryMetadata.getAll();
+
   return gamesSublevel
     .iterator()
     .all()
@@ -162,6 +165,7 @@ const getLibrary = async (
             return {
               id: key,
               ...game,
+              metadata: metadataByKey.get(catalogueKey) ?? null,
               installerSizeInBytes,
               installedSizeInBytes,
               download: download ?? null,

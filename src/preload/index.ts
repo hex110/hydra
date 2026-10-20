@@ -8,6 +8,8 @@ import type {
   ProtonFlavor,
   ProtonInstallProgress,
   GameSetupStatusEvent,
+  GameMetadataOverrides,
+  PlayStatus,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
@@ -995,6 +997,17 @@ contextBridge.exposeInMainWorld("electron", {
     enabled: boolean
   ) =>
     ipcRenderer.invoke("setGameHydraPlaytimeEnabled", shop, objectId, enabled),
+  setGamePlayStatus: (
+    shop: GameShop,
+    objectId: string,
+    playStatus: PlayStatus | null
+  ) => ipcRenderer.invoke("setGamePlayStatus", shop, objectId, playStatus),
+  updateGameMetadata: (
+    shop: GameShop,
+    objectId: string,
+    overrides: GameMetadataOverrides
+  ) => ipcRenderer.invoke("updateGameMetadata", shop, objectId, overrides),
+  getActiveGameSetups: () => ipcRenderer.invoke("getActiveGameSetups"),
   toggleGameMangohud: (
     shop: GameShop,
     objectId: string,

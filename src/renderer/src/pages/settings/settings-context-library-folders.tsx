@@ -21,6 +21,7 @@ export function SettingsContextLibraryFolders() {
   const folders = userPreferences?.libraryScanDirectories ?? [];
   const ignoredFolders = userPreferences?.libraryScanIgnoredFolders ?? [];
   const scanOnStartup = userPreferences?.scanLibraryOnStartup === true;
+  const watchFolders = userPreferences?.watchLibraryFolders === true;
   const identifyByFolderName =
     userPreferences?.identifyGamesByFolderName !== false;
 
@@ -94,6 +95,17 @@ export function SettingsContextLibraryFolders() {
             updateUserPreferences({ scanLibraryOnStartup: !scanOnStartup })
           }
         />
+
+        <CheckboxField
+          label={t("library_folders_watch")}
+          checked={watchFolders}
+          onChange={() =>
+            updateUserPreferences({ watchLibraryFolders: !watchFolders })
+          }
+        />
+        <p className="settings-library-folders__hint">
+          {t("library_folders_watch_description")}
+        </p>
 
         <CheckboxField
           label={t("library_folders_identify_by_name")}

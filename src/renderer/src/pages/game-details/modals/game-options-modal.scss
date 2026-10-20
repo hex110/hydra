@@ -923,3 +923,29 @@ $disc-menu-transition-duration: 0.15s;
     overflow-wrap: anywhere;
   }
 }
+
+.game-options-modal__details-field {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  font-size: globals.$small-font-size;
+  color: globals.$body-color;
+}
+
+.game-options-modal__textarea {
+  width: 100%;
+  padding: calc(globals.$spacing-unit * 1.5);
+  border: 1px solid globals.$border-color;
+  border-radius: 8px;
+  background: globals.$dark-background-color;
+  color: globals.$body-color;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: globals.$brand-teal;
+  }
+}

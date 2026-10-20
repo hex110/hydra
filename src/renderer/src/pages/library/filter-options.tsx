@@ -8,7 +8,40 @@ export type SortOption =
   | "most_played"
   | "achievements"
   | "installed_first"
-  | "title_desc";
+  | "title_desc"
+  | "recently_added"
+  | "release_date"
+  | "critic_score"
+  | "installed_size"
+  | "shortest";
+
+export const SORT_OPTIONS: SortOption[] = [
+  "title_asc",
+  "title_desc",
+  "recently_played",
+  "most_played",
+  "recently_added",
+  "release_date",
+  "critic_score",
+  "shortest",
+  "achievements",
+  "installed_first",
+  "installed_size",
+];
+
+const SORT_LABEL_KEYS: Record<SortOption, string> = {
+  title_asc: "sort_title_asc",
+  title_desc: "sort_title_desc",
+  recently_played: "recently_played",
+  most_played: "sort_most_played",
+  recently_added: "sort_recently_added",
+  release_date: "sort_release_date",
+  critic_score: "sort_critic_score",
+  shortest: "sort_shortest",
+  achievements: "sort_achievements",
+  installed_first: "sort_installed_first",
+  installed_size: "sort_installed_size",
+};
 
 interface FilterOptionsProps {
   sortBy: SortOption;
@@ -28,14 +61,10 @@ export function FilterOptions({
         value={sortBy}
         ariaLabel={t("sort_by")}
         onChange={(value) => onSortChange(value as SortOption)}
-        options={[
-          { value: "title_asc", label: t("sort_title_asc") },
-          { value: "recently_played", label: t("recently_played") },
-          { value: "most_played", label: t("sort_most_played") },
-          { value: "achievements", label: t("sort_achievements") },
-          { value: "installed_first", label: t("sort_installed_first") },
-          { value: "title_desc", label: t("sort_title_desc") },
-        ]}
+        options={SORT_OPTIONS.map((option) => ({
+          value: option,
+          label: t(SORT_LABEL_KEYS[option]),
+        }))}
       />
     </div>
   );

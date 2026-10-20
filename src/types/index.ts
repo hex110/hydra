@@ -11,6 +11,7 @@ import type {
 } from "./level.types";
 import type { GameShop, UnlockedAchievement } from "./game.types";
 import type { ArtworkAssetType } from "./artwork.types";
+import type { GameLibraryMetadata } from "./library-metadata.types";
 import type { GameContentWarning } from "./souvenir.types";
 
 export type FriendRequestAction = "ACCEPTED" | "REFUSED" | "CANCEL";
@@ -878,6 +879,7 @@ export type LibraryGame = Game &
   Partial<ShopAssets> & {
     id: string;
     download: Download | null;
+    metadata?: GameLibraryMetadata | null;
     unlockedAchievementCount?: number;
     achievementCount?: number;
   };
@@ -931,6 +933,7 @@ export * from "./save-import.types";
 export * from "./library-scan.types";
 export * from "./game-update.types";
 export * from "./linux-gaming.types";
+export * from "./library-metadata.types";
 
 export type ExtractionFailure =
   | { reason: "unsupported-format"; format: string }

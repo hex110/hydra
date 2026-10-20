@@ -1,0 +1,64 @@
+@use "../../scss/globals.scss";
+
+.library-card-activity {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+  pointer-events: none;
+
+  &__label {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__track {
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+
+  &__bar {
+    height: 100%;
+    border-radius: 2px;
+    background-color: globals.$brand-teal;
+    transition: width 0.4s ease;
+
+    &--indeterminate {
+      width: 35%;
+      animation: library-card-activity-slide 1.4s ease-in-out infinite;
+    }
+  }
+
+  &--paused &__bar,
+  &--queued &__bar {
+    background-color: rgba(255, 255, 255, 0.6);
+  }
+
+  &--setup &__bar,
+  &--extracting &__bar {
+    background-color: #f5a623;
+  }
+}
+
+@keyframes library-card-activity-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
+}

@@ -11,3 +11,31 @@
   justify-content: flex-end;
   gap: calc(globals.$spacing-unit);
 }
+
+.collection-context-menu__manage {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 2);
+  width: min(560px, 80vw);
+}
+
+.collection-context-menu__manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: globals.$spacing-unit;
+}
+
+.collection-context-menu__manage-empty {
+  color: globals.$muted-color;
+  font-size: globals.$small-font-size;
+}
+
+.collection-context-menu__manage-count {
+  margin-right: auto;
+  align-self: center;
+  color: globals.$muted-color;
+  font-size: globals.$small-font-size;
+}

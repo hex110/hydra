@@ -1,0 +1,26 @@
+@use "../../../scss/globals.scss";
+
+.genres-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: calc(globals.$spacing-unit * 2);
+
+  &__genre {
+    padding: 4px 10px;
+    border: 1px solid globals.$border-color;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.04);
+    color: globals.$muted-color;
+    font-size: 12px;
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+}

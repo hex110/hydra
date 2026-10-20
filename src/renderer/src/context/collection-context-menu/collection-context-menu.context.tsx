@@ -17,7 +17,8 @@ import {
   Modal,
   TextField,
 } from "@renderer/components";
-import { PencilIcon, TrashIcon } from "@primer/octicons-react";
+import { ChecklistIcon, PencilIcon, TrashIcon } from "@primer/octicons-react";
+import { ManageCollectionGamesModal } from "./manage-collection-games-modal";
 
 import "./collection-context-menu.context.scss";
 
@@ -26,6 +27,7 @@ export interface CollectionContextMenuContextValue {
     event: React.MouseEvent<HTMLElement>,
     collection: GameCollection
   ) => void;
+  openManageCollectionGames: (collection: GameCollection) => void;
   isCollectionContextMenuOrModalOpen: boolean;
 }
 
@@ -72,6 +74,8 @@ export function CollectionContextMenuProvider({
   const [showDeleteCollectionModal, setShowDeleteCollectionModal] =
     useState(false);
   const [isDeletingCollection, setIsDeletingCollection] = useState(false);
+  const [managedCollection, setManagedCollection] =
+    useState<GameCollection | null>(null);
 
   const selectedCollectionId = searchParams.get("collection");
 
@@ -270,6 +274,13 @@ export function CollectionContextMenuProvider({
 
     return [
       {
+        id: "manage-collection-games",
+        label: t("manage_collection_games"),
+        icon: <ChecklistIcon size={16} />,
+        onClick: () => setManagedCollection(collectionContextMenu.collection),
+        disabled: isCollectionActionBusy,
+      },
+      {
         id: "rename-collection",
         label: t("rename_collection"),
         icon: <PencilIcon size={16} />,
@@ -286,6 +297,7 @@ export function CollectionContextMenuProvider({
       },
     ];
   }, [
+    collectionContextMenu.collection,
     handleOpenDeleteCollectionModal,
     handleOpenRenameCollectionModal,
     isDeletingCollection,
@@ -296,16 +308,19 @@ export function CollectionContextMenuProvider({
   const contextValue = useMemo(
     () => ({
       openCollectionContextMenu: handleOpenCollectionContextMenu,
+      openManageCollectionGames: setManagedCollection,
       isCollectionContextMenuOrModalOpen:
         collectionContextMenu.visible ||
         showRenameCollectionModal ||
-        showDeleteCollectionModal,
+        showDeleteCollectionModal ||
+        managedCollection !== null,
     }),
     [
       handleOpenCollectionContextMenu,
       collectionContextMenu.visible,
       showRenameCollectionModal,
       showDeleteCollectionModal,
+      managedCollection,
     ]
   );
 
@@ -356,6 +371,10 @@ export function CollectionContextMenuProvider({
           </div>
         </div>
       </Modal>
+      <ManageCollectionGamesModal
+        collection={managedCollection}
+        onClose={() => setManagedCollection(null)}
+      />
       <ConfirmationModal
         visible={showDeleteCollectionModal}
         title={t("delete_collection_title")}

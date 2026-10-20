@@ -1,0 +1,105 @@
+@use "../../scss/globals.scss";
+@use "./library-dropdown" as dropdown;
+
+.library-filters-menu {
+  &__trigger {
+    @include dropdown.trigger(&);
+
+    &[data-state="open"] .library-filters-menu__chevron {
+      transform: rotate(180deg);
+    }
+
+    &--active {
+      color: #fff;
+    }
+  }
+
+  &__chevron {
+    @include dropdown.chevron;
+  }
+
+  &__count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  &__content {
+    @include dropdown.content;
+    min-width: 220px;
+
+    &--sub {
+      max-height: min(
+        360px,
+        var(--radix-dropdown-menu-content-available-height)
+      );
+      min-width: 180px;
+    }
+  }
+
+  &__item {
+    @include dropdown.item;
+    padding-right: 32px;
+
+    &[data-state="checked"] {
+      color: #dadbe1;
+    }
+
+    &:hover,
+    &[data-highlighted],
+    &[data-state="open"] {
+      background-color: rgba(255, 255, 255, 0.15);
+      outline: none;
+    }
+
+    > svg:last-child {
+      position: absolute;
+      right: 12px;
+    }
+  }
+
+  &__item-label {
+    @include dropdown.item-label;
+  }
+
+  &__item-indicator {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    pointer-events: none;
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+    transition:
+      transform 0.15s ease-out,
+      opacity 0.15s ease-out;
+
+    &[data-state="unchecked"] {
+      transform: translateY(-50%) scale(0.4);
+      opacity: 0;
+    }
+  }
+
+  &__separator {
+    height: 1px;
+    margin: 4px 0;
+    background-color: globals.$border-color;
+  }
+
+  &__empty {
+    padding: 8px 12px;
+    max-width: 240px;
+    color: globals.$muted-color;
+    font-size: 13px;
+    white-space: normal;
+  }
+}

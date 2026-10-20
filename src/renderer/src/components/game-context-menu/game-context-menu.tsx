@@ -20,6 +20,8 @@ import {
   PinSlashIcon,
   EyeClosedIcon,
   LockIcon,
+  BookmarkIcon,
+  CheckIcon,
 } from "@primer/octicons-react";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import {
@@ -37,12 +39,12 @@ import {
   useLibrary,
   useLibraryGamePresentation,
 } from "@renderer/hooks";
-import { applyLibraryGroupAction } from "@shared";
+import { applyLibraryGroupAction, PLAY_STATUSES } from "@shared";
 import { useCollectionContextMenu } from "@renderer/context";
 import { getGameCollectionIds } from "@renderer/helpers";
 import { RemoveGameFromLibraryModal } from "@renderer/pages/game-details/modals/remove-from-library-modal";
 import { DeleteGameModal } from "@renderer/pages/downloads/delete-game-modal";
-import type { GameCollection } from "@types";
+import type { GameCollection, PlayStatus } from "@types";
 import type { GameContextMenuGame } from "./game-context-menu.types";
 
 interface GameContextMenuProps extends Omit<ContextMenuProps, "items"> {
@@ -170,6 +172,46 @@ export function GameContextMenu({
       setIsVisibilityPending(false);
     }
   };
+
+  const handleSetPlayStatus = async (playStatus: PlayStatus | null) => {
+    try {
+      await applyLibraryGroupAction(group?.members ?? [game], (member) =>
+        window.electron.setGamePlayStatus(
+          member.shop,
+          member.objectId,
+          playStatus
+        )
+      );
+      await updateLibrary();
+    } catch {
+      showErrorToast(t("failed_update_play_status"));
+    }
+  };
+
+  const currentPlayStatus = preferenceGame.playStatus ?? null;
+
+  const playStatusSubmenu: ContextMenuItemData[] = [
+    ...PLAY_STATUSES.map((playStatus) => ({
+      id: `play-status-${playStatus}`,
+      label: t(`play_status_${playStatus}`, { ns: "library" }),
+      icon:
+        currentPlayStatus === playStatus ? <CheckIcon size={16} /> : undefined,
+      onClick: () => {
+        void handleSetPlayStatus(playStatus);
+      },
+      disabled: isDeleting,
+    })),
+    {
+      id: "play-status-clear",
+      label: t("play_status_clear", { ns: "library" }),
+      icon: <XIcon size={16} />,
+      separator: true,
+      onClick: () => {
+        void handleSetPlayStatus(null);
+      },
+      disabled: isDeleting || currentPlayStatus === null,
+    },
+  ];
 
   const handleAssignGameCollection = async (collectionId: string) => {
     if (pendingCollectionId || isFavoritePending) return;
@@ -321,6 +363,13 @@ export function GameContextMenu({
             },
           ]
         : collectionSubmenu,
+    },
+    {
+      id: "play-status",
+      label: t("play_status", { ns: "library" }),
+      icon: <BookmarkIcon size={16} />,
+      disabled: isDeleting,
+      submenu: playStatusSubmenu,
     },
     ...(game.executablePath
       ? [

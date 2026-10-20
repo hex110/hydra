@@ -57,6 +57,8 @@ function renderCard(
     },
     "@shared": { getDisplayedPlayTimeInMilliseconds: () => 0 },
     "./library-category": libraryCategory,
+    "./library-card-activity": { LibraryCardActivity: () => null },
+    "./play-status-badge": { PlayStatusBadge: () => null },
     "@renderer/helpers": {
       CLASSICS_PS_PLATFORM_LABELS: {},
       isGameReadyToPlay: (game: Record<string, unknown>) => game.isInstalled,

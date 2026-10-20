@@ -37,21 +37,30 @@ import { useSearchParams } from "react-router-dom";
 import { LibraryGameCard } from "./library-game-card";
 import { LibraryGameCardLarge } from "./library-game-card-large";
 import { ViewOptions, ViewMode } from "./view-options";
-import { FilterOptions, SortOption } from "./filter-options";
-import { CategoryFilter, LibraryCategory } from "./category-filter";
+import { FilterOptions, SORT_OPTIONS, SortOption } from "./filter-options";
+import { CategoryFilter } from "./category-filter";
 import { InstalledFilter } from "./installed-filter";
 import { PlatformFilter } from "./platform-filter";
-import { SourceFilter } from "./source-filter";
+import { LibraryFiltersMenu } from "./library-filters-menu";
 import { CollectionsFilter } from "./collections-filter";
 import { LibraryGamesSkeleton } from "./library-games-skeleton";
 import {
-  categoryShowsPlatforms,
-  categoryShowsSources,
   filterLibraryGames,
   getLibraryFilterOptions,
-  readStoredLibraryFilters,
-  type LibrarySource,
+  type LibraryCategory,
 } from "./library-category";
+import {
+  applyLibraryFilters,
+  filterLibraryGamesByTab,
+  getAvailableLibraryTabs,
+  getLibraryGenres,
+  LIBRARY_FILTERS_STORAGE_KEY,
+  LIBRARY_TAB_STORAGE_KEY,
+  parseStoredLibraryFilters,
+  readStoredLibraryTab,
+  type LibraryFilters,
+  type LibraryTab,
+} from "./library-filters";
 import {
   LIBRARY_INSTALLED_ONLY_STORAGE_KEY,
   LIBRARY_PLATFORMS_STORAGE_KEY,
@@ -82,6 +91,15 @@ const getColumnsCount = (width: number, mode: ViewMode): number => {
   return COLUMNS[mode][idx === -1 ? COLUMN_BREAKPOINTS.length : idx];
 };
 
+const tabShowsPlatforms = (tab: LibraryTab) =>
+  tab === "all" || tab === "classics";
+
+/** The category filter that matches a tab; the tab filter narrows it further. */
+const getTabCategory = (tab: LibraryTab): LibraryCategory => {
+  if (tab === "all") return "all";
+  return tab === "classics" ? "classics" : "pc";
+};
+
 const readStoredPlatforms = (): string[] => {
   try {
     const saved = localStorage.getItem(LIBRARY_PLATFORMS_STORAGE_KEY);
@@ -95,15 +113,6 @@ const readStoredPlatforms = (): string[] => {
     return [];
   }
 };
-
-const SORT_OPTIONS: SortOption[] = [
-  "title_asc",
-  "recently_played",
-  "most_played",
-  "achievements",
-  "installed_first",
-  "title_desc",
-];
 
 export default function Library() {
   const { library, updateLibrary } = useLibrary();
@@ -166,7 +175,8 @@ export default function Library() {
     hasFailed: hasFailedToLoadCollections,
   } = useGameCollections();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { openCollectionContextMenu } = useCollectionContextMenu();
+  const { openCollectionContextMenu, openManageCollectionGames } =
+    useCollectionContextMenu();
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const savedViewMode = localStorage.getItem("library-view-mode");
@@ -188,18 +198,15 @@ export default function Library() {
   const [showCreateCollectionModal, setShowCreateCollectionModal] =
     useState(false);
 
-  const [storedFilters] = useState(() =>
-    readStoredLibraryFilters(
+  const [tab, setTab] = useState<LibraryTab>(() =>
+    readStoredLibraryTab(
       localStorage,
       "library-category",
       LIBRARY_SOURCES_STORAGE_KEY
     )
   );
-  const [category, setCategory] = useState<LibraryCategory>(
-    storedFilters.category
-  );
-  const [selectedSources, setSelectedSources] = useState<LibrarySource[]>(
-    storedFilters.sources
+  const [libraryFilters, setLibraryFilters] = useState<LibraryFilters>(() =>
+    parseStoredLibraryFilters(localStorage.getItem(LIBRARY_FILTERS_STORAGE_KEY))
   );
   const [selectedPlatforms, setSelectedPlatforms] =
     useState<string[]>(readStoredPlatforms);
@@ -207,8 +214,6 @@ export default function Library() {
     () => localStorage.getItem(LIBRARY_INSTALLED_ONLY_STORAGE_KEY) === "true"
   );
   const [isImportingClassics, setIsImportingClassics] = useState(false);
-
-  const effectiveCategory: LibraryCategory = category;
 
   const [showClassicsOnboarding, setShowClassicsOnboarding] = useState(false);
   const classicsOnboardingTriggeredRef = useRef(false);
@@ -268,23 +273,23 @@ export default function Library() {
 
   useEffect(() => {
     if (
-      effectiveCategory === "classics" &&
+      tab === "classics" &&
       !classicsOnboardingTriggeredRef.current &&
       !hasDismissedClassicsOnboarding()
     ) {
       classicsOnboardingTriggeredRef.current = true;
       setShowClassicsOnboarding(true);
     }
-  }, [effectiveCategory]);
+  }, [tab]);
 
   const handlePlatformsChange = useCallback((next: string[]) => {
     setSelectedPlatforms(next);
     localStorage.setItem(LIBRARY_PLATFORMS_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
-  const handleSourcesChange = useCallback((next: LibrarySource[]) => {
-    setSelectedSources(next);
-    localStorage.setItem(LIBRARY_SOURCES_STORAGE_KEY, JSON.stringify(next));
+  const handleLibraryFiltersChange = useCallback((next: LibraryFilters) => {
+    setLibraryFilters(next);
+    localStorage.setItem(LIBRARY_FILTERS_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
   const handleShowInstalledOnlyChange = useCallback((next: boolean) => {
@@ -292,18 +297,15 @@ export default function Library() {
     localStorage.setItem(LIBRARY_INSTALLED_ONLY_STORAGE_KEY, String(next));
   }, []);
 
-  const handleCategoryChange = useCallback(
-    (next: LibraryCategory) => {
-      setCategory(next);
-      localStorage.setItem("library-category", next);
-      if (!categoryShowsPlatforms(next)) {
+  const handleTabChange = useCallback(
+    (next: LibraryTab) => {
+      setTab(next);
+      localStorage.setItem(LIBRARY_TAB_STORAGE_KEY, next);
+      if (!tabShowsPlatforms(next)) {
         handlePlatformsChange([]);
       }
-      if (!categoryShowsSources(next)) {
-        handleSourcesChange([]);
-      }
     },
-    [handlePlatformsChange, handleSourcesChange]
+    [handlePlatformsChange]
   );
 
   const searchQuery = useAppSelector((state) => state.library.searchQuery);
@@ -500,18 +502,31 @@ export default function Library() {
     [groupedLibrary, sortBy]
   );
 
-  const { platforms: uniquePlatforms, hasImportedGames } = useMemo(
+  const scopeLibrary =
+    selectedCollectionId === HIDDEN_COLLECTION_ID
+      ? groupedHiddenGames
+      : groupedLibrary;
+  const { platforms: uniquePlatforms } = useMemo(
     () =>
       getLibraryFilterOptions(
         selectedCollectionId === HIDDEN_COLLECTION_ID ? hiddenGames : library
       ),
     [library, hiddenGames, selectedCollectionId]
   );
+  const availableTabs = useMemo(
+    () => getAvailableLibraryTabs(groupedLibrary),
+    [groupedLibrary]
+  );
+  const libraryGenres = useMemo(
+    () => getLibraryGenres(scopeLibrary),
+    [scopeLibrary]
+  );
   const hasPlatforms = uniquePlatforms.length > 0;
-  const showSourceFilter =
-    categoryShowsSources(effectiveCategory) && hasImportedGames;
-  const showPlatformFilter =
-    categoryShowsPlatforms(effectiveCategory) && hasPlatforms;
+  const showPlatformFilter = tabShowsPlatforms(tab) && hasPlatforms;
+
+  // A stored Steam or Epic tab falls back to All once those games are gone.
+  const effectiveTab: LibraryTab =
+    availableTabs.includes(tab) || isLibraryLoading ? tab : "all";
 
   const filteredLibrary = useMemo(() => {
     let filtered =
@@ -534,10 +549,12 @@ export default function Library() {
     }
 
     filtered = filterLibraryGames(filtered, {
-      category: effectiveCategory,
-      sources: hasImportedGames ? selectedSources : [],
+      category: getTabCategory(effectiveTab),
+      sources: [],
       platforms: hasPlatforms ? selectedPlatforms : [],
     });
+    filtered = filterLibraryGamesByTab(filtered, effectiveTab);
+    filtered = applyLibraryFilters(filtered, libraryFilters);
 
     if (showInstalledOnly) {
       filtered = filtered.filter(isGameInstalled);
@@ -570,9 +587,8 @@ export default function Library() {
     sortBy,
     deferredSearchQuery,
     selectedCollectionId,
-    effectiveCategory,
-    hasImportedGames,
-    selectedSources,
+    effectiveTab,
+    libraryFilters,
     hasPlatforms,
     selectedPlatforms,
     showInstalledOnly,
@@ -664,8 +680,8 @@ export default function Library() {
     gamesScrollRef.current?.scrollTo({ top: 0 });
     setHeaderHidden(false);
   }, [
-    effectiveCategory,
-    selectedSources,
+    effectiveTab,
+    libraryFilters,
     selectedPlatforms,
     showInstalledOnly,
     sortBy,
@@ -696,9 +712,7 @@ export default function Library() {
     !isFavoritesCollectionSelected &&
     hasNoFilteredGames;
   const shouldShowClassicsImporting =
-    effectiveCategory === "classics" &&
-    isImportingClassics &&
-    hasNoFilteredGames;
+    effectiveTab === "classics" && isImportingClassics && hasNoFilteredGames;
   const shouldShowNoResultsEmptyState =
     hasGames &&
     hasNoFilteredGames &&
@@ -721,8 +735,9 @@ export default function Library() {
           <div className="library__controls-row">
             <div className="library__controls-left">
               <CategoryFilter
-                category={effectiveCategory}
-                onCategoryChange={handleCategoryChange}
+                tab={effectiveTab}
+                tabs={availableTabs}
+                onTabChange={handleTabChange}
               />
               <CollectionsFilter
                 collections={libraryCollections}
@@ -731,14 +746,9 @@ export default function Library() {
                 hiddenCollectionId={HIDDEN_COLLECTION_ID}
                 onSelect={handleCollectionSelect}
                 onCreate={handleCreateCollectionButtonClick}
+                onManageGames={openManageCollectionGames}
                 onCollectionContextMenu={openCollectionContextMenu}
               />
-              {showSourceFilter && (
-                <SourceFilter
-                  selectedSources={selectedSources}
-                  onSourcesChange={handleSourcesChange}
-                />
-              )}
               {showPlatformFilter && (
                 <PlatformFilter
                   selectedPlatforms={selectedPlatforms}
@@ -746,6 +756,12 @@ export default function Library() {
                   onPlatformsChange={handlePlatformsChange}
                 />
               )}
+              <LibraryFiltersMenu
+                filters={libraryFilters}
+                genres={libraryGenres}
+                showProtonDb={window.electron.platform === "linux"}
+                onFiltersChange={handleLibraryFiltersChange}
+              />
               <InstalledFilter
                 showInstalledOnly={showInstalledOnly}
                 onShowInstalledOnlyChange={handleShowInstalledOnlyChange}

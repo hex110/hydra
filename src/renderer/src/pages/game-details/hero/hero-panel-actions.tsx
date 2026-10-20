@@ -6,7 +6,7 @@ import {
   PlusCircleIcon,
 } from "@primer/octicons-react";
 import { Button, ConfirmationModal, Modal } from "@renderer/components";
-import type { LibraryGame } from "@types";
+import type { LibraryGame, PlayStatus } from "@types";
 import {
   canRetryEpicLaunchWithLocalSaves,
   getEpicLaunchError,
@@ -31,6 +31,7 @@ import { DiscSelectionModal } from "../modals/disc-selection-modal";
 import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-modal";
 
 import { GameMoreMenu } from "./game-more-menu";
+import { PlayStatusMenu } from "./play-status-menu";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
@@ -223,6 +224,23 @@ export function HeroPanelActions() {
     } finally {
       await Promise.all([updateLibrary(), updateGame()]);
       setToggleLibraryGameDisabled(false);
+    }
+  };
+
+  const setGamePlayStatus = async (playStatus: PlayStatus | null) => {
+    try {
+      if (!game) return;
+      await applyLibraryGroupAction(presentation?.members ?? [game], (member) =>
+        window.electron.setGamePlayStatus(
+          member.shop,
+          member.objectId,
+          playStatus
+        )
+      );
+    } catch {
+      showErrorToast(t("failed_update_play_status"));
+    } finally {
+      await Promise.all([updateLibrary(), updateGame()]);
     }
   };
 
@@ -566,6 +584,12 @@ export function HeroPanelActions() {
           <GearIcon />
           {t("options")}
         </Button>
+
+        <PlayStatusMenu
+          playStatus={presentation?.playStatus ?? game.playStatus ?? null}
+          onChange={(playStatus) => void setGamePlayStatus(playStatus)}
+          disabled={deleting}
+        />
 
         <GameMoreMenu
           title={game.title}

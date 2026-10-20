@@ -457,6 +457,13 @@ async function onOpenGame(game: Game, matchedPath: string) {
   let isSteamLibraryPath = false;
   const managedEpicSession = await onManagedEpicDetected(game, matchedPath);
 
+  if (game.playStatus === "backlog") {
+    void updateGameRecord(gameKey, { playStatus: "playing" }).catch(
+      (error: unknown) =>
+        logger.warn("Failed to move a started game out of the backlog", error)
+    );
+  }
+
   if (game.shop === "steam") {
     isSteamLibraryPath = await isSteamAppExecutable(game.objectId, matchedPath);
 

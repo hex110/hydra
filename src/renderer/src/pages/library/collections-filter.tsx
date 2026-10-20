@@ -7,6 +7,7 @@ import {
   HeartIcon,
   LockIcon,
   PlusIcon,
+  ChecklistIcon,
 } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
 import type { GameCollection } from "@types";
@@ -25,6 +26,7 @@ interface CollectionsFilterProps {
   hiddenCollectionId: string;
   onSelect: (collectionId: string | null) => void;
   onCreate: () => void;
+  onManageGames: (collection: GameCollection) => void;
   onCollectionContextMenu: (
     event: React.MouseEvent<HTMLElement>,
     collection: GameCollection
@@ -61,6 +63,7 @@ export function CollectionsFilter({
   hiddenCollectionId,
   onSelect,
   onCreate,
+  onManageGames,
   onCollectionContextMenu,
 }: Readonly<CollectionsFilterProps>) {
   const { t } = useTranslation(["library", "sidebar"]);
@@ -150,6 +153,20 @@ export function CollectionsFilter({
           </div>
 
           <DropdownMenuPrimitive.Separator className="collections-filter__separator" />
+
+          {selectedCollection &&
+            selectedCollection.id !== favoritesCollectionId &&
+            selectedCollection.id !== hiddenCollectionId && (
+              <DropdownMenuPrimitive.Item
+                className="collections-filter__item"
+                onSelect={() => onManageGames(selectedCollection)}
+              >
+                <ChecklistIcon size={16} />
+                <span className="collections-filter__item-label">
+                  {t("manage_collection_games")}
+                </span>
+              </DropdownMenuPrimitive.Item>
+            )}
 
           <DropdownMenuPrimitive.Item
             className="collections-filter__item"

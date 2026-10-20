@@ -514,6 +514,25 @@ const getAchievementRateDifference = (
   return bUnlocked - aUnlocked;
 };
 
+const toTime = (value: Date | string | null | undefined): number | null => {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? null : time;
+};
+
+/** Larger values first (or smaller with `ascending`); games without one go last. */
+const compareKnownValues = (
+  a: number | null | undefined,
+  b: number | null | undefined,
+  ascending = false
+): number => {
+  const aKnown = a != null && a > 0;
+  const bKnown = b != null && b > 0;
+  if (aKnown && bKnown) return ascending ? a - b : b - a;
+  if (aKnown !== bKnown) return aKnown ? -1 : 1;
+  return 0;
+};
+
 const libraryTitleCollator = new Intl.Collator(undefined, {
   sensitivity: "base",
 });
@@ -559,6 +578,52 @@ export const sortLibraryGames = (
 
       case "title_desc": {
         return compareLibraryGamesByTitle(a, b, false);
+      }
+
+      case "recently_added": {
+        const difference = compareKnownValues(
+          toTime(a.addedToLibraryAt),
+          toTime(b.addedToLibraryAt)
+        );
+        if (difference !== 0) return difference;
+        break;
+      }
+
+      case "release_date": {
+        const difference = compareKnownValues(
+          toTime(a.metadata?.releaseDate),
+          toTime(b.metadata?.releaseDate)
+        );
+        if (difference !== 0) return difference;
+        break;
+      }
+
+      case "critic_score": {
+        const difference = compareKnownValues(
+          a.metadata?.criticScore,
+          b.metadata?.criticScore
+        );
+        if (difference !== 0) return difference;
+        break;
+      }
+
+      case "installed_size": {
+        const difference = compareKnownValues(
+          a.installedSizeInBytes,
+          b.installedSizeInBytes
+        );
+        if (difference !== 0) return difference;
+        break;
+      }
+
+      case "shortest": {
+        const difference = compareKnownValues(
+          a.metadata?.howLongToBeat?.mainStory,
+          b.metadata?.howLongToBeat?.mainStory,
+          true
+        );
+        if (difference !== 0) return difference;
+        break;
       }
 
       case "title_asc":

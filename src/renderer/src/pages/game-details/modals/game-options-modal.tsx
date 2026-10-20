@@ -52,6 +52,7 @@ import {
   DownloadIcon,
   FileDirectoryIcon,
   GearIcon,
+  NoteIcon,
   HistoryIcon,
   ImageIcon,
 } from "@primer/octicons-react";
@@ -65,6 +66,7 @@ import "./game-options-modal.scss";
 import { logger } from "@renderer/logger";
 import { GameOptionsSidebar } from "./game-options-modal/sidebar";
 import { GeneralSettingsSection } from "./game-options-modal/general-section";
+import { DetailsSection } from "./game-options-modal/details-section";
 import { CompatibilitySettingsSection } from "./game-options-modal/compatibility-section";
 import { OptiScalerSettingsSection } from "./game-options-modal/optiscaler-section";
 import { SaveImportSection } from "./game-options-modal/save-import-section";
@@ -942,6 +944,11 @@ export function GameOptionsModal({
         label: t("settings_category_general"),
         icon: <GearIcon size={16} />,
       },
+      {
+        id: "details" as const,
+        label: t("settings_category_details"),
+        icon: <NoteIcon size={16} />,
+      },
       ...(isLaunchbox
         ? []
         : [
@@ -1346,6 +1353,7 @@ export function GameOptionsModal({
                 showLaunchOptionsSection={!isLaunchbox}
               />
             )}
+            {selectedCategory === "details" && <DetailsSection game={game} />}
             {selectedCategory === "locations" && (
               <GeneralSettingsSection
                 {...baseGeneralSettingsProps}

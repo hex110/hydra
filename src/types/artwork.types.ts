@@ -26,6 +26,8 @@ export interface ArtworkItem {
   language?: string;
   tags?: string[];
   author?: ArtworkAuthor;
+  /** Where the artwork comes from; SteamGridDB when unset. */
+  provider?: "steamgriddb" | GameShop;
 }
 
 export interface ArtworkPage {

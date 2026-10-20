@@ -26,6 +26,8 @@ import {
 } from "@primer/octicons-react";
 import { HowLongToBeatSection } from "./how-long-to-beat-section";
 import { LaunchboxDetailsSection } from "./launchbox-details-section";
+import { GenresSection } from "./genres-section";
+import { getGenreNames } from "@shared";
 import { SidebarSection } from "../sidebar-section/sidebar-section";
 import { buildGameAchievementPath } from "@renderer/helpers";
 import { useSubscription } from "@renderer/hooks/use-subscription";
@@ -131,7 +133,11 @@ export function Sidebar() {
     catalogueGame,
     stats,
     achievements,
+    game,
   } = useContext(gameDetailsContext);
+  const genres = game?.customGenres?.length
+    ? game.customGenres
+    : getGenreNames(shopDetails?.genres);
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
@@ -346,10 +352,12 @@ export function Sidebar() {
       {shop === "launchbox" && (
         <LaunchboxDetailsSection
           platform={shopDetails?.platform}
-          genres={shopDetails?.genres?.map((g) => g.name)}
+          genres={genres}
           skus={shopDetails?.skus}
         />
       )}
+
+      {shop !== "launchbox" && <GenresSection genres={genres} />}
 
       <HowLongToBeatSection
         howLongToBeatData={howLongToBeat.data}
