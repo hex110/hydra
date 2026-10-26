@@ -2,8 +2,9 @@
 
 Hydra Plus can read your playtime, last played times and achievement unlock
 dates straight from Steam. It uses your own Steam Web API key, so it needs no
-Hydra account and does not go through Hydra's servers (unlike the upstream
-Steam sync, which is separate and untouched). Your Steam profile's **Game
+Hydra account and does not go through Hydra's servers. It replaces upstream
+Hydra's Steam integration, which needed a Hydra account and is removed in
+Hydra Plus (see [the roadmap](../roadmap.md#hydra-without-an-account)). Your Steam profile's **Game
 details** must be public.
 
 ## Settings
@@ -144,6 +145,22 @@ data, only when they are empty in Floppy and never overwritten:
 
 **Fill in Floppy start and end dates from Steam history** in the Floppy
 settings turns the dates off. Hydra also pushes the displayed playtime (Hydra plus Steam), not just its own.
+
+## Upstream's Steam integration
+
+Upstream Hydra's Steam integration (Steam sign-in, a sync through Hydra's
+servers into your Hydra profile) is removed. Steam history covers what it did
+locally, and the two wrote a game's Steam playtime differently.
+
+- Games it imported stay in the library and under the Steam tab.
+- A game's Steam playtime now only comes from Steam history. A profile merge
+  no longer overwrites it with the profile's Steam share (which is 0 for anyone
+  who never connected upstream's integration).
+- Hydra counts its own playtime for every game it sees running, including
+  games started from a Steam library folder; Steam history then shows the
+  larger of the two (see [Where it shows](#where-it-shows)).
+- The copy of your Steam data on Hydra's servers can only be deleted by
+  disconnecting in upstream Hydra, or in Hydra Plus 4.1.6-plus.13 or earlier.
 
 ## Code
 

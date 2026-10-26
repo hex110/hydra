@@ -154,8 +154,6 @@ async function fixture(t: TestContext, apiUrl = "http://localhost:3000") {
       "export const groupedSouvenirWorker = { trigger() { harness.effects.push('worker-start'); }, resumeAfterSubscriptionRefresh(ownerId, expiresAt) { harness.effects.push('worker-refresh:' + ownerId + ':' + expiresAt); }, stop() { harness.effects.push('worker-stop'); } };",
     "./linux-game-capture-session":
       "export const stopAllLinuxGameCaptureSessions = () => {};",
-    "./steam-integration/steam-startup-sync":
-      "export const startSteamSyncOnStartup = () => harness.effects.push('steam-start'); export const resetSteamStartupSync = () => {};",
     "./user": "export const syncDownloadSourcesFromApi = async () => {};",
     "./friends-snapshot": "export const FriendsSnapshotCache = { clear() {} };",
     "./chat/chat-unread-store":
@@ -521,7 +519,6 @@ test("real profile preserves subscription/cache and offline fallback matches cur
 test("existing HTTP contracts and optional integration failures preserve Hydra login", async (t) => {
   const f = await fixture(t);
   await f.signIn("A");
-  assert.ok(f.effects.includes("steam-start"));
   f.api.onAuthContextChanged(() => {
     throw new Error("optional Epic failure");
   });

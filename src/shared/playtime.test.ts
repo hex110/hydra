@@ -42,10 +42,13 @@ describe("getPlayTimeHoursAndMinutes", () => {
 });
 
 describe("mergeLocalAndRemotePlayTime", () => {
-  it("keeps local Hydra hours and adds Steam from runtimeByPlatform", () => {
+  it("keeps local Hydra and Steam hours, ignoring the profile's Steam share", () => {
     assert.deepEqual(
       mergeLocalAndRemotePlayTime(
-        { playTimeInMilliseconds: 360_000_000 },
+        {
+          playTimeInMilliseconds: 360_000_000,
+          steamPlayTimeInMilliseconds: 90_000_000,
+        },
         {
           playTimeInMilliseconds: 187_200_000,
           runtimeByPlatform: { hydra: 7_200, steam: 180_000 },
@@ -53,7 +56,7 @@ describe("mergeLocalAndRemotePlayTime", () => {
       ),
       {
         playTimeInMilliseconds: 360_000_000,
-        steamPlayTimeInMilliseconds: 180_000_000,
+        steamPlayTimeInMilliseconds: 90_000_000,
         epicPlayTimeInMilliseconds: 0,
       }
     );
@@ -69,7 +72,7 @@ describe("mergeLocalAndRemotePlayTime", () => {
       ),
       {
         playTimeInMilliseconds: 10_000,
-        steamPlayTimeInMilliseconds: 50_000,
+        steamPlayTimeInMilliseconds: 0,
         epicPlayTimeInMilliseconds: 0,
       }
     );
@@ -103,11 +106,11 @@ it("replaces Epic totals without reattributing aggregate time to Hydra", () => {
   const merged = mergeLocalAndRemotePlayTime(local, remote);
   assert.deepEqual(merged, {
     playTimeInMilliseconds: 10,
-    steamPlayTimeInMilliseconds: 2000,
+    steamPlayTimeInMilliseconds: 20,
     epicPlayTimeInMilliseconds: 3000,
   });
   assert.deepEqual(mergeLocalAndRemotePlayTime(merged, remote), merged);
-  assert.equal(getDisplayedPlayTimeInMilliseconds(merged), 5010);
+  assert.equal(getDisplayedPlayTimeInMilliseconds(merged), 3030);
   assert.equal(
     mergeLocalAndRemotePlayTime(merged, {
       runtimeByPlatform: { hydra: 0, steam: 2, epic: 0 },
@@ -147,7 +150,7 @@ it("preserves Epic contribution when an older API omits its fields and does not 
     }),
     {
       playTimeInMilliseconds: 1000,
-      steamPlayTimeInMilliseconds: 2000,
+      steamPlayTimeInMilliseconds: 0,
       epicPlayTimeInMilliseconds: 3000,
     }
   );

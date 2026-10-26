@@ -141,3 +141,10 @@ export const steamArtworkUrls = (appId: string, iconHash?: string) => {
     logoImageUrl: `${base}/logo.png`,
   };
 };
+
+const STEAM_SKIP_TITLE_PATTERN =
+  /\b(?:demo|(?:play|public|closed|open|technical)[\s-]*test|test[\s-]*(?:server|client)|beta|ptb)\b/i;
+
+/** Demos, playtests and betas: owned on Steam, but not games for the library. */
+export const isSkippedSteamLibraryTitle = (name: string): boolean =>
+  STEAM_SKIP_TITLE_PATTERN.test(name.trim());

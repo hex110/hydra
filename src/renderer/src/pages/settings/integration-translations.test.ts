@@ -26,8 +26,6 @@ const INTEGRATION_DISPLAY_KEYS = [
 
 const INTEGRATION_SOURCE_FILES = [
   "src/renderer/src/pages/settings/settings-integration-card.tsx",
-  "src/renderer/src/pages/settings/settings-steam.tsx",
-  "src/renderer/src/pages/settings/settings-steam-state.ts",
   "src/renderer/src/pages/settings/settings-retroachievements.tsx",
   "src/renderer/src/pages/settings/settings-epic.tsx",
   "src/renderer/src/pages/settings/settings-epic-state.ts",

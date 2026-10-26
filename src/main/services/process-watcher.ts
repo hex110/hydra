@@ -9,7 +9,6 @@ import { WindowManager } from "./window-manager";
 import { updateGameExecutablePath } from "@main/helpers/update-executable-path";
 import { createGame, trackGamePlaytime } from "./library-sync";
 import type { Game, UserPreferences } from "@types";
-import axios from "axios";
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { CloudSync } from "./cloud-sync";
 import { logger, networkLogger } from "./logger";
@@ -41,16 +40,6 @@ import {
 import { isWindowsBatchFile } from "@main/helpers/windows-batch-command";
 import { getLaunchExecutable } from "@main/helpers/launcher-redirects";
 import { HydraApi } from "./hydra-api";
-import { isSteamAppExecutable } from "./steam-integration/steam-library-executable";
-import {
-  resolveActiveSteamImport,
-  resolveSteamSessionPlaytimePolicy,
-} from "./steam-integration/steam-playtime";
-import {
-  cancelSteamGameExitSync,
-  scheduleSteamGameExitSync,
-  shouldScheduleSteamGameExitSync,
-} from "./steam-integration/steam-game-exit-sync";
 import {
   getCloudSaveAutomaticSyncMode,
   runAutomaticCloudSavePostExit,
@@ -455,15 +444,12 @@ async function onOpenGame(game: Game, matchedPath: string) {
   const hydraRevision = getHydraPlaytimeRevision(
     levelKeys.game(game.shop, game.objectId)
   );
-  cancelSteamGameExitSync(game);
   if (game.shop === "epic") cancelEpicGameExitSync(game.objectId);
 
   const now = performance.now();
   const gameKey = levelKeys.game(game.shop, game.objectId);
   let countHydraPlaytime = true;
-  let syncSteamOnExit = false;
   let syncEpicOnExit = false;
-  let isSteamLibraryPath = false;
   const managedEpicSession = await onManagedEpicDetected(game, matchedPath);
 
   if (isImportedEntry(game)) {
@@ -478,39 +464,6 @@ async function onOpenGame(game: Game, matchedPath: string) {
       (error: unknown) =>
         logger.warn("Failed to move a started game out of the backlog", error)
     );
-  }
-
-  if (game.shop === "steam") {
-    isSteamLibraryPath = await isSteamAppExecutable(game.objectId, matchedPath);
-
-    const hasActiveSteamImport = await resolveActiveSteamImport(
-      game.hasActiveSteamImport,
-      async (signal) => {
-        try {
-          return await HydraApi.get<{ hasActiveSteamImport?: boolean }>(
-            `/profile/games/steam/${encodeURIComponent(game.objectId)}`,
-            undefined,
-            { signal }
-          );
-        } catch (error) {
-          if (axios.isAxiosError(error) && error.response?.status === 404) {
-            return { hasActiveSteamImport: false };
-          }
-          throw error;
-        }
-      }
-    );
-
-    game = (await updateGameRecord(gameKey, { hasActiveSteamImport })) ?? game;
-  }
-
-  if (game.shop === "steam") {
-    ({ countHydraPlaytime, syncSteamOnExit } =
-      resolveSteamSessionPlaytimePolicy({
-        hasActiveSteamImport: game.hasActiveSteamImport === true,
-        isSteamLibraryPath,
-        enableHydraPlaytimeTracking: game.enableHydraPlaytimeTracking === true,
-      }));
   }
 
   if (game.shop === "epic") {
@@ -536,7 +489,6 @@ async function onOpenGame(game: Game, matchedPath: string) {
     firstTick: now,
     lastSyncTick: now,
     countHydraPlaytime,
-    syncSteamOnExit,
     syncEpicOnExit,
     managedEpicSession,
   });
@@ -757,16 +709,6 @@ const onCloseGame = (game: Game) => {
 
   if (game.shop === "epic" && gamePlaytime.syncEpicOnExit)
     scheduleEpicGameExitSync(game);
-
-  if (
-    shouldScheduleSteamGameExitSync(
-      game.shop,
-      gamePlaytime.syncSteamOnExit === true
-    )
-  ) {
-    scheduleSteamGameExitSync(game);
-    logPlaytimeTrace("steam-exit-sync-scheduled", game);
-  }
 
   const updatedGame = {
     playTimeInMilliseconds: (game.playTimeInMilliseconds ?? 0) + delta,

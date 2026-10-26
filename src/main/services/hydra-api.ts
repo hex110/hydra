@@ -293,11 +293,6 @@ export class HydraApi {
     if (generation !== this.authContexts.generation) return;
     void groupedSouvenirWorker.trigger();
 
-    const { startSteamSyncOnStartup } = await import(
-      "./steam-integration/steam-startup-sync"
-    );
-    if (generation !== this.authContexts.generation) return;
-    void startSteamSyncOnStartup();
     const { startEpicSyncOnStartup } = await import("./epic");
     if (generation !== this.authContexts.generation) return;
     void startEpicSyncOnStartup();
@@ -346,12 +341,6 @@ export class HydraApi {
       );
       if (generation !== this.authContexts.generation) return;
       groupedSouvenirWorker.stop();
-
-      const { resetSteamStartupSync } = await import(
-        "./steam-integration/steam-startup-sync"
-      );
-      if (generation !== this.authContexts.generation) return;
-      resetSteamStartupSync();
 
       await persistence;
       if (generation !== this.authContexts.generation) return;

@@ -34,16 +34,6 @@ import { registerLinuxSchemeHandler } from "./helpers/linux-scheme-handler";
 import { lookupCachedPlatform } from "./events/library/get-library";
 import { loadState } from "./main";
 import {
-  closeSteamOpenIdWindow,
-  notifySteamConnectError,
-  notifySteamConnected,
-} from "./services/steam-integration/steam-store-session";
-import {
-  completeSteamOpenIdConnection,
-  parseSteamOpenIdReturn,
-} from "./services/steam-integration/steam-openid-return";
-import { steamSyncOrchestrator } from "./services/steam-integration/steam-sync-orchestrator";
-import {
   initializeEpicIntegration,
   shutdownEpicIntegration,
   suspendEpicPlaytime,
@@ -374,20 +364,6 @@ const handleDeepLinkPath = (uri?: string) => {
       }
 
       return;
-    }
-
-    if (url.host === "steam-connected") {
-      closeSteamOpenIdWindow();
-      const result = parseSteamOpenIdReturn(uri);
-      if (result?.kind === "error") {
-        notifySteamConnectError(result.code);
-        return;
-      }
-      completeSteamOpenIdConnection({
-        clearReconnectRequired: () =>
-          steamSyncOrchestrator.clearReconnectRequired(),
-        notifyConnected: notifySteamConnected,
-      });
     }
   } catch (error) {
     logger.error("Error handling deep link", uri, error);

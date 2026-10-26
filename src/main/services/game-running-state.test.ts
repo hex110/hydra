@@ -16,10 +16,7 @@ import {
   setEmulatorGameRunning,
   resetHydraPlaytimeTicks,
 } from "./game-running-state.js";
-import {
-  getDisplayedPlayTimeInMilliseconds,
-  mergeLocalAndRemotePlayTime,
-} from "../../shared/playtime.js";
+import { getDisplayedPlayTimeInMilliseconds } from "../../shared/playtime.js";
 
 describe("game running state", () => {
   afterEach(clearGamesPlaytimeState);
@@ -69,7 +66,7 @@ describe("game running state", () => {
     assert.equal(isGameRunning("20", "custom"), false);
   });
 
-  it("keeps a Steam session running without counting local or periodic/closing deltas", () => {
+  it("keeps a non-counting session running without local or periodic/closing deltas", () => {
     const key = levelKeys.game("steam", "620");
     setGamePlaytime(key, {
       firstTick: 0,
@@ -93,11 +90,7 @@ describe("game running state", () => {
       setGamePlaytime(key, { ...session, lastTick: now, lastSyncTick: now });
     }
     deleteGamePlaytime(key);
-    const merged = mergeLocalAndRemotePlayTime(
-      { playTimeInMilliseconds: localMilliseconds },
-      { runtimeByPlatform: { hydra: 0, steam: 600 } }
-    );
-    assert.equal(getDisplayedPlayTimeInMilliseconds(merged), 600_000);
+    assert.equal(localMilliseconds, 0);
   });
 
   it("preserves old Hydra pending time across failed Steam-session heartbeats", () => {

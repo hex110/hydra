@@ -43,7 +43,6 @@ import {
   startSteamHistorySchedule,
   startSteamWishlistSchedule,
 } from "./services/steam-history";
-import { startSteamSyncOnStartup } from "./services/steam-integration/steam-startup-sync";
 import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automatic-sync-emulator-migration";
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
@@ -167,7 +166,6 @@ export const loadState = async () => {
     if (HydraApi.isLoggedIn()) {
       SSEClient.connect();
       void groupedSouvenirWorker.trigger();
-      void startSteamSyncOnStartup();
       void startEpicSyncOnStartup();
     }
   });

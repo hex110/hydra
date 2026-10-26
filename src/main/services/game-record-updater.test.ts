@@ -53,7 +53,7 @@ describe("game record updater", () => {
     assert.equal(storedGame.enableHydraPlaytimeTracking, true);
   });
 
-  it("keeps process updates made while Steam exit sync waits for remote data", async () => {
+  it("keeps process updates made while a profile merge waits for remote data", async () => {
     let storedGame = { ...game };
     const updateGame = createGameRecordUpdater({
       get: async () => ({ ...storedGame }),
@@ -91,7 +91,8 @@ describe("game record updater", () => {
     assert.equal(storedGame.unsyncedDeltaPlayTimeInMilliseconds, 180_000);
     assert.equal(storedGame.executablePath, "/games/Portal 2/portal2");
     assert.equal(storedGame.enableHydraPlaytimeTracking, true);
-    assert.equal(storedGame.steamPlayTimeInMilliseconds, 3_600_000);
+    // Steam playtime is read locally (Steam history), not from the profile.
+    assert.equal(storedGame.steamPlayTimeInMilliseconds, 0);
     assert.equal(storedGame.hasActiveSteamImport, true);
   });
 

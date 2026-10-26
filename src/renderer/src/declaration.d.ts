@@ -145,10 +145,6 @@ import type {
   ConfirmCloudSaveCustomPathRebindApprovalResult,
   LegacySaveExportProgress,
   LegacySaveExportResult,
-  SteamSyncState,
-  SteamSyncFinishedPayload,
-  SteamSyncRunStatus,
-  SteamConnectErrorCode,
   ExtractionFailure,
   FriendsSnapshot,
   ChatAttachmentUploadProgress,
@@ -1519,10 +1515,6 @@ declare global {
     getSessionHash: () => Promise<string | null>;
     onSignIn: (cb: () => void) => () => Electron.IpcRenderer;
     onAccountUpdated: (cb: () => void) => () => Electron.IpcRenderer;
-    onSteamConnected: (cb: () => void) => () => Electron.IpcRenderer;
-    onSteamConnectError: (
-      cb: (code: SteamConnectErrorCode) => void
-    ) => () => Electron.IpcRenderer;
     onSignOut: (cb: () => void) => () => Electron.IpcRenderer;
 
     /* User */
@@ -1592,21 +1584,7 @@ declare global {
     onEpicConnectionChanged: (
       cb: (state: EpicConnectionState) => void
     ) => () => void;
-    startSteamOAuth: (lng: string) => Promise<void>;
-    disconnectSteam: (deleteImportedData: boolean) => Promise<void>;
-    startSteamSync: () => Promise<SteamSyncState>;
-    cancelSteamSync: () => Promise<void>;
-    getSteamSyncState: () => Promise<SteamSyncState>;
     syncSteamGameOnGamePage: (steamAppId: string) => Promise<boolean>;
-    reconcileSteamSyncRun: (
-      latestSyncRunStatus: SteamSyncRunStatus | null
-    ) => Promise<void>;
-    onSteamSyncProgress: (
-      cb: (state: SteamSyncState) => void
-    ) => () => Electron.IpcRenderer;
-    onSteamSyncFinished: (
-      cb: (payload: SteamSyncFinishedPayload) => void
-    ) => () => Electron.IpcRenderer;
 
     /* Profile */
     getMe: () => Promise<UserDetails | null>;

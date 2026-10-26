@@ -943,7 +943,6 @@ export type UserGameDetails = ShopAssets & {
 
 export * from "./game.types";
 export * from "./steam.types";
-export * from "./steam-integration.types";
 export * from "./epic-integration.types";
 export * from "./epic-managed.types";
 export * from "./download.types";

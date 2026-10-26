@@ -25,11 +25,6 @@ import { AchievementNotificationInfo, GameRepack } from "@types";
 
 export * from "./archive-org";
 export * from "./constants";
-export {
-  shouldAutoStartSteamSync,
-  type SteamAutoStartRunStatus,
-} from "./should-auto-start-steam-sync";
-export * from "./steam-session";
 export * from "./window-layout";
 export * from "./title-matching";
 export * from "./optiscaler";

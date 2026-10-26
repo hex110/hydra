@@ -5,6 +5,7 @@ import type { SteamGameHistory } from "@types";
 
 import {
   firstUnlockTime,
+  isSkippedSteamLibraryTitle,
   mergeAchievements,
   needsAchievementFetch,
   shouldAddToLibrary,
@@ -183,5 +184,24 @@ describe("library import", () => {
     );
     assert.match(urls.iconUrl ?? "", /apps\/2379780\/abc\.jpg$/);
     assert.equal(steamArtworkUrls("1").iconUrl, null);
+  });
+});
+
+describe("isSkippedSteamLibraryTitle", () => {
+  it("skips demos and playtests without matching ordinary titles", () => {
+    assert.equal(isSkippedSteamLibraryTitle("FINAL FANTASY XVI Demo"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Game (Demo)"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Game Name Playtest"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Game Name Play Test"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Game Name Play-Test"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Playtest"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Battlefield™ Open Beta"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Game PTB"), true);
+    assert.equal(isSkippedSteamLibraryTitle("For Honor - Public Test"), true);
+    assert.equal(isSkippedSteamLibraryTitle("PUBG: Test Server"), true);
+    assert.equal(isSkippedSteamLibraryTitle("Portal 2"), false);
+    assert.equal(isSkippedSteamLibraryTitle("Demolition Derby"), false);
+    assert.equal(isSkippedSteamLibraryTitle("Bethesda"), false);
+    assert.equal(isSkippedSteamLibraryTitle("Test Drive"), false);
   });
 });

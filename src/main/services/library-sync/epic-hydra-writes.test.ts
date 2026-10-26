@@ -226,10 +226,6 @@ function fixture() {
         "./launched-game-pids": { launchedGamePids: new Map() },
         "./floppy": { queueFloppySync: () => {} },
         "../../shared/imported-games": importedGames,
-        "./steam-integration/steam-game-exit-sync": {
-          cancelSteamGameExitSync: () => {},
-          shouldScheduleSteamGameExitSync: () => false,
-        },
         "./cloud-save": {
           getCloudSaveAutomaticSyncMode: async () =>
             state.legacySavesEnabled ? "legacy" : "off",
@@ -245,7 +241,6 @@ function fixture() {
           GameExecutables: { ensureLoaded: async () => {} },
         },
         "@main/helpers/update-executable-path": {},
-        axios: {},
         "./cloud-sync": {
           CloudSync: {
             getBackupLabel: () => "automatic",
@@ -265,16 +260,6 @@ function fixture() {
         "@main/helpers/launcher-redirects": {
           getLaunchExecutable: (_game: unknown, executablePath: string) =>
             executablePath,
-        },
-        "./steam-integration/steam-library-executable": {
-          isSteamAppExecutable: async () => false,
-        },
-        "./steam-integration/steam-playtime": {
-          resolveActiveSteamImport: async () => false,
-          resolveSteamSessionPlaytimePolicy: () => ({
-            countHydraPlaytime: true,
-            syncSteamOnExit: false,
-          }),
         },
       },
       "\nexport { onOpenGame, onCloseGame };"

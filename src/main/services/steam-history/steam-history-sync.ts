@@ -24,7 +24,6 @@ import {
 } from "../integration-status";
 import { updateGameRecord } from "../game-record-updater";
 import { libraryWriteQueue } from "../library-sync/library-write-queue";
-import { isSkippedSteamLibraryTitle } from "../steam-integration/steam-source-payload";
 import { queueFloppySync } from "../floppy";
 import { logger } from "../logger";
 import { getPlayActivity, recordPlayActivity } from "../play-activity";
@@ -36,6 +35,7 @@ import {
   type SteamHistoryCredentials,
 } from "./steam-history-api";
 import {
+  isSkippedSteamLibraryTitle,
   mergeAchievements,
   needsAchievementFetch,
   shouldAddToLibrary,

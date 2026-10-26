@@ -105,14 +105,16 @@ export const mergeLocalAndRemotePlayTime = (
           },
         }
       : remote;
-  const { hydraMs, steamMs, epicMs } = getRemotePlayTimeParts(compatibleRemote);
+  const { hydraMs, epicMs } = getRemotePlayTimeParts(compatibleRemote);
 
   return {
     playTimeInMilliseconds: Math.max(
       local.playTimeInMilliseconds ?? 0,
       hydraMs
     ),
-    steamPlayTimeInMilliseconds: steamMs,
+    // Hydra Plus reads Steam playtime itself (Steam history); the profile's
+    // Steam share only existed for upstream's removed Steam integration.
+    steamPlayTimeInMilliseconds: local.steamPlayTimeInMilliseconds ?? 0,
     epicPlayTimeInMilliseconds: epicMs,
   };
 };
