@@ -8,6 +8,7 @@ export interface SteamOwnedGame {
   playtime_deck_forever?: number;
   rtime_last_played?: number;
   has_community_visible_stats?: boolean;
+  img_icon_url?: string;
 }
 
 export interface SteamPlayerAchievement {
@@ -112,4 +113,27 @@ export const firstUnlockTime = (history: SteamGameHistory) => {
       .filter((time): time is number => time !== null) ?? [];
 
   return times.length > 0 ? Math.min(...times) : null;
+};
+
+/** Demos and betas are not part of the library; `minMinutes` 0 adds everything else. */
+export const shouldAddToLibrary = (
+  game: SteamOwnedGame,
+  minMinutes: number,
+  isSkippedTitle: (name: string) => boolean
+) =>
+  !isSkippedTitle(game.name ?? "") &&
+  (game.playtime_forever ?? 0) >= Math.max(0, minMinutes);
+
+/** Steam's public artwork for an app, so imported games need no catalogue request. */
+export const steamArtworkUrls = (appId: string, iconHash?: string) => {
+  const base = `https://shared.steamstatic.com/store_item_assets/steam/apps/${appId}`;
+
+  return {
+    iconUrl: iconHash
+      ? `https://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${iconHash}.jpg`
+      : null,
+    libraryImageUrl: `${base}/library_600x900_2x.jpg`,
+    libraryHeroImageUrl: `${base}/library_hero.jpg`,
+    logoImageUrl: `${base}/logo.png`,
+  };
 };

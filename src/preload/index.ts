@@ -11,6 +11,8 @@ import type {
   GameSetupStatusEvent,
   GameMetadataOverrides,
   PlayStatus,
+  BackgroundTask,
+  BackgroundTaskKind,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
@@ -1007,6 +1009,18 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("setGameWishlisted", shop, objectId, wishlisted),
   testFloppyConnection: (url: string, token: string) =>
     ipcRenderer.invoke("testFloppyConnection", url, token),
+  getBackgroundTasks: () => ipcRenderer.invoke("getBackgroundTasks"),
+  dismissBackgroundTask: (id: BackgroundTaskKind) =>
+    ipcRenderer.invoke("dismissBackgroundTask", id),
+  onBackgroundTasksChanged: (cb: (tasks: BackgroundTask[]) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      tasks: BackgroundTask[]
+    ) => cb(tasks);
+    ipcRenderer.on("on-background-tasks-changed", listener);
+    return () =>
+      ipcRenderer.removeListener("on-background-tasks-changed", listener);
+  },
   testSteamHistoryConnection: (apiKey: string, steamId: string) =>
     ipcRenderer.invoke("testSteamHistoryConnection", apiKey, steamId),
   syncSteamHistory: () => ipcRenderer.invoke("syncSteamHistory"),

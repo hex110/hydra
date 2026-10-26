@@ -1,5 +1,6 @@
 import {
   db,
+  gamesShopAssetsSublevel,
   gamesSublevel,
   levelKeys,
   steamHistorySublevel,
@@ -11,7 +12,13 @@ import type {
   UserPreferences,
 } from "@types";
 
+import {
+  updateBackgroundTask,
+  removeBackgroundTask,
+} from "../background-tasks";
 import { updateGameRecord } from "../game-record-updater";
+import { libraryWriteQueue } from "../library-sync/library-write-queue";
+import { isSkippedSteamLibraryTitle } from "../steam-integration/steam-source-payload";
 import { queueFloppySync } from "../floppy";
 import { logger } from "../logger";
 import { getPlayActivity, recordPlayActivity } from "../play-activity";
@@ -25,6 +32,8 @@ import {
 import {
   mergeAchievements,
   needsAchievementFetch,
+  shouldAddToLibrary,
+  steamArtworkUrls,
   steamActivityToRecord,
   steamPlayTimeToStore,
   toHistoryEntry,
@@ -41,6 +50,7 @@ const idle: SteamHistorySyncStatus = {
   processed: 0,
   activityDays: 0,
   gamesWithAchievements: 0,
+  gamesAdded: 0,
   error: null,
   finishedAt: null,
 };
@@ -48,13 +58,16 @@ let status: SteamHistorySyncStatus = idle;
 
 export const getSteamHistorySyncStatus = () => status;
 
+const readPreferences = () =>
+  db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
+
 export const getSteamHistoryCredentials =
   async (): Promise<SteamHistoryCredentials | null> => {
-    const preferences = await db
-      .get<string, UserPreferences | null>(levelKeys.userPreferences, {
-        valueEncoding: "json",
-      })
-      .catch(() => null);
+    const preferences = await readPreferences();
 
     if (!preferences?.steamHistoryApiKey || !preferences.steamHistorySteamId) {
       return null;
@@ -85,12 +98,76 @@ const loadHydraPlay = async (previous: Map<string, SteamGameHistory>) => {
   };
 };
 
+interface LibraryImportOptions {
+  addToLibrary: boolean;
+  minMinutes: number;
+}
+
+/** Creates an uninstalled library entry for an owned game that has none. */
+const addToLibraryIfMissing = async (
+  game: SteamOwnedGame,
+  entry: SteamGameHistory,
+  options: LibraryImportOptions
+) => {
+  if (
+    !options.addToLibrary ||
+    !shouldAddToLibrary(game, options.minMinutes, isSkippedSteamLibraryTitle)
+  ) {
+    return false;
+  }
+
+  const key = levelKeys.game("steam", entry.appId);
+  // A record that exists, even a removed one, is the user's decision.
+  if (await gamesSublevel.get(key).catch(() => null)) return false;
+
+  const artwork = steamArtworkUrls(entry.appId, game.img_icon_url);
+  const existingAssets = await gamesShopAssetsSublevel
+    .get(key)
+    .catch(() => null);
+  if (!existingAssets) {
+    await gamesShopAssetsSublevel.put(key, {
+      objectId: entry.appId,
+      shop: "steam",
+      title: entry.name,
+      ...artwork,
+      logoPosition: null,
+      coverImageUrl: artwork.libraryImageUrl,
+      downloadSources: [],
+      updatedAt: Date.now(),
+    });
+  }
+
+  return libraryWriteQueue.run(async () => {
+    if (await gamesSublevel.get(key).catch(() => null)) return false;
+
+    await gamesSublevel.put(key, {
+      title: entry.name,
+      iconUrl: existingAssets?.iconUrl ?? artwork.iconUrl,
+      libraryHeroImageUrl:
+        existingAssets?.libraryHeroImageUrl ?? artwork.libraryHeroImageUrl,
+      logoImageUrl: existingAssets?.logoImageUrl ?? artwork.logoImageUrl,
+      objectId: entry.appId,
+      shop: "steam",
+      remoteId: null,
+      isDeleted: false,
+      playTimeInMilliseconds: 0,
+      lastTimePlayed: null,
+      // Not "recently added": the game was in the user's Steam library already.
+      addedToLibraryAt: null,
+      source: "hydra",
+      steamHistoryImported: true,
+    });
+    return true;
+  });
+};
+
 const syncOne = async (
   credentials: SteamHistoryCredentials,
   game: SteamOwnedGame,
   previous: SteamGameHistory | null,
   hydraPlay: (appId: string, sinceMs: number) => number,
-  now: number
+  now: number,
+  options: LibraryImportOptions
 ) => {
   const appId = String(game.appid);
   const entry = toHistoryEntry(game, previous, now);
@@ -132,9 +209,14 @@ const syncOne = async (
   }
 
   await steamHistorySublevel.put(appId, entry);
+  const added = await addToLibraryIfMissing(game, entry, options);
   await applyToLibraryGame(entry);
 
-  return { recorded: toRecord !== null, hasAchievements: !!entry.achievements };
+  return {
+    recorded: toRecord !== null,
+    hasAchievements: !!entry.achievements,
+    added,
+  };
 };
 
 const applyToLibraryGame = async (entry: SteamGameHistory) => {
@@ -167,7 +249,20 @@ const applyToLibraryGame = async (entry: SteamGameHistory) => {
   queueFloppySync("steam", entry.appId, "playtime");
 };
 
-const run = async (credentials: SteamHistoryCredentials) => {
+export const applySteamHistoryToGame = async (
+  shop: string,
+  objectId: string
+) => {
+  if (shop !== "steam") return;
+
+  const entry = await getSteamGameHistory(objectId);
+  if (entry) await applyToLibraryGame(entry);
+};
+
+const run = async (
+  credentials: SteamHistoryCredentials,
+  options: LibraryImportOptions
+) => {
   const owned = await fetchOwnedGames(credentials);
   const stored = await steamHistorySublevel.values().all();
   const previous = new Map(stored.map((entry) => [entry.appId, entry]));
@@ -187,13 +282,15 @@ const run = async (credentials: SteamHistoryCredentials) => {
           game,
           previous.get(String(game.appid)) ?? null,
           hydraPlay,
-          now
+          now,
+          options
         );
         status = {
           ...status,
           activityDays: status.activityDays + (result.recorded ? 1 : 0),
           gamesWithAchievements:
             status.gamesWithAchievements + (result.hasAchievements ? 1 : 0),
+          gamesAdded: status.gamesAdded + (result.added ? 1 : 0),
         };
       } catch (error) {
         logger.error("Steam history sync failed for a game", {
@@ -203,24 +300,61 @@ const run = async (credentials: SteamHistoryCredentials) => {
       }
 
       status = { ...status, processed: status.processed + 1 };
+      updateBackgroundTask("steam-history", {
+        processed: status.processed,
+        total: status.total,
+      });
     }
   };
 
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 };
 
-/** Runs in the background; poll `getSteamHistorySyncStatus`. */
-export const startSteamHistorySync = async () => {
+/**
+ * Runs in the background; poll `getSteamHistorySyncStatus`. A scheduled run
+ * (`quiet`) leaves nothing on the Downloads page when it changed nothing.
+ */
+export const startSteamHistorySync = async (quiet = false) => {
   if (status.running) return status;
 
   const credentials = await getSteamHistoryCredentials();
   if (!credentials) throw new Error("steam-history-not-configured");
 
-  status = { ...idle, running: true };
+  const preferences = await readPreferences();
+  const options: LibraryImportOptions = {
+    addToLibrary: preferences?.steamHistoryAddToLibrary === true,
+    minMinutes: preferences?.steamHistoryMinMinutes ?? 0,
+  };
 
-  void run(credentials)
+  status = { ...idle, running: true };
+  updateBackgroundTask("steam-history", {
+    state: "running",
+    processed: 0,
+    total: null,
+    result: null,
+  });
+
+  void run(credentials, options)
     .then(() => {
       status = { ...status, running: false, finishedAt: Date.now() };
+
+      const result = {
+        games: status.total,
+        added: status.gamesAdded,
+        achievements: status.gamesWithAchievements,
+        days: status.activityDays,
+      };
+      if (quiet && result.added === 0 && result.days === 0) {
+        removeBackgroundTask("steam-history");
+      } else {
+        updateBackgroundTask("steam-history", {
+          state: "done",
+          processed: status.total,
+          total: status.total,
+          result,
+        });
+      }
+
       WindowManager.sendToAppWindows("on-library-batch-complete");
     })
     .catch((error: unknown) => {
@@ -230,6 +364,7 @@ export const startSteamHistorySync = async () => {
         running: false,
         error: error instanceof Error ? error.message : String(error),
       };
+      updateBackgroundTask("steam-history", { state: "failed" });
     });
 
   return status;
@@ -241,7 +376,7 @@ export const startSteamHistorySchedule = () => {
   if (timer) return;
 
   const tick = () => {
-    startSteamHistorySync().catch((error: unknown) => {
+    startSteamHistorySync(true).catch((error: unknown) => {
       if (
         error instanceof Error &&
         error.message === "steam-history-not-configured"

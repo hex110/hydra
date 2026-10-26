@@ -25,6 +25,25 @@ The first import reads about 400 games' achievements and takes a few minutes;
 later ones take seconds. Hydra then repeats it 90 seconds after starting and
 every six hours.
 
+## Adding your Steam games to the library
+
+Turn on **Add my Steam games to the library** (it appears once a key is
+saved) and the import creates an ordinary, uninstalled library entry for each
+owned game that has none, with Steam's artwork, so it needs no catalogue
+request. Choose the minimum playtime: **no playtime** adds every owned game
+(your whole library), or only games played at least 1 minute, 30 minutes or an
+hour. Demos and betas are always skipped.
+
+- They sit under the **Steam** tab and respond to the same filters, sorting,
+  collections and statuses as any library game. They are not "recently
+  added".
+- A game that is already in the library, **including one you removed**, is
+  left alone: your choice wins.
+- They are never uploaded to your Hydra profile, signed in or not.
+- Installing one works like any uninstalled game.
+- A game below the playtime limit that you later add from the catalogue gets
+  its Steam history, Floppy status and rating straight away.
+
 ## Where it shows
 
 - **Game page**, in the game's block: an **On Steam** section with playtime,
@@ -72,7 +91,7 @@ background job and schedule. Entries are stored per app id in the
 
 ## Not done
 
-- Games you played on Steam but that are not in Hydra's library only exist in
-  the Steam history store; a library view of them is planned (see the
-  roadmap).
+- Games played outside Steam that Floppy tracks are not added to the library
+  yet: Floppy only knows their IGDB id, and a library entry needs a catalogue
+  id (see the roadmap).
 - Steam wishlist (no official API; the public profile page is the only source).

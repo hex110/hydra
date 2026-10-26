@@ -27,6 +27,8 @@ export interface SteamHistorySyncStatus {
   /** Days of play recorded into the activity heatmap by this run. */
   activityDays: number;
   gamesWithAchievements: number;
+  /** Library games created by this run. */
+  gamesAdded: number;
   error: string | null;
   finishedAt: number | null;
 }

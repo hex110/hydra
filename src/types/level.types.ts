@@ -171,6 +171,11 @@ export interface Game extends LibraryCatalogueMetadata {
   playStatus?: PlayStatus | null;
   /** On the wishlist: notify when a download source adds the game. */
   wishlisted?: boolean;
+  /**
+   * Added by the Steam history import: kept off Hydra's profile uploads, shown
+   * under the Steam tab.
+   */
+  steamHistoryImported?: boolean;
   /** IGDB id of the matching Floppy entry; set by the Floppy sync. */
   floppyMediaId?: string | null;
   /** The user's own notes about the game. */
@@ -290,6 +295,10 @@ export interface UserPreferences {
   /** Steam Web API key and SteamID64 for the local Steam history import. */
   steamHistoryApiKey?: string | null;
   steamHistorySteamId?: string | null;
+  /** Add owned Steam games to the library, uninstalled, with their history. */
+  steamHistoryAddToLibrary?: boolean;
+  /** Minutes played a game needs to be added; 0 adds every owned game. */
+  steamHistoryMinMinutes?: number;
   floppyEnabled?: boolean;
   floppyUrl?: string | null;
   floppyApiToken?: string | null;

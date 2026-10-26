@@ -18,6 +18,7 @@ export type FriendRequestAction = "ACCEPTED" | "REFUSED" | "CANCEL";
 export * from "./download-contract";
 export * from "./floppy.types";
 export * from "./steam-history.types";
+export * from "./background-tasks.types";
 
 export type HydraCloudFeature =
   | "achievements"
@@ -114,6 +115,7 @@ export type UserGame = LibraryCatalogueMetadata & {
   achievementsPointsEarnedSum: number;
   hasManuallyUpdatedPlaytime: boolean;
   hasActiveSteamImport?: boolean;
+  steamHistoryImported?: boolean;
   hasActiveEpicImport?: boolean;
   runtimeByPlatform?: { hydra?: number; steam?: number; epic?: number };
   isFavorite: boolean;

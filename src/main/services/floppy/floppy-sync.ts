@@ -18,6 +18,10 @@ import type {
 import { logger } from "../logger";
 import { updateGameRecord } from "../game-record-updater";
 import { firstUnlockTime } from "../steam-history/steam-history-core";
+import {
+  removeBackgroundTask,
+  updateBackgroundTask,
+} from "../background-tasks";
 import { WindowManager } from "../window-manager";
 import { FloppyClient } from "./floppy-client";
 import {
@@ -173,6 +177,16 @@ const REASON_PRIORITY: Record<FloppySyncReason, number> = {
   status: 2,
 };
 
+const syncPushTask = () => {
+  if (pending.size === 0) removeBackgroundTask("floppy-push");
+  else
+    updateBackgroundTask("floppy-push", {
+      state: "queued",
+      total: pending.size,
+      processed: 0,
+    });
+};
+
 const schedule = (
   key: string,
   reason: FloppySyncReason | "wishlist",
@@ -190,10 +204,12 @@ const schedule = (
         : reason;
   const timer = setTimeout(() => {
     pending.delete(slot);
+    syncPushTask();
     void run(effective);
   }, DEBOUNCE_MS);
 
   pending.set(slot, { timer, reason: effective });
+  syncPushTask();
 };
 
 export const queueFloppySync = (
@@ -215,7 +231,7 @@ const hasPendingFloppyChange = (key: string) =>
   pending.has(`g:${key}`) || pending.has(`w:${key}`);
 
 /** Brings status, rating and wishlist from Floppy into Hydra. */
-export const pullFromFloppy = async (): Promise<FloppyPullResult> => {
+const runPull = async (): Promise<FloppyPullResult> => {
   const client = await getFloppyClient();
   if (!client) throw new Error("floppy-not-configured");
 
@@ -273,6 +289,38 @@ export const pullFromFloppy = async (): Promise<FloppyPullResult> => {
   return result;
 };
 
+/** A scheduled pull (`quiet`) leaves nothing on the Downloads page if it changed nothing. */
+export const pullFromFloppy = async (
+  quiet = false
+): Promise<FloppyPullResult> => {
+  if (!(await getFloppyClient())) throw new Error("floppy-not-configured");
+
+  updateBackgroundTask("floppy-pull", {
+    state: "running",
+    processed: 0,
+    total: null,
+    result: null,
+  });
+
+  try {
+    const result = await runPull();
+
+    if (quiet && result.updated === 0) removeBackgroundTask("floppy-pull");
+    else
+      updateBackgroundTask("floppy-pull", {
+        state: "done",
+        processed: result.total,
+        total: result.total,
+        result: { matched: result.matched, updated: result.updated },
+      });
+
+    return result;
+  } catch (error) {
+    updateBackgroundTask("floppy-pull", { state: "failed" });
+    throw error;
+  }
+};
+
 const PULL_INTERVAL_MS = 30 * 60_000;
 const PULL_STARTUP_DELAY_MS = 60_000;
 let pullTimer: NodeJS.Timeout | null = null;
@@ -281,7 +329,7 @@ export const startFloppyPullSchedule = () => {
   if (pullTimer) return;
 
   const run = () =>
-    pullFromFloppy().catch((error: unknown) => {
+    pullFromFloppy(true).catch((error: unknown) => {
       // Not configured is the normal state for most users.
       if (error instanceof Error && error.message === "floppy-not-configured")
         return;
@@ -321,6 +369,7 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
     failed: 0,
   };
   syncStatus = { ...syncStatus, total: games.length };
+  updateBackgroundTask("floppy-sync", { total: games.length });
 
   let next = 0;
   const worker = async () => {
@@ -341,6 +390,7 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
       }
 
       syncStatus = { ...syncStatus, processed: syncStatus.processed + 1 };
+      updateBackgroundTask("floppy-sync", { processed: syncStatus.processed });
     }
   };
 
@@ -356,13 +406,34 @@ export const startFloppyLibrarySync = async (dryRun: boolean) => {
   if (!client) throw new Error("floppy-not-configured");
 
   syncStatus = { ...idleStatus, running: true, dryRun };
+  updateBackgroundTask("floppy-sync", {
+    state: "running",
+    processed: 0,
+    total: null,
+    result: null,
+    dryRun,
+  });
 
   void runBackfill(client, dryRun)
     .then((report) => {
       syncStatus = { ...syncStatus, running: false, report };
+      updateBackgroundTask("floppy-sync", {
+        state: "done",
+        processed: report.total,
+        total: report.total,
+        dryRun,
+        result: {
+          created: report.created,
+          updated: report.updated,
+          unchanged: report.unchanged,
+          unmatched: report.unmatched.length,
+          failed: report.failed,
+        },
+      });
     })
     .catch((error: unknown) => {
       logger.error("Floppy library sync failed", error);
+      updateBackgroundTask("floppy-sync", { state: "failed" });
       syncStatus = {
         ...syncStatus,
         running: false,

@@ -7,6 +7,8 @@ import {
   firstUnlockTime,
   mergeAchievements,
   needsAchievementFetch,
+  shouldAddToLibrary,
+  steamArtworkUrls,
   steamActivityToRecord,
   steamPlayTimeToStore,
   toHistoryEntry,
@@ -146,5 +148,36 @@ describe("achievements and playtime", () => {
         .achievements,
       []
     );
+  });
+});
+
+describe("library import", () => {
+  const demo = (name: string) => /demo/i.test(name);
+
+  it("adds every owned game at 0 minutes, but never demos", () => {
+    assert.equal(shouldAddToLibrary({ appid: 1, name: "Game" }, 0, demo), true);
+    assert.equal(
+      shouldAddToLibrary({ appid: 1, name: "Game Demo" }, 0, demo),
+      false
+    );
+  });
+
+  it("respects the minimum playtime", () => {
+    const game = { appid: 1, name: "Game", playtime_forever: 29 };
+    assert.equal(shouldAddToLibrary(game, 30, demo), false);
+    assert.equal(
+      shouldAddToLibrary({ ...game, playtime_forever: 30 }, 30, demo),
+      true
+    );
+  });
+
+  it("builds artwork urls from the app id", () => {
+    const urls = steamArtworkUrls("2379780", "abc");
+    assert.match(
+      urls.libraryImageUrl,
+      /apps\/2379780\/library_600x900_2x\.jpg$/
+    );
+    assert.match(urls.iconUrl ?? "", /apps\/2379780\/abc\.jpg$/);
+    assert.equal(steamArtworkUrls("1").iconUrl, null);
   });
 });

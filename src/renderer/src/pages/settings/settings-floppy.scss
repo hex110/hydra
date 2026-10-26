@@ -44,6 +44,22 @@
     }
   }
 
+  &__select {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+
+    select {
+      align-self: flex-start;
+      padding: 4px globals.$spacing-unit;
+      border-radius: 4px;
+      border: 1px solid globals.$border-color;
+      background-color: globals.$background-color;
+      color: inherit;
+      font: inherit;
+    }
+  }
+
   &__actions {
     display: flex;
     align-items: center;

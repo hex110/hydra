@@ -171,6 +171,7 @@ const projectGroup = (
     steamPlayTimeInMilliseconds: sum("steamPlayTimeInMilliseconds"),
     epicPlayTimeInMilliseconds: sum("epicPlayTimeInMilliseconds"),
     hasActiveSteamImport: members.some((member) => member.hasActiveSteamImport),
+    steamHistoryImported: members.some((member) => member.steamHistoryImported),
     hasActiveEpicImport: members.some((member) => member.hasActiveEpicImport),
     favorite: members.some((member) => member.favorite),
     isPinned: members.some((member) => member.isPinned),

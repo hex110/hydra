@@ -136,14 +136,16 @@ in the sections below.
     1. [x] Push playtime, status and wishlist to Floppy
     2. [x] Pull status, rating and wishlist from Floppy; rating on the game page
     3. [x] Steam playtime, achievements with unlock dates, activity deltas
-    4. [ ] "Played anywhere" library view: every game tracked in Floppy or
-           played on Steam, including ones you don't have installed
-    5. [ ] Install or play from those cards (catalogue matching, Steam launch)
-    6. [ ] Completion suggestions: offer Finished at 100 % achievements or at
+    4. [x] Steam games you own appear in the library as uninstalled entries,
+           with their history (opt-in; [Steam history](features/steam-history.md))
+    5. [ ] Floppy-only games (played outside Steam) added to the library,
+           matched to the catalogue
+    6. [x] Background tasks on the Downloads page
+    7. [ ] Completion suggestions: offer Finished at 100 % achievements or at
            the How Long to Beat main-story time
-    7. [ ] Per-session history pushed to Floppy
-    8. [ ] Steam wishlist (public profile only; no official API)
-    9. [ ] Fix a wrong or missing Floppy match from the game's options
+    8. [ ] Per-session history pushed to Floppy
+    9. [ ] Steam wishlist (public profile only; no official API)
+    10. [ ] Fix a wrong or missing Floppy match from the game's options
 11. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups

@@ -20,6 +20,7 @@ export interface LibraryCategoryGame {
   shop: string;
   isDeleted?: boolean;
   hasActiveSteamImport?: boolean;
+  steamHistoryImported?: boolean;
   hasActiveEpicImport?: boolean;
   canonicalId?: string | null;
   catalogueGame?: { shop: string; objectId: string };
@@ -97,7 +98,7 @@ export const readStoredLibraryFilters = (
 };
 
 export const isSteamLibraryGame = (game: LibraryCategoryGame) =>
-  game.hasActiveSteamImport === true;
+  game.hasActiveSteamImport === true || game.steamHistoryImported === true;
 
 export const isClassicsGame = (game: LibraryCategoryGame) =>
   game.shop === "launchbox";

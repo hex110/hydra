@@ -12,6 +12,7 @@ import { BinaryNotFoundModal } from "../shared-modals/binary-not-found-modal";
 import "./downloads.scss";
 import { DeleteGameModal } from "./delete-game-modal";
 import { DownloadGroup } from "./download-group";
+import { BackgroundTasksSection } from "./background-tasks-section";
 import { GameUpdatesSection } from "./game-updates-section";
 import {
   getDownloadId,
@@ -192,6 +193,8 @@ export default function Downloads() {
         onClose={() => setShowDeleteModal(false)}
         deleteGame={handleDeleteGame}
       />
+
+      <BackgroundTasksSection />
 
       {userPreferences?.checkGameUpdates !== false && (
         <GameUpdatesSection library={fullLibrary} />

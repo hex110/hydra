@@ -11,6 +11,8 @@ import type {
   GameMetadataOverrides,
   PlayActivityEntry,
   PlayStatus,
+  BackgroundTask,
+  BackgroundTaskKind,
   FloppyPullResult,
   SteamGameHistory,
   SteamHistorySyncStatus,
@@ -432,6 +434,11 @@ declare global {
       wishlisted: boolean
     ) => Promise<void>;
     testFloppyConnection: (url: string, token: string) => Promise<void>;
+    getBackgroundTasks: () => Promise<BackgroundTask[]>;
+    dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    onBackgroundTasksChanged: (
+      cb: (tasks: BackgroundTask[]) => void
+    ) => () => void;
     testSteamHistoryConnection: (
       apiKey: string,
       steamId: string

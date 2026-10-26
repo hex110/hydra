@@ -9,6 +9,7 @@ import {
 } from "@main/services/achievements/grouped-souvenir-worker";
 
 import "./auth";
+import "./background-tasks";
 import "./autoupdater";
 import "./big-picture";
 import "./catalogue";

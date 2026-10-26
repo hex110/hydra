@@ -1,11 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, TextField } from "@renderer/components";
+import { Button, CheckboxField, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
 import type { SteamHistorySyncStatus } from "@types";
 
 import "./settings-floppy.scss";
+
+const MIN_PLAYTIME_OPTIONS = [0, 1, 30, 60] as const;
 
 export function SettingsSteamHistory() {
   const userPreferences = useAppSelector(
@@ -98,6 +100,7 @@ export function SettingsSteamHistory() {
 
     return t("steam_history_result", {
       games: status.total,
+      added: status.gamesAdded,
       achievements: status.gamesWithAchievements,
       days: status.activityDays,
     });
@@ -131,6 +134,41 @@ export function SettingsSteamHistory() {
           </Button>
         }
       />
+
+      {isSaved && (
+        <>
+          <CheckboxField
+            label={t("steam_history_add_to_library")}
+            checked={userPreferences?.steamHistoryAddToLibrary === true}
+            onChange={() =>
+              updateUserPreferences({
+                steamHistoryAddToLibrary:
+                  userPreferences?.steamHistoryAddToLibrary !== true,
+              })
+            }
+          />
+
+          {userPreferences?.steamHistoryAddToLibrary === true && (
+            <label className="settings-floppy__select">
+              {t("steam_history_min_playtime")}
+              <select
+                value={userPreferences.steamHistoryMinMinutes ?? 0}
+                onChange={(event) =>
+                  updateUserPreferences({
+                    steamHistoryMinMinutes: Number(event.target.value),
+                  })
+                }
+              >
+                {MIN_PLAYTIME_OPTIONS.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {t(`steam_history_min_${minutes}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </>
+      )}
 
       {isSaved && (
         <div className="settings-floppy__actions">
