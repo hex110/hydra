@@ -1007,6 +1007,13 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("setGameWishlisted", shop, objectId, wishlisted),
   testFloppyConnection: (url: string, token: string) =>
     ipcRenderer.invoke("testFloppyConnection", url, token),
+  testSteamHistoryConnection: (apiKey: string, steamId: string) =>
+    ipcRenderer.invoke("testSteamHistoryConnection", apiKey, steamId),
+  syncSteamHistory: () => ipcRenderer.invoke("syncSteamHistory"),
+  getSteamHistorySyncStatus: () =>
+    ipcRenderer.invoke("getSteamHistorySyncStatus"),
+  getSteamGameHistory: (appId: string) =>
+    ipcRenderer.invoke("getSteamGameHistory", appId),
   pullFloppy: () => ipcRenderer.invoke("pullFloppy"),
   setGameRating: (shop: GameShop, objectId: string, rating: number | null) =>
     ipcRenderer.invoke("setGameRating", shop, objectId, rating),

@@ -287,6 +287,9 @@ export interface UserPreferences {
   retroAchievementsWebApiKey?: string | null;
   retroAchievementsUsername?: string | null;
   /** Push playtime, play status and wishlist to a Floppy instance. */
+  /** Steam Web API key and SteamID64 for the local Steam history import. */
+  steamHistoryApiKey?: string | null;
+  steamHistorySteamId?: string | null;
   floppyEnabled?: boolean;
   floppyUrl?: string | null;
   floppyApiToken?: string | null;

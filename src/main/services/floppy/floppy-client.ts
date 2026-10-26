@@ -15,6 +15,8 @@ interface FloppyConsumption {
   status: number | null;
   progress: number | null;
   score?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 interface FloppyListedItem {
@@ -29,6 +31,14 @@ interface FloppyListedItem {
 interface FloppyPage<T> {
   results: T[];
   pagination?: { next?: string | null };
+}
+
+interface FloppyWriteBody {
+  status?: number;
+  progress?: number;
+  score?: number | null;
+  start_date?: string;
+  end_date?: string;
 }
 
 const PAGE_SIZE = 200;
@@ -72,13 +82,12 @@ export class FloppyClient {
       status: latest?.status ?? null,
       progress: latest?.progress ?? 0,
       score: latest?.score ?? null,
+      startDate: latest?.start_date ?? null,
+      endDate: latest?.end_date ?? null,
     };
   }
 
-  async track(
-    mediaId: string,
-    body: { status: number; progress?: number; score?: number | null }
-  ) {
+  async track(mediaId: string, body: FloppyWriteBody & { status: number }) {
     await this.http.post("/media/game/", {
       source: "igdb",
       media_id: mediaId,
@@ -86,10 +95,7 @@ export class FloppyClient {
     });
   }
 
-  async update(
-    mediaId: string,
-    body: { status?: number; progress?: number; score?: number | null }
-  ) {
+  async update(mediaId: string, body: FloppyWriteBody) {
     await this.http.patch(`/media/game/igdb/${mediaId}/`, body);
   }
 

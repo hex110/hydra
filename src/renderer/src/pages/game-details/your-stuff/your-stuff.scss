@@ -41,6 +41,12 @@
     font: inherit;
   }
 
+  &__achievements {
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: globals.$spacing-unit;
+  }
+
   &__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

@@ -20,6 +20,8 @@ export interface FloppyTrackedState {
   status: number | null;
   progress: number;
   score: number | null;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 /** One tracked game as listed by Floppy. */
@@ -37,6 +39,9 @@ export interface FloppyGameInput {
   playStatus?: PlayStatus | null;
   wishlisted?: boolean;
   rating?: number | null;
+  /** First sign of play, e.g. the first achievement unlocked on Steam. */
+  startedAt?: Date | null;
+  lastPlayedAt?: Date | null;
 }
 
 export type FloppySyncReason = "playtime" | "status" | "rating" | "backfill";
@@ -45,6 +50,8 @@ export interface FloppyPatch {
   status?: number;
   progress?: number;
   score?: number | null;
+  start_date?: string;
+  end_date?: string;
 }
 
 const PC_PLATFORM = "PC (Microsoft Windows)";
@@ -78,6 +85,13 @@ export const pickMatch = (
     exact.find((r) => r.platforms?.includes(PC_PLATFORM)) ?? exact[0] ?? null
   );
 };
+
+const toDay = (date: Date) =>
+  [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 
 export const playTimeToMinutes = (milliseconds: number) =>
   Math.floor(milliseconds / 60_000);
@@ -120,6 +134,19 @@ export const planPatch = (
     }
   } else if (current === FLOPPY_STATUS.planning && inferred !== current) {
     patch.status = inferred;
+  }
+
+  // Dates are only filled in, never changed: they are approximations.
+  if (game.startedAt && !state.startDate) {
+    patch.start_date = toDay(game.startedAt);
+  }
+  const finalStatus = patch.status ?? current;
+  if (
+    game.lastPlayedAt &&
+    finalStatus === FLOPPY_STATUS.completed &&
+    !state.endDate
+  ) {
+    patch.end_date = toDay(game.lastPlayedAt);
   }
 
   return patch;

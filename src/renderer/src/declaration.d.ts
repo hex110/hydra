@@ -12,6 +12,8 @@ import type {
   PlayActivityEntry,
   PlayStatus,
   FloppyPullResult,
+  SteamGameHistory,
+  SteamHistorySyncStatus,
   FloppySyncStatus,
   GameLaunchPreview,
   MangoHudSettings,
@@ -430,6 +432,13 @@ declare global {
       wishlisted: boolean
     ) => Promise<void>;
     testFloppyConnection: (url: string, token: string) => Promise<void>;
+    testSteamHistoryConnection: (
+      apiKey: string,
+      steamId: string
+    ) => Promise<{ ownedGames: number }>;
+    syncSteamHistory: () => Promise<SteamHistorySyncStatus>;
+    getSteamHistorySyncStatus: () => Promise<SteamHistorySyncStatus>;
+    getSteamGameHistory: (appId: string) => Promise<SteamGameHistory | null>;
     pullFloppy: () => Promise<FloppyPullResult>;
     setGameRating: (
       shop: GameShop,

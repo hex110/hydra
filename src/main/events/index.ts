@@ -17,6 +17,7 @@ import "./cloud-save";
 import "./connectivity";
 import "./download-sources";
 import "./floppy";
+import "./steam-history";
 import "./friends";
 import "./hardware";
 import "./library";

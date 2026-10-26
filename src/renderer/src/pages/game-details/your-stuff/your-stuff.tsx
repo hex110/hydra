@@ -17,6 +17,7 @@ import { useDate, useGameCard, useLibrary, useToast } from "@renderer/hooks";
 import { PlayStatusMenu } from "../hero/play-status-menu";
 import { GameNotesField } from "@renderer/pages/library/game-notes-field";
 import { libraryTabIncludes } from "@renderer/pages/library/library-filters";
+import { SteamHistorySection } from "./steam-history-section";
 import { findRelatedLibraryGames } from "./related-library-games";
 import "./your-stuff.scss";
 
@@ -247,6 +248,14 @@ export function YourStuff() {
             ))}
           </ul>
         </div>
+      )}
+
+      {members.some((member) => member.shop === "steam") && (
+        <SteamHistorySection
+          appId={
+            members.find((member) => member.shop === "steam")?.objectId ?? ""
+          }
+        />
       )}
 
       <GameNotesField game={presentation ?? game} />

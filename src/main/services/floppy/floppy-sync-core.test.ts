@@ -17,6 +17,8 @@ const untracked: FloppyTrackedState = {
   status: null,
   progress: 0,
   score: null,
+  startDate: null,
+  endDate: null,
 };
 const tracked = (
   status: number,
@@ -27,6 +29,8 @@ const tracked = (
   status,
   progress,
   score,
+  startDate: null,
+  endDate: null,
 });
 const game = (overrides: Partial<FloppyGameInput> = {}): FloppyGameInput => ({
   title: "Hades",
@@ -154,6 +158,45 @@ describe("planPatch", () => {
         "playtime"
       ),
       { progress: 10, status: FLOPPY_STATUS.inProgress }
+    );
+  });
+});
+
+describe("planPatch dates", () => {
+  const first = new Date(2025, 9, 24, 12);
+  const last = new Date(2026, 9, 12, 12);
+
+  it("fills empty start and end dates for a completed game", () => {
+    assert.deepEqual(
+      planPatch(
+        game({ startedAt: first, lastPlayedAt: last }),
+        tracked(FLOPPY_STATUS.completed),
+        "backfill"
+      ),
+      { start_date: "2025-10-24", end_date: "2026-10-12" }
+    );
+  });
+
+  it("gives no end date to a game still being played, or one that has dates", () => {
+    assert.deepEqual(
+      planPatch(
+        game({ startedAt: first, lastPlayedAt: last }),
+        tracked(FLOPPY_STATUS.inProgress),
+        "backfill"
+      ),
+      { start_date: "2025-10-24" }
+    );
+    assert.deepEqual(
+      planPatch(
+        game({ startedAt: first, lastPlayedAt: last }),
+        {
+          ...tracked(FLOPPY_STATUS.completed),
+          startDate: "2020-01-01",
+          endDate: "2020-02-02",
+        },
+        "backfill"
+      ),
+      {}
     );
   });
 });

@@ -4,6 +4,7 @@ import { SettingsRetroAchievements } from "./settings-retroachievements";
 import { SettingsSteam } from "./settings-steam";
 import { SettingsEpic } from "./settings-epic";
 import { SettingsFloppy } from "./settings-floppy";
+import { SettingsSteamHistory } from "./settings-steam-history";
 
 export function SettingsContextIntegrations() {
   const { t } = useTranslation("settings");
@@ -14,6 +15,7 @@ export function SettingsContextIntegrations() {
         <SettingsSteam />
         <SettingsEpic />
         <SettingsRetroAchievements />
+        <SettingsSteamHistory />
         <SettingsFloppy />
       </div>
 

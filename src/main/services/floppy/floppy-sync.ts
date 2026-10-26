@@ -1,4 +1,10 @@
-import { db, gamesSublevel, levelKeys } from "@main/level";
+import {
+  db,
+  gamesSublevel,
+  levelKeys,
+  steamHistorySublevel,
+} from "@main/level";
+import { getDisplayedPlayTimeInMilliseconds } from "@shared";
 import type {
   FloppyBackfillReport,
   FloppyGameChange,
@@ -11,6 +17,7 @@ import type {
 
 import { logger } from "../logger";
 import { updateGameRecord } from "../game-record-updater";
+import { firstUnlockTime } from "../steam-history/steam-history-core";
 import { WindowManager } from "../window-manager";
 import { FloppyClient } from "./floppy-client";
 import {
@@ -63,6 +70,24 @@ const resolveMediaId = async (client: FloppyClient, game: Game) => {
   return mediaId;
 };
 
+/** Playtime from every source, and the dates Steam's history can vouch for. */
+const withHistory = async (game: Game) => {
+  const history =
+    game.shop === "steam"
+      ? await steamHistorySublevel.get(game.objectId).catch(() => null)
+      : null;
+  const firstUnlock = history ? firstUnlockTime(history) : null;
+
+  return {
+    ...game,
+    playTimeInMilliseconds: getDisplayedPlayTimeInMilliseconds(game),
+    startedAt: firstUnlock ? new Date(firstUnlock * 1000) : null,
+    lastPlayedAt: history?.lastPlayedAt
+      ? new Date(history.lastPlayedAt * 1000)
+      : null,
+  };
+};
+
 type SyncResult =
   | { outcome: "unchanged" | "unmatched" }
   | { outcome: "created" | "updated"; change: FloppyGameChange };
@@ -77,7 +102,7 @@ const syncGame = async (
   if (!mediaId) return { outcome: "unmatched" };
 
   const state = await client.getState(mediaId);
-  const patch: FloppyPatch = planPatch(game, state, reason);
+  const patch: FloppyPatch = planPatch(await withHistory(game), state, reason);
   const change: FloppyGameChange = {
     title: game.title,
     action: state.tracked ? "update" : "create",
@@ -94,6 +119,8 @@ const syncGame = async (
         status: patch.status,
         progress: patch.progress,
         score: patch.score,
+        start_date: patch.start_date,
+        end_date: patch.end_date,
       });
     return { outcome: "created", change };
   }
