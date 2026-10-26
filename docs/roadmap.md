@@ -147,18 +147,31 @@ in the sections below.
            count each day as a replay ([why](features/floppy.md#why-there-is-no-per-session-history))
     9. [x] Steam wishlist and release notifications ([Steam history](features/steam-history.md#steam-wishlist))
     10. [x] Fix a wrong or missing Floppy match from the game's options
-11. **More save sources.**
+    11. [x] Polish: remove what an import added, failure reasons with Try again,
+            settings as integration cards, imported games become yours once
+            downloaded or launched
+11. **Hydra without an account.** Everything works signed out; the Hydra
+    account becomes an optional setting, off by default. Decided 2026-10-26;
+    details in [Hydra without an account](#hydra-without-an-account).
+    1. [ ] Remove the upstream Steam integration
+    2. [ ] SteamGridDB with your own API key
+    3. [ ] Account-only features shown only when signed in
+    4. [ ] One "Hydra account" setting
+    5. [ ] Self-hosted saves: folder target
+    6. [ ] Self-hosted saves: rclone target
+    7. [ ] Self-hosted saves: automatic sync and conflicts
+12. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
     3. [ ] Steam's own prefixes
     4. [ ] Steam Cloud
     5. [ ] Hydra cloud account
-12. **Distribution.**
+13. **Distribution.**
     1. [ ] Export and import settings
     2. [ ] pacman updates
     3. [x] Sign the browser add-on
     4. [ ] Translations
-13. **Mods.** Native mod support, after a design.
+14. **Mods.** Native mod support, after a design.
 
 Why this order:
 
@@ -180,12 +193,71 @@ Why this order:
   every day, and it builds on the data phases 7–8 added (catalogue cache,
   play status, play activity). It is large; split it over several releases
   in the order listed.
+- Hydra without an account comes before the other save work: self-hosted
+  saves are the save store the other sources can feed, and with Floppy and
+  Steam history shipped, the upstream Steam integration only duplicates them
+  (both write a game's Steam playtime, differently). The cheap items go
+  first, so the account is truly optional before the large saves work starts.
 - Save sources are independent of everything else; Heroic/Lutris and
   Ludusavi are cheap, Steam Cloud needs a Steam login, Hydra cloud waits on
   the account existing.
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
+
+## Hydra without an account
+
+Decided 2026-10-26. Hydra's servers do two jobs. Public data (catalogue,
+search, game details, artwork, achievement names, download sources, update
+checks) needs no account and stays: there is nothing realistic to self-host
+it with. Account features are replaced or hidden:
+
+| Account feature                                 | In Hydra Plus                                       |
+| ----------------------------------------------- | --------------------------------------------------- |
+| Profile, library and playtime sync              | [Floppy](features/floppy.md)                        |
+| Upstream Steam integration                      | [Steam history](features/steam-history.md); removed |
+| Collections                                     | Local collections (already shipped)                 |
+| Hydra Cloud saves (paid)                        | Self-hosted saves (folder, rclone)                  |
+| SteamGridDB artwork                             | Your own SteamGridDB API key                        |
+| Epic, RetroAchievements connections             | Only shown when signed in (not used)                |
+| Friends, chat, reviews, profile page, souvenirs | Only shown when signed in                           |
+
+**Rule: hide, don't delete.** About 90 upstream files call Hydra's API.
+Deleting account code would make every upstream merge conflict, so
+account-only features leave the interface and stop their background jobs
+while signed out, and their code stays. Only self-contained modules with a
+replacement are deleted (the upstream Steam integration).
+
+1. **Remove the upstream Steam integration.** Delete the settings card, Steam
+   OAuth, the sync orchestrator, startup and exit syncs. Check first what
+   still reads `hasActiveSteamImport`: the Steam tab, the process watcher's
+   playtime policy (`resolveActiveSteamImport` asks Hydra's server), game
+   setup skipping, and the profile merge. Games it imported stay in the
+   library and move to Steam history's flag so they keep their tab.
+   Disconnecting in a build that still has it is the only way to delete the
+   copy on Hydra's servers; say so in the release notes.
+2. **SteamGridDB with your own API key.** A field in the artwork settings;
+   the key is free at steamgriddb.com. Signed-in users without a key keep
+   Hydra's proxy.
+3. **Account-only features shown only when signed in.** Friends, chat,
+   reviews, the profile page, souvenirs, Hydra Cloud panels and upsells,
+   the Epic and RetroAchievements cards. Their background jobs (SSE, friend
+   snapshots, profile uploads) don't start while signed out. Audit what
+   breaks or nags signed out today first.
+4. **One "Hydra account" setting.** Sign-in moves out of the sidebar into a
+   settings card that says what an account adds. Signing out stays as it is.
+5. **Self-hosted saves: folder target.** Snapshots written to a folder you
+   pick (a Syncthing folder, a NAS mount, Nextcloud), in Hydra Cloud's
+   snapshot format so the save-import restore code applies. Backup, list,
+   restore per game.
+6. **Self-hosted saves: rclone target.** The same store through an rclone
+   remote, which covers Cloudflare R2, S3, Google Drive, SFTP and WebDAV.
+   Uses the user's rclone config; Hydra does not store cloud credentials.
+7. **Self-hosted saves: automatic sync and conflicts.** Back up on game exit,
+   offer a restore on first launch on a new machine, and detect when two
+   devices changed the same save. CappyT's local and rclone stores and
+   per-device conflict detection are the reference
+   ([fork survey](fork-survey.md)).
 
 ## Design and QoL
 
@@ -377,9 +449,6 @@ All of these plug into the `SaveImportSource` interface.
 
 - Built-in download sources, and why the laptop gets different server source
   ids for the same URL.
-- Self-hosted cloud saves on Cloudflare. CappyT's local and rclone backup
-  stores, per-device conflict detection and restore-on-first-launch are a
-  reference ([fork survey](fork-survey.md)).
 - Installing on the laptop (offline in Tailscale). Leave the HDR rule off
   there.
 
