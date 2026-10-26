@@ -3,6 +3,7 @@ import { SettingsDebrid } from "./settings-debrid";
 import { SettingsRetroAchievements } from "./settings-retroachievements";
 import { SettingsSteam } from "./settings-steam";
 import { SettingsEpic } from "./settings-epic";
+import { SettingsFloppy } from "./settings-floppy";
 
 export function SettingsContextIntegrations() {
   const { t } = useTranslation("settings");
@@ -13,6 +14,7 @@ export function SettingsContextIntegrations() {
         <SettingsSteam />
         <SettingsEpic />
         <SettingsRetroAchievements />
+        <SettingsFloppy />
       </div>
 
       <hr className="settings-context-panel__divider" />

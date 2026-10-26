@@ -1,0 +1,18 @@
+@use "../../scss/globals.scss";
+
+.settings-floppy {
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__description {
+    color: globals.$muted-color;
+  }
+
+  &__actions {
+    display: flex;
+    gap: globals.$spacing-unit;
+  }
+}

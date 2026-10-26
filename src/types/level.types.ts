@@ -171,6 +171,8 @@ export interface Game extends LibraryCatalogueMetadata {
   playStatus?: PlayStatus | null;
   /** On the wishlist: notify when a download source adds the game. */
   wishlisted?: boolean;
+  /** IGDB id of the matching Floppy entry; set by the Floppy sync. */
+  floppyMediaId?: string | null;
   /** The user's own notes about the game. */
   notes?: string | null;
   /** Replaces the store description on the game page. */
@@ -282,6 +284,10 @@ export interface UserPreferences {
   torBoxApiToken?: string | null;
   retroAchievementsWebApiKey?: string | null;
   retroAchievementsUsername?: string | null;
+  /** Push playtime, play status and wishlist to a Floppy instance. */
+  floppyEnabled?: boolean;
+  floppyUrl?: string | null;
+  floppyApiToken?: string | null;
   preferQuitInsteadOfHiding?: boolean;
   runAtStartup?: boolean;
   startMinimized?: boolean;

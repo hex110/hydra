@@ -1,5 +1,6 @@
 import { levelKeys } from "@main/level";
 import { updateGameRecord } from "@main/services/game-record-updater";
+import { queueFloppySync } from "@main/services/floppy";
 import { WindowManager } from "@main/services/window-manager";
 import type { GameShop } from "@types";
 
@@ -13,6 +14,7 @@ const setGameWishlisted = async (
 ) => {
   await updateGameRecord(levelKeys.game(shop, objectId), { wishlisted });
   WindowManager.sendToAppWindows("on-library-batch-complete");
+  if (wishlisted) queueFloppySync(shop, objectId, "wishlist");
 };
 
 registerEvent("setGameWishlisted", setGameWishlisted);

@@ -16,6 +16,7 @@ import "./chat";
 import "./cloud-save";
 import "./connectivity";
 import "./download-sources";
+import "./floppy";
 import "./friends";
 import "./hardware";
 import "./library";

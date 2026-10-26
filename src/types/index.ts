@@ -16,6 +16,7 @@ import type { GameContentWarning } from "./souvenir.types";
 
 export type FriendRequestAction = "ACCEPTED" | "REFUSED" | "CANCEL";
 export * from "./download-contract";
+export * from "./floppy.types";
 
 export type HydraCloudFeature =
   | "achievements"

@@ -22,6 +22,7 @@ import { Wine } from "./wine";
 import { NativeAddon } from "./native-addon";
 import { emulatorSessions } from "./emulators/emulator-session-tracker";
 import { launchedGamePids } from "./launched-game-pids";
+import { queueFloppySync } from "./floppy";
 import { markGameLauncherGameDetected } from "./game-launcher-status";
 import {
   isValidProcessWatcherScan,
@@ -762,6 +763,7 @@ const onCloseGame = (game: Game) => {
   };
 
   void persistGamePlaytime(gameKey, updatedGame, authContext, delta);
+  queueFloppySync(game.shop, game.objectId, "playtime");
 
   if (game.shop === "custom") return;
 

@@ -1005,6 +1005,10 @@ contextBridge.exposeInMainWorld("electron", {
   ) => ipcRenderer.invoke("setGamePlayStatus", shop, objectId, playStatus),
   setGameWishlisted: (shop: GameShop, objectId: string, wishlisted: boolean) =>
     ipcRenderer.invoke("setGameWishlisted", shop, objectId, wishlisted),
+  testFloppyConnection: (url: string, token: string) =>
+    ipcRenderer.invoke("testFloppyConnection", url, token),
+  syncFloppyLibrary: (dryRun: boolean) =>
+    ipcRenderer.invoke("syncFloppyLibrary", dryRun),
   setGameNotes: (shop: GameShop, objectId: string, notes: string) =>
     ipcRenderer.invoke("setGameNotes", shop, objectId, notes),
   updateGameMetadata: (
