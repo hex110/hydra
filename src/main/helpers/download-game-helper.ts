@@ -7,6 +7,7 @@ import {
 } from "@main/level";
 import { DownloadOrchestrator } from "@main/services/download-orchestrator";
 import { canDiscardDownload, type GameShop } from "../../types";
+import { IMPORT_FLAGS_CLEARED } from "@shared";
 
 interface PrepareGameEntryParams {
   gameKey: string;
@@ -49,6 +50,8 @@ export const prepareGameEntry = async ({
         ...latest,
         isDeleted: false,
         source: "hydra",
+        // Downloading makes an imported entry an ordinary game of the user's.
+        ...IMPORT_FLAGS_CLEARED,
         ...(shop === "epic" ? { remoteId: null } : {}),
       });
     });

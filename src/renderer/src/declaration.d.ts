@@ -13,6 +13,9 @@ import type {
   PlayStatus,
   BackgroundTask,
   BackgroundTaskKind,
+  IntegrationName,
+  IntegrationStatuses,
+  LibraryImportSource,
   FloppyPullResult,
   FloppySearchResult,
   SteamGameHistory,
@@ -437,6 +440,12 @@ declare global {
     testFloppyConnection: (url: string, token: string) => Promise<void>;
     getBackgroundTasks: () => Promise<BackgroundTask[]>;
     dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    retryBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    getIntegrationStatuses: () => Promise<IntegrationStatuses>;
+    resetIntegrationStatus: (name: IntegrationName) => Promise<void>;
+    onIntegrationStatusChanged: (cb: () => void) => () => void;
+    countRemovableImports: (source: LibraryImportSource) => Promise<number>;
+    removeImportedGames: (source: LibraryImportSource) => Promise<number>;
     onBackgroundTasksChanged: (
       cb: (tasks: BackgroundTask[]) => void
     ) => () => void;

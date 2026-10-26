@@ -13,6 +13,8 @@ import type {
   PlayStatus,
   BackgroundTask,
   BackgroundTaskKind,
+  IntegrationName,
+  LibraryImportSource,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
@@ -1012,6 +1014,21 @@ contextBridge.exposeInMainWorld("electron", {
   getBackgroundTasks: () => ipcRenderer.invoke("getBackgroundTasks"),
   dismissBackgroundTask: (id: BackgroundTaskKind) =>
     ipcRenderer.invoke("dismissBackgroundTask", id),
+  retryBackgroundTask: (id: BackgroundTaskKind) =>
+    ipcRenderer.invoke("retryBackgroundTask", id),
+  getIntegrationStatuses: () => ipcRenderer.invoke("getIntegrationStatuses"),
+  resetIntegrationStatus: (name: IntegrationName) =>
+    ipcRenderer.invoke("resetIntegrationStatus", name),
+  onIntegrationStatusChanged: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on("on-integration-status-changed", listener);
+    return () =>
+      ipcRenderer.removeListener("on-integration-status-changed", listener);
+  },
+  countRemovableImports: (source: LibraryImportSource) =>
+    ipcRenderer.invoke("countRemovableImports", source),
+  removeImportedGames: (source: LibraryImportSource) =>
+    ipcRenderer.invoke("removeImportedGames", source),
   onBackgroundTasksChanged: (cb: (tasks: BackgroundTask[]) => void) => {
     const listener = (
       _event: Electron.IpcRendererEvent,

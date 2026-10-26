@@ -19,9 +19,16 @@ import { logger } from "../logger";
 import { updateGameRecord } from "../game-record-updater";
 import { firstUnlockTime } from "../steam-history/steam-history-core";
 import {
+  failBackgroundTask,
+  registerBackgroundTaskRetry,
   removeBackgroundTask,
   updateBackgroundTask,
 } from "../background-tasks";
+import {
+  markIntegrationFailed,
+  markIntegrationSynced,
+} from "../integration-status";
+import { describeTaskError } from "../background-task-errors";
 import { WindowManager } from "../window-manager";
 import { FloppyClient } from "./floppy-client";
 import { importFloppyOnlyGames } from "./floppy-import";
@@ -154,6 +161,7 @@ const runQueued = async (key: string, reason: FloppySyncReason) => {
     await syncGame(client, game, reason);
   } catch (error) {
     logger.error("Failed to sync game to Floppy", { key, error });
+    markIntegrationFailed("floppy", describeTaskError(error));
   }
 };
 
@@ -319,11 +327,19 @@ const runPull = async (
   return result;
 };
 
-/** A scheduled pull (`quiet`) leaves nothing on the Downloads page if it changed nothing. */
-export const pullFromFloppy = async (
-  quiet = false
-): Promise<FloppyPullResult> => {
-  if (!(await getFloppyClient())) throw new Error("floppy-not-configured");
+export interface FloppyPullOptions {
+  /** A scheduled pull leaves nothing on the Downloads page if it changed nothing. */
+  quiet?: boolean;
+  /** Also add Floppy-only games to the library (when that option is on). */
+  includeImport?: boolean;
+}
+
+const runPullTask = async ({
+  quiet = false,
+  includeImport = true,
+}: FloppyPullOptions): Promise<FloppyPullResult> => {
+  const client = await getFloppyClient();
+  if (!client) throw new Error("floppy-not-configured");
 
   updateBackgroundTask("floppy-pull", {
     state: "running",
@@ -333,7 +349,6 @@ export const pullFromFloppy = async (
   });
 
   try {
-    const client = (await getFloppyClient())!;
     const preferences = await db
       .get<string, UserPreferences | null>(levelKeys.userPreferences, {
         valueEncoding: "json",
@@ -343,7 +358,7 @@ export const pullFromFloppy = async (
     const entries = await client.listGames();
     const result = await runPull(client, entries);
 
-    if (preferences?.floppyAddToLibrary) {
+    if (includeImport && preferences?.floppyAddToLibrary) {
       const imported = await importFloppyOnlyGames(
         entries,
         await gamesSublevel.values().all()
@@ -370,12 +385,56 @@ export const pullFromFloppy = async (
       });
     }
 
+    await markIntegrationSynced("floppy");
     return result;
   } catch (error) {
-    updateBackgroundTask("floppy-pull", { state: "failed" });
+    markIntegrationFailed(
+      "floppy",
+      failBackgroundTask("floppy-pull", error, { quiet })
+    );
     throw error;
   }
 };
+
+let pullRunning: Promise<FloppyPullResult> | null = null;
+let followUp: Promise<FloppyPullResult> | null = null;
+let followUpOptions: FloppyPullOptions | null = null;
+
+/**
+ * Pulls status, rating and wishlist from Floppy. Requests made while a pull
+ * runs share a single follow-up pull, so adding several games in a row does
+ * not start overlapping reads of the whole Floppy list.
+ */
+export const pullFromFloppy = (
+  options: FloppyPullOptions = {}
+): Promise<FloppyPullResult> => {
+  if (!pullRunning) {
+    pullRunning = runPullTask(options).finally(() => {
+      pullRunning = null;
+    });
+    return pullRunning;
+  }
+
+  followUpOptions = {
+    quiet: (followUpOptions?.quiet ?? true) && options.quiet === true,
+    includeImport:
+      followUpOptions?.includeImport === true ||
+      options.includeImport !== false,
+  };
+  followUp ??= pullRunning
+    .catch(() => null)
+    .then(() => {
+      const next = followUpOptions ?? {};
+      followUpOptions = null;
+      followUp = null;
+      return pullFromFloppy(next);
+    });
+  return followUp;
+};
+
+/** For a change to one game: no Floppy-only import, nothing shown unless it changed something. */
+export const pullFromFloppyForGame = () =>
+  pullFromFloppy({ quiet: true, includeImport: false }).catch(() => null);
 
 const PULL_INTERVAL_MS = 30 * 60_000;
 const PULL_STARTUP_DELAY_MS = 60_000;
@@ -385,11 +444,11 @@ export const startFloppyPullSchedule = () => {
   if (pullTimer) return;
 
   const run = () =>
-    pullFromFloppy(true).catch((error: unknown) => {
+    pullFromFloppy({ quiet: true }).catch((error: unknown) => {
       // Not configured is the normal state for most users.
       if (error instanceof Error && error.message === "floppy-not-configured")
         return;
-      logger.error("Failed to pull from Floppy", error);
+      logger.warn("Failed to pull from Floppy", error);
     });
 
   setTimeout(() => void run(), PULL_STARTUP_DELAY_MS);
@@ -428,6 +487,7 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
   updateBackgroundTask("floppy-sync", { total: games.length });
 
   let next = 0;
+  let firstError: unknown = null;
   const worker = async () => {
     while (next < games.length) {
       const game = games[next++];
@@ -439,6 +499,7 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
         if ("change" in result) report.changes.push(result.change);
       } catch (error) {
         report.failed += 1;
+        firstError ??= error;
         logger.error("Floppy backfill failed for a game", {
           title: game.title,
           error,
@@ -451,6 +512,8 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
   };
 
   await Promise.all(Array.from({ length: BACKFILL_CONCURRENCY }, worker));
+  // Every game failing means Floppy itself is the problem, not the games.
+  if (report.total > 0 && report.failed === report.total) throw firstError;
   return report;
 };
 
@@ -489,7 +552,7 @@ export const startFloppyLibrarySync = async (dryRun: boolean) => {
     })
     .catch((error: unknown) => {
       logger.error("Floppy library sync failed", error);
-      updateBackgroundTask("floppy-sync", { state: "failed" });
+      markIntegrationFailed("floppy", failBackgroundTask("floppy-sync", error));
       syncStatus = {
         ...syncStatus,
         running: false,
@@ -499,3 +562,9 @@ export const startFloppyLibrarySync = async (dryRun: boolean) => {
 
   return syncStatus;
 };
+
+registerBackgroundTaskRetry("floppy-pull", () => pullFromFloppy());
+registerBackgroundTaskRetry("floppy-import", () => pullFromFloppy());
+registerBackgroundTaskRetry("floppy-sync", () =>
+  startFloppyLibrarySync(syncStatus.dryRun)
+);

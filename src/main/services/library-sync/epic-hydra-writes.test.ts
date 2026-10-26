@@ -6,6 +6,7 @@ import { test } from "node:test";
 import * as queue from "./library-write-queue.js";
 import * as requests from "./game-request-queue.js";
 import * as playtime from "../../../shared/playtime.js";
+import * as importedGames from "../../../shared/imported-games.js";
 import * as running from "../game-running-state.js";
 import { createGameRecordUpdater } from "../game-record-updater-core.js";
 import type { Game } from "@types";
@@ -54,6 +55,7 @@ function fixture() {
     "./game-request-queue": requests,
     "./library-write-queue": queue,
     "@shared": playtime,
+    "../../../shared/imported-games": importedGames,
     "../hydra-api": {
       HydraApi: {
         getAuthContext: () => auth,
@@ -223,6 +225,7 @@ function fixture() {
         "@main/constants": { INTERVALS: { processWatcher: 1000 } },
         "./launched-game-pids": { launchedGamePids: new Map() },
         "./floppy": { queueFloppySync: () => {} },
+        "../../shared/imported-games": importedGames,
         "./steam-integration/steam-game-exit-sync": {
           cancelSteamGameExitSync: () => {},
           shouldScheduleSteamGameExitSync: () => false,

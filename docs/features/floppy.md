@@ -1,9 +1,22 @@
 # Floppy sync
 
-Hydra Plus can push your play data to a [Floppy](https://github.com/dannyvfilms/floppy)
-tracker (a self-hosted Yamtrack fork). Settings live in
-**Settings → Integrations → Floppy**: turn it on, enter the Floppy URL and an
-API token, and use **Test connection**, which also saves the settings.
+[Floppy](https://github.com/dannyvfilms/floppy) is a self-hosted game tracker
+(a Yamtrack fork). Hydra Plus keeps it in step with your library. It is
+optional and needs no Hydra account.
+
+## Settings
+
+**Settings → Integrations → Play tracking → Floppy** is a card like the other
+integrations. Enter the Floppy URL and an API token and press **Connect**,
+which checks them before saving. Once connected the card shows the server, when
+Hydra last synced, and why the last sync failed if it did. **Sync** pulls from
+Floppy now; **Disconnect** forgets the token (the URL stays, so reconnecting
+only needs a new token) and can also remove the games Floppy added to the
+library. Nothing is deleted in Floppy.
+
+The options sit in three sections: **Library** (adding Floppy-only games),
+**Start and end dates** (filling them from Steam history) and **Send your whole
+library** (the one-off library sync below).
 
 Sync goes both ways, with a fixed owner for each field:
 
@@ -20,11 +33,8 @@ Sync goes both ways, with a fixed owner for each field:
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Playtime                                            | Progress, in whole minutes. Only ever raised, so playtime entered in Floppy is never lowered. |
 | Play status: playing / finished / dropped / backlog | In progress / Completed / Dropped / Planning                                                  |
-| Wishlisted game                                     | Planning, when the game is not tracked yet                                                    |
-
-A game is pushed ten seconds after its session ends or its status or wishlist
-flag changes (changes are debounced per game). Failures are logged and retried
-on the next change; there is no persistent queue.
+| Your rating (1–10)                                  | Score                                                                                         |
+| Wishlisted game                                     | On the **Wishlist** list (created on demand)                                                  |
 
 ### Status rules
 
@@ -48,8 +58,8 @@ the rest of the session rather than guessed.
 ## Pulling from Floppy
 
 Hydra pulls from Floppy a minute after it starts, every 30 minutes, and on
-**Pull from Floppy now** in the settings. It reads Floppy's whole game list
-(a handful of requests) and, for each game in your library:
+**Sync** in the settings. It reads Floppy's whole game list (a handful of
+requests) and, for each game in your library:
 
 - matches it by the stored id, or else by an exact title that appears once in
   your Floppy list, so no search is needed;
@@ -59,7 +69,12 @@ Hydra pulls from Floppy a minute after it starts, every 30 minutes, and on
 - puts the game on Hydra's wishlist if it is on Floppy's Wishlist list.
 
 A game with a change still waiting to be pushed (about ten seconds) is
-skipped, so a fresh edit in Hydra is not overwritten. Taking a game off
+skipped, so a fresh edit in Hydra is not overwritten.
+
+Adding a game to the library, linking a match or adding a custom game also
+pulls, so the game gets its status and rating straight away. These pulls skip
+the Floppy-only import, and requests made while a pull is running share one
+follow-up pull, so adding several games in a row never runs overlapping pulls. Taking a game off
 Floppy's Wishlist list does not remove it from Hydra's wishlist: a game
 wishlisted before this existed is not on the list yet.
 
@@ -76,15 +91,18 @@ match; on a match it also links an existing library entry for the same game.
   limit.
 - A game you removed from the library, or unlinked from Floppy, is never added
   again.
-- They are never uploaded to your Hydra profile.
+- They stay off your Hydra profile until you download or launch one; then it
+  is an ordinary game of yours.
 - Titles differing only by Roman numeral (II = 2), a leading "The" or an edition
   word (Remastered, Game of the Year Edition, ...) still match, but only when
   exactly one catalogue game fits; "I", "V" and "X" are never read as numerals.
-- Games with no match (Valorant, Minecraft: not on Steam) are listed under the
-  pull button. **Add as custom game** puts one in the library as an uninstalled
-  custom entry with Floppy's cover, linked to its Floppy entry.
-- On the data checked when this was written, 65 of 88 such games matched
-  exactly; the looser rule is for the rest.
+- Games with no match (Valorant, Minecraft: not on Steam) are listed in the
+  **Library** section after a **Sync**. **Add as custom game** puts one in the
+  library as an uninstalled custom entry with Floppy's cover, linked to its
+  Floppy entry.
+- Turning the option off, or disconnecting, offers to remove the games it
+  added. Only untouched entries go (see
+  [Removing imported games](steam-history.md#removing-imported-games)).
 
 ## Fixing a match
 
@@ -94,16 +112,16 @@ links the game to the entry you pick; it is pushed and pulled straight away.
 **Don't track this game in Floppy** unlinks it for good: neither the title
 match nor the library import will link it again, until you pick an entry.
 
-## Library sync
+## Sending your whole library
 
-The sync runs in the background (four games at a time), so you can leave the
-settings page; coming back shows its progress or last result. The result
-lists every game that was (or would be) changed, with its old and new status
-and playtime, and the games that could not be matched.
-
-**Preview library sync** reports what would be created and updated without
-writing; **Sync library now** applies it. Both report the games that could not
-be matched.
+Changes are sent as they happen, so this is for games played before Floppy was
+connected. **Preview** reports what would be created and updated without
+writing; **Send library** applies it. It runs in the background (four games at
+a time), so you can leave the settings page; coming back shows its progress or
+last result. The result lists every game that was (or would be) changed, with
+its old and new status and playtime, and the games that could not be matched.
+If every game fails, Floppy itself is the problem and the task fails with the
+reason instead of reporting hundreds of failed games.
 
 ## Code
 
@@ -116,12 +134,12 @@ the debounced queue and library backfill. Sync is triggered from
 ## TODO
 
 - A "played anywhere" library view of every game tracked in Floppy.
-- A way to correct a wrong or missing match from the game's options.
 
 ## Why there is no per-session history
 
 Floppy records every extra play of a game as another entry of that game (a
 "repeat"), each with its own status and progress. Sending one entry per day
 played would make Floppy count dozens of replays and split the playtime across
-rows, so Hydra sends totals and the start and end dates described above. The
+rows, so Hydra sends totals, plus the start and end dates described in
+[Steam history](steam-history.md#floppy). The
 sessions view in Floppy is only a different way to display those entries.

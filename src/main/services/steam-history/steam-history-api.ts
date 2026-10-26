@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
 
 import type { SteamStoreItem } from "./steam-wishlist-core";
 import type {
@@ -15,6 +15,31 @@ export interface SteamHistoryCredentials {
 const steam = axios.create({
   baseURL: "https://api.steampowered.com",
   timeout: 20_000,
+});
+
+const MAX_RETRIES = 3;
+const RETRY_BASE_MS = 2_000;
+
+// The first import reads hundreds of games; back off when Steam rate-limits or hiccups.
+steam.interceptors.response.use(undefined, async (error: unknown) => {
+  if (!axios.isAxiosError(error) || !error.config) throw error;
+
+  const status = error.response?.status ?? 0;
+  const config = error.config as InternalAxiosRequestConfig & {
+    retryCount?: number;
+  };
+  const attempt = config.retryCount ?? 0;
+  if (![429, 502, 503].includes(status) || attempt >= MAX_RETRIES) throw error;
+
+  const retryAfter = Number(error.response?.headers["retry-after"]);
+  const delay =
+    Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : RETRY_BASE_MS * 2 ** attempt;
+
+  config.retryCount = attempt + 1;
+  await new Promise((resolve) => setTimeout(resolve, delay));
+  return steam.request(config);
 });
 
 export const fetchOwnedGames = async ({

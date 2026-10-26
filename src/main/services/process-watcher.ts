@@ -23,6 +23,10 @@ import { NativeAddon } from "./native-addon";
 import { emulatorSessions } from "./emulators/emulator-session-tracker";
 import { launchedGamePids } from "./launched-game-pids";
 import { queueFloppySync } from "./floppy";
+import {
+  IMPORT_FLAGS_CLEARED,
+  isImportedEntry,
+} from "../../shared/imported-games";
 import { markGameLauncherGameDetected } from "./game-launcher-status";
 import {
   isValidProcessWatcherScan,
@@ -461,6 +465,13 @@ async function onOpenGame(game: Game, matchedPath: string) {
   let syncEpicOnExit = false;
   let isSteamLibraryPath = false;
   const managedEpicSession = await onManagedEpicDetected(game, matchedPath);
+
+  if (isImportedEntry(game)) {
+    void updateGameRecord(gameKey, IMPORT_FLAGS_CLEARED).catch(
+      (error: unknown) =>
+        logger.warn("Failed to clear a launched game's import flags", error)
+    );
+  }
 
   if (game.playStatus === "backlog") {
     void updateGameRecord(gameKey, { playStatus: "playing" }).catch(

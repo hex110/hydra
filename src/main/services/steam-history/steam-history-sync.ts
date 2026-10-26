@@ -13,9 +13,15 @@ import type {
 } from "@types";
 
 import {
+  failBackgroundTask,
+  registerBackgroundTaskRetry,
   updateBackgroundTask,
   removeBackgroundTask,
 } from "../background-tasks";
+import {
+  markIntegrationFailed,
+  markIntegrationSynced,
+} from "../integration-status";
 import { updateGameRecord } from "../game-record-updater";
 import { libraryWriteQueue } from "../library-sync/library-write-queue";
 import { isSkippedSteamLibraryTitle } from "../steam-integration/steam-source-payload";
@@ -358,6 +364,7 @@ export const startSteamHistorySync = async (quiet = false) => {
       }
 
       WindowManager.sendToAppWindows("on-library-batch-complete");
+      return markIntegrationSynced("steamHistory");
     })
     .catch((error: unknown) => {
       logger.error("Steam history sync failed", error);
@@ -366,11 +373,16 @@ export const startSteamHistorySync = async (quiet = false) => {
         running: false,
         error: error instanceof Error ? error.message : String(error),
       };
-      updateBackgroundTask("steam-history", { state: "failed" });
+      markIntegrationFailed(
+        "steamHistory",
+        failBackgroundTask("steam-history", error, { quiet })
+      );
     });
 
   return status;
 };
+
+registerBackgroundTaskRetry("steam-history", () => startSteamHistorySync());
 
 let timer: NodeJS.Timeout | null = null;
 

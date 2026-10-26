@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { XIcon } from "@primer/octicons-react";
+import { SyncIcon, XIcon } from "@primer/octicons-react";
 import type { BackgroundTask } from "@types";
+import { Button } from "@renderer/components";
+import { useToast } from "@renderer/hooks";
+
+import { useTaskErrorMessage } from "./use-task-error-message";
 
 import "./background-tasks-section.scss";
 
@@ -16,6 +20,8 @@ const TASK_ORDER = [
 
 export function BackgroundTasksSection() {
   const { t } = useTranslation("downloads");
+  const { showErrorToast } = useToast();
+  const taskErrorMessage = useTaskErrorMessage();
   const [tasks, setTasks] = useState<BackgroundTask[]>([]);
 
   useEffect(() => {
@@ -36,7 +42,7 @@ export function BackgroundTasksSection() {
     t(`task_${task.id.replaceAll("-", "_")}${task.dryRun ? "_preview" : ""}`);
 
   const detail = (task: BackgroundTask) => {
-    if (task.state === "failed") return t("task_failed");
+    if (task.state === "failed") return taskErrorMessage(task.id, task.error);
     if (task.state === "queued") {
       return t("task_floppy_push_queued", { count: task.total ?? 0 });
     }
@@ -52,6 +58,12 @@ export function BackgroundTasksSection() {
         ...task.result,
       }
     );
+  };
+
+  const retry = (task: BackgroundTask) => {
+    window.electron
+      .retryBackgroundTask(task.id)
+      .catch(() => showErrorToast(t("task_retry_failed")));
   };
 
   return (
@@ -71,6 +83,12 @@ export function BackgroundTasksSection() {
                 />
               )}
             </div>
+            {task.state === "failed" && (
+              <Button theme="outline" onClick={() => retry(task)}>
+                <SyncIcon size={14} />
+                {t("task_retry")}
+              </Button>
+            )}
             {(task.state === "done" || task.state === "failed") && (
               <button
                 type="button"

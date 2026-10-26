@@ -3,12 +3,22 @@
 Hydra Plus can read your playtime, last played times and achievement unlock
 dates straight from Steam. It uses your own Steam Web API key, so it needs no
 Hydra account and does not go through Hydra's servers (unlike the upstream
-Steam sync, which is separate and untouched). Settings live in
-**Settings → Integrations → Steam history**: enter your SteamID64 and a key
-from `steamcommunity.com/dev/apikey`, press **Test connection**, then
-**Import now**. Your Steam profile's **Game details** must be public.
+Steam sync, which is separate and untouched). Your Steam profile's **Game
+details** must be public.
 
-The key is stored in Hydra's user preferences next to the other tokens.
+## Settings
+
+**Settings → Integrations → Play tracking → Steam history** is a card like
+the other integrations. Enter your SteamID64 and a key from
+`steamcommunity.com/dev/apikey` and press **Connect**, which checks them
+against Steam before saving. Once connected the card shows the SteamID, when
+the last import finished, its progress while it runs, and why the last import
+failed if it did. **Import now** runs an import; **Disconnect** forgets the key
+and can also remove the games the import and the wishlist added to the
+library. Playtime and achievements already imported stay.
+
+The options sit in two sections, **Library** and **Wishlist**, described
+below. The key is stored in Hydra's user preferences next to the other tokens.
 
 ## What is imported
 
@@ -21,14 +31,16 @@ For every game you own (including ones that are not in Hydra's library):
   read, and a game is read again only when its playtime or last played time
   changed, so later imports are fast.
 
-The first import reads about 400 games' achievements and takes a few minutes;
-later ones take seconds. Hydra then repeats it 90 seconds after starting and
-every six hours.
+The first import reads the achievements of every game you have played, which
+takes a few minutes for a large library; later ones take seconds. Hydra then
+repeats it 90 seconds after starting and every six hours. When Steam
+rate-limits or briefly fails (HTTP 429, 502, 503), a request is retried up to
+three times with a growing delay, honouring Steam's `Retry-After`.
 
 ## Adding your Steam games to the library
 
-Turn on **Add my Steam games to the library** (it appears once a key is
-saved) and the import creates an ordinary, uninstalled library entry for each
+Turn on **Add my Steam games to the library** (in the **Library** section) and
+the import creates an ordinary, uninstalled library entry for each
 owned game that has none, with Steam's artwork, so it needs no catalogue
 request. Choose the minimum playtime: **no playtime** adds every owned game
 (your whole library), or only games played at least 1 minute, 30 minutes or an
@@ -39,14 +51,16 @@ hour. Demos and betas are always skipped.
   added".
 - A game that is already in the library, **including one you removed**, is
   left alone: your choice wins.
-- They are never uploaded to your Hydra profile, signed in or not.
+- They stay off your Hydra profile until you download or launch one. From then
+  on it is an ordinary game of yours: uploaded like any other, no longer
+  under the Steam tab, and never removed by the options below.
 - Installing one works like any uninstalled game.
 - A game below the playtime limit that you later add from the catalogue gets
   its Steam history, Floppy status and rating straight away.
 
 ## Steam wishlist
 
-Turn on **Follow my Steam wishlist** and Hydra reads your wishlist through
+In the **Wishlist** section, turn on **Follow my Steam wishlist** and Hydra reads your wishlist through
 Steam's Web API (the same key; the profile's game details must be public)
 every three hours and when you press **Check wishlist now**.
 
@@ -60,14 +74,27 @@ every three hours and when you press **Check wishlist now**.
 - **Upcoming games in the library.** On by default: games that are not out yet
   are listed as ordinary library entries and marked wishlisted, so they show
   in the wishlist collection and Hydra's own download alerts apply. Games you
-  removed stay removed, and none of them are uploaded to your Hydra profile.
-  Floppy's **Wishlist** list gets them too when Floppy sync is on.
+  removed stay removed, and they stay off your Hydra profile until you
+  download one. Floppy's **Wishlist** list gets them too when Floppy sync is on.
 - Games you already own, or that are already out, are not added; they are only
   tracked to notice their release. Games bought or taken off the wishlist stop
   being tracked.
 
-The status shows as a task on the Downloads page. On the account used to write
-this, 1,459 games were wishlisted and 243 were not out yet.
+The status shows as a task on the Downloads page, and the **Wishlist** section
+shows when it last checked or why the check failed.
+
+## Removing imported games
+
+Turning off **Add my Steam games to the library**, **List wishlisted games that
+are not out yet in the library** or Floppy's **Add Floppy games played outside
+Steam to the library** asks whether to remove the games that option added;
+**Disconnect** offers the same as a checkbox. Only untouched entries go: a game
+you downloaded, launched, played in Hydra, favourited, pinned, put in a
+collection, wrote notes for or gave custom artwork stays. Playtime, status and
+rating that came from Steam or Floppy don't count as touching it.
+
+The entries are deleted outright rather than marked removed, so turning the
+option on again adds them back. A game you removed yourself stays removed.
 
 ## Where it shows
 
@@ -125,8 +152,5 @@ logic, `steam-history-api.ts` the Steam client, `steam-history-sync.ts` the
 background job and schedule. Entries are stored per app id in the
 `steamHistory` sublevel.
 
-## Not done
-
-- Games played outside Steam that Floppy tracks are not added to the library
-  yet: Floppy only knows their IGDB id, and a library entry needs a catalogue
-  id (see the roadmap).
+Removal is in `src/main/services/imported-games.ts`; what counts as untouched
+is `isUntouchedImport` in `src/shared/imported-games.ts` (tested).

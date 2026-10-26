@@ -53,6 +53,7 @@ export * from "./library-group-actions";
 export * from "./library-metadata";
 export * from "./play-activity";
 export * from "./completion-suggestion";
+export * from "./imported-games";
 export * from "./local-collections";
 export * from "./steam-news";
 export * from "./catalogue-row-details";

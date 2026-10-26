@@ -15,6 +15,15 @@ export function SettingsContextIntegrations() {
         <SettingsSteam />
         <SettingsEpic />
         <SettingsRetroAchievements />
+      </div>
+
+      <hr className="settings-context-panel__divider" />
+
+      <div className="settings-context-panel__group">
+        <h3>{t("play_tracking")}</h3>
+        <p className="settings-context-panel__description">
+          {t("play_tracking_description")}
+        </p>
         <SettingsSteamHistory />
         <SettingsFloppy />
       </div>

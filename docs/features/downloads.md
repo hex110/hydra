@@ -70,3 +70,9 @@ changes waiting to be sent to Floppy (a game's change is sent about ten
 seconds after it happens, so a burst shows as "N waiting to be sent"). Each
 shows its progress, and a finished one stays with its result until you dismiss
 it. Scheduled runs that changed nothing leave nothing behind.
+
+A failed task says why in plain words (Floppy can't be reached, Steam rejected
+the key, the Steam profile is private, the service is rate-limiting or had a
+server error) and has **Try again**. If you dismiss a failure, scheduled runs
+that fail the same way stay quiet until one succeeds or the reason changes;
+the integration's card in **Settings → Integrations** still shows it.

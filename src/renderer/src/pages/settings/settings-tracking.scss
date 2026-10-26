@@ -1,0 +1,53 @@
+@use "../../scss/globals.scss";
+
+.settings-tracking {
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 1.5);
+  }
+
+  &__row {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: globals.$spacing-unit;
+  }
+
+  &__error {
+    color: globals.$warning-color;
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+
+    summary {
+      cursor: pointer;
+      color: globals.$body-color;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    max-height: 320px;
+    overflow-y: auto;
+    margin: 0;
+    padding: globals.$spacing-unit 0 0 calc(globals.$spacing-unit * 2);
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(globals.$spacing-unit * 2);
+    }
+
+    span {
+      color: globals.$body-color;
+    }
+  }
+}

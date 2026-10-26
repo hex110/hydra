@@ -12,9 +12,15 @@ import type {
 } from "@types";
 
 import {
+  failBackgroundTask,
+  registerBackgroundTaskRetry,
   removeBackgroundTask,
   updateBackgroundTask,
 } from "../background-tasks";
+import {
+  markIntegrationFailed,
+  markIntegrationSynced,
+} from "../integration-status";
 import { queueFloppySync } from "../floppy";
 import { updateGameRecord } from "../game-record-updater";
 import { libraryWriteQueue } from "../library-sync/library-write-queue";
@@ -237,13 +243,19 @@ export const startSteamWishlistSync = async (quiet = false) => {
     if (result.added > 0) {
       WindowManager.sendToAppWindows("on-library-batch-complete");
     }
+    await markIntegrationSynced("steamWishlist");
   } catch (error) {
     logger.error("Steam wishlist sync failed", error);
-    updateBackgroundTask("steam-wishlist", { state: "failed" });
+    markIntegrationFailed(
+      "steamWishlist",
+      failBackgroundTask("steam-wishlist", error, { quiet })
+    );
   } finally {
     running = false;
   }
 };
+
+registerBackgroundTaskRetry("steam-wishlist", () => startSteamWishlistSync());
 
 let timer: NodeJS.Timeout | null = null;
 

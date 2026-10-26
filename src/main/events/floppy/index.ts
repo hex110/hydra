@@ -12,6 +12,7 @@ import {
   getFloppySyncStatus,
   queueFloppySync,
   pullFromFloppy,
+  pullFromFloppyForGame,
   startFloppyLibrarySync,
   FloppyClient,
 } from "@main/services/floppy";
@@ -77,7 +78,7 @@ registerEvent(
     });
 
     WindowManager.sendToAppWindows("on-library-batch-complete");
-    void pullFromFloppy(true).catch(() => {});
+    void pullFromFloppyForGame();
   }
 );
 
@@ -114,7 +115,7 @@ registerEvent(
 
     if (mediaId !== null) {
       queueFloppySync(shop, objectId, "backfill");
-      void pullFromFloppy(true).catch(() => {});
+      void pullFromFloppyForGame();
     }
   }
 );

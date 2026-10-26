@@ -9,7 +9,7 @@ import {
 } from "@main/level";
 import { clearFinishedDownload } from "@main/helpers";
 import { applySteamHistoryToGame } from "@main/services/steam-history";
-import { pullFromFloppy } from "@main/services/floppy";
+import { pullFromFloppyForGame } from "@main/services/floppy";
 import { AchievementWatcherManager } from "@main/services/achievements/achievement-watcher-manager";
 
 const lookupCachedPlatform = async (
@@ -91,7 +91,7 @@ const addGameToLibrary = async (
     // A game the Steam import skipped (below the playtime limit) or a Floppy-only game
     // still gets its history now rather than at the next sync.
     void applySteamHistoryToGame(game.shop, game.objectId).catch(() => {});
-    void pullFromFloppy(true).catch(() => {});
+    void pullFromFloppyForGame();
   }
 };
 

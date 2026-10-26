@@ -14,6 +14,7 @@ export const levelKeys = {
   playActivity: "playActivity",
   steamHistory: "steamHistory",
   steamWishlist: "steamWishlist",
+  integrationSyncTimes: "integrationSyncTimes",
   localCollections: "localCollections",
   gameShopCacheItem: (shop: GameShop, objectId: string, language: string) =>
     `${shop}:${objectId}:${language}`,

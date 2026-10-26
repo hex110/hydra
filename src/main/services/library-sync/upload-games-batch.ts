@@ -11,6 +11,7 @@ import { WindowManager } from "../window-manager";
 import { AchievementWatcherManager } from "../achievements/achievement-watcher-manager";
 import { gamesSublevel } from "@main/level";
 import { trackRemoteLibrarySync } from "./remote-library-sync-state";
+import { isImportedEntry } from "../../../shared/imported-games";
 
 const uploadLocalGamesAndMerge = async () => {
   const context = HydraApi.getAuthContext();
@@ -28,9 +29,7 @@ const uploadLocalGamesAndMerge = async () => {
         (game) =>
           !game.isDeleted &&
           game.remoteId === null &&
-          !game.steamHistoryImported &&
-          !game.floppyImported &&
-          !game.steamWishlistImported &&
+          !isImportedEntry(game) &&
           game.shop !== "custom" &&
           game.source !== "epic"
       );
@@ -50,9 +49,7 @@ const uploadLocalGamesAndMerge = async () => {
               !!game &&
               !game.isDeleted &&
               game.remoteId === null &&
-              !game.steamHistoryImported &&
-              !game.floppyImported &&
-              !game.steamWishlistImported &&
+              !isImportedEntry(game) &&
               game.source !== "epic"
           );
           if (!latest.length) return;
