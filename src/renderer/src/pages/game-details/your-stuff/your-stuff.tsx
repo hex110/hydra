@@ -22,6 +22,8 @@ import "./your-stuff.scss";
 
 const COPY_SOURCES = ["steam", "epic", "classics", "local"] as const;
 
+const RATINGS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
 const noop = () => {};
 
 const describeRelease = (title: string) =>
@@ -92,6 +94,18 @@ export function YourStuff() {
     }
   };
 
+  const setRating = async (rating: number | null) => {
+    try {
+      await applyLibraryGroupAction(members, (member) =>
+        window.electron.setGameRating(member.shop, member.objectId, rating)
+      );
+    } catch {
+      showErrorToast(t("failed_update_rating"));
+    } finally {
+      await Promise.all([updateLibrary(), updateGame()]);
+    }
+  };
+
   const copyLabel = (member: LibraryGame) => {
     const source =
       COPY_SOURCES.find((value) => libraryTabIncludes(member, value)) ??
@@ -110,6 +124,28 @@ export function YourStuff() {
       </div>
 
       <dl className="your-stuff__stats">
+        <div>
+          <dt>{t("your_rating")}</dt>
+          <dd>
+            <select
+              className="your-stuff__rating"
+              aria-label={t("your_rating")}
+              value={shown.rating ?? ""}
+              onChange={(event) =>
+                void setRating(
+                  event.target.value === "" ? null : Number(event.target.value)
+                )
+              }
+            >
+              <option value="">{t("rating_none")}</option>
+              {RATINGS.map((value) => (
+                <option key={value} value={value}>
+                  {value} / 10
+                </option>
+              ))}
+            </select>
+          </dd>
+        </div>
         <div>
           <dt>{t("details_playtime", { ns: "library" })}</dt>
           <dd>

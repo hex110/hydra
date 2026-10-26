@@ -143,6 +143,19 @@ export function SettingsFloppy() {
     }
   };
 
+  const handlePull = async () => {
+    setIsBusy(true);
+
+    try {
+      const result = await window.electron.pullFloppy();
+      showSuccessToast(t("floppy_pull_result", { ...result }));
+    } catch {
+      showErrorToast(t("floppy_pull_failed"));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const renderSyncStatus = () => {
     if (!syncStatus) return null;
     const { running, report, error, processed, total } = syncStatus;
@@ -221,6 +234,14 @@ export function SettingsFloppy() {
                 onClick={() => handleSync(false)}
               >
                 {t("floppy_sync_library")}
+              </Button>
+              <Button
+                type="button"
+                theme="outline"
+                disabled={isBusy || syncStatus?.running}
+                onClick={handlePull}
+              >
+                {t("floppy_pull")}
               </Button>
               <span className="settings-floppy__status">
                 {renderSyncStatus()}

@@ -5,7 +5,14 @@ tracker (a self-hosted Yamtrack fork). Settings live in
 **Settings → Integrations → Floppy**: turn it on, enter the Floppy URL and an
 API token, and use **Test connection**, which also saves the settings.
 
-Sync is **one way, Hydra → Floppy**. Nothing is read back into Hydra.
+Sync goes both ways, with a fixed owner for each field:
+
+| Field       | Owner          | Notes                                                         |
+| ----------- | -------------- | ------------------------------------------------------------- |
+| Play status | Floppy         | Hydra's change is pushed; a pull then applies Floppy's.       |
+| Rating      | Floppy         | Set on the game page, **Your rating** (1–10); Floppy's score. |
+| Wishlist    | Both, add-only | See below.                                                    |
+| Playtime    | Hydra          | Pushed as minutes; never lowers Floppy's value.               |
 
 ## What is pushed
 
@@ -25,9 +32,10 @@ on the next change; there is no persistent queue.
 - A playtime or wishlist sync never overwrites a status that already exists
   in Floppy. The one exception: an entry still on Planning moves to In
   progress once the game has playtime.
-- A game with no playtime, status or wishlist flag is not created in Floppy.
-- Removing a game from the wishlist, or from Hydra, never deletes anything in
-  Floppy.
+- A game with no playtime, status or rating is not created in Floppy.
+- Removing a game from Hydra never deletes anything in Floppy.
+- Wishlisted games go on a list, not on Planning, because Planning also means
+  "owned, waiting to be played".
 
 ## Matching
 
@@ -36,6 +44,24 @@ title and accepts only a result whose normalised title (case, punctuation and
 ™/® ignored) equals the game's, preferring the PC release. The id is stored on
 the game record as `floppyMediaId`. A game with no exact match is skipped for
 the rest of the session rather than guessed.
+
+## Pulling from Floppy
+
+Hydra pulls from Floppy a minute after it starts, every 30 minutes, and on
+**Pull from Floppy now** in the settings. It reads Floppy's whole game list
+(a handful of requests) and, for each game in your library:
+
+- matches it by the stored id, or else by an exact title that appears once in
+  your Floppy list, so no search is needed;
+- takes Floppy's status (Planning → Backlog, In progress → Playing,
+  Completed → Finished, Dropped → Dropped; **Paused** has no Hydra status and
+  changes nothing) and score;
+- puts the game on Hydra's wishlist if it is on Floppy's Wishlist list.
+
+A game with a change still waiting to be pushed (about ten seconds) is
+skipped, so a fresh edit in Hydra is not overwritten. Taking a game off
+Floppy's Wishlist list does not remove it from Hydra's wishlist: a game
+wishlisted before this existed is not on the list yet.
 
 ## Library sync
 
@@ -58,7 +84,7 @@ the debounced queue and library backfill. Sync is triggered from
 
 ## TODO
 
-- **Rating.** Hydra has no per-game rating yet. Once it does, push it as
-  Floppy's `score` (a `PATCH /media/game/igdb/{id}/` field).
+- Start and end dates, and per-session history, so Floppy's statistics show
+  when a game was played.
+- A "played anywhere" library view of every game tracked in Floppy.
 - A way to correct a wrong or missing match from the game's options.
-- Optionally read Floppy's status and score back into Hydra.

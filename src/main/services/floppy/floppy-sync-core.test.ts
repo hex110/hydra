@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 
 import {
   FLOPPY_STATUS,
+  floppyStatusToPlayStatus,
+  planPull,
   normalizeTitle,
   pickMatch,
   planPatch,
@@ -14,11 +16,17 @@ const untracked: FloppyTrackedState = {
   tracked: false,
   status: null,
   progress: 0,
+  score: null,
 };
-const tracked = (status: number, progress = 0): FloppyTrackedState => ({
+const tracked = (
+  status: number,
+  progress = 0,
+  score: number | null = null
+): FloppyTrackedState => ({
   tracked: true,
   status,
   progress,
+  score,
 });
 const game = (overrides: Partial<FloppyGameInput> = {}): FloppyGameInput => ({
   title: "Hades",
@@ -76,10 +84,37 @@ describe("planPatch", () => {
     assert.deepEqual(planPatch(game(), untracked, "backfill"), {});
   });
 
-  it("puts a wishlisted game on Planning", () => {
+  it("does not track a game just because it is wishlisted", () => {
     assert.deepEqual(
-      planPatch(game({ wishlisted: true }), untracked, "wishlist"),
-      { status: FLOPPY_STATUS.planning }
+      planPatch(game({ wishlisted: true }), untracked, "backfill"),
+      {}
+    );
+  });
+
+  it("pushes a rating and clears the score only on an explicit change", () => {
+    assert.deepEqual(
+      planPatch(
+        game({ rating: 8, playStatus: "finished" }),
+        tracked(FLOPPY_STATUS.completed, 0, 6),
+        "rating"
+      ),
+      { score: 8 }
+    );
+    assert.deepEqual(
+      planPatch(
+        game({ rating: null }),
+        tracked(FLOPPY_STATUS.completed, 0, 6),
+        "rating"
+      ),
+      { score: null }
+    );
+    assert.deepEqual(
+      planPatch(
+        game({ rating: null }),
+        tracked(FLOPPY_STATUS.completed, 0, 6),
+        "backfill"
+      ),
+      {}
     );
   });
 
@@ -120,5 +155,38 @@ describe("planPatch", () => {
       ),
       { progress: 10, status: FLOPPY_STATUS.inProgress }
     );
+  });
+});
+
+describe("planPull", () => {
+  it("lets Floppy win on status and rating", () => {
+    assert.deepEqual(
+      planPull(
+        { playStatus: "playing", rating: null, wishlisted: false },
+        { status: FLOPPY_STATUS.completed, score: 9 },
+        false
+      ),
+      { playStatus: "finished", rating: 9 }
+    );
+  });
+
+  it("leaves the play status alone for Paused", () => {
+    assert.equal(floppyStatusToPlayStatus(FLOPPY_STATUS.paused), undefined);
+    assert.deepEqual(
+      planPull(
+        { playStatus: "playing", rating: 7, wishlisted: false },
+        { status: FLOPPY_STATUS.paused, score: 7 },
+        false
+      ),
+      {}
+    );
+  });
+
+  it("adds to the wishlist but never removes from it", () => {
+    const entry = { status: null, score: null };
+    assert.deepEqual(planPull({ wishlisted: false }, entry, true), {
+      wishlisted: true,
+    });
+    assert.deepEqual(planPull({ wishlisted: true }, entry, false), {});
   });
 });

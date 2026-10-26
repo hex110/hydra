@@ -27,3 +27,9 @@ export interface FloppySyncStatus {
   report: FloppyBackfillReport | null;
   error: string | null;
 }
+
+export interface FloppyPullResult {
+  total: number;
+  matched: number;
+  updated: number;
+}

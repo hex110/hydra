@@ -175,6 +175,8 @@ export interface Game extends LibraryCatalogueMetadata {
   floppyMediaId?: string | null;
   /** The user's own notes about the game. */
   notes?: string | null;
+  /** Your rating from 1 to 10, kept in step with the score in Floppy. */
+  rating?: number | null;
   /** Replaces the store description on the game page. */
   customDescription?: string | null;
   /** Replaces the catalogue genres on the game page and in library filters. */

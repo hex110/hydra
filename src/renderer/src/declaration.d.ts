@@ -11,6 +11,7 @@ import type {
   GameMetadataOverrides,
   PlayActivityEntry,
   PlayStatus,
+  FloppyPullResult,
   FloppySyncStatus,
   GameLaunchPreview,
   MangoHudSettings,
@@ -429,6 +430,12 @@ declare global {
       wishlisted: boolean
     ) => Promise<void>;
     testFloppyConnection: (url: string, token: string) => Promise<void>;
+    pullFloppy: () => Promise<FloppyPullResult>;
+    setGameRating: (
+      shop: GameShop,
+      objectId: string,
+      rating: number | null
+    ) => Promise<void>;
     getFloppySyncStatus: () => Promise<FloppySyncStatus>;
     syncFloppyLibrary: (dryRun: boolean) => Promise<FloppySyncStatus>;
     setGameNotes: (

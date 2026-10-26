@@ -1,6 +1,7 @@
 import { registerEvent } from "../register-event";
 import {
   getFloppySyncStatus,
+  pullFromFloppy,
   startFloppyLibrarySync,
   FloppyClient,
 } from "@main/services/floppy";
@@ -20,3 +21,4 @@ registerEvent("testFloppyConnection", testFloppyConnection);
 registerEvent("syncFloppyLibrary", syncFloppyLibrary);
 
 registerEvent("getFloppySyncStatus", () => getFloppySyncStatus());
+registerEvent("pullFloppy", () => pullFromFloppy());

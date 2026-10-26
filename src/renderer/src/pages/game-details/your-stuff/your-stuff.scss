@@ -32,6 +32,15 @@
     }
   }
 
+  &__rating {
+    padding: 2px calc(globals.$spacing-unit);
+    border-radius: 4px;
+    border: 1px solid globals.$border-color;
+    background-color: globals.$background-color;
+    color: inherit;
+    font: inherit;
+  }
+
   &__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

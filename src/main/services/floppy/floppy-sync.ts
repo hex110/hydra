@@ -2,6 +2,7 @@ import { db, gamesSublevel, levelKeys } from "@main/level";
 import type {
   FloppyBackfillReport,
   FloppyGameChange,
+  FloppyPullResult,
   FloppySyncStatus,
   Game,
   GameShop,
@@ -10,10 +11,13 @@ import type {
 
 import { logger } from "../logger";
 import { updateGameRecord } from "../game-record-updater";
+import { WindowManager } from "../window-manager";
 import { FloppyClient } from "./floppy-client";
 import {
+  normalizeTitle,
   pickMatch,
   planPatch,
+  planPull,
   type FloppyPatch,
   type FloppySyncReason,
 } from "./floppy-sync-core";
@@ -89,13 +93,12 @@ const syncGame = async (
       await client.track(mediaId, {
         status: patch.status,
         progress: patch.progress,
+        score: patch.score,
       });
     return { outcome: "created", change };
   }
 
-  if (patch.status === undefined && patch.progress === undefined) {
-    return { outcome: "unchanged" };
-  }
+  if (Object.keys(patch).length === 0) return { outcome: "unchanged" };
 
   if (!dryRun) await client.update(mediaId, patch);
   return { outcome: "updated", change };
@@ -115,23 +118,151 @@ const runQueued = async (key: string, reason: FloppySyncReason) => {
   }
 };
 
+const runQueuedWishlist = async (key: string) => {
+  const client = await getFloppyClient();
+  if (!client) return;
+
+  const game = await gamesSublevel.get(key).catch(() => null);
+  if (!game || game.shop === "launchbox") return;
+
+  try {
+    const mediaId = await resolveMediaId(client, game);
+    if (!mediaId) return;
+
+    const wishlisted = game.wishlisted === true;
+    const listId = await client.getWishlistId(wishlisted);
+    if (listId !== null)
+      await client.setWishlisted(mediaId, listId, wishlisted);
+  } catch (error) {
+    logger.error("Failed to sync the Floppy wishlist", { key, error });
+  }
+};
+
+// An explicit change must not be downgraded by a later playtime sync.
+const REASON_PRIORITY: Record<FloppySyncReason, number> = {
+  playtime: 0,
+  backfill: 0,
+  rating: 1,
+  status: 2,
+};
+
+const schedule = (
+  key: string,
+  reason: FloppySyncReason | "wishlist",
+  run: (effective: FloppySyncReason) => Promise<void>
+) => {
+  const slot = `${reason === "wishlist" ? "w" : "g"}:${key}`;
+  const existing = pending.get(slot);
+  if (existing) clearTimeout(existing.timer);
+
+  const effective =
+    reason === "wishlist"
+      ? "playtime"
+      : existing && REASON_PRIORITY[existing.reason] > REASON_PRIORITY[reason]
+        ? existing.reason
+        : reason;
+  const timer = setTimeout(() => {
+    pending.delete(slot);
+    void run(effective);
+  }, DEBOUNCE_MS);
+
+  pending.set(slot, { timer, reason: effective });
+};
+
 export const queueFloppySync = (
   shop: GameShop,
   objectId: string,
-  reason: FloppySyncReason
+  reason: FloppySyncReason | "wishlist"
 ) => {
   const key = levelKeys.game(shop, objectId);
-  const existing = pending.get(key);
-  if (existing) clearTimeout(existing.timer);
 
-  // A status change must not be downgraded by a later playtime sync.
-  const effective = existing?.reason === "status" ? "status" : reason;
-  const timer = setTimeout(() => {
-    pending.delete(key);
-    void runQueued(key, effective);
-  }, DEBOUNCE_MS);
+  if (reason === "wishlist") {
+    schedule(key, reason, () => runQueuedWishlist(key));
+    return;
+  }
 
-  pending.set(key, { timer, reason: effective });
+  schedule(key, reason, (effective) => runQueued(key, effective));
+};
+
+const hasPendingFloppyChange = (key: string) =>
+  pending.has(`g:${key}`) || pending.has(`w:${key}`);
+
+/** Brings status, rating and wishlist from Floppy into Hydra. */
+export const pullFromFloppy = async (): Promise<FloppyPullResult> => {
+  const client = await getFloppyClient();
+  if (!client) throw new Error("floppy-not-configured");
+
+  const [entries, wishlistId, games] = await Promise.all([
+    client.listGames(),
+    client.getWishlistId(false),
+    gamesSublevel.values().all(),
+  ]);
+  const wishlist =
+    wishlistId === null
+      ? new Set<string>()
+      : await client.listWishlistMediaIds(wishlistId);
+
+  const byId = new Map(entries.map((entry) => [entry.mediaId, entry]));
+  const byTitle = new Map<string, string | null>();
+  for (const entry of entries) {
+    const title = normalizeTitle(entry.title);
+    // Two entries with one title (remaster, other platform) are ambiguous.
+    byTitle.set(title, byTitle.has(title) ? null : entry.mediaId);
+  }
+
+  const result: FloppyPullResult = {
+    total: games.length,
+    matched: 0,
+    updated: 0,
+  };
+
+  for (const game of games) {
+    if (game.isDeleted || game.shop === "launchbox") continue;
+
+    const key = levelKeys.game(game.shop, game.objectId);
+    const mediaId =
+      game.floppyMediaId ?? byTitle.get(normalizeTitle(game.title)) ?? null;
+    const entry = mediaId ? byId.get(mediaId) : undefined;
+    if (!mediaId || !entry) continue;
+    result.matched += 1;
+
+    // A change made in Hydra a moment ago has not reached Floppy yet.
+    if (hasPendingFloppyChange(key)) continue;
+
+    const change = planPull(game, entry, wishlist.has(mediaId));
+    const matchChanged = game.floppyMediaId !== mediaId;
+    if (Object.keys(change).length === 0 && !matchChanged) continue;
+
+    await updateGameRecord(key, {
+      ...change,
+      ...(matchChanged ? { floppyMediaId: mediaId } : {}),
+    });
+    if (Object.keys(change).length > 0) result.updated += 1;
+  }
+
+  if (result.updated > 0) {
+    WindowManager.sendToAppWindows("on-library-batch-complete");
+  }
+  return result;
+};
+
+const PULL_INTERVAL_MS = 30 * 60_000;
+const PULL_STARTUP_DELAY_MS = 60_000;
+let pullTimer: NodeJS.Timeout | null = null;
+
+export const startFloppyPullSchedule = () => {
+  if (pullTimer) return;
+
+  const run = () =>
+    pullFromFloppy().catch((error: unknown) => {
+      // Not configured is the normal state for most users.
+      if (error instanceof Error && error.message === "floppy-not-configured")
+        return;
+      logger.error("Failed to pull from Floppy", error);
+    });
+
+  setTimeout(() => void run(), PULL_STARTUP_DELAY_MS);
+  pullTimer = setInterval(() => void run(), PULL_INTERVAL_MS);
 };
 
 const BACKFILL_CONCURRENCY = 4;

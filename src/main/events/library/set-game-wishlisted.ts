@@ -14,7 +14,7 @@ const setGameWishlisted = async (
 ) => {
   await updateGameRecord(levelKeys.game(shop, objectId), { wishlisted });
   WindowManager.sendToAppWindows("on-library-batch-complete");
-  if (wishlisted) queueFloppySync(shop, objectId, "wishlist");
+  queueFloppySync(shop, objectId, "wishlist");
 };
 
 registerEvent("setGameWishlisted", setGameWishlisted);

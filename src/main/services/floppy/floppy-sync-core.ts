@@ -19,6 +19,16 @@ export interface FloppyTrackedState {
   tracked: boolean;
   status: number | null;
   progress: number;
+  score: number | null;
+}
+
+/** One tracked game as listed by Floppy. */
+export interface FloppyEntry {
+  mediaId: string;
+  title: string;
+  status: number | null;
+  score: number | null;
+  progress: number;
 }
 
 export interface FloppyGameInput {
@@ -26,13 +36,15 @@ export interface FloppyGameInput {
   playTimeInMilliseconds: number;
   playStatus?: PlayStatus | null;
   wishlisted?: boolean;
+  rating?: number | null;
 }
 
-export type FloppySyncReason = "playtime" | "status" | "wishlist" | "backfill";
+export type FloppySyncReason = "playtime" | "status" | "rating" | "backfill";
 
 export interface FloppyPatch {
   status?: number;
   progress?: number;
+  score?: number | null;
 }
 
 const PC_PLATFORM = "PC (Microsoft Windows)";
@@ -84,8 +96,12 @@ export const planPatch = (
   const minutes = playTimeToMinutes(game.playTimeInMilliseconds);
   const current = state.tracked ? state.status : null;
 
-  if (reason !== "wishlist" && minutes > state.progress) {
-    patch.progress = minutes;
+  if (minutes > state.progress) patch.progress = minutes;
+
+  // Only an explicit rating change may clear Floppy's score.
+  const rating = game.rating ?? null;
+  if (rating !== state.score && (rating !== null || reason === "rating")) {
+    if (reason !== "playtime") patch.score = rating;
   }
 
   const hydraStatus = game.playStatus
@@ -99,7 +115,7 @@ export const planPatch = (
   if (reason === "status" && hydraStatus !== null) {
     if (hydraStatus !== current) patch.status = hydraStatus;
   } else if (!state.tracked) {
-    if (hydraStatus !== null || game.wishlisted || minutes > 0) {
+    if (hydraStatus !== null || minutes > 0 || patch.score != null) {
       patch.status = inferred;
     }
   } else if (current === FLOPPY_STATUS.planning && inferred !== current) {
@@ -107,4 +123,51 @@ export const planPatch = (
   }
 
   return patch;
+};
+
+/** Paused has no Hydra equivalent, so it leaves the play status alone. */
+export const floppyStatusToPlayStatus = (
+  status: number | null
+): PlayStatus | undefined => {
+  switch (status) {
+    case FLOPPY_STATUS.planning:
+      return "backlog";
+    case FLOPPY_STATUS.inProgress:
+      return "playing";
+    case FLOPPY_STATUS.completed:
+      return "finished";
+    case FLOPPY_STATUS.dropped:
+      return "dropped";
+    default:
+      return undefined;
+  }
+};
+
+export interface FloppyPullChange {
+  playStatus?: PlayStatus;
+  rating?: number | null;
+  wishlisted?: boolean;
+}
+
+/**
+ * Floppy wins on status and rating. Wishlist is only ever added to: a game
+ * Hydra wishlisted before the sync existed is not on Floppy's list, and must
+ * not be dropped for that.
+ */
+export const planPull = (
+  game: Pick<FloppyGameInput, "playStatus" | "rating" | "wishlisted">,
+  entry: Pick<FloppyEntry, "status" | "score">,
+  onWishlist: boolean
+): FloppyPullChange => {
+  const change: FloppyPullChange = {};
+  const playStatus = floppyStatusToPlayStatus(entry.status);
+
+  if (playStatus !== undefined && playStatus !== (game.playStatus ?? null)) {
+    change.playStatus = playStatus;
+  }
+
+  if (entry.score !== (game.rating ?? null)) change.rating = entry.score;
+  if (onWishlist && !game.wishlisted) change.wishlisted = true;
+
+  return change;
 };

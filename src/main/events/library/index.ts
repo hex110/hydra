@@ -47,6 +47,7 @@ import "./select-game-proton-path";
 import "./select-game-wine-prefix";
 import "./set-game-hydra-playtime-enabled";
 import "./set-game-play-status";
+import "./set-game-rating";
 import "./set-game-wishlisted";
 import "./set-game-notes";
 import "./local-collections";
