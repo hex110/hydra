@@ -10,6 +10,7 @@ import {
   isCloudSaveSyncAnchorKeyForGame,
 } from "./sync-anchor-key";
 import { hasCloudSaveV4AnchorSchema } from "./sync-anchor-policy";
+import { getSaveSyncScopeId } from "./save-store";
 
 const isValidAnchor = (
   anchor: CloudSaveSyncAnchor | null,
@@ -50,6 +51,8 @@ const isValidAnchor = (
 };
 
 const getCurrentUserId = async () => {
+  const scopeId = getSaveSyncScopeId();
+  if (scopeId) return scopeId;
   const user = await db.get<string, User>(levelKeys.user, {
     valueEncoding: "json",
   });

@@ -4,7 +4,7 @@ A Hydra account is optional in Hydra Plus. Everything that runs on your own
 machine works signed out: the library, downloads, game setup, achievements,
 play tracking ([Steam history](steam-history.md), [Floppy](floppy.md)),
 artwork with your own [SteamGridDB key](game-page.md#artwork) and
-self-hosted [save backups](save-backups.md). Hydra's public catalogue data
+self-hosted [save sync](save-sync.md). Hydra's public catalogue data
 (search, game details, artwork, achievement names, download sources, update
 checks) needs no account either.
 

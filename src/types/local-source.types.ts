@@ -9,4 +9,6 @@ export interface LocalSourceStatus {
   fetchedAt: string | null;
   /** Why the last download failed, when it did. */
   error: string | null;
+  /** The host serves a browser challenge that can be passed in a window. */
+  needsVerification?: boolean;
 }

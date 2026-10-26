@@ -3,6 +3,7 @@ import type { GameSetupLog, GameShop } from "./game.types";
 import type { DownloadStatus } from "./download.types";
 import type { ClassicsDisc } from "./emulator.types";
 import type { PlayStatus } from "./library-metadata.types";
+import type { SaveStoreConfig } from "./save-store.types";
 import type { LaunchRule } from "./launch-rule.types";
 import type { MangoHudSettings, ProtonFlavor } from "./linux-gaming.types";
 import type {
@@ -324,6 +325,8 @@ export interface UserPreferences {
   floppyApiToken?: string | null;
   /** The user's own SteamGridDB key; artwork then needs no Hydra account. */
   steamGridDbApiKey?: string | null;
+  /** Self-hosted save backups; when set, they replace Hydra Cloud. */
+  saveStore?: SaveStoreConfig | null;
   preferQuitInsteadOfHiding?: boolean;
   runAtStartup?: boolean;
   startMinimized?: boolean;

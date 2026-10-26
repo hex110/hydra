@@ -6,8 +6,11 @@ import {
   resolveCloudSavePendingDeletionPhase,
   type StoredCloudSavePendingDeletion,
 } from "./pending-deletion-state";
+import { getSaveSyncScopeId } from "./save-store";
 
 const getCurrentUserId = async () => {
+  const scopeId = getSaveSyncScopeId();
+  if (scopeId) return scopeId;
   const user = await db.get<string, User>(levelKeys.user, {
     valueEncoding: "json",
   });

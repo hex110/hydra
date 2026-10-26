@@ -4,6 +4,7 @@ import { HydraApi } from "../hydra-api";
 import { analyzeCloudSaveState } from "./analyze-cloud-save-state";
 import { clearCloudSaveLocalState } from "./clear-cloud-save-local-state";
 import { assertCloudSaveSubscription } from "./cloud-save-access";
+import { getActiveSaveStore } from "./save-store";
 import { cloudSaveFileKey } from "./cloud-save-contract";
 import { getCloudSaveGameContext } from "./cloud-save-game-context";
 import { cloudSaveCustomPathContextFromPathContext } from "./custom-path";
@@ -98,6 +99,7 @@ export const deleteGameCloudSaveData = async (
         },
         assertGameNotRunning,
         deleteRemoteSnapshots: () =>
+          getActiveSaveStore()?.deleteGame(objectId, shop) ??
           HydraApi.delete<void>(
             buildDeleteGameCloudSaveSnapshotsUrl(objectId, shop),
             {

@@ -1,6 +1,7 @@
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { registerEvent } from "../register-event";
 import path from "node:path";
+import { configureSaveStore } from "@main/services/cloud-save/save-store";
 
 import type { Game, UserPreferences } from "@types";
 import i18next from "i18next";
@@ -155,6 +156,9 @@ const updateUserPreferences = async (
   );
 
   Wine.syncUserPreferences(updatedPreferences);
+  if (preferences.saveStore !== undefined) {
+    configureSaveStore(updatedPreferences.saveStore);
+  }
 
   await updateAchievementSouvenirPreference(preferences);
 

@@ -2,6 +2,7 @@ import { HydraApi } from "@main/services/hydra-api";
 import type { GameShop, RemoteSnapshotSummary } from "@types";
 
 import { validateRemoteSnapshotSummary } from "./cloud-save-contract";
+import { getActiveSaveStore } from "./save-store";
 
 const validateRemoteSnapshots = (value: unknown): RemoteSnapshotSummary[] => {
   if (!Array.isArray(value)) throw new Error("Invalid snapshots response");
@@ -14,8 +15,11 @@ const validateRemoteSnapshots = (value: unknown): RemoteSnapshotSummary[] => {
 export const listRemoteGameSnapshots = async (
   objectId: string,
   shop: GameShop
-) =>
-  validateRemoteSnapshots(
+) => {
+  const store = getActiveSaveStore();
+  if (store) return store.listSnapshots(objectId, shop);
+
+  return validateRemoteSnapshots(
     await HydraApi.get<unknown>(
       "/profile/cloud-saves/snapshots",
       {
@@ -28,3 +32,4 @@ export const listRemoteGameSnapshots = async (
       }
     )
   );
+};

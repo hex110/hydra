@@ -6,7 +6,10 @@ import type {
   RestoreManifestFile,
 } from "@types";
 
+import path from "node:path";
+
 import { NativeAddon } from "../native-addon";
+import { getActiveSaveStore } from "./save-store";
 import {
   cloudSaveFileKey,
   validateRestoreDownloadUrls,
@@ -23,13 +26,18 @@ export const downloadRemoteSnapshotToTemp = async (
   onProgress?: (processedFiles: number, totalFiles: number) => void
 ): Promise<DownloadedRestoreFile[]> => {
   if (requestedFiles?.length === 0) return [];
-  const files = validateRestoreDownloadUrls(
-    await HydraApi.get<unknown>(
-      "/profile/cloud-saves/snapshot-download-urls",
-      { snapshotId },
-      { needsAuth: true, needsSubscription: true }
-    )
-  );
+  const store = getActiveSaveStore();
+  const files: RestoreDownloadUrlFile[] = store
+    ? (await store.getRestoreManifest(snapshotId, snapshotVersion)).files.map(
+        (file) => ({ ...file, downloadUrl: "" })
+      )
+    : validateRestoreDownloadUrls(
+        await HydraApi.get<unknown>(
+          "/profile/cloud-saves/snapshot-download-urls",
+          { snapshotId },
+          { needsAuth: true, needsSubscription: true }
+        )
+      );
   const requestedById = requestedFiles
     ? new Map(
         requestedFiles.map((file) => [cloudSaveFileKey(file), file] as const)
@@ -69,6 +77,17 @@ export const downloadRemoteSnapshotToTemp = async (
     MAX_CONCURRENT_RESTORE_OPERATIONS,
     async (group) => {
       const [file] = group;
+      if (store) {
+        // The folder native restore cleans up when it finishes.
+        const tempPath = path.join(
+          tempRoot,
+          "hydra-cloud-saves",
+          tempSnapshotId,
+          `${file.hash}-${file.sizeBytes}`
+        );
+        await store.downloadBlob(file, tempPath);
+        return { key: JSON.stringify([file.hash, file.sizeBytes]), tempPath };
+      }
       const tempPath = await NativeAddon.downloadRestoreBlobToTemp(
         tempSnapshotId,
         file.hash,

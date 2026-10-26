@@ -1,5 +1,7 @@
 import { isAxiosError } from "axios";
 
+import { SaveStoreConflictError } from "./save-store/self-hosted-save-store.js";
+
 export const isCloudSaveCommitTransportFailure = (error: unknown) =>
   (isAxiosError(error) && !error.response) ||
   (!isAxiosError(error) &&
@@ -25,7 +27,9 @@ export const shouldReprepareCloudSaveSnapshot = (error: unknown) => {
 };
 
 export const shouldRetryCloudSaveConflict = (error: unknown, attempt: number) =>
-  attempt === 0 && isAxiosError(error) && error.response?.status === 409;
+  attempt === 0 &&
+  ((isAxiosError(error) && error.response?.status === 409) ||
+    error instanceof SaveStoreConflictError);
 
 export const shouldRetryCloudSaveStateChange = (attempt: number) =>
   attempt === 0;

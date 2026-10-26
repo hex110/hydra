@@ -8,8 +8,11 @@ import {
 import type { GameShop, User } from "@types";
 
 import { isCloudSaveSyncAnchorKeyForGame } from "./sync-anchor-key";
+import { getSaveSyncScopeId } from "./save-store";
 
 const getCurrentUserId = async () => {
+  const scopeId = getSaveSyncScopeId();
+  if (scopeId) return scopeId;
   const user = await db.get<string, User>(levelKeys.user, {
     valueEncoding: "json",
   });

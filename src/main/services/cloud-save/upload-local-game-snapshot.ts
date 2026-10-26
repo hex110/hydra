@@ -19,6 +19,7 @@ import {
   validatePrepareResponse,
 } from "./upload-local-game-snapshot-helpers";
 import { assertCloudSaveUploadWithinLimits } from "./upload-limits";
+import { getActiveSaveStore } from "./save-store";
 
 type ProgressCallback = (progress: CloudSaveUploadProgress) => void;
 
@@ -61,24 +62,29 @@ export const uploadLocalGameSnapshot = async (
 
   assertCloudSaveUploadWithinLimits(proposalFiles);
 
-  const response = validatePrepareResponse(
-    await HydraApi.post<unknown>(
-      "/profile/cloud-saves/prepare-snapshot",
-      buildPrepareSnapshotPayload({
-        shop,
-        objectId,
-        platform: context.pathContext.platform,
-        hostname: os.hostname() || undefined,
-        snapshotHash: aggregateHash,
-        baseVersion: resolvedOptions.baseVersion,
-        retroArchFormatVersion: resolvedOptions.retroArchFormatVersion,
-        customPathRawPaths: proposalCustomPathRawPaths,
-        variants: proposalVariants,
-        files: proposalFiles,
-      }),
-      { needsAuth: true, needsSubscription: true }
-    )
-  );
+  const payload = buildPrepareSnapshotPayload({
+    shop,
+    objectId,
+    platform: context.pathContext.platform,
+    hostname: os.hostname() || undefined,
+    snapshotHash: aggregateHash,
+    baseVersion: resolvedOptions.baseVersion,
+    retroArchFormatVersion: resolvedOptions.retroArchFormatVersion,
+    customPathRawPaths: proposalCustomPathRawPaths,
+    variants: proposalVariants,
+    files: proposalFiles,
+  });
+  // The user's own store replaces Hydra Cloud when one is set.
+  const store = getActiveSaveStore();
+  const response = store
+    ? await store.prepare(payload)
+    : validatePrepareResponse(
+        await HydraApi.post<unknown>(
+          "/profile/cloud-saves/prepare-snapshot",
+          payload,
+          { needsAuth: true, needsSubscription: true }
+        )
+      );
   if (response.snapshotHash !== aggregateHash) {
     throw new Error("Prepare snapshot hash does not match the proposal");
   }
@@ -166,12 +172,20 @@ export const uploadLocalGameSnapshot = async (
       emitCurrentProgress();
 
       try {
-        await NativeAddon.uploadLocalSaveBlob(
-          source.absolutePath,
-          file.uploadUrl,
-          file.requiredHeaders["Content-Length"],
-          file.requiredHeaders["x-amz-checksum-sha256"]
-        );
+        if (store) {
+          await store.putBlob(
+            source.absolutePath,
+            source.hash,
+            source.sizeBytes
+          );
+        } else {
+          await NativeAddon.uploadLocalSaveBlob(
+            source.absolutePath,
+            file.uploadUrl,
+            file.requiredHeaders["Content-Length"],
+            file.requiredHeaders["x-amz-checksum-sha256"]
+          );
+        }
       } catch (error) {
         hasFailed = true;
         activeFiles.delete(uploadIndex);

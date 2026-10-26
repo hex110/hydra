@@ -15,11 +15,15 @@ export {
   retroArchStateCloudIdentity,
   type RetroArchObservedState,
 } from "./retroarch-state-binding-policy.js";
+import { getSaveSyncScopeId } from "./save-store/index.js";
 
 const bindingKey = async (game: Game) => {
-  const user = await db.get<string, User>(levelKeys.user, {
-    valueEncoding: "json",
-  });
+  const scopeId = getSaveSyncScopeId();
+  const user = scopeId
+    ? { id: scopeId }
+    : await db.get<string, User>(levelKeys.user, {
+        valueEncoding: "json",
+      });
   if (!user?.id) throw new Error("cloud_save_user_required");
   return JSON.stringify([user.id, game.shop, game.objectId, "retroarch-v2"]);
 };

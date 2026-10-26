@@ -10,6 +10,12 @@ const getLocalSourceStatuses = () => LocalSources.getStatuses();
 
 const refreshLocalSources = () => LocalSources.refreshAll(true);
 
+const verifyLocalSource = (
+  _event: Electron.IpcMainInvokeEvent,
+  sourceId: string
+) => LocalSources.verify(sourceId);
+
 registerEvent("getLocalSourceRepacks", getLocalSourceRepacks);
 registerEvent("getLocalSourceStatuses", getLocalSourceStatuses);
 registerEvent("refreshLocalSources", refreshLocalSources);
+registerEvent("verifyLocalSource", verifyLocalSource);

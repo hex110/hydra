@@ -23,6 +23,7 @@ import {
 } from "./operation-gate.js";
 import { getRemoteSnapshotRestoreManifest } from "./resolve-remote-snapshot-targets.js";
 import { shouldRetryCloudSaveConflict } from "./snapshot-retry-policy.js";
+import { getActiveSaveStore } from "./save-store/index.js";
 
 const publishCustomPathRemoval = async (
   objectId: string,
@@ -50,6 +51,7 @@ const publishCustomPathRemoval = async (
     await executeCloudSaveCustomPathRemoteRemoval({
       proposal,
       deleteSnapshot: () =>
+        getActiveSaveStore()?.deleteGame(objectId, shop) ??
         HydraApi.delete<void>(
           buildDeleteGameCloudSaveSnapshotsUrl(objectId, shop),
           {

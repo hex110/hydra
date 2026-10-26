@@ -13,6 +13,7 @@ import type {
 
 import { NativeAddon } from "../native-addon";
 import { validateRestoreManifest } from "./cloud-save-contract";
+import { getActiveSaveStore } from "./save-store";
 import { getCloudSaveGameContext } from "./cloud-save-game-context";
 import { cloudSaveCustomPathContextFromPathContext } from "./custom-path";
 import { customPathToCloudSaveRule } from "./custom-path-store";
@@ -39,13 +40,16 @@ const isWinePrefixValid = (winePrefixPath?: string) => {
 export const getRemoteSnapshotRestoreManifest = async (
   snapshot: RemoteSnapshotSummary | RemoteGameSnapshot
 ): Promise<RestoreManifestResponse> => {
-  const manifest = validateRestoreManifest(
-    await HydraApi.get<unknown>(
-      "/profile/cloud-saves/snapshot-restore-manifest",
-      { snapshotId: snapshot.id },
-      { needsAuth: true, needsSubscription: true }
-    )
-  );
+  const store = getActiveSaveStore();
+  const manifest = store
+    ? await store.getRestoreManifest(snapshot.id, snapshot.version)
+    : validateRestoreManifest(
+        await HydraApi.get<unknown>(
+          "/profile/cloud-saves/snapshot-restore-manifest",
+          { snapshotId: snapshot.id },
+          { needsAuth: true, needsSubscription: true }
+        )
+      );
   const totalSizeBytes = manifest.files.reduce(
     (total, file) => total + file.sizeBytes,
     0

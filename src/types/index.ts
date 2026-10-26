@@ -20,6 +20,7 @@ export * from "./floppy.types";
 export * from "./steam-history.types";
 export * from "./steam-wishlist.types";
 export * from "./background-tasks.types";
+export * from "./save-store.types";
 
 export type HydraCloudFeature =
   | "achievements"

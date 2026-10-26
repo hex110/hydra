@@ -451,26 +451,29 @@ export function GameDetailsContent() {
                   </button>
                 )}
 
-                {game && cloudSaveVisibility?.hero === "legacy" && (
-                  <button
-                    type="button"
-                    className="game-details__cloud-sync-button"
-                    onClick={handleLegacyCloudSaveButtonClick}
-                  >
-                    <div className="game-details__cloud-icon-container">
-                      <img
-                        src={cloudIconAnimated}
-                        alt=""
-                        className="game-details__cloud-icon"
-                      />
-                    </div>
-                    {t("cloud_save")}
-                  </button>
-                )}
+                {game &&
+                  userDetails &&
+                  cloudSaveVisibility?.hero === "legacy" && (
+                    <button
+                      type="button"
+                      className="game-details__cloud-sync-button"
+                      onClick={handleLegacyCloudSaveButtonClick}
+                    >
+                      <div className="game-details__cloud-icon-container">
+                        <img
+                          src={cloudIconAnimated}
+                          alt=""
+                          className="game-details__cloud-icon"
+                        />
+                      </div>
+                      {t("cloud_save")}
+                    </button>
+                  )}
 
-                {game && objectId && cloudSaveVisibility?.hero === "v2" && (
-                  <CloudSaveWidget />
-                )}
+                {game &&
+                  objectId &&
+                  (userDetails || userPreferences?.saveStore) &&
+                  cloudSaveVisibility?.hero === "v2" && <CloudSaveWidget />}
               </div>
             </div>
 

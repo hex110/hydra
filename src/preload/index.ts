@@ -15,6 +15,7 @@ import type {
   BackgroundTaskKind,
   IntegrationName,
   LibraryImportSource,
+  SaveStoreConfig,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
@@ -1010,6 +1011,9 @@ contextBridge.exposeInMainWorld("electron", {
   getBackgroundTasks: () => ipcRenderer.invoke("getBackgroundTasks"),
   dismissBackgroundTask: (id: BackgroundTaskKind) =>
     ipcRenderer.invoke("dismissBackgroundTask", id),
+  testSaveStore: (config: SaveStoreConfig) =>
+    ipcRenderer.invoke("testSaveStore", config),
+  isRcloneAvailable: () => ipcRenderer.invoke("isRcloneAvailable"),
   testSteamGridDbApiKey: (apiKey: string) =>
     ipcRenderer.invoke("testSteamGridDbApiKey", apiKey),
   retryBackgroundTask: (id: BackgroundTaskKind) =>
@@ -1134,6 +1138,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getLocalSourceRepacks", title),
   getLocalSourceStatuses: () => ipcRenderer.invoke("getLocalSourceStatuses"),
   refreshLocalSources: () => ipcRenderer.invoke("refreshLocalSources"),
+  verifyLocalSource: (sourceId: string) =>
+    ipcRenderer.invoke("verifyLocalSource", sourceId),
   getOptiScalerOverview: () => ipcRenderer.invoke("getOptiScalerOverview"),
   checkOptiScalerUpdates: () => ipcRenderer.invoke("checkOptiScalerUpdates"),
   downloadOptiScaler: () => ipcRenderer.invoke("downloadOptiScaler"),

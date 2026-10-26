@@ -34,6 +34,7 @@ export {
   isSameExistingEmulatorDestination,
   type EmulatorDestinationKind,
 } from "./emulator-destination-policy.js";
+import { getSaveSyncScopeId } from "./save-store/index.js";
 
 export const getExpectedEmulatorDestination = async (
   game: Game,
@@ -95,9 +96,12 @@ const bindingKey = async (
   rawPath: string,
   kind: EmulatorDestinationKind
 ) => {
-  const user = await db.get<string, User>(levelKeys.user, {
-    valueEncoding: "json",
-  });
+  const scopeId = getSaveSyncScopeId();
+  const user = scopeId
+    ? { id: scopeId }
+    : await db.get<string, User>(levelKeys.user, {
+        valueEncoding: "json",
+      });
   if (!user?.id) throw new Error("cloud_save_user_required");
   return JSON.stringify([
     user.id,

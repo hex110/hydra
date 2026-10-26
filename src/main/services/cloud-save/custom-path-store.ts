@@ -26,11 +26,14 @@ import {
 } from "./custom-path-binding-state";
 import { resolveStoredCloudSaveCustomPathBindings } from "./custom-path-binding-resolver";
 import { CloudSaveOperationCoordinator } from "./operation-coordinator";
+import { getSaveSyncScopeId } from "./save-store";
 
 const storeMutationCoordinator = new CloudSaveOperationCoordinator<void>();
 let storeMutationId = 0;
 
 const getCurrentUserId = async () => {
+  const scopeId = getSaveSyncScopeId();
+  if (scopeId) return scopeId;
   const user = await db.get<string, User>(levelKeys.user, {
     valueEncoding: "json",
   });

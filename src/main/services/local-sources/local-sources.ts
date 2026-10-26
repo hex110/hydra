@@ -1,10 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { net } from "electron";
 import { db, downloadSourcesSublevel, levelKeys } from "@main/level";
 import { logger } from "@main/services/logger";
 import { SystemPath } from "@main/services/system-path";
+import { getSourceSession } from "./source-session";
+import { verifySourceInBrowser } from "./source-verification";
 import {
   buildSourceIndex,
   parseSourceDocument,
@@ -50,6 +51,8 @@ const writeJson = async (filePath: string, value: unknown) => {
   await fs.promises.writeFile(temporaryPath, JSON.stringify(value));
   await fs.promises.rename(temporaryPath, filePath);
 };
+
+const CHALLENGE_MESSAGE = "Blocked by a Cloudflare challenge";
 
 const isCloudflareChallenge = (response: Response, body: string) =>
   response.headers.get("cf-mitigated") === "challenge" ||
@@ -110,14 +113,14 @@ export class LocalSources {
     }
 
     try {
-      const response = await net.fetch(source.url, {
+      const response = await getSourceSession().fetch(source.url, {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: { Accept: "application/json" },
       });
       const body = await response.text();
 
       if (isCloudflareChallenge(response, body)) {
-        throw new Error("Blocked by a Cloudflare challenge");
+        throw new Error(CHALLENGE_MESSAGE);
       }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       if (body.length > MAX_DOCUMENT_BYTES) {
@@ -148,6 +151,7 @@ export class LocalSources {
         entries: parsed.downloads.length,
         fetchedAt: new Date(fetchedAt).toISOString(),
         error: null,
+        needsVerification: false,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -164,8 +168,20 @@ export class LocalSources {
         entries: cached?.downloads.length ?? 0,
         fetchedAt: cached ? new Date(cached.fetchedAt).toISOString() : null,
         error: message,
+        needsVerification: message === CHALLENGE_MESSAGE,
       });
     }
+  }
+
+  /** Lets the person pass the host's challenge in a browser window, then downloads the source again. */
+  public static async verify(sourceId: string) {
+    const source = await downloadSourcesSublevel
+      .get(sourceId)
+      .catch(() => null);
+    if (!source) return;
+
+    await verifySourceInBrowser(source.url, source.name);
+    await this.refresh(source, true);
   }
 
   public static async refreshAll(force = false) {

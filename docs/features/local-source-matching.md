@@ -39,10 +39,26 @@ Each source on the settings page shows its local copy: how many downloads it
 has and when it was updated, or why the last download failed. A failed
 download keeps using the previous copy. Common failures:
 
-| Message                             | Meaning                                                                                   |
-| ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| `HTTP 404`                          | The source moved. The server may still serve an old copy; ask the source for its new URL. |
-| `Blocked by a Cloudflare challenge` | The host only serves browsers that pass a challenge. Server-side matching still works.    |
-| `The source did not return JSON`    | The URL points to a web page rather than the source file.                                 |
+| Message                             | Meaning                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `HTTP 404`                          | The source moved. The server may still serve an old copy; ask the source for its new URL.                                 |
+| `Blocked by a Cloudflare challenge` | The host only serves browsers that pass a challenge. Use **Verify in browser** (below). Server-side matching still works. |
+| `The source did not return JSON`    | The URL points to a web page rather than the source file.                                                                 |
 
 Removing a source deletes its local copy.
+
+## Verify in browser
+
+A source blocked by a Cloudflare challenge shows a **Verify in browser**
+button. It opens the source in a normal window; once you pass the check the
+window closes itself and the source is downloaded again.
+
+- Hydra keeps the host's `cf_clearance` cookie in its own persistent session
+  (`persist:download-source-verification`), separate from the app's. Every
+  source refresh goes through that session, so a verified host stays fetchable
+  until the cookie expires, usually hours to days. Verify again when the
+  error comes back.
+- The session sends the app's user agent without the Electron and app tokens,
+  because the cookie is only valid for the user agent that earned it.
+- The window is plain HTTPS browsing: no popups, no permissions, no downloads.
+- Hydra does not solve challenges on your behalf.

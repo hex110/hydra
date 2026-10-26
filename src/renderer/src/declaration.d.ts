@@ -16,6 +16,7 @@ import type {
   IntegrationName,
   IntegrationStatuses,
   LibraryImportSource,
+  SaveStoreConfig,
   FloppyPullResult,
   FloppySearchResult,
   SteamGameHistory,
@@ -436,6 +437,8 @@ declare global {
     testFloppyConnection: (url: string, token: string) => Promise<void>;
     getBackgroundTasks: () => Promise<BackgroundTask[]>;
     dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    testSaveStore: (config: SaveStoreConfig) => Promise<void>;
+    isRcloneAvailable: () => Promise<boolean>;
     testSteamGridDbApiKey: (apiKey: string) => Promise<void>;
     retryBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     getIntegrationStatuses: () => Promise<IntegrationStatuses>;
@@ -554,6 +557,7 @@ declare global {
     getLocalSourceRepacks: (title: string) => Promise<GameRepack[]>;
     getLocalSourceStatuses: () => Promise<LocalSourceStatus[]>;
     refreshLocalSources: () => Promise<void>;
+    verifyLocalSource: (sourceId: string) => Promise<void>;
     getOptiScalerOverview: () => Promise<OptiScalerOverview>;
     checkOptiScalerUpdates: () => Promise<void>;
     downloadOptiScaler: () => Promise<string>;

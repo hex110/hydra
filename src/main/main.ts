@@ -39,6 +39,7 @@ import { isDebridPendingError } from "./services/download/debrid-files";
 import { GofileApi } from "./services/hosters";
 import { clearLegacyAchievementPersistence } from "./level/clear-legacy-achievements";
 import { startFloppyPullSchedule } from "./services/floppy";
+import { loadSaveStoreConfig } from "./services/cloud-save/save-store";
 import {
   startSteamHistorySchedule,
   startSteamWishlistSchedule,
@@ -134,6 +135,7 @@ export const loadState = async () => {
   }
 
   void watchSteamLibraries();
+  await loadSaveStoreConfig();
   startFloppyPullSchedule();
   startSteamHistorySchedule();
   startSteamWishlistSchedule();

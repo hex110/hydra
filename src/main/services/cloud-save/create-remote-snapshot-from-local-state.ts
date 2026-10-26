@@ -21,6 +21,7 @@ import {
   isNonEmptyString,
 } from "./cloud-save-contract";
 import { saveCloudSaveSyncAnchor } from "./sync-anchor";
+import { getActiveSaveStore } from "./save-store";
 import {
   isCloudSaveCommitTransportFailure,
   shouldReprepareCloudSaveSnapshot,
@@ -82,6 +83,9 @@ const validateCommitResponse = (value: unknown): CommitSnapshotResponse => {
 };
 
 const commitPendingSnapshot = async (pendingSnapshotId: string) => {
+  const store = getActiveSaveStore();
+  if (store) return store.commit(pendingSnapshotId);
+
   let response: unknown;
   const request: CommitSnapshotRequest = { pendingSnapshotId };
   for (let attempt = 0; attempt < 2; attempt += 1) {

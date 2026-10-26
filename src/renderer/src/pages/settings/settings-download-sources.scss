@@ -107,3 +107,11 @@
     color: globals.$warning-color;
   }
 }
+
+.settings-download-sources__verify {
+  display: flex;
+  align-items: center;
+  gap: calc(globals.$spacing-unit * 2);
+  margin-bottom: globals.$spacing-unit;
+  color: globals.$muted-color;
+}

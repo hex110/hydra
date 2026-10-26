@@ -1,3 +1,4 @@
+import { useAppSelector } from "@renderer/hooks";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowClockwiseIcon,
@@ -701,12 +702,19 @@ export function CloudSaveModal({
   ...panelProps
 }: Readonly<CloudSaveModalProps>) {
   const { t } = useTranslation("game_details");
+  const hasSelfHostedStore = useAppSelector((state) =>
+    Boolean(state.userPreferences.value?.saveStore)
+  );
 
   return (
     <Modal
       className="cloud-save-v2__dialog"
       visible={visible}
-      title={t("cloud_save_v2_modal_title")}
+      title={t(
+        hasSelfHostedStore
+          ? "settings_category_save_sync"
+          : "cloud_save_v2_modal_title"
+      )}
       description={t("cloud_save_v2_modal_description")}
       onClose={onClose}
     >

@@ -1465,7 +1465,8 @@
     "dlc_open_store": "Open on Steam",
     "dlc_see_all_one": "See all {{count}} DLC on Steam",
     "dlc_see_all_other": "See all {{count}} DLC on Steam",
-    "news_title": "News"
+    "news_title": "News",
+    "settings_category_save_sync": "Save sync"
   },
   "activation": {
     "title": "Activate Hydra",
@@ -1710,6 +1711,9 @@
     "local_source_ready_other": "Local copy: {{countFormatted}} downloads, updated {{age}}.",
     "local_source_failed": "Local copy could not be downloaded ({{error}}).",
     "local_source_using_previous": "Using the previous one. {{copy}}",
+    "local_source_verify": "Verify in browser",
+    "local_source_verifying": "Waiting for verification…",
+    "local_source_verify_hint": "Opens the source in a window so you can pass its Cloudflare check. Hydra keeps the result for later downloads.",
     "validate_download_source": "Validate",
     "remove_download_source": "Remove",
     "add_download_source": "Add source",
@@ -2675,7 +2679,27 @@
     "hydra_account_signed_out": "Not signed in",
     "hydra_account_sign_in": "Sign in",
     "hydra_account_description": "An account adds a public profile, friends, chat, reviews, achievement points and Hydra Cloud, and lets you connect Epic Games and RetroAchievements. Your library, downloads, achievements and play tracking work without one.",
-    "hydra_account_signed_in_description": "Profile, friends, chat, reviews and Hydra Cloud are on."
+    "hydra_account_signed_in_description": "Profile, friends, chat, reviews and Hydra Cloud are on.",
+    "save_sync_title": "Save sync",
+    "save_sync_description": "Back up and sync game saves to storage you own: a folder (a Syncthing folder, a NAS share, Nextcloud) or any rclone remote (Cloudflare R2, S3, Google Drive, SFTP, WebDAV). It works without a Hydra account and replaces Hydra Cloud while it is on.",
+    "save_sync_target": "Where to keep saves",
+    "save_sync_target_folder": "A folder",
+    "save_sync_target_rclone": "An rclone remote",
+    "save_sync_folder": "Folder",
+    "save_sync_choose_folder": "Choose folder",
+    "save_sync_rclone_remote": "rclone remote and path",
+    "save_sync_rclone_hint": "A remote from your rclone config, e.g. r2:hydra-saves or gdrive:Games/Saves. Hydra uses your rclone config and stores no cloud credentials.",
+    "save_sync_rclone_missing": "rclone is not installed. Install it (pacman -S rclone) and set up a remote with rclone config.",
+    "save_sync_turn_on": "Turn on",
+    "save_sync_turn_off": "Turn off",
+    "save_sync_on": "On",
+    "save_sync_off": "Off",
+    "save_sync_enabled": "Save sync is on",
+    "save_sync_test_failed": "Could not write to that location. Check the path or the rclone remote.",
+    "save_sync_disabled": "Save sync is off",
+    "save_sync_active_folder": "Saves go to {{path}}",
+    "save_sync_active_rclone": "Saves go to the rclone remote {{remote}}",
+    "save_sync_active_description": "Each game's saves are backed up when it closes and checked when it starts, on every device that uses this location. Per-game settings are in a game's options, under Save sync."
   },
   "notifications": {
     "download_complete": "Download complete",

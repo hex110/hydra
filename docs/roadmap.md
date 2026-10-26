@@ -153,13 +153,17 @@ in the sections below.
 11. **Hydra without an account.** Everything works signed out; the Hydra
     account becomes an optional setting, off by default. Decided 2026-10-26;
     details in [Hydra without an account](#hydra-without-an-account).
-    1. [ ] Remove the upstream Steam integration
-    2. [ ] SteamGridDB with your own API key
-    3. [ ] Account-only features shown only when signed in
-    4. [ ] One "Hydra account" setting
-    5. [ ] Self-hosted saves: folder target
-    6. [ ] Self-hosted saves: rclone target
-    7. [ ] Self-hosted saves: automatic sync and conflicts
+    1. [x] Remove the upstream Steam integration (1532fec85)
+    2. [x] SteamGridDB with your own API key (66418f1a1)
+    3. [x] Account-only features shown only when signed in (95a886cda)
+    4. [x] One "Hydra account" setting (95a886cda)
+    5. [x] Self-hosted saves: folder target ([Save sync](features/save-sync.md))
+    6. [x] Self-hosted saves: rclone target
+    7. [x] Self-hosted saves: automatic sync and conflicts
+
+    Shipped: [Hydra account](features/account.md),
+    [Save sync](features/save-sync.md).
+
 12. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
@@ -258,6 +262,12 @@ replacement are deleted (the upstream Steam integration).
    devices changed the same save. CappyT's local and rclone stores and
    per-device conflict detection are the reference
    ([fork survey](fork-survey.md)).
+
+### Follow-ups
+
+Not scheduled: delete unreferenced save blobs; a history view of older save
+versions (they are kept); emulator memory-card cloud saves
+(`emulation-cloud-saves.ts`) still use Hydra Cloud only.
 
 ## Design and QoL
 

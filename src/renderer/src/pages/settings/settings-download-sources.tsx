@@ -51,6 +51,9 @@ export function SettingsDownloadSources() {
   const [localSourceStatuses, setLocalSourceStatuses] = useState<
     Record<string, LocalSourceStatus>
   >({});
+  const [verifyingSourceId, setVerifyingSourceId] = useState<string | null>(
+    null
+  );
 
   const { sourceUrl, clearSourceUrl, updateUserPreferences } =
     useContext(settingsContext);
@@ -86,6 +89,18 @@ export function SettingsDownloadSources() {
   useEffect(() => {
     void loadLocalSourceStatuses();
   }, [loadLocalSourceStatuses, downloadSources]);
+
+  const handleVerifySource = async (source: DownloadSource) => {
+    setVerifyingSourceId(source.id);
+    try {
+      await window.electron.verifyLocalSource(source.id);
+      await loadLocalSourceStatuses();
+    } catch (error) {
+      logger.error("Failed to verify download source:", error);
+    } finally {
+      setVerifyingSourceId(null);
+    }
+  };
 
   const toggleMatchLocally = async () => {
     await updateUserPreferences({ matchDownloadSourcesLocally: !matchLocally });
@@ -350,6 +365,8 @@ export function SettingsDownloadSources() {
               {matchLocally && (
                 <LocalSourceStatusLine
                   status={localSourceStatuses[downloadSource.id]}
+                  isVerifying={verifyingSourceId === downloadSource.id}
+                  onVerify={() => handleVerifySource(downloadSource)}
                   formatCount={(count) => numberFormatter.format(count)}
                   formatAge={(date) =>
                     formatDistance(date, new Date(), { addSuffix: true })
@@ -385,10 +402,14 @@ export function SettingsDownloadSources() {
 
 function LocalSourceStatusLine({
   status,
+  isVerifying,
+  onVerify,
   formatCount,
   formatAge,
 }: Readonly<{
   status: LocalSourceStatus | undefined;
+  isVerifying: boolean;
+  onVerify: () => void;
   formatCount: (count: number) => string;
   formatAge: (date: string) => string;
 }>) {
@@ -412,10 +433,27 @@ function LocalSourceStatusLine({
 
   if (status.state === "failed") {
     return (
-      <small className="settings-download-sources__local-status settings-download-sources__local-status--failed">
-        {t("local_source_failed", { error: status.error })}
-        {copy && ` ${t("local_source_using_previous", { copy })}`}
-      </small>
+      <>
+        <small className="settings-download-sources__local-status settings-download-sources__local-status--failed">
+          {t("local_source_failed", { error: status.error })}
+          {copy && ` ${t("local_source_using_previous", { copy })}`}
+        </small>
+        {status.needsVerification && (
+          <div className="settings-download-sources__verify">
+            <Button
+              type="button"
+              theme="outline"
+              onClick={onVerify}
+              disabled={isVerifying}
+            >
+              {isVerifying
+                ? t("local_source_verifying")
+                : t("local_source_verify")}
+            </Button>
+            <small>{t("local_source_verify_hint")}</small>
+          </div>
+        )}
+      </>
     );
   }
 

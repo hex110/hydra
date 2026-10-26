@@ -263,20 +263,27 @@ export function GameOptionsModal({
   const { userDetails, hasActiveSubscription } = useUserDetails();
   const { artifacts } = useContext(cloudSyncContext);
   const { showHydraCloudModal } = useSubscription();
+  const hasSelfHostedStore = useAppSelector((state) =>
+    Boolean(state.userPreferences.value?.saveStore)
+  );
   const cloudSaveAccessAction = getCloudSaveAccessAction(
     Boolean(userDetails),
-    hasActiveSubscription
+    hasActiveSubscription,
+    hasSelfHostedStore
   );
   const cloudSaveSettings = getCloudSaveVisibility(
     game.shop,
     game.platform
   ).settings;
   const { showV2: showCloudSaveV2Settings, legacyPurpose } = cloudSaveSettings;
-  const showLegacyCloudSaveSettings = isLegacyCloudSaveSettingsAvailable(
-    cloudSaveSettings,
-    hasActiveSubscription,
-    artifacts.length
-  );
+  // Legacy backups live on Hydra's servers; save sync does not replace them.
+  const showLegacyCloudSaveSettings =
+    Boolean(userDetails) &&
+    isLegacyCloudSaveSettingsAvailable(
+      cloudSaveSettings,
+      hasActiveSubscription,
+      artifacts.length
+    );
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
@@ -980,7 +987,9 @@ export function GameOptionsModal({
             : id === "hydra_cloud_legacy" &&
                 (legacyPurpose !== "active" || showCloudSaveV2Settings)
               ? t("settings_category_legacy_saves")
-              : t("settings_category_hydra_cloud"),
+              : hasSelfHostedStore
+                ? t("settings_category_save_sync")
+                : t("settings_category_hydra_cloud"),
         icon:
           id === "epic_cloud" ? (
             <EpicLogo width={16} height={16} aria-hidden="true" />

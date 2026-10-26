@@ -1,3 +1,4 @@
+import { useAppSelector } from "@renderer/hooks";
 import { useTranslation } from "react-i18next";
 
 import { CloudSavePanel, useCloudSaveV2 } from "../../cloud-save-v2";
@@ -10,6 +11,9 @@ export function HydraCloudV2SettingsSection({
   onSelectExecutable,
 }: Readonly<HydraCloudV2SettingsSectionProps>) {
   const { t } = useTranslation("game_details");
+  const hasSelfHostedStore = useAppSelector((state) =>
+    Boolean(state.userPreferences.value?.saveStore)
+  );
   const {
     overview,
     isAutomaticSyncEnabled,
@@ -40,7 +44,13 @@ export function HydraCloudV2SettingsSection({
   return (
     <div className="game-options-modal__cloud-panel game-options-modal__cloud-panel--v2">
       <div className="game-options-modal__panel-header">
-        <h2>{t("cloud_save_v2_modal_title")}</h2>
+        <h2>
+          {t(
+            hasSelfHostedStore
+              ? "settings_category_save_sync"
+              : "cloud_save_v2_modal_title"
+          )}
+        </h2>
         <p>{t("cloud_save_v2_modal_description")}</p>
       </div>
 
