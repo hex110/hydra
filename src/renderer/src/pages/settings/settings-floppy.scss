@@ -11,8 +11,13 @@
     color: globals.$muted-color;
   }
 
+  &__status {
+    color: globals.$muted-color;
+  }
+
   &__actions {
     display: flex;
+    align-items: center;
     gap: globals.$spacing-unit;
   }
 }

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button, CheckboxField, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
+import type { FloppySyncStatus } from "@types";
 
 import "./settings-floppy.scss";
 
@@ -15,6 +16,7 @@ export function SettingsFloppy() {
   const { t } = useTranslation("settings");
 
   const [isBusy, setIsBusy] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<FloppySyncStatus | null>(null);
   const [form, setForm] = useState(() => ({
     enabled: userPreferences?.floppyEnabled ?? false,
     url: userPreferences?.floppyUrl ?? "",
@@ -59,25 +61,57 @@ export function SettingsFloppy() {
     if (!enabled) updateUserPreferences({ floppyEnabled: false });
   };
 
-  const handleSync = async (dryRun: boolean) => {
-    setIsBusy(true);
+  useEffect(() => {
+    let cancelled = false;
 
+    const refresh = async () => {
+      const current = await window.electron.getFloppySyncStatus();
+      if (!cancelled) setSyncStatus(current);
+      return current.running;
+    };
+
+    const poll = async () => {
+      const running = await refresh().catch(() => false);
+      if (running && !cancelled) timer = setTimeout(poll, 1000);
+    };
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    void poll();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [syncStatus?.running]);
+
+  const handleSync = async (dryRun: boolean) => {
     try {
-      const report = await window.electron.syncFloppyLibrary(dryRun);
-      showSuccessToast(
-        t(dryRun ? "floppy_sync_preview_result" : "floppy_sync_result", {
-          created: report.created,
-          updated: report.updated,
-          unchanged: report.unchanged,
-          unmatched: report.unmatched.length,
-          failed: report.failed,
-        })
-      );
+      setSyncStatus(await window.electron.syncFloppyLibrary(dryRun));
     } catch {
       showErrorToast(t("floppy_sync_failed"));
-    } finally {
-      setIsBusy(false);
     }
+  };
+
+  const renderSyncStatus = () => {
+    if (!syncStatus) return null;
+    const { running, report, error, processed, total } = syncStatus;
+
+    if (running) {
+      return t("floppy_sync_progress", { processed, total });
+    }
+    if (error) return t("floppy_sync_failed");
+    if (!report) return null;
+
+    return t(
+      report.dryRun ? "floppy_sync_preview_result" : "floppy_sync_result",
+      {
+        created: report.created,
+        updated: report.updated,
+        unchanged: report.unchanged,
+        unmatched: report.unmatched.length,
+        failed: report.failed,
+      }
+    );
   };
 
   const isSaved = Boolean(
@@ -125,18 +159,21 @@ export function SettingsFloppy() {
               <Button
                 type="button"
                 theme="outline"
-                disabled={isBusy}
+                disabled={isBusy || syncStatus?.running}
                 onClick={() => handleSync(true)}
               >
                 {t("floppy_preview_library")}
               </Button>
               <Button
                 type="button"
-                disabled={isBusy}
+                disabled={isBusy || syncStatus?.running}
                 onClick={() => handleSync(false)}
               >
                 {t("floppy_sync_library")}
               </Button>
+              <span className="settings-floppy__status">
+                {renderSyncStatus()}
+              </span>
             </div>
           )}
         </>

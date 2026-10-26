@@ -11,7 +11,7 @@ import type {
   GameMetadataOverrides,
   PlayActivityEntry,
   PlayStatus,
-  FloppyBackfillReport,
+  FloppySyncStatus,
   GameLaunchPreview,
   MangoHudSettings,
   ProtonFlavor,
@@ -429,7 +429,8 @@ declare global {
       wishlisted: boolean
     ) => Promise<void>;
     testFloppyConnection: (url: string, token: string) => Promise<void>;
-    syncFloppyLibrary: (dryRun: boolean) => Promise<FloppyBackfillReport>;
+    getFloppySyncStatus: () => Promise<FloppySyncStatus>;
+    syncFloppyLibrary: (dryRun: boolean) => Promise<FloppySyncStatus>;
     setGameNotes: (
       shop: GameShop,
       objectId: string,

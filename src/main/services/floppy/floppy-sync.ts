@@ -1,6 +1,7 @@
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import type {
   FloppyBackfillReport,
+  FloppySyncStatus,
   Game,
   GameShop,
   UserPreferences,
@@ -23,7 +24,6 @@ const pending = new Map<
   { timer: NodeJS.Timeout; reason: FloppySyncReason }
 >();
 const unmatchedThisSession = new Set<string>();
-let backfillRunning = false;
 
 export const getFloppyClient = async () => {
   const preferences = await db
@@ -123,31 +123,40 @@ export const queueFloppySync = (
   pending.set(key, { timer, reason: effective });
 };
 
-export const backfillFloppyLibrary = async (
-  dryRun: boolean
-): Promise<FloppyBackfillReport> => {
-  const client = await getFloppyClient();
-  if (!client) throw new Error("floppy-not-configured");
-  if (backfillRunning) throw new Error("floppy-backfill-running");
+const BACKFILL_CONCURRENCY = 4;
 
-  backfillRunning = true;
+const idleStatus: FloppySyncStatus = {
+  running: false,
+  dryRun: false,
+  total: 0,
+  processed: 0,
+  report: null,
+  error: null,
+};
+let syncStatus: FloppySyncStatus = idleStatus;
+
+export const getFloppySyncStatus = () => syncStatus;
+
+const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
+  const games = (await gamesSublevel.values().all()).filter(
+    (game) => !game.isDeleted && game.shop !== "launchbox"
+  );
   const report: FloppyBackfillReport = {
     dryRun,
-    total: 0,
+    total: games.length,
     created: 0,
     updated: 0,
     unchanged: 0,
     unmatched: [],
     failed: 0,
   };
+  syncStatus = { ...syncStatus, total: games.length };
 
-  try {
-    const games = (await gamesSublevel.values().all()).filter(
-      (game) => !game.isDeleted && game.shop !== "launchbox"
-    );
-    report.total = games.length;
+  let next = 0;
+  const worker = async () => {
+    while (next < games.length) {
+      const game = games[next++];
 
-    for (const game of games) {
       try {
         const outcome = await syncGame(client, game, "backfill", dryRun);
         if (outcome === "unmatched") report.unmatched.push(game.title);
@@ -159,10 +168,36 @@ export const backfillFloppyLibrary = async (
           error,
         });
       }
-    }
 
-    return report;
-  } finally {
-    backfillRunning = false;
-  }
+      syncStatus = { ...syncStatus, processed: syncStatus.processed + 1 };
+    }
+  };
+
+  await Promise.all(Array.from({ length: BACKFILL_CONCURRENCY }, worker));
+  return report;
+};
+
+/** Starts the library sync in the background; poll `getFloppySyncStatus`. */
+export const startFloppyLibrarySync = async (dryRun: boolean) => {
+  if (syncStatus.running) return syncStatus;
+
+  const client = await getFloppyClient();
+  if (!client) throw new Error("floppy-not-configured");
+
+  syncStatus = { ...idleStatus, running: true, dryRun };
+
+  void runBackfill(client, dryRun)
+    .then((report) => {
+      syncStatus = { ...syncStatus, running: false, report };
+    })
+    .catch((error: unknown) => {
+      logger.error("Floppy library sync failed", error);
+      syncStatus = {
+        ...syncStatus,
+        running: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    });
+
+  return syncStatus;
 };
