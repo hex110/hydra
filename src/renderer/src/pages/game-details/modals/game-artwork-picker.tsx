@@ -17,6 +17,7 @@ import {
   getRenderableArtworkUrl,
   isAnimatedArtworkItem,
   isArtworkRowSettled,
+  useAppSelector,
   useGameArtworkGrid,
   useToast,
   useUserDetails,
@@ -419,6 +420,9 @@ export function GameArtworkPicker({
   const { t: tProfile } = useTranslation("user_profile");
   const { showErrorToast, showSuccessToast } = useToast();
   const { userDetails } = useUserDetails();
+  const hasSteamGridDbKey = useAppSelector((state) =>
+    Boolean(state.userPreferences.value?.steamGridDbApiKey)
+  );
   const scrollId = useId();
 
   const onError = useCallback(() => {
@@ -626,7 +630,7 @@ export function GameArtworkPicker({
         </span>
       )}
 
-      {!userDetails && (
+      {!userDetails && !hasSteamGridDbKey && (
         <span className="game-artwork__hint">
           {t("steamgriddb_sign_in_required")}
         </span>

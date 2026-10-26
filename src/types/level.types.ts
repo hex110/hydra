@@ -322,6 +322,8 @@ export interface UserPreferences {
   floppyAddToLibrary?: boolean;
   floppyUrl?: string | null;
   floppyApiToken?: string | null;
+  /** The user's own SteamGridDB key; artwork then needs no Hydra account. */
+  steamGridDbApiKey?: string | null;
   preferQuitInsteadOfHiding?: boolean;
   runAtStartup?: boolean;
   startMinimized?: boolean;

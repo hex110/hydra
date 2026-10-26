@@ -11,6 +11,10 @@ import {
 } from "@shared";
 
 import { HydraApi } from "./hydra-api";
+import {
+  fetchSteamGridDbArtwork,
+  getSteamGridDbApiKey,
+} from "./steam-grid-db-direct";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -265,6 +269,24 @@ export const fetchGameArtwork = async (
     ...parameters,
   };
   if (!useDefaultDimensions) delete query.dimensions;
+
+  const apiKey = await getSteamGridDbApiKey();
+  if (apiKey) {
+    const items = await fetchSteamGridDbArtwork(
+      apiKey,
+      shop,
+      objectId,
+      kind,
+      query,
+      timeout
+    );
+    return {
+      items,
+      cache: "fresh",
+      hasMore: items.length === ARTWORK_PAGE_SIZE,
+    };
+  }
+
   const response = await HydraApi.getResponse<ArtworkResponse>(
     `/games/${shop}/${objectId}/artwork/${kind}`,
     query,

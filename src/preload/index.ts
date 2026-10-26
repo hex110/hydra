@@ -1010,6 +1010,8 @@ contextBridge.exposeInMainWorld("electron", {
   getBackgroundTasks: () => ipcRenderer.invoke("getBackgroundTasks"),
   dismissBackgroundTask: (id: BackgroundTaskKind) =>
     ipcRenderer.invoke("dismissBackgroundTask", id),
+  testSteamGridDbApiKey: (apiKey: string) =>
+    ipcRenderer.invoke("testSteamGridDbApiKey", apiKey),
   retryBackgroundTask: (id: BackgroundTaskKind) =>
     ipcRenderer.invoke("retryBackgroundTask", id),
   getIntegrationStatuses: () => ipcRenderer.invoke("getIntegrationStatuses"),

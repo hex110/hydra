@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckIcon } from "@primer/octicons-react";
 import type { ArtworkAssetType, ArtworkItem, LibraryGame } from "@types";
@@ -43,6 +43,21 @@ export function GameArtworkPicker({
   const { t } = useTranslation("big_picture");
   const { showErrorToast, showSuccessToast } = useBigPictureToast();
   const { userDetails } = useUserDetails();
+  const [hasSteamGridDbKey, setHasSteamGridDbKey] = useState(false);
+  const canBrowse = Boolean(userDetails) || hasSteamGridDbKey;
+
+  useEffect(() => {
+    let cancelled = false;
+    globalThis.window.electron
+      .getUserPreferences()
+      .then((preferences) => {
+        if (!cancelled) setHasSteamGridDbKey(!!preferences?.steamGridDbApiKey);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onError = useCallback(() => {
     showErrorToast(t("steamgriddb_fetch_failed"));
@@ -65,7 +80,7 @@ export function GameArtworkPicker({
     shop: game.shop,
     objectId: game.objectId,
     assetType,
-    enabled: Boolean(userDetails),
+    enabled: canBrowse,
     onChanged,
     onError,
     onPicked,
@@ -110,7 +125,7 @@ export function GameArtworkPicker({
     ARTWORK_PREVIEW_FOCUS_ID
   );
 
-  if (!userDetails) {
+  if (!canBrowse) {
     return (
       <p className="game-artwork-picker__hint">
         {t("steamgriddb_sign_in_required")}

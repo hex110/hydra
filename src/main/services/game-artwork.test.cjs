@@ -71,6 +71,10 @@ function service(items, download, grids = () => []) {
   const instance = load("src/main/services/game-artwork.ts", {
     "@shared": shared,
     "./hydra-api": { HydraApi: api },
+    "./steam-grid-db-direct": {
+      getSteamGridDbApiKey: async () => null,
+      fetchSteamGridDbArtwork: async () => [],
+    },
     "@main/constants": { ASSETS_PATH: cacheDirectory },
     "../events/catalogue/cover-poster-url": parser,
     sharp,

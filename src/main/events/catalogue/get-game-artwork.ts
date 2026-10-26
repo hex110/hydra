@@ -1,6 +1,7 @@
 import { registerEvent } from "../register-event";
 import { fetchGameArtwork, logger } from "@main/services";
 import { fetchOfficialArtwork } from "@main/services/official-artwork";
+import { testSteamGridDbApiKey } from "@main/services/steam-grid-db-direct";
 import { UserNotLoggedInError } from "@shared";
 import type { ArtworkKind, ArtworkPage, GameShop } from "@types";
 
@@ -39,3 +40,7 @@ const getGameArtwork = async (
 };
 
 registerEvent("getGameArtwork", getGameArtwork);
+
+registerEvent("testSteamGridDbApiKey", (_event, apiKey: string) =>
+  testSteamGridDbApiKey(apiKey)
+);

@@ -4,6 +4,7 @@ import { SettingsRetroAchievements } from "./settings-retroachievements";
 import { SettingsEpic } from "./settings-epic";
 import { SettingsFloppy } from "./settings-floppy";
 import { SettingsSteamHistory } from "./settings-steam-history";
+import { SettingsSteamGridDb } from "./settings-steamgriddb";
 
 export function SettingsContextIntegrations() {
   const { t } = useTranslation("settings");
@@ -24,6 +25,13 @@ export function SettingsContextIntegrations() {
         </p>
         <SettingsSteamHistory />
         <SettingsFloppy />
+      </div>
+
+      <hr className="settings-context-panel__divider" />
+
+      <div className="settings-context-panel__group">
+        <h3>{t("artwork_services")}</h3>
+        <SettingsSteamGridDb />
       </div>
 
       <hr className="settings-context-panel__divider" />

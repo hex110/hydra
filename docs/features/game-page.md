@@ -75,8 +75,17 @@ images are edited as before, under **General** and **Customization**.
 The artwork picker under **Customization** shows the stores' own cover,
 hero, logo and icon first, labelled Steam, Epic Games or LaunchBox, from
 every store the catalogue links the game to, followed by SteamGridDB's
-results. Store artwork needs no account, so the picker now opens while
-signed out too; SteamGridDB still needs a Hydra sign-in.
+results. Store artwork needs no account, so the picker opens while signed
+out too.
+
+SteamGridDB results need either your own API key or a Hydra sign-in. Add the
+key (free, under Preferences → API on steamgriddb.com) in
+**Settings → Integrations → Artwork → SteamGridDB**; **Connect** checks it
+first. With a key, Hydra asks SteamGridDB directly, also for Big Picture's
+picker and Epic games' default artwork. Steam games are looked up by app id;
+other games by title, and only an exact, unambiguous match is used. Without
+a key, signed-in users keep going through Hydra's proxy. The code is in
+`src/main/services/steam-grid-db-direct.ts`.
 
 ## Missing files
 

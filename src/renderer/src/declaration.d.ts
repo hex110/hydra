@@ -436,6 +436,7 @@ declare global {
     testFloppyConnection: (url: string, token: string) => Promise<void>;
     getBackgroundTasks: () => Promise<BackgroundTask[]>;
     dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    testSteamGridDbApiKey: (apiKey: string) => Promise<void>;
     retryBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     getIntegrationStatuses: () => Promise<IntegrationStatuses>;
     resetIntegrationStatus: (name: IntegrationName) => Promise<void>;

@@ -188,7 +188,7 @@
     "decky_plugin_installation_error": "Error installing Decky plugin: {{error}}",
     "confirm": "Confirm",
     "cancel": "Cancel",
-    "steamgriddb_sign_in_required": "Sign in to Hydra to also browse SteamGridDB artwork.",
+    "steamgriddb_sign_in_required": "Add a SteamGridDB API key in Settings → Integrations, or sign in to Hydra, to also browse SteamGridDB artwork.",
     "steamgriddb_stale_cache": "Showing cached artwork. The latest may take a moment to appear.",
     "steamgriddb_artwork_updated": "Artwork updated",
     "steamgriddb_artwork_reset": "Artwork reset to default",
@@ -2658,7 +2658,16 @@
     "floppy_disconnect_remove_one": "Also remove the {{count}} untouched game Floppy added to the library",
     "floppy_disconnect_remove_other": "Also remove the {{count}} untouched games Floppy added to the library",
     "floppy_disconnected": "Floppy disconnected",
-    "floppy_disconnect_failed": "Could not disconnect Floppy"
+    "floppy_disconnect_failed": "Could not disconnect Floppy",
+    "artwork_services": "Artwork",
+    "steamgriddb_title": "SteamGridDB",
+    "steamgriddb_description": "Community covers, heroes, logos and icons in the artwork picker. With your own free API key it works without a Hydra account.",
+    "steamgriddb_api_key": "SteamGridDB API key",
+    "steamgriddb_api_key_hint": "Create a key under Preferences → API at",
+    "steamgriddb_connected": "SteamGridDB connected",
+    "steamgriddb_connection_failed": "SteamGridDB did not accept this key",
+    "steamgriddb_disconnected": "SteamGridDB disconnected",
+    "steamgriddb_connected_description": "The artwork picker asks SteamGridDB directly with your key. Games outside Steam are found by an exact title match."
   },
   "notifications": {
     "download_complete": "Download complete",
