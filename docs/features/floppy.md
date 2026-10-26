@@ -7,12 +7,12 @@ API token, and use **Test connection**, which also saves the settings.
 
 Sync goes both ways, with a fixed owner for each field:
 
-| Field       | Owner          | Notes                                                         |
-| ----------- | -------------- | ------------------------------------------------------------- |
-| Play status | Floppy         | Hydra's change is pushed; a pull then applies Floppy's.       |
-| Rating      | Floppy         | Set on the game page, **Your rating** (1–10); Floppy's score. |
-| Wishlist    | Both, add-only | See below.                                                    |
-| Playtime    | Hydra          | Pushed as minutes; never lowers Floppy's value.               |
+| Field       | Owner          | Notes                                                                                  |
+| ----------- | -------------- | -------------------------------------------------------------------------------------- |
+| Play status | Floppy         | Hydra's change is pushed; a pull then applies Floppy's.                                |
+| Rating      | Floppy         | Set on the game page, **Your rating** (1–10); Floppy's score.                          |
+| Wishlist    | Both, add-only | See below.                                                                             |
+| Playtime    | Hydra          | Pushed as minutes (Hydra plus [Steam](steam-history.md)); never lowers Floppy's value. |
 
 ## What is pushed
 
@@ -84,7 +84,8 @@ the debounced queue and library backfill. Sync is triggered from
 
 ## TODO
 
-- Start and end dates, and per-session history, so Floppy's statistics show
-  when a game was played.
+- Per-session history, so Floppy's statistics show when a game was played.
+  (Start and end dates for Steam games are filled in from
+  [Steam history](steam-history.md).)
 - A "played anywhere" library view of every game tracked in Floppy.
 - A way to correct a wrong or missing match from the game's options.

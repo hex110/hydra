@@ -129,18 +129,33 @@ in the sections below.
    31. [x] DLC and news on the game page
    32. [x] Your other copies on the game page
    33. [x] Check slow covers while signed out
-10. **More save sources.**
+10. **Tracking with Floppy and Steam.** Floppy is the record of what you
+    played, rated and planned; Steam is a source; Hydra is the view and the
+    launcher. Shipped: [Floppy sync](features/floppy.md),
+    [Steam history](features/steam-history.md).
+    1. [x] Push playtime, status and wishlist to Floppy
+    2. [x] Pull status, rating and wishlist from Floppy; rating on the game page
+    3. [x] Steam playtime, achievements with unlock dates, activity deltas
+    4. [ ] "Played anywhere" library view: every game tracked in Floppy or
+           played on Steam, including ones you don't have installed
+    5. [ ] Install or play from those cards (catalogue matching, Steam launch)
+    6. [ ] Completion suggestions: offer Finished at 100 % achievements or at
+           the How Long to Beat main-story time
+    7. [ ] Per-session history pushed to Floppy
+    8. [ ] Steam wishlist (public profile only; no official API)
+    9. [ ] Fix a wrong or missing Floppy match from the game's options
+11. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
     3. [ ] Steam's own prefixes
     4. [ ] Steam Cloud
     5. [ ] Hydra cloud account
-11. **Distribution.**
+12. **Distribution.**
     1. [ ] Export and import settings
     2. [ ] pacman updates
     3. [x] Sign the browser add-on
     4. [ ] Translations
-12. **Mods.** Native mod support, after a design.
+13. **Mods.** Native mod support, after a design.
 
 Why this order:
 
