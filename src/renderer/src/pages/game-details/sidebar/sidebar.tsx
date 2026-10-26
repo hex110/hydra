@@ -3,7 +3,6 @@ import type {
   HowLongToBeatCategory,
   ProtonDBData,
   SteamAppDetails,
-  UserAchievement,
 } from "@types";
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components/button/button";
@@ -20,7 +19,6 @@ import {
 import {
   AlertIcon,
   DownloadIcon,
-  LockIcon,
   PeopleIcon,
   StarIcon,
 } from "@primer/octicons-react";
@@ -76,40 +74,6 @@ const getProtonDBData = (shop: string, objectId: string) => {
   return request;
 };
 
-const achievementsPlaceholder: UserAchievement[] = [
-  {
-    displayName: "Timber!!",
-    name: "1",
-    hidden: false,
-    description: "Chop down your first tree.",
-    icon: "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/105600/0fbb33098c9da39d1d4771d8209afface9c46e81.jpg",
-    icongray:
-      "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/105600/0fbb33098c9da39d1d4771d8209afface9c46e81.jpg",
-    unlocked: true,
-    unlockTime: Date.now(),
-  },
-  {
-    displayName: "Supreme Helper Minion!",
-    name: "2",
-    hidden: false,
-    icon: "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/105600/0a6ff6a36670c96ceb4d30cf6fd69d2fdf55f38e.jpg",
-    icongray:
-      "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/105600/0a6ff6a36670c96ceb4d30cf6fd69d2fdf55f38e.jpg",
-    unlocked: false,
-    unlockTime: null,
-  },
-  {
-    displayName: "Feast of Midas",
-    name: "3",
-    hidden: false,
-    icon: "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/105600/2d10311274fe7c92ab25cc29afdca86b019ad472.jpg",
-    icongray:
-      "https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/105600/2d10311274fe7c92ab25cc29afdca86b019ad472.jpg",
-    unlocked: false,
-    unlockTime: null,
-  },
-];
-
 export function Sidebar() {
   const shouldShowProtonFeatures = window.electron.platform === "linux";
   const [howLongToBeat, setHowLongToBeat] = useState<{
@@ -148,7 +112,7 @@ export function Sidebar() {
   const { numberFormatter } = useFormat();
   const achievementsCount = achievements?.length ?? 0;
   const shouldRenderAchievementsSection =
-    (!!userDetails && achievementsCount > 0) ||
+    achievementsCount > 0 ||
     (shop === "launchbox" &&
       !!shopDetails?.retroAchievementsGameId &&
       !userPreferences?.retroAchievementsWebApiKey);
@@ -211,37 +175,6 @@ export function Sidebar() {
         </Suspense>
       )}
 
-      {userDetails === null && !shouldRenderAchievementsSection && (
-        <SidebarSection title={t("achievements")}>
-          <div className="achievements-placeholder">
-            <LockIcon size={36} />
-            <h3>{t("sign_in_to_see_achievements")}</h3>
-          </div>
-          <ul className="list achievements-placeholder__blur">
-            {achievementsPlaceholder.map((achievement) => (
-              <li key={achievement.name}>
-                <div className="list__item">
-                  <img
-                    className={`list__item-image achievements-placeholder__blur ${
-                      achievement.unlocked ? "" : "list__item-image--locked"
-                    }`}
-                    src={achievement.icon}
-                    alt={achievement.displayName}
-                  />
-                  <div>
-                    <p>{achievement.displayName}</p>
-                    <small>
-                      {achievement.unlockTime != null &&
-                        formatDateTime(achievement.unlockTime)}
-                    </small>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </SidebarSection>
-      )}
-
       {shouldRenderAchievementsSection && (
         <SidebarSection
           title={
@@ -257,7 +190,7 @@ export function Sidebar() {
           <ul className="list">
             <RetroAchievementsConnectBanner />
 
-            {!hasActiveSubscription && achievementsCount > 0 && (
+            {userDetails && !hasActiveSubscription && achievementsCount > 0 && (
               <button
                 type="button"
                 className="subscription-required-button"

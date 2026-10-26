@@ -142,6 +142,7 @@ export function AchievementsContent({
     useContext(gameDetailsContext);
   const dispatch = useAppDispatch();
 
+  const { t } = useTranslation("achievement");
   const { userDetails, hasActiveSubscription } = useUserDetails();
   useEffect(() => {
     dispatch(setHeaderTitle(gameTitle));
@@ -184,7 +185,14 @@ export function AchievementsContent({
     );
   };
 
-  if (!objectId || !shop || !gameTitle || !userDetails) return null;
+  // Signed out, the page shows your local achievements without a profile.
+  const owner = userDetails ?? {
+    id: "",
+    displayName: t("your_achievements"),
+    profileImageUrl: null,
+  };
+
+  if (!objectId || !shop || !gameTitle) return null;
 
   return (
     <div className="achievements-content__achievements-list">
@@ -234,7 +242,7 @@ export function AchievementsContent({
             <div className="achievements-content__achievements-list__section__container__achievements-summary-wrapper">
               <AchievementSummary
                 user={{
-                  ...userDetails,
+                  ...owner,
                   totalAchievementCount: comparedAchievements
                     ? comparedAchievements.owner.totalAchievementCount
                     : achievements!.length,
@@ -262,7 +270,7 @@ export function AchievementsContent({
               <div></div>
               {hasActiveSubscription && (
                 <div className="achievements-content__achievements-list__section__table-header__container__user-avatar">
-                  {getProfileImage({ ...userDetails })}
+                  {getProfileImage({ ...owner })}
                 </div>
               )}
               <div className="achievements-content__achievements-list__section__table-header__container__other-user-avatar">

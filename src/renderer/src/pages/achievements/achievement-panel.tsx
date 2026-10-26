@@ -11,7 +11,7 @@ export interface AchievementPanelProps {
 
 export function AchievementPanel({ achievements }: AchievementPanelProps) {
   const { t } = useTranslation("achievement");
-  const { hasActiveSubscription } = useUserDetails();
+  const { userDetails, hasActiveSubscription } = useUserDetails();
   const { showHydraCloudModal } = useSubscription();
 
   const achievementsPointsTotal = achievements.reduce(
@@ -24,6 +24,9 @@ export function AchievementPanel({ achievements }: AchievementPanelProps) {
       acc + (achievement.unlocked ? (achievement.points ?? 0) : 0),
     0
   );
+
+  // Points belong to a Hydra profile.
+  if (!userDetails) return null;
 
   if (!hasActiveSubscription) {
     return (

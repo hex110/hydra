@@ -2667,7 +2667,15 @@
     "steamgriddb_connected": "SteamGridDB connected",
     "steamgriddb_connection_failed": "SteamGridDB did not accept this key",
     "steamgriddb_disconnected": "SteamGridDB disconnected",
-    "steamgriddb_connected_description": "The artwork picker asks SteamGridDB directly with your key. Games outside Steam are found by an exact title match."
+    "steamgriddb_connected_description": "The artwork picker asks SteamGridDB directly with your key. Games outside Steam are found by an exact title match.",
+    "hydra_account_group": "Hydra services",
+    "hydra_account_group_description": "Optional. These run on Hydra's servers and need a Hydra account; everything else in Hydra Plus works without one.",
+    "hydra_account_title": "Hydra account",
+    "hydra_account_signed_in": "Signed in",
+    "hydra_account_signed_out": "Not signed in",
+    "hydra_account_sign_in": "Sign in",
+    "hydra_account_description": "An account adds a public profile, friends, chat, reviews, achievement points and Hydra Cloud, and lets you connect Epic Games and RetroAchievements. Your library, downloads, achievements and play tracking work without one.",
+    "hydra_account_signed_in_description": "Profile, friends, chat, reviews and Hydra Cloud are on."
   },
   "notifications": {
     "download_complete": "Download complete",
@@ -3205,7 +3213,7 @@
   "achievement": {
     "achievement_unlocked": "Achievement unlocked",
     "user_achievements": "{{displayName}}'s Achievements",
-    "your_achievements": "Your Achievements",
+    "your_achievements": "Your achievements",
     "connect_retroachievements_prompt": "Connect RetroAchievements to track your progress",
     "unlocked_at": "Unlocked at: {{date}}",
     "subscription_needed": "A Hydra Cloud subscription is required to see this content",

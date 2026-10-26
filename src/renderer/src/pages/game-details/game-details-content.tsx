@@ -540,7 +540,7 @@ export function GameDetailsContent() {
               />
             )}
 
-            {shop !== "custom" && shop && objectId && (
+            {userDetails && shop !== "custom" && shop && objectId && (
               <div ref={reviewsRef}>
                 <GameReviews
                   shop={shop}

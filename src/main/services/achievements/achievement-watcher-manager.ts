@@ -13,7 +13,6 @@ import type {
   UserPreferences,
 } from "@types";
 import { achievementsLogger } from "../logger";
-import { HydraApi } from "../hydra-api";
 import {
   hasTouchedAchievementBatchGames,
   setAchievementBatchActive,
@@ -405,7 +404,7 @@ export class AchievementWatcherManager {
 
   private static async syncUnseenAchievementFiles() {
     const touchedGameKeys = takeTouchedAchievementBatchGames();
-    if (touchedGameKeys.size === 0 || !HydraApi.isLoggedIn()) return;
+    if (touchedGameKeys.size === 0) return;
 
     const pendingGames = (
       await this.getGameAchievementFiles(touchedGameKeys)

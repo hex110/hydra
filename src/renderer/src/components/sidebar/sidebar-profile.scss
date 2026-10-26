@@ -248,3 +248,13 @@
     animation: none;
   }
 }
+
+.sidebar-profile__bell {
+  width: 35px;
+  height: 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.06);
+}

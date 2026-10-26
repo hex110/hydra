@@ -52,6 +52,8 @@ export const getGameAchievementData = async (
     { language },
     {
       ...requestOptions,
+      // Public catalogue data: achievements work without a Hydra account.
+      needsAuth: false,
       ifNoneMatch:
         cachedAchievements?.language === language
           ? cachedAchievements.catalogueValidator

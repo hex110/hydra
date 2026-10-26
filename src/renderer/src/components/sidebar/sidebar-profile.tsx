@@ -12,7 +12,6 @@ import { useTranslation } from "react-i18next";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import { Avatar } from "../avatar/avatar";
 import { ConfirmationModal } from "../confirmation-modal/confirmation-modal";
-import { AuthPage } from "@shared";
 import { platformToSystem } from "@renderer/helpers";
 import { logger } from "@renderer/logger";
 import type {
@@ -304,8 +303,9 @@ export function SidebarProfile() {
   };
 
   const handleProfileClick = () => {
+    // Signing in lives in Settings; signed out, this spot opens notifications.
     if (userDetails === null) {
-      window.electron.openAuthWindow(AuthPage.SignIn);
+      navigate("/notifications");
       return;
     }
     if (dropdownOpen) {
@@ -414,11 +414,17 @@ export function SidebarProfile() {
       >
         <div className="sidebar-profile__button-content">
           <span className="sidebar-profile__avatar">
-            <Avatar
-              size={35}
-              src={userDetails?.profileImageUrl}
-              alt={userDetails?.displayName}
-            />
+            {userDetails ? (
+              <Avatar
+                size={35}
+                src={userDetails.profileImageUrl}
+                alt={userDetails.displayName}
+              />
+            ) : (
+              <span className="sidebar-profile__bell">
+                <BellIcon size={18} />
+              </span>
+            )}
             {userDetails && chatUnreadCount > 0 && (
               <output
                 className="sidebar-profile__unread-dot"
@@ -429,7 +435,7 @@ export function SidebarProfile() {
 
           <div className="sidebar-profile__button-information">
             <p className="sidebar-profile__button-title">
-              {userDetails ? userDetails.displayName : t("sign_in")}
+              {userDetails ? userDetails.displayName : t("notifications")}
             </p>
 
             {userDetails && gameRunning && (
@@ -440,6 +446,12 @@ export function SidebarProfile() {
           </div>
 
           {gameRunningDetails()}
+
+          {!userDetails && notificationCount > 0 && (
+            <small className="sidebar-profile__dropdown-badge">
+              {notificationCount > 99 ? "99+" : notificationCount}
+            </small>
+          )}
 
           {userDetails && (
             <ChevronDownIcon

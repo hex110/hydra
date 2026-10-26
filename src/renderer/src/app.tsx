@@ -92,6 +92,7 @@ export function App() {
   const workwondersInitializingRef = useRef(false);
 
   const {
+    userDetails,
     hasActiveSubscription,
     fetchUserDetails,
     updateUserDetails,
@@ -753,11 +754,14 @@ export function App() {
         duration={toast.duration}
       />
 
-      <CloudSubscriptionModal
-        visible={isHydraCloudModalVisible}
-        onClose={hideHydraCloudModal}
-        feature={hydraCloudFeature || undefined}
-      />
+      {/* Its iframe preloads Hydra's checkout page, so only mount it signed in. */}
+      {userDetails && (
+        <CloudSubscriptionModal
+          visible={isHydraCloudModalVisible}
+          onClose={hideHydraCloudModal}
+          feature={hydraCloudFeature || undefined}
+        />
+      )}
 
       <CloudGiftNotificationModal />
 

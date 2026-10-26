@@ -8,6 +8,10 @@ import { HydraCloudFeature } from "@types";
 
 export function useSubscription() {
   const dispatch = useAppDispatch();
+  // Hydra Cloud is an account feature: nothing to offer while signed out.
+  const isSignedIn = useAppSelector(
+    (state) => state.userDetails.userDetails !== null
+  );
 
   const { isHydraCloudModalVisible, feature } = useAppSelector(
     (state) => state.subscription
@@ -15,9 +19,10 @@ export function useSubscription() {
 
   const showHydraCloudModal = useCallback(
     (feature: HydraCloudFeature) => {
+      if (!isSignedIn) return;
       dispatch(setHydraCloudModalVisible(feature));
     },
-    [dispatch]
+    [dispatch, isSignedIn]
   );
 
   const hideHydraCloudModal = useCallback(() => {
