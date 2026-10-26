@@ -5,6 +5,10 @@ The [Hydra Plus for Steam](../../extensions/steam/README.md) add-on puts a
 own `hydraplus://` scheme, which upstream Hydra does not claim, so they always
 reach Hydra Plus. The browser asks once before opening the app.
 
+Firefox and Zen install the Mozilla-signed `.xpi` from the release and then
+update it on their own; see the add-on's
+[README](../../extensions/steam/README.md) for installing and releasing it.
+
 ## Links
 
 | Link                                                | Opens                                                  |

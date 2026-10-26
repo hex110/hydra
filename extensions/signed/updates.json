@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "hydra-plus-steam@hex110.github.io": {
+      "updates": [
+        {
+          "version": "1.0.1",
+          "update_link": "https://raw.githubusercontent.com/hex110/hydra/main/extensions/signed/hydra-plus-steam-1.0.1.xpi"
+        }
+      ]
+    }
+  }
+}

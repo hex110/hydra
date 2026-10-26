@@ -12,16 +12,16 @@ It works in Firefox 115+ and Chromium-based browsers. It only runs on
 `store.steampowered.com/app/*` pages, needs no permissions beyond storing its
 own option, and collects no data.
 
-## Install (unsigned builds)
+## Install
 
-Download `hydra-plus-steam-addon-<version>.zip` from the
-[latest release](https://github.com/hex110/hydra/releases/latest).
-
-- **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load
-  Temporary Add-on…** and pick the zip. Temporary add-ons are removed when
-  Firefox restarts until the add-on is signed by Mozilla.
-- **Chrome, Edge, Brave:** unzip it, open `chrome://extensions`, turn on
-  **Developer mode**, choose **Load unpacked** and pick the folder.
+- **Firefox, Zen:** download `hydra-plus-steam-<version>.xpi` from the
+  [latest release](https://github.com/hex110/hydra/releases/latest) and open
+  it. It is signed by Mozilla (unlisted, not on the add-on site), so it stays
+  installed, and it updates itself from `extensions/signed/updates.json` in
+  this repository.
+- **Chrome, Edge, Brave:** download `hydra-plus-steam-addon-<version>.zip`,
+  unzip it, open `chrome://extensions`, turn on **Developer mode**, choose
+  **Load unpacked** and pick the folder. Chromium browsers do not update it.
 
 ## Develop
 
@@ -33,3 +33,20 @@ npx web-ext run --source-dir extensions/steam     # try it in a fresh Firefox pr
 ```
 
 Strings live in `_locales/<language>/messages.json`.
+
+## Release a new version
+
+Mozilla signs each version once, so every change to the add-on needs a new
+`version` in `manifest.json`.
+
+```sh
+export WEB_EXT_API_KEY=<JWT issuer> WEB_EXT_API_SECRET=<JWT secret>   # from addons.mozilla.org/developers/addon/api/key/
+npx web-ext sign --source-dir extensions/steam --artifacts-dir dist \
+  --channel=unlisted --ignore-files .eslintrc.cjs README.md
+cp dist/*-<version>.xpi extensions/signed/hydra-plus-steam-<version>.xpi
+```
+
+Then add the version to `extensions/signed/updates.json` (point `update_link`
+at the new file on `main`), commit, and push. Browsers pick the update up from
+`main`, and the release workflow attaches the xpi for the manifest's version,
+so push the commit before tagging.

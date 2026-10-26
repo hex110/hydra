@@ -79,12 +79,13 @@ jobs:
           MAIN_VITE_LAUNCHER_SUBDOMAIN: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Unsigned for now; Firefox installs it temporarily from about:debugging,
-      # Chromium-based browsers through "Load unpacked".
+      # The zip is for Chromium-based browsers ("Load unpacked"). Firefox gets
+      # the xpi that Mozilla signed, committed in extensions/signed.
       - name: Package Steam add-on
         run: |
           version="$(node -p 'require("./extensions/steam/manifest.json").version')"
-          (cd extensions/steam && zip -r "../../dist/hydra-plus-steam-addon-${version}.zip" . -x .eslintrc.cjs README.md)
+          (cd extensions/steam && zip -r "../../dist/hydra-plus-steam-addon-${version}.zip" . -x .eslintrc.cjs README.md .amo-upload-uuid)
+          cp "extensions/signed/hydra-plus-steam-${version}.xpi" dist/
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
@@ -96,5 +97,6 @@ jobs:
             dist/*.AppImage
             dist/*.pacman
             dist/hydra-plus-steam-addon-*.zip
+            dist/hydra-plus-steam-*.xpi
             dist/latest-linux.yml
             dist/*.blockmap
