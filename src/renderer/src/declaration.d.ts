@@ -14,6 +14,7 @@ import type {
   BackgroundTask,
   BackgroundTaskKind,
   FloppyPullResult,
+  FloppySearchResult,
   SteamGameHistory,
   SteamHistorySyncStatus,
   FloppySyncStatus,
@@ -446,6 +447,24 @@ declare global {
     syncSteamHistory: () => Promise<SteamHistorySyncStatus>;
     getSteamHistorySyncStatus: () => Promise<SteamHistorySyncStatus>;
     getSteamGameHistory: (appId: string) => Promise<SteamGameHistory | null>;
+    searchFloppyGames: (title: string) => Promise<FloppySearchResult[]>;
+    getGameFloppyMatch: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<{
+      mediaId: string | null;
+      title: string | null;
+      unlinked: boolean;
+    }>;
+    setGameFloppyMatch: (
+      shop: GameShop,
+      objectId: string,
+      mediaId: string | null
+    ) => Promise<void>;
+    dismissCompletionSuggestion: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<void>;
     pullFloppy: () => Promise<FloppyPullResult>;
     setGameRating: (
       shop: GameShop,

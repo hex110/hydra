@@ -32,4 +32,17 @@ export interface FloppyPullResult {
   total: number;
   matched: number;
   updated: number;
+  /** Library games created from Floppy-only entries by this pull. */
+  added: number;
+  /** Existing library games linked to a Floppy entry by the catalogue. */
+  linked: number;
+  /** Floppy-only games the catalogue could not match. */
+  unmatched: string[];
+}
+
+export interface FloppySearchResult {
+  media_id: string | number;
+  title: string;
+  year?: number | null;
+  platforms?: string[];
 }

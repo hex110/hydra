@@ -1,10 +1,7 @@
 import axios, { type AxiosInstance } from "axios";
 
-import type {
-  FloppyEntry,
-  FloppySearchResult,
-  FloppyTrackedState,
-} from "./floppy-sync-core";
+import type { FloppySearchResult } from "@types";
+import type { FloppyEntry, FloppyTrackedState } from "./floppy-sync-core";
 
 export interface FloppyConfig {
   url: string;
@@ -23,6 +20,7 @@ interface FloppyListedItem {
   item?: { media_id?: string | number; title?: string };
   media_id?: string | number;
   title?: string;
+  source?: string | null;
   status?: number | null;
   score?: number | null;
   progress?: number | null;
@@ -122,6 +120,7 @@ export class FloppyClient {
         status: row.status ?? null,
         score: row.score ?? null,
         progress: row.progress ?? 0,
+        entrySource: row.source ?? null,
       });
     }
 
@@ -163,5 +162,12 @@ export class FloppyClient {
     const path = `/media/game/igdb/${mediaId}/lists/${listId}/`;
     if (wishlisted) await this.http.put(path, {});
     else await this.http.delete(path);
+  }
+
+  async getTitle(mediaId: string) {
+    const { data } = await this.http.get<{ title?: string }>(
+      `/media/game/igdb/${mediaId}/`
+    );
+    return data.title ?? null;
   }
 }

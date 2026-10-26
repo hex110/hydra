@@ -63,6 +63,33 @@ skipped, so a fresh edit in Hydra is not overwritten. Taking a game off
 Floppy's Wishlist list does not remove it from Hydra's wishlist: a game
 wishlisted before this existed is not on the list yet.
 
+## Adding Floppy games to the library
+
+With **Add Floppy games played outside Steam to the library** on, each pull
+also adds the games Floppy tracks that you don't own on Steam as ordinary
+uninstalled library entries (Steam artwork, your status and rating from
+Floppy). Hydra searches its catalogue by title and accepts only a single exact
+match; on a match it also links an existing library entry for the same game.
+
+- Entries Floppy itself imported from Steam, and games your Steam library
+  lists, are left to the [Steam import](steam-history.md) and its playtime
+  limit.
+- A game you removed from the library, or unlinked from Floppy, is never added
+  again.
+- They are never uploaded to your Hydra profile.
+- Games the catalogue has no exact match for (Valorant, Minecraft, differently
+  named editions such as "Slay the Spire II") are listed under the pull button;
+  they stay in Floppy only.
+- On the data checked when this was written, 65 of 88 such games matched.
+
+## Fixing a match
+
+In a game's options, **Details → Floppy** shows which Floppy entry the game is
+tracked as. **Search** looks the title up in Floppy (IGDB) and **Use this**
+links the game to the entry you pick; it is pushed and pulled straight away.
+**Don't track this game in Floppy** unlinks it for good: neither the title
+match nor the library import will link it again, until you pick an entry.
+
 ## Library sync
 
 The sync runs in the background (four games at a time), so you can leave the
@@ -84,8 +111,13 @@ the debounced queue and library backfill. Sync is triggered from
 
 ## TODO
 
-- Per-session history, so Floppy's statistics show when a game was played.
-  (Start and end dates for Steam games are filled in from
-  [Steam history](steam-history.md).)
 - A "played anywhere" library view of every game tracked in Floppy.
 - A way to correct a wrong or missing match from the game's options.
+
+## Why there is no per-session history
+
+Floppy records every extra play of a game as another entry of that game (a
+"repeat"), each with its own status and progress. Sending one entry per day
+played would make Floppy count dozens of replays and split the playtime across
+rows, so Hydra sends totals and the start and end dates described above. The
+sessions view in Floppy is only a different way to display those entries.

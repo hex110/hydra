@@ -9,6 +9,7 @@ const TASK_ORDER = [
   "steam-history",
   "floppy-sync",
   "floppy-pull",
+  "floppy-import",
   "floppy-push",
 ] as const;
 

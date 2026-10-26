@@ -1028,6 +1028,17 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getSteamHistorySyncStatus"),
   getSteamGameHistory: (appId: string) =>
     ipcRenderer.invoke("getSteamGameHistory", appId),
+  searchFloppyGames: (title: string) =>
+    ipcRenderer.invoke("searchFloppyGames", title),
+  getGameFloppyMatch: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameFloppyMatch", shop, objectId),
+  setGameFloppyMatch: (
+    shop: GameShop,
+    objectId: string,
+    mediaId: string | null
+  ) => ipcRenderer.invoke("setGameFloppyMatch", shop, objectId, mediaId),
+  dismissCompletionSuggestion: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("dismissCompletionSuggestion", shop, objectId),
   pullFloppy: () => ipcRenderer.invoke("pullFloppy"),
   setGameRating: (shop: GameShop, objectId: string, rating: number | null) =>
     ipcRenderer.invoke("setGameRating", shop, objectId, rating),

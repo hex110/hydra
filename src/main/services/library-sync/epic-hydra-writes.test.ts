@@ -222,6 +222,7 @@ function fixture() {
         },
         "@main/constants": { INTERVALS: { processWatcher: 1000 } },
         "./launched-game-pids": { launchedGamePids: new Map() },
+        "./floppy": { queueFloppySync: () => {} },
         "./steam-integration/steam-game-exit-sync": {
           cancelSteamGameExitSync: () => {},
           shouldScheduleSteamGameExitSync: () => false,

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { SteamGameHistory } from "@types";
 import { useDate } from "@renderer/hooks";
@@ -7,26 +6,11 @@ const formatMinutes = (minutes: number) =>
   `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 
 /** What Steam itself reports for the game: playtime, last played, achievement dates. */
-export function SteamHistorySection({ appId }: Readonly<{ appId: string }>) {
+export function SteamHistorySection({
+  history,
+}: Readonly<{ history: SteamGameHistory | null }>) {
   const { t } = useTranslation("game_details");
   const { formatDateTime } = useDate();
-  const [history, setHistory] = useState<SteamGameHistory | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setHistory(null);
-
-    window.electron
-      .getSteamGameHistory(appId)
-      .then((value) => {
-        if (!cancelled) setHistory(value);
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [appId]);
 
   if (!history || history.playtimeMinutes === 0) return null;
 

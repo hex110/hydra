@@ -2,6 +2,7 @@ export type BackgroundTaskKind =
   | "steam-history"
   | "floppy-sync"
   | "floppy-pull"
+  | "floppy-import"
   | "floppy-push";
 
 export type BackgroundTaskState = "queued" | "running" | "done" | "failed";

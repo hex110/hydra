@@ -41,6 +41,23 @@
     font: inherit;
   }
 
+  &__suggestion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 1.5) calc(globals.$spacing-unit * 2);
+    border-radius: 8px;
+    border: 1px solid globals.$border-color;
+    background-color: globals.$background-color;
+  }
+
+  &__suggestion-actions {
+    display: flex;
+    gap: globals.$spacing-unit;
+  }
+
   &__achievements {
     max-height: 280px;
     overflow-y: auto;

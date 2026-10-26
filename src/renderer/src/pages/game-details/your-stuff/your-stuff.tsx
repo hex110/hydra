@@ -6,6 +6,7 @@ import type { LibraryGame, PlayStatus } from "@types";
 import {
   applyLibraryGroupAction,
   formatReleaseVersion,
+  getCompletionSuggestion,
   getDisplayedPlayTimeInMilliseconds,
   groupLibraryGames,
   parseReleaseVersion,
@@ -18,6 +19,7 @@ import { PlayStatusMenu } from "../hero/play-status-menu";
 import { GameNotesField } from "@renderer/pages/library/game-notes-field";
 import { libraryTabIncludes } from "@renderer/pages/library/library-filters";
 import { SteamHistorySection } from "./steam-history-section";
+import { useSteamHistory } from "./use-steam-history";
 import { findRelatedLibraryGames } from "./related-library-games";
 import "./your-stuff.scss";
 
@@ -63,15 +65,34 @@ export function YourStuff() {
     );
   }, [library, members, shown]);
 
+  const steamAppId =
+    members.find((member) => member.shop === "steam")?.objectId ?? null;
+  const steamHistory = useSteamHistory(steamAppId);
+
   if (!game || !shown || game.isDeleted) return null;
 
   const playTime = getDisplayedPlayTimeInMilliseconds(shown);
   const achievementGame = presentation?.achievementGame ?? shown;
-  const unlocked = achievementGame.unlockedAchievementCount ?? 0;
-  const achievementCount = Math.max(
-    achievementGame.achievementCount ?? 0,
-    unlocked
-  );
+  // Hydra's own achievement data first; Steam's import fills in what it lacks.
+  const steamAchievements = steamHistory?.achievements ?? [];
+  const hydraUnlocked = achievementGame.unlockedAchievementCount ?? 0;
+  const useSteamAchievements =
+    (achievementGame.achievementCount ?? 0) === 0 &&
+    steamAchievements.length > 0;
+  const unlocked = useSteamAchievements
+    ? steamAchievements.filter((item) => item.unlockTime !== null).length
+    : hydraUnlocked;
+  const achievementCount = useSteamAchievements
+    ? steamAchievements.length
+    : Math.max(achievementGame.achievementCount ?? 0, hydraUnlocked);
+  const completionSuggestion = getCompletionSuggestion({
+    playStatus: shown.playStatus,
+    dismissed: members.some((member) => member.completionSuggestionDismissed),
+    playTimeInMilliseconds: playTime,
+    unlockedAchievements: unlocked,
+    totalAchievements: achievementCount,
+    mainStoryHours: shown.metadata?.howLongToBeat?.mainStory ?? null,
+  });
   const availableUpdate = members.find(
     (member) => member.availableUpdate
   )?.availableUpdate;
@@ -90,6 +111,19 @@ export function YourStuff() {
       );
     } catch {
       showErrorToast(t("failed_update_play_status"));
+    } finally {
+      await Promise.all([updateLibrary(), updateGame()]);
+    }
+  };
+
+  const dismissCompletionSuggestion = async () => {
+    try {
+      await applyLibraryGroupAction(members, (member) =>
+        window.electron.dismissCompletionSuggestion(
+          member.shop,
+          member.objectId
+        )
+      );
     } finally {
       await Promise.all([updateLibrary(), updateGame()]);
     }
@@ -123,6 +157,29 @@ export function YourStuff() {
           onChange={(playStatus) => void setPlayStatus(playStatus)}
         />
       </div>
+
+      {completionSuggestion && (
+        <div className="your-stuff__suggestion" role="status">
+          <span>
+            {completionSuggestion === "achievements"
+              ? t("completion_suggestion_achievements", { count: unlocked })
+              : t("completion_suggestion_story", {
+                  hours: shown.metadata?.howLongToBeat?.mainStory,
+                })}
+          </span>
+          <div className="your-stuff__suggestion-actions">
+            <Button onClick={() => void setPlayStatus("finished")}>
+              {t("completion_suggestion_accept")}
+            </Button>
+            <Button
+              theme="outline"
+              onClick={() => void dismissCompletionSuggestion()}
+            >
+              {t("completion_suggestion_dismiss")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <dl className="your-stuff__stats">
         <div>
@@ -250,13 +307,7 @@ export function YourStuff() {
         </div>
       )}
 
-      {members.some((member) => member.shop === "steam") && (
-        <SteamHistorySection
-          appId={
-            members.find((member) => member.shop === "steam")?.objectId ?? ""
-          }
-        />
-      )}
+      {steamAppId && <SteamHistorySection history={steamHistory} />}
 
       <GameNotesField game={presentation ?? game} />
     </section>

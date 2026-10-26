@@ -24,11 +24,13 @@ import {
 } from "../background-tasks";
 import { WindowManager } from "../window-manager";
 import { FloppyClient } from "./floppy-client";
+import { importFloppyOnlyGames } from "./floppy-import";
 import {
   normalizeTitle,
   pickMatch,
   planPatch,
   planPull,
+  type FloppyEntry,
   type FloppyPatch,
   type FloppySyncReason,
 } from "./floppy-sync-core";
@@ -58,6 +60,7 @@ export const getFloppyClient = async () => {
 };
 
 const resolveMediaId = async (client: FloppyClient, game: Game) => {
+  if (game.floppyUnlinked) return null;
   if (game.floppyMediaId) return game.floppyMediaId;
 
   const key = levelKeys.game(game.shop, game.objectId);
@@ -231,12 +234,11 @@ const hasPendingFloppyChange = (key: string) =>
   pending.has(`g:${key}`) || pending.has(`w:${key}`);
 
 /** Brings status, rating and wishlist from Floppy into Hydra. */
-const runPull = async (): Promise<FloppyPullResult> => {
-  const client = await getFloppyClient();
-  if (!client) throw new Error("floppy-not-configured");
-
-  const [entries, wishlistId, games] = await Promise.all([
-    client.listGames(),
+const runPull = async (
+  client: FloppyClient,
+  entries: FloppyEntry[]
+): Promise<FloppyPullResult> => {
+  const [wishlistId, games] = await Promise.all([
     client.getWishlistId(false),
     gamesSublevel.values().all(),
   ]);
@@ -257,10 +259,14 @@ const runPull = async (): Promise<FloppyPullResult> => {
     total: games.length,
     matched: 0,
     updated: 0,
+    added: 0,
+    linked: 0,
+    unmatched: [],
   };
 
   for (const game of games) {
     if (game.isDeleted || game.shop === "launchbox") continue;
+    if (game.floppyUnlinked) continue;
 
     const key = levelKeys.game(game.shop, game.objectId);
     const mediaId =
@@ -303,16 +309,42 @@ export const pullFromFloppy = async (
   });
 
   try {
-    const result = await runPull();
+    const client = (await getFloppyClient())!;
+    const preferences = await db
+      .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+        valueEncoding: "json",
+      })
+      .catch(() => null);
 
-    if (quiet && result.updated === 0) removeBackgroundTask("floppy-pull");
-    else
+    const entries = await client.listGames();
+    const result = await runPull(client, entries);
+
+    if (preferences?.floppyAddToLibrary) {
+      const imported = await importFloppyOnlyGames(
+        entries,
+        await gamesSublevel.values().all()
+      );
+      Object.assign(result, imported);
+
+      if (imported.added > 0 || imported.linked > 0) {
+        // The new entries get their status, rating and wishlist now.
+        const applied = await runPull(client, entries);
+        result.matched = applied.matched;
+        result.updated += applied.updated;
+        WindowManager.sendToAppWindows("on-library-batch-complete");
+      }
+    }
+
+    if (quiet && result.updated === 0 && result.added === 0) {
+      removeBackgroundTask("floppy-pull");
+    } else {
       updateBackgroundTask("floppy-pull", {
         state: "done",
         processed: result.total,
         total: result.total,
         result: { matched: result.matched, updated: result.updated },
       });
+    }
 
     return result;
   } catch (error) {

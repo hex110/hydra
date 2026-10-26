@@ -116,6 +116,8 @@ export type UserGame = LibraryCatalogueMetadata & {
   hasManuallyUpdatedPlaytime: boolean;
   hasActiveSteamImport?: boolean;
   steamHistoryImported?: boolean;
+  floppyImported?: boolean;
+  completionSuggestionDismissed?: boolean;
   hasActiveEpicImport?: boolean;
   runtimeByPlatform?: { hydra?: number; steam?: number; epic?: number };
   isFavorite: boolean;

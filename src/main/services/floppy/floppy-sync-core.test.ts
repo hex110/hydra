@@ -4,6 +4,8 @@ import { describe, it } from "node:test";
 import {
   FLOPPY_STATUS,
   floppyStatusToPlayStatus,
+  isFloppyOnlyEntry,
+  pickCatalogueMatch,
   planPull,
   normalizeTitle,
   pickMatch,
@@ -231,5 +233,52 @@ describe("planPull", () => {
       wishlisted: true,
     });
     assert.deepEqual(planPull({ wishlisted: true }, entry, false), {});
+  });
+});
+
+describe("catalogue matching", () => {
+  const item = (title: string, objectId: string, shop = "steam") => ({
+    title,
+    objectId,
+    shop,
+    iconUrl: null,
+  });
+
+  it("takes a single exact title", () => {
+    assert.equal(
+      pickCatalogueMatch("Stray", [item("Stray", "1"), item("Stray Gods", "2")])
+        ?.objectId,
+      "1"
+    );
+  });
+
+  it("will not pick between two games of the same name", () => {
+    assert.equal(
+      pickCatalogueMatch("Doom", [item("DOOM", "1"), item("Doom", "2")]),
+      null
+    );
+  });
+
+  it("ignores other shops", () => {
+    assert.equal(
+      pickCatalogueMatch("Stray", [item("Stray", "1", "epic")]),
+      null
+    );
+  });
+
+  it("leaves Steam's own entries to the Steam import", () => {
+    const owned = new Set(["balatro"]);
+    assert.equal(
+      isFloppyOnlyEntry({ title: "Stray", entrySource: "yamtrack" }, owned),
+      true
+    );
+    assert.equal(
+      isFloppyOnlyEntry({ title: "Whatever", entrySource: "steam" }, owned),
+      false
+    );
+    assert.equal(
+      isFloppyOnlyEntry({ title: "Balatro", entrySource: "yamtrack" }, owned),
+      false
+    );
   });
 });

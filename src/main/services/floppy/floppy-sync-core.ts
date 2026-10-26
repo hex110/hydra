@@ -1,4 +1,4 @@
-import type { PlayStatus } from "@types";
+import type { FloppySearchResult, PlayStatus } from "@types";
 
 export const FLOPPY_STATUS = {
   planning: 0,
@@ -7,13 +7,6 @@ export const FLOPPY_STATUS = {
   completed: 3,
   dropped: 4,
 } as const;
-
-export interface FloppySearchResult {
-  media_id: string | number;
-  title: string;
-  year?: number | null;
-  platforms?: string[];
-}
 
 export interface FloppyTrackedState {
   tracked: boolean;
@@ -31,6 +24,8 @@ export interface FloppyEntry {
   status: number | null;
   score: number | null;
   progress: number;
+  /** How the entry got into Floppy: "steam" for its Steam import. */
+  entrySource: string | null;
 }
 
 export interface FloppyGameInput {
@@ -198,3 +193,34 @@ export const planPull = (
 
   return change;
 };
+
+export interface CatalogueSuggestion {
+  title: string;
+  objectId: string;
+  shop: string;
+  iconUrl: string | null;
+}
+
+/** One exact title only: two catalogue games of that name are a guess. */
+export const pickCatalogueMatch = (
+  title: string,
+  suggestions: CatalogueSuggestion[]
+): CatalogueSuggestion | null => {
+  const wanted = normalizeTitle(title);
+  const exact = suggestions.filter(
+    (item) => item.shop === "steam" && normalizeTitle(item.title) === wanted
+  );
+
+  return exact.length === 1 ? exact[0] : null;
+};
+
+/**
+ * Entries Floppy imported from Steam, and games Steam already lists, belong
+ * to the Steam import and its playtime limit, not to this one.
+ */
+export const isFloppyOnlyEntry = (
+  entry: Pick<FloppyEntry, "title" | "entrySource">,
+  ownedSteamTitles: ReadonlySet<string>
+) =>
+  entry.entrySource !== "steam" &&
+  !ownedSteamTitles.has(normalizeTitle(entry.title));

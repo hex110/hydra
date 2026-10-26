@@ -176,6 +176,12 @@ export interface Game extends LibraryCatalogueMetadata {
    * under the Steam tab.
    */
   steamHistoryImported?: boolean;
+  /** Added from a Floppy entry: kept off profile uploads. */
+  floppyImported?: boolean;
+  /** The user cut the link to Floppy: never match this game again. */
+  floppyUnlinked?: boolean;
+  /** The user declined the "mark as finished" suggestion. */
+  completionSuggestionDismissed?: boolean;
   /** IGDB id of the matching Floppy entry; set by the Floppy sync. */
   floppyMediaId?: string | null;
   /** The user's own notes about the game. */
@@ -300,6 +306,8 @@ export interface UserPreferences {
   /** Minutes played a game needs to be added; 0 adds every owned game. */
   steamHistoryMinMinutes?: number;
   floppyEnabled?: boolean;
+  /** Add Floppy games played outside Steam to the library. */
+  floppyAddToLibrary?: boolean;
   floppyUrl?: string | null;
   floppyApiToken?: string | null;
   preferQuitInsteadOfHiding?: boolean;

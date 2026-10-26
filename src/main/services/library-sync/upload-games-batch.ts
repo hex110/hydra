@@ -29,6 +29,7 @@ const uploadLocalGamesAndMerge = async () => {
           !game.isDeleted &&
           game.remoteId === null &&
           !game.steamHistoryImported &&
+          !game.floppyImported &&
           game.shop !== "custom" &&
           game.source !== "epic"
       );
@@ -49,6 +50,7 @@ const uploadLocalGamesAndMerge = async () => {
               !game.isDeleted &&
               game.remoteId === null &&
               !game.steamHistoryImported &&
+              !game.floppyImported &&
               game.source !== "epic"
           );
           if (!latest.length) return;

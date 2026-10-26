@@ -3,7 +3,11 @@ import { useTranslation } from "react-i18next";
 import { Button, CheckboxField, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
-import type { FloppyBackfillReport, FloppySyncStatus } from "@types";
+import type {
+  FloppyBackfillReport,
+  FloppyPullResult,
+  FloppySyncStatus,
+} from "@types";
 
 import "./settings-floppy.scss";
 
@@ -68,6 +72,7 @@ export function SettingsFloppy() {
 
   const [isBusy, setIsBusy] = useState(false);
   const [syncStatus, setSyncStatus] = useState<FloppySyncStatus | null>(null);
+  const [pullResult, setPullResult] = useState<FloppyPullResult | null>(null);
   const [form, setForm] = useState(() => ({
     enabled: userPreferences?.floppyEnabled ?? false,
     url: userPreferences?.floppyUrl ?? "",
@@ -148,6 +153,7 @@ export function SettingsFloppy() {
 
     try {
       const result = await window.electron.pullFloppy();
+      setPullResult(result);
       showSuccessToast(t("floppy_pull_result", { ...result }));
     } catch {
       showErrorToast(t("floppy_pull_failed"));
@@ -219,6 +225,19 @@ export function SettingsFloppy() {
           />
 
           {isSaved && (
+            <CheckboxField
+              label={t("floppy_add_to_library")}
+              checked={userPreferences?.floppyAddToLibrary === true}
+              onChange={() =>
+                updateUserPreferences({
+                  floppyAddToLibrary:
+                    userPreferences?.floppyAddToLibrary !== true,
+                })
+              }
+            />
+          )}
+
+          {isSaved && (
             <div className="settings-floppy__actions">
               <Button
                 type="button"
@@ -247,6 +266,21 @@ export function SettingsFloppy() {
                 {renderSyncStatus()}
               </span>
             </div>
+          )}
+
+          {pullResult && pullResult.unmatched.length > 0 && (
+            <details>
+              <summary>
+                {t("floppy_unmatched_import", {
+                  count: pullResult.unmatched.length,
+                })}
+              </summary>
+              <ul className="settings-floppy__list">
+                {[...pullResult.unmatched].sort().map((title) => (
+                  <li key={title}>{title}</li>
+                ))}
+              </ul>
+            </details>
           )}
 
           {syncStatus?.report && !syncStatus.running && (

@@ -122,3 +122,11 @@ forks, see the [fork survey](../fork-survey.md)):
   8 seconds with the cached profile. Upstream waited for the connection to
   time out, which took 134 seconds when measured (2026-10-19); without any
   network it already opened at once.
+
+## Finished suggestion
+
+The game's block offers **Mark as finished** when you have unlocked every
+achievement (Hydra's own, or Steam's for games from the
+[Steam import](steam-history.md)), or played as long as How Long to Beat's main
+story takes. **Not now** stops the offer for that game. Finished and dropped
+games, and games without achievements or a story length, get none.

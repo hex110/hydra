@@ -138,14 +138,15 @@ in the sections below.
     3. [x] Steam playtime, achievements with unlock dates, activity deltas
     4. [x] Steam games you own appear in the library as uninstalled entries,
            with their history (opt-in; [Steam history](features/steam-history.md))
-    5. [ ] Floppy-only games (played outside Steam) added to the library,
-           matched to the catalogue
+    5. [x] Floppy-only games (played outside Steam) added to the library,
+           matched to the catalogue ([Floppy sync](features/floppy.md))
     6. [x] Background tasks on the Downloads page
-    7. [ ] Completion suggestions: offer Finished at 100 % achievements or at
+    7. [x] Completion suggestions: offer Finished at 100 % achievements or at
            the How Long to Beat main-story time
-    8. [ ] Per-session history pushed to Floppy
+    8. [ ] ~~Per-session history pushed to Floppy~~ Declined: Floppy would
+           count each day as a replay ([why](features/floppy.md#why-there-is-no-per-session-history))
     9. [ ] Steam wishlist (public profile only; no official API)
-    10. [ ] Fix a wrong or missing Floppy match from the game's options
+    10. [x] Fix a wrong or missing Floppy match from the game's options
 11. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups

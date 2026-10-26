@@ -9,6 +9,8 @@ import languageResources from "@locales";
 import { getGenreNames } from "@shared";
 import type { GameMetadataOverrides, LibraryGame } from "@types";
 
+import { FloppyMatchSection } from "./floppy-match-section";
+
 const LANGUAGE_OPTIONS = orderBy(
   Object.entries(languageResources).map(([language, value]) => ({
     value: language,
@@ -141,6 +143,8 @@ export function DetailsSection({ game }: Readonly<{ game: LibraryGame }>) {
       <p className="game-options-modal__optiscaler-hint">
         {t("details_language_hint")}
       </p>
+
+      <FloppyMatchSection game={game} />
     </div>
   );
 }
