@@ -176,6 +176,10 @@ export interface Game extends LibraryCatalogueMetadata {
    * under the Steam tab.
    */
   steamHistoryImported?: boolean;
+  /** Added from the Steam wishlist while unreleased: kept off profile uploads. */
+  steamWishlistImported?: boolean;
+  /** Steam's playtime counts on top of Hydra's instead of the larger of the two. */
+  steamPlaytimeAdditive?: boolean;
   /** Added from a Floppy entry: kept off profile uploads. */
   floppyImported?: boolean;
   /** The user cut the link to Floppy: never match this game again. */
@@ -305,6 +309,14 @@ export interface UserPreferences {
   steamHistoryAddToLibrary?: boolean;
   /** Minutes played a game needs to be added; 0 adds every owned game. */
   steamHistoryMinMinutes?: number;
+  /** Follow the Steam wishlist: notify on release, optionally list upcoming games. */
+  steamWishlistTrack?: boolean;
+  /** Add unreleased wishlist games to the library; on unless set to false. */
+  steamWishlistAddToLibrary?: boolean;
+  /** Also notify when an unreleased wishlist game gets a release date. */
+  steamWishlistNotifyDate?: boolean;
+  /** Fill Floppy start and end dates from Steam; on unless set to false. */
+  floppyFillDates?: boolean;
   floppyEnabled?: boolean;
   /** Add Floppy games played outside Steam to the library. */
   floppyAddToLibrary?: boolean;

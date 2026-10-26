@@ -18,6 +18,7 @@ export type FriendRequestAction = "ACCEPTED" | "REFUSED" | "CANCEL";
 export * from "./download-contract";
 export * from "./floppy.types";
 export * from "./steam-history.types";
+export * from "./steam-wishlist.types";
 export * from "./background-tasks.types";
 
 export type HydraCloudFeature =
@@ -117,6 +118,8 @@ export type UserGame = LibraryCatalogueMetadata & {
   hasActiveSteamImport?: boolean;
   steamHistoryImported?: boolean;
   floppyImported?: boolean;
+  steamWishlistImported?: boolean;
+  steamPlaytimeAdditive?: boolean;
   completionSuggestionDismissed?: boolean;
   hasActiveEpicImport?: boolean;
   runtimeByPlatform?: { hydra?: number; steam?: number; epic?: number };
@@ -766,6 +769,7 @@ export type LocalNotificationType =
   | "SAVES_FOUND"
   | "GAME_UPDATES_AVAILABLE"
   | "WISHLIST_DOWNLOAD_AVAILABLE"
+  | "STEAM_WISHLIST_RELEASE"
   | "GAME_UPDATED"
   | "OPTISCALER_FILES_MISSING";
 

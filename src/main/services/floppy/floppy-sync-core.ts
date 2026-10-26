@@ -26,6 +26,7 @@ export interface FloppyEntry {
   progress: number;
   /** How the entry got into Floppy: "steam" for its Steam import. */
   entrySource: string | null;
+  image: string | null;
 }
 
 export interface FloppyGameInput {
@@ -68,6 +69,33 @@ export const normalizeTitle = (title: string) =>
     .replaceAll(/[^a-z0-9]+/g, " ")
     .trim();
 
+const ROMAN_NUMERALS: Record<string, string> = {
+  ii: "2",
+  iii: "3",
+  iv: "4",
+  vi: "6",
+  vii: "7",
+  viii: "8",
+  ix: "9",
+};
+
+const EDITION_WORDS =
+  /\b(?:game of the year|director s cut|remastered|remaster|definitive|enhanced|complete|deluxe|anniversary|ultimate|legendary|special|gold|goty|edition)\b/g;
+
+/**
+ * A looser key for titles that differ only by numeral style, a leading "The"
+ * or an edition word ("Slay the Spire II" and "Slay the Spire 2"). "I", "V" and
+ * "X" are left alone: they are as often letters as numerals.
+ */
+export const looseTitleKey = (title: string) =>
+  normalizeTitle(title)
+    .replace(EDITION_WORDS, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => ROMAN_NUMERALS[word] ?? word)
+    .filter((word, index) => !(index === 0 && word === "the"))
+    .join(" ");
+
 /** Exact normalised title only: a wrong match would write to the wrong entry. */
 export const pickMatch = (
   title: string,
@@ -75,10 +103,14 @@ export const pickMatch = (
 ): FloppySearchResult | null => {
   const wanted = normalizeTitle(title);
   const exact = results.filter((r) => normalizeTitle(r.title) === wanted);
+  if (exact.length > 0) {
+    return exact.find((r) => r.platforms?.includes(PC_PLATFORM)) ?? exact[0];
+  }
 
-  return (
-    exact.find((r) => r.platforms?.includes(PC_PLATFORM)) ?? exact[0] ?? null
+  const loose = results.filter(
+    (r) => looseTitleKey(r.title) === looseTitleKey(title)
   );
+  return loose.length === 1 ? loose[0] : null;
 };
 
 const toDay = (date: Date) =>
@@ -211,7 +243,14 @@ export const pickCatalogueMatch = (
     (item) => item.shop === "steam" && normalizeTitle(item.title) === wanted
   );
 
-  return exact.length === 1 ? exact[0] : null;
+  if (exact.length > 0) return exact.length === 1 ? exact[0] : null;
+
+  const loose = suggestions.filter(
+    (item) =>
+      item.shop === "steam" &&
+      looseTitleKey(item.title) === looseTitleKey(title)
+  );
+  return loose.length === 1 ? loose[0] : null;
 };
 
 /**

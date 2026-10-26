@@ -444,9 +444,24 @@ declare global {
       apiKey: string,
       steamId: string
     ) => Promise<{ ownedGames: number }>;
+    previewSteamLibraryImport: (minMinutes: number) => Promise<{
+      owned: number;
+      wouldAdd: number;
+      alreadyInLibrary: number;
+    }>;
+    setGameSteamPlaytimeAdditive: (
+      appId: string,
+      additive: boolean
+    ) => Promise<void>;
+    syncSteamWishlist: () => Promise<void>;
     syncSteamHistory: () => Promise<SteamHistorySyncStatus>;
     getSteamHistorySyncStatus: () => Promise<SteamHistorySyncStatus>;
     getSteamGameHistory: (appId: string) => Promise<SteamGameHistory | null>;
+    addFloppyGameAsCustom: (
+      mediaId: string,
+      title: string,
+      image: string | null
+    ) => Promise<void>;
     searchFloppyGames: (title: string) => Promise<FloppySearchResult[]>;
     getGameFloppyMatch: (
       shop: GameShop,

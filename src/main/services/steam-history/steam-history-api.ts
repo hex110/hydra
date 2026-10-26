@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import type { SteamStoreItem } from "./steam-wishlist-core";
 import type {
   SteamOwnedGame,
   SteamPlayerAchievement,
@@ -73,4 +74,52 @@ export const fetchAchievementSchema = async (
     params: { key: apiKey, appid: appId, l: "english", format: "json" },
   });
   return data.game?.availableGameStats?.achievements ?? [];
+};
+
+export interface SteamWishlistItem {
+  appid: number;
+  priority?: number;
+  date_added?: number;
+}
+
+/** The profile's game details must be public for the wishlist to be readable. */
+export const fetchWishlist = async ({
+  apiKey,
+  steamId,
+}: SteamHistoryCredentials) => {
+  const { data } = await steam.get<{
+    response?: { items?: SteamWishlistItem[] };
+  }>("/IWishlistService/GetWishlist/v1/", {
+    params: { key: apiKey, steamid: steamId, format: "json" },
+  });
+
+  return data.response?.items ?? [];
+};
+
+const STORE_BATCH_SIZE = 200;
+
+/** Release data for many apps at once; Steam answers a batch in about a second. */
+export const fetchStoreItems = async (appIds: number[]) => {
+  const items: SteamStoreItem[] = [];
+
+  for (let start = 0; start < appIds.length; start += STORE_BATCH_SIZE) {
+    const ids = appIds
+      .slice(start, start + STORE_BATCH_SIZE)
+      .map((appid) => ({ appid }));
+    const { data } = await steam.get<{
+      response?: { store_items?: SteamStoreItem[] };
+    }>("/IStoreBrowseService/GetItems/v1/", {
+      params: {
+        input_json: JSON.stringify({
+          ids,
+          context: { language: "english", country_code: "US" },
+          data_request: { include_release: true },
+        }),
+      },
+    });
+
+    items.push(...(data.response?.store_items ?? []));
+  }
+
+  return items;
 };

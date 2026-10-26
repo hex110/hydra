@@ -103,8 +103,12 @@ export const steamActivityToRecord = ({
 /** Steam's total as the part Hydra has not tracked itself, so none is counted twice. */
 export const steamPlayTimeToStore = (
   steamMinutes: number,
-  hydraPlayTimeInMilliseconds: number
-) => Math.max(0, steamMinutes * MINUTE_MS - hydraPlayTimeInMilliseconds);
+  hydraPlayTimeInMilliseconds: number,
+  additive = false
+) =>
+  additive
+    ? Math.max(0, steamMinutes * MINUTE_MS)
+    : Math.max(0, steamMinutes * MINUTE_MS - hydraPlayTimeInMilliseconds);
 
 export const firstUnlockTime = (history: SteamGameHistory) => {
   const times =

@@ -1,5 +1,5 @@
 import { Notification } from "electron";
-import { t } from "i18next";
+import i18next, { t } from "i18next";
 import trayIcon from "@resources/tray-icon.png?asset";
 import fs from "node:fs";
 import axios from "axios";
@@ -13,6 +13,8 @@ import { WindowManager } from "../window-manager";
 import type {
   Game,
   GameUpdateFailure,
+  SteamWishlistEntry,
+  SteamWishlistEvent,
   UserPreferences,
   UserProfile,
 } from "@types";
@@ -550,6 +552,53 @@ export const publishWishlistDownloadsNotification = async (games: Game[]) => {
       url:
         games.length === 1
           ? `/game/${games[0].shop}/${games[0].objectId}`
+          : "/library?collection=__wishlist__",
+    }
+  );
+};
+
+export const publishSteamWishlistNotification = async (
+  entries: SteamWishlistEntry[],
+  event: SteamWishlistEvent
+) => {
+  if (entries.length === 0) return;
+
+  const [first] = entries;
+  const key =
+    event === "released"
+      ? first.isEarlyAccess && entries.length === 1
+        ? "steam_wishlist_early_access"
+        : "steam_wishlist_released"
+      : "steam_wishlist_date_announced";
+
+  const title = t(key, {
+    ns: "notifications",
+    count: entries.length,
+    title: first.name,
+  });
+  const body = t(`${key}_description`, {
+    ns: "notifications",
+    count: entries.length,
+    titles: entries
+      .slice(0, 3)
+      .map((entry) => entry.name)
+      .join(", "),
+    date: first.releaseDate
+      ? new Date(first.releaseDate * 1000).toLocaleDateString(i18next.language)
+      : "",
+  });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "STEAM_WISHLIST_RELEASE",
+    title,
+    body,
+    {
+      pictureUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${first.appId}/header.jpg`,
+      url:
+        entries.length === 1
+          ? `/game/steam/${first.appId}`
           : "/library?collection=__wishlist__",
     }
   );

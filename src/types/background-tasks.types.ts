@@ -1,5 +1,6 @@
 export type BackgroundTaskKind =
   | "steam-history"
+  | "steam-wishlist"
   | "floppy-sync"
   | "floppy-pull"
   | "floppy-import"

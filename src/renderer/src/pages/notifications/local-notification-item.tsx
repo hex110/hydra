@@ -69,6 +69,7 @@ export function LocalNotificationItem({
       case "GAME_UPDATED":
         return <SyncIcon size={24} />;
       case "WISHLIST_DOWNLOAD_AVAILABLE":
+      case "STEAM_WISHLIST_RELEASE":
         return <StarIcon size={24} />;
         return <SyncIcon size={24} />;
       case "OPTISCALER_FILES_MISSING":

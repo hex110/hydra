@@ -145,7 +145,7 @@ in the sections below.
            the How Long to Beat main-story time
     8. [ ] ~~Per-session history pushed to Floppy~~ Declined: Floppy would
            count each day as a replay ([why](features/floppy.md#why-there-is-no-per-session-history))
-    9. [ ] Steam wishlist (public profile only; no official API)
+    9. [x] Steam wishlist and release notifications ([Steam history](features/steam-history.md#steam-wishlist))
     10. [x] Fix a wrong or missing Floppy match from the game's options
 11. **More save sources.**
     1. [ ] Heroic and Lutris

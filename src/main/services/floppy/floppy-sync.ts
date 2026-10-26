@@ -79,8 +79,13 @@ const resolveMediaId = async (client: FloppyClient, game: Game) => {
 
 /** Playtime from every source, and the dates Steam's history can vouch for. */
 const withHistory = async (game: Game) => {
+  const preferences = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
   const history =
-    game.shop === "steam"
+    game.shop === "steam" && preferences?.floppyFillDates !== false
       ? await steamHistorySublevel.get(game.objectId).catch(() => null)
       : null;
   const firstUnlock = history ? firstUnlockTime(history) : null;
@@ -180,6 +185,25 @@ const REASON_PRIORITY: Record<FloppySyncReason, number> = {
   status: 2,
 };
 
+// Importing a wishlist queues hundreds of pushes at once; Floppy's searches are slow.
+const MAX_PARALLEL_PUSHES = 3;
+let activePushes = 0;
+const waitingPushes: (() => void)[] = [];
+
+const withPushSlot = async (task: () => Promise<void>) => {
+  if (activePushes >= MAX_PARALLEL_PUSHES) {
+    await new Promise<void>((resolve) => waitingPushes.push(resolve));
+  }
+
+  activePushes += 1;
+  try {
+    await task();
+  } finally {
+    activePushes -= 1;
+    waitingPushes.shift()?.();
+  }
+};
+
 const syncPushTask = () => {
   if (pending.size === 0) removeBackgroundTask("floppy-push");
   else
@@ -208,7 +232,7 @@ const schedule = (
   const timer = setTimeout(() => {
     pending.delete(slot);
     syncPushTask();
-    void run(effective);
+    void withPushSlot(() => run(effective));
   }, DEBOUNCE_MS);
 
   pending.set(slot, { timer, reason: effective });

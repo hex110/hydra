@@ -1023,11 +1023,21 @@ contextBridge.exposeInMainWorld("electron", {
   },
   testSteamHistoryConnection: (apiKey: string, steamId: string) =>
     ipcRenderer.invoke("testSteamHistoryConnection", apiKey, steamId),
+  previewSteamLibraryImport: (minMinutes: number) =>
+    ipcRenderer.invoke("previewSteamLibraryImport", minMinutes),
+  setGameSteamPlaytimeAdditive: (appId: string, additive: boolean) =>
+    ipcRenderer.invoke("setGameSteamPlaytimeAdditive", appId, additive),
+  syncSteamWishlist: () => ipcRenderer.invoke("syncSteamWishlist"),
   syncSteamHistory: () => ipcRenderer.invoke("syncSteamHistory"),
   getSteamHistorySyncStatus: () =>
     ipcRenderer.invoke("getSteamHistorySyncStatus"),
   getSteamGameHistory: (appId: string) =>
     ipcRenderer.invoke("getSteamGameHistory", appId),
+  addFloppyGameAsCustom: (
+    mediaId: string,
+    title: string,
+    image: string | null
+  ) => ipcRenderer.invoke("addFloppyGameAsCustom", mediaId, title, image),
   searchFloppyGames: (title: string) =>
     ipcRenderer.invoke("searchFloppyGames", title),
   getGameFloppyMatch: (shop: GameShop, objectId: string) =>

@@ -39,7 +39,10 @@ import { isDebridPendingError } from "./services/download/debrid-files";
 import { GofileApi } from "./services/hosters";
 import { clearLegacyAchievementPersistence } from "./level/clear-legacy-achievements";
 import { startFloppyPullSchedule } from "./services/floppy";
-import { startSteamHistorySchedule } from "./services/steam-history";
+import {
+  startSteamHistorySchedule,
+  startSteamWishlistSchedule,
+} from "./services/steam-history";
 import { startSteamSyncOnStartup } from "./services/steam-integration/steam-startup-sync";
 import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automatic-sync-emulator-migration";
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
@@ -134,6 +137,7 @@ export const loadState = async () => {
   void watchSteamLibraries();
   startFloppyPullSchedule();
   startSteamHistorySchedule();
+  startSteamWishlistSchedule();
   AppLauncherEntries.watch();
   LibraryMetadata.watch();
   LibraryFolderWatcher.watch();

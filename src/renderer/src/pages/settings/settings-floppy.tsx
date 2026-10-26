@@ -7,6 +7,7 @@ import type {
   FloppyBackfillReport,
   FloppyPullResult,
   FloppySyncStatus,
+  FloppyUnmatchedGame,
 } from "@types";
 
 import "./settings-floppy.scss";
@@ -162,6 +163,29 @@ export function SettingsFloppy() {
     }
   };
 
+  const handleAddCustom = async (game: FloppyUnmatchedGame) => {
+    try {
+      await window.electron.addFloppyGameAsCustom(
+        game.mediaId,
+        game.title,
+        game.image
+      );
+      setPullResult((current) =>
+        current
+          ? {
+              ...current,
+              unmatched: current.unmatched.filter(
+                (item) => item.mediaId !== game.mediaId
+              ),
+            }
+          : current
+      );
+      showSuccessToast(t("floppy_custom_added", { title: game.title }));
+    } catch {
+      showErrorToast(t("floppy_custom_failed"));
+    }
+  };
+
   const renderSyncStatus = () => {
     if (!syncStatus) return null;
     const { running, report, error, processed, total } = syncStatus;
@@ -226,6 +250,18 @@ export function SettingsFloppy() {
 
           {isSaved && (
             <CheckboxField
+              label={t("floppy_fill_dates")}
+              checked={userPreferences?.floppyFillDates !== false}
+              onChange={() =>
+                updateUserPreferences({
+                  floppyFillDates: userPreferences?.floppyFillDates === false,
+                })
+              }
+            />
+          )}
+
+          {isSaved && (
+            <CheckboxField
               label={t("floppy_add_to_library")}
               checked={userPreferences?.floppyAddToLibrary === true}
               onChange={() =>
@@ -276,9 +312,21 @@ export function SettingsFloppy() {
                 })}
               </summary>
               <ul className="settings-floppy__list">
-                {[...pullResult.unmatched].sort().map((title) => (
-                  <li key={title}>{title}</li>
-                ))}
+                {[...pullResult.unmatched]
+                  .sort((x, y) => x.title.localeCompare(y.title))
+                  .map((game) => (
+                    <li key={game.mediaId}>
+                      <span>{game.title}</span>
+                      <Button
+                        type="button"
+                        theme="outline"
+                        disabled={isBusy}
+                        onClick={() => void handleAddCustom(game)}
+                      >
+                        {t("floppy_add_custom")}
+                      </Button>
+                    </li>
+                  ))}
               </ul>
             </details>
           )}

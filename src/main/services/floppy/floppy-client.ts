@@ -17,7 +17,7 @@ interface FloppyConsumption {
 }
 
 interface FloppyListedItem {
-  item?: { media_id?: string | number; title?: string };
+  item?: { media_id?: string | number; title?: string; image?: string };
   media_id?: string | number;
   title?: string;
   source?: string | null;
@@ -121,6 +121,7 @@ export class FloppyClient {
         score: row.score ?? null,
         progress: row.progress ?? 0,
         entrySource: row.source ?? null,
+        image: row.item?.image ?? null,
       });
     }
 

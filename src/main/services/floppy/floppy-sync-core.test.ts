@@ -5,6 +5,7 @@ import {
   FLOPPY_STATUS,
   floppyStatusToPlayStatus,
   isFloppyOnlyEntry,
+  looseTitleKey,
   pickCatalogueMatch,
   planPull,
   normalizeTitle,
@@ -279,6 +280,62 @@ describe("catalogue matching", () => {
     assert.equal(
       isFloppyOnlyEntry({ title: "Balatro", entrySource: "yamtrack" }, owned),
       false
+    );
+  });
+});
+
+describe("looseTitleKey", () => {
+  it("equates numeral styles and edition words", () => {
+    assert.equal(
+      looseTitleKey("Slay the Spire II"),
+      looseTitleKey("Slay the Spire 2")
+    );
+    assert.equal(
+      looseTitleKey("Horizon Zero Dawn Remastered"),
+      looseTitleKey("Horizon Zero Dawn")
+    );
+    assert.equal(
+      looseTitleKey("The Witcher 3: Wild Hunt - Game of the Year Edition"),
+      looseTitleKey("Witcher 3 Wild Hunt")
+    );
+  });
+
+  it("leaves I, V and X alone", () => {
+    assert.notEqual(
+      looseTitleKey("Final Fantasy X"),
+      looseTitleKey("Final Fantasy 10")
+    );
+    assert.notEqual(
+      looseTitleKey("Tomb Raider I"),
+      looseTitleKey("Tomb Raider")
+    );
+  });
+
+  it("matches loosely only when one game fits, and never over an exact match", () => {
+    const item = (title: string, objectId: string) => ({
+      title,
+      objectId,
+      shop: "steam",
+      iconUrl: null,
+    });
+    assert.equal(
+      pickCatalogueMatch("Slay the Spire II", [
+        item("Slay the Spire 2", "1"),
+        item("Slay the Spire", "2"),
+      ])?.objectId,
+      "1"
+    );
+    assert.equal(
+      pickCatalogueMatch("Doom II", [item("DOOM 2", "1"), item("Doom II", "2")])
+        ?.objectId,
+      "2"
+    );
+    assert.equal(
+      pickCatalogueMatch("Game II", [
+        item("Game 2", "1"),
+        item("Game 2 Remastered", "2"),
+      ]),
+      null
     );
   });
 });

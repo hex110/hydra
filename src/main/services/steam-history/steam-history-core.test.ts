@@ -141,6 +141,10 @@ describe("achievements and playtime", () => {
     assert.equal(steamPlayTimeToStore(10, 40 * 60_000), 0);
   });
 
+  it("can count Steam's playtime on top of Hydra's", () => {
+    assert.equal(steamPlayTimeToStore(100, 40 * 60_000, true), 100 * 60_000);
+  });
+
   it("keeps earlier achievements when only playtime changes", () => {
     const previous = entry({ achievements: [] });
     assert.deepEqual(

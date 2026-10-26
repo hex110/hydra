@@ -8,6 +8,7 @@ export * from "./game-stats-cache";
 export * from "./game-library-metadata";
 export * from "./play-activity";
 export * from "./steam-history";
+export * from "./steam-wishlist";
 export * from "./local-collections";
 export * from "./keys";
 export * from "./themes";

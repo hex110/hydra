@@ -41,6 +41,7 @@ import {
 } from "./steam-history-core";
 
 const CONCURRENCY = 4;
+export const DEFAULT_MIN_MINUTES = 30;
 const SYNC_INTERVAL_MS = 6 * 3_600_000;
 const SYNC_STARTUP_DELAY_MS = 90_000;
 
@@ -230,7 +231,8 @@ const applyToLibraryGame = async (entry: SteamGameHistory) => {
     : 0;
   const steamPlayTime = steamPlayTimeToStore(
     entry.playtimeMinutes,
-    game.playTimeInMilliseconds ?? 0
+    game.playTimeInMilliseconds ?? 0,
+    game.steamPlaytimeAdditive === true
   );
 
   if (
@@ -323,7 +325,7 @@ export const startSteamHistorySync = async (quiet = false) => {
   const preferences = await readPreferences();
   const options: LibraryImportOptions = {
     addToLibrary: preferences?.steamHistoryAddToLibrary === true,
-    minMinutes: preferences?.steamHistoryMinMinutes ?? 0,
+    minMinutes: preferences?.steamHistoryMinMinutes ?? DEFAULT_MIN_MINUTES,
   };
 
   status = { ...idle, running: true };
@@ -388,4 +390,48 @@ export const startSteamHistorySchedule = () => {
 
   setTimeout(tick, SYNC_STARTUP_DELAY_MS);
   timer = setInterval(tick, SYNC_INTERVAL_MS);
+};
+
+export interface SteamImportPreview {
+  owned: number;
+  wouldAdd: number;
+  alreadyInLibrary: number;
+}
+
+/** How many owned games the library import would add at a playtime limit; writes nothing. */
+export const previewSteamLibraryImport = async (
+  minMinutes: number
+): Promise<SteamImportPreview> => {
+  const credentials = await getSteamHistoryCredentials();
+  if (!credentials) throw new Error("steam-history-not-configured");
+
+  const owned = await fetchOwnedGames(credentials);
+  const inLibrary = new Set(
+    (await gamesSublevel.values().all())
+      .filter((game) => game.shop === "steam")
+      .map((game) => game.objectId)
+  );
+
+  const candidates = owned.filter((game) =>
+    shouldAddToLibrary(game, minMinutes, isSkippedSteamLibraryTitle)
+  );
+
+  return {
+    owned: owned.length,
+    wouldAdd: candidates.filter((game) => !inLibrary.has(String(game.appid)))
+      .length,
+    alreadyInLibrary: candidates.filter((game) =>
+      inLibrary.has(String(game.appid))
+    ).length,
+  };
+};
+
+export const setSteamPlaytimeAdditive = async (
+  appId: string,
+  additive: boolean
+) => {
+  await updateGameRecord(levelKeys.game("steam", appId), {
+    steamPlaytimeAdditive: additive,
+  });
+  await applySteamHistoryToGame("steam", appId);
 };

@@ -7,6 +7,7 @@ import "./background-tasks-section.scss";
 
 const TASK_ORDER = [
   "steam-history",
+  "steam-wishlist",
   "floppy-sync",
   "floppy-pull",
   "floppy-import",

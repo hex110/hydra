@@ -10,6 +10,7 @@ import { getGenreNames } from "@shared";
 import type { GameMetadataOverrides, LibraryGame } from "@types";
 
 import { FloppyMatchSection } from "./floppy-match-section";
+import { SteamPlaytimeSection } from "./steam-playtime-section";
 
 const LANGUAGE_OPTIONS = orderBy(
   Object.entries(languageResources).map(([language, value]) => ({
@@ -144,6 +145,7 @@ export function DetailsSection({ game }: Readonly<{ game: LibraryGame }>) {
         {t("details_language_hint")}
       </p>
 
+      <SteamPlaytimeSection game={game} />
       <FloppyMatchSection game={game} />
     </div>
   );

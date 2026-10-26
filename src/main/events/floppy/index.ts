@@ -1,10 +1,14 @@
-import { gamesSublevel, levelKeys } from "@main/level";
+import { randomUUID } from "node:crypto";
+
+import { gamesShopAssetsSublevel, gamesSublevel, levelKeys } from "@main/level";
+import { WindowManager } from "@main/services/window-manager";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import type { GameShop } from "@types";
 
 import { registerEvent } from "../register-event";
 import {
   getFloppyClient,
+  normalizeTitle,
   getFloppySyncStatus,
   queueFloppySync,
   pullFromFloppy,
@@ -28,6 +32,54 @@ registerEvent("syncFloppyLibrary", syncFloppyLibrary);
 
 registerEvent("getFloppySyncStatus", () => getFloppySyncStatus());
 registerEvent("pullFloppy", () => pullFromFloppy());
+
+registerEvent(
+  "addFloppyGameAsCustom",
+  async (_event, mediaId: string, title: string, image: string | null) => {
+    const games = await gamesSublevel.values().all();
+    const exists = games.some(
+      (game) =>
+        !game.isDeleted &&
+        (game.floppyMediaId === mediaId ||
+          normalizeTitle(game.title) === normalizeTitle(title))
+    );
+    if (exists) throw new Error("floppy-game-already-in-library");
+
+    const objectId = randomUUID();
+    const key = levelKeys.game("custom", objectId);
+    await gamesShopAssetsSublevel.put(key, {
+      updatedAt: Date.now(),
+      objectId,
+      shop: "custom",
+      title,
+      iconUrl: image,
+      libraryHeroImageUrl: "",
+      libraryImageUrl: image ?? "",
+      logoImageUrl: "",
+      logoPosition: null,
+      coverImageUrl: image ?? "",
+      downloadSources: [],
+    });
+    await gamesSublevel.put(key, {
+      title,
+      iconUrl: image,
+      logoImageUrl: null,
+      libraryHeroImageUrl: null,
+      objectId,
+      shop: "custom",
+      remoteId: null,
+      isDeleted: false,
+      playTimeInMilliseconds: 0,
+      lastTimePlayed: null,
+      addedToLibraryAt: null,
+      floppyMediaId: mediaId,
+      floppyImported: true,
+    });
+
+    WindowManager.sendToAppWindows("on-library-batch-complete");
+    void pullFromFloppy(true).catch(() => {});
+  }
+);
 
 registerEvent("searchFloppyGames", async (_event, title: string) => {
   const client = await getFloppyClient();

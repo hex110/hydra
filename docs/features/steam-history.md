@@ -44,6 +44,31 @@ hour. Demos and betas are always skipped.
 - A game below the playtime limit that you later add from the catalogue gets
   its Steam history, Floppy status and rating straight away.
 
+## Steam wishlist
+
+Turn on **Follow my Steam wishlist** and Hydra reads your wishlist through
+Steam's Web API (the same key; the profile's game details must be public)
+every three hours and when you press **Check wishlist now**.
+
+- **Release notifications.** When a game that was "coming soon" is out, you get
+  a notification (and an entry in the notification list) that opens the game's
+  page, where the usual download options appear. A game going into Early
+  Access says so. The first check only records the wishlist, so nothing that
+  is already out is announced.
+- **Release dates (optional).** _Also tell me when an unreleased game gets a
+  release date_ adds a notification when a game that had no date now has one.
+- **Upcoming games in the library.** On by default: games that are not out yet
+  are listed as ordinary library entries and marked wishlisted, so they show
+  in the wishlist collection and Hydra's own download alerts apply. Games you
+  removed stay removed, and none of them are uploaded to your Hydra profile.
+  Floppy's **Wishlist** list gets them too when Floppy sync is on.
+- Games you already own, or that are already out, are not added; they are only
+  tracked to notice their release. Games bought or taken off the wishlist stop
+  being tracked.
+
+The status shows as a task on the Downloads page. On the account used to write
+this, 1,459 games were wishlisted and 243 were not out yet.
+
 ## Where it shows
 
 - **Game page**, in the game's block: an **On Steam** section with playtime,
@@ -71,6 +96,16 @@ game**, minus any play Hydra already recorded itself. This means:
 Achievement unlock dates are real, but they are not turned into activity:
 they carry no duration.
 
+## Previewing and limits
+
+**Preview what would be added** (next to the playtime limit) asks Steam for
+your owned games and reports how many would be added at that limit, without
+writing anything. The limit defaults to 30 minutes of playtime.
+
+Steam's playtime and Hydra's overlap for a game Hydra starts through Steam, so
+by default the longer of the two is shown. A game's options (**Details**) have
+**Add Steam's playtime to Hydra's** for games you play both ways.
+
 ## Floppy
 
 When Floppy sync is on, a game's start and end date are filled in from this
@@ -80,7 +115,8 @@ data, only when they are empty in Floppy and never overwritten:
   first unlock can come well after the first launch);
 - **End date**: the last day played, and only for games marked Completed.
 
-Hydra also pushes the displayed playtime (Hydra plus Steam), not just its own.
+**Fill in Floppy start and end dates from Steam history** in the Floppy
+settings turns the dates off. Hydra also pushes the displayed playtime (Hydra plus Steam), not just its own.
 
 ## Code
 
@@ -94,4 +130,3 @@ background job and schedule. Entries are stored per app id in the
 - Games played outside Steam that Floppy tracks are not added to the library
   yet: Floppy only knows their IGDB id, and a library entry needs a catalogue
   id (see the roadmap).
-- Steam wishlist (no official API; the public profile page is the only source).

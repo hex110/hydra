@@ -18,6 +18,11 @@ export function SettingsSteamHistory() {
   const { t } = useTranslation("settings");
 
   const [isBusy, setIsBusy] = useState(false);
+  const [preview, setPreview] = useState<{
+    owned: number;
+    wouldAdd: number;
+    alreadyInLibrary: number;
+  } | null>(null);
   const [status, setStatus] = useState<SteamHistorySyncStatus | null>(null);
   const [form, setForm] = useState(() => ({
     apiKey: userPreferences?.steamHistoryApiKey ?? "",
@@ -74,6 +79,22 @@ export function SettingsSteamHistory() {
       showSuccessToast(t("steam_history_connected", { count: ownedGames }));
     } catch {
       showErrorToast(t("steam_history_connection_failed"));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    setIsBusy(true);
+
+    try {
+      setPreview(
+        await window.electron.previewSteamLibraryImport(
+          userPreferences?.steamHistoryMinMinutes ?? 30
+        )
+      );
+    } catch {
+      showErrorToast(t("steam_history_sync_failed"));
     } finally {
       setIsBusy(false);
     }
@@ -144,6 +165,8 @@ export function SettingsSteamHistory() {
               updateUserPreferences({
                 steamHistoryAddToLibrary:
                   userPreferences?.steamHistoryAddToLibrary !== true,
+                steamHistoryMinMinutes:
+                  userPreferences?.steamHistoryMinMinutes ?? 30,
               })
             }
           />
@@ -152,12 +175,13 @@ export function SettingsSteamHistory() {
             <label className="settings-floppy__select">
               {t("steam_history_min_playtime")}
               <select
-                value={userPreferences.steamHistoryMinMinutes ?? 0}
-                onChange={(event) =>
-                  updateUserPreferences({
+                value={userPreferences.steamHistoryMinMinutes ?? 30}
+                onChange={(event) => {
+                  setPreview(null);
+                  void updateUserPreferences({
                     steamHistoryMinMinutes: Number(event.target.value),
-                  })
-                }
+                  });
+                }}
               >
                 {MIN_PLAYTIME_OPTIONS.map((minutes) => (
                   <option key={minutes} value={minutes}>
@@ -166,6 +190,72 @@ export function SettingsSteamHistory() {
                 ))}
               </select>
             </label>
+          )}
+
+          {userPreferences?.steamHistoryAddToLibrary === true && (
+            <div className="settings-floppy__actions">
+              <Button
+                type="button"
+                theme="outline"
+                disabled={isBusy}
+                onClick={handlePreview}
+              >
+                {t("steam_history_preview")}
+              </Button>
+              <span className="settings-floppy__status">
+                {preview
+                  ? t("steam_history_preview_result", { ...preview })
+                  : null}
+              </span>
+            </div>
+          )}
+
+          <CheckboxField
+            label={t("steam_wishlist_track")}
+            checked={userPreferences?.steamWishlistTrack === true}
+            onChange={() =>
+              updateUserPreferences({
+                steamWishlistTrack:
+                  userPreferences?.steamWishlistTrack !== true,
+              })
+            }
+          />
+
+          {userPreferences?.steamWishlistTrack === true && (
+            <>
+              <CheckboxField
+                label={t("steam_wishlist_add_to_library")}
+                checked={userPreferences.steamWishlistAddToLibrary !== false}
+                onChange={() =>
+                  updateUserPreferences({
+                    steamWishlistAddToLibrary:
+                      userPreferences.steamWishlistAddToLibrary === false,
+                  })
+                }
+              />
+              <CheckboxField
+                label={t("steam_wishlist_notify_date")}
+                checked={userPreferences.steamWishlistNotifyDate === true}
+                onChange={() =>
+                  updateUserPreferences({
+                    steamWishlistNotifyDate:
+                      userPreferences.steamWishlistNotifyDate !== true,
+                  })
+                }
+              />
+              <div className="settings-floppy__actions">
+                <Button
+                  type="button"
+                  theme="outline"
+                  onClick={() => void window.electron.syncSteamWishlist()}
+                >
+                  {t("steam_wishlist_check")}
+                </Button>
+                <span className="settings-floppy__status">
+                  {t("steam_wishlist_check_hint")}
+                </span>
+              </div>
+            </>
           )}
         </>
       )}

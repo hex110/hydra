@@ -77,10 +77,14 @@ match; on a match it also links an existing library entry for the same game.
 - A game you removed from the library, or unlinked from Floppy, is never added
   again.
 - They are never uploaded to your Hydra profile.
-- Games the catalogue has no exact match for (Valorant, Minecraft, differently
-  named editions such as "Slay the Spire II") are listed under the pull button;
-  they stay in Floppy only.
-- On the data checked when this was written, 65 of 88 such games matched.
+- Titles differing only by Roman numeral (II = 2), a leading "The" or an edition
+  word (Remastered, Game of the Year Edition, ...) still match, but only when
+  exactly one catalogue game fits; "I", "V" and "X" are never read as numerals.
+- Games with no match (Valorant, Minecraft: not on Steam) are listed under the
+  pull button. **Add as custom game** puts one in the library as an uninstalled
+  custom entry with Floppy's cover, linked to its Floppy entry.
+- On the data checked when this was written, 65 of 88 such games matched
+  exactly; the looser rule is for the rest.
 
 ## Fixing a match
 

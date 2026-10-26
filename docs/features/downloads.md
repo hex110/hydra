@@ -64,7 +64,8 @@ before.
 ## Background tasks
 
 Long actions that are not downloads show above the downloads: the Steam
-history import, a Floppy library sync or preview, a pull from Floppy, and
+history import, the Steam wishlist check, a Floppy library sync or preview, a
+pull from Floppy, adding Floppy games to the library, and
 changes waiting to be sent to Floppy (a game's change is sent about ten
 seconds after it happens, so a burst shows as "N waiting to be sent"). Each
 shows its progress, and a finished one stays with its result until you dismiss

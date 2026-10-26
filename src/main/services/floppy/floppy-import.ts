@@ -4,7 +4,7 @@ import {
   levelKeys,
   steamHistorySublevel,
 } from "@main/level";
-import type { Game } from "@types";
+import type { FloppyUnmatchedGame, Game } from "@types";
 
 import { updateBackgroundTask } from "../background-tasks";
 import { updateGameRecord } from "../game-record-updater";
@@ -40,10 +40,16 @@ const searchSteamCatalogue = async (title: string) => {
   }
 };
 
+const toUnmatched = (entry: FloppyEntry): FloppyUnmatchedGame => ({
+  mediaId: entry.mediaId,
+  title: entry.title,
+  image: entry.image,
+});
+
 export interface FloppyImportResult {
   added: number;
   linked: number;
-  unmatched: string[];
+  unmatched: FloppyUnmatchedGame[];
 }
 
 const createLibraryGame = async (
@@ -134,7 +140,7 @@ export const importFloppyOnlyGames = async (
 
       try {
         if (notInCatalogue.has(entry.mediaId)) {
-          result.unmatched.push(entry.title);
+          result.unmatched.push(toUnmatched(entry));
           continue;
         }
 
@@ -144,7 +150,7 @@ export const importFloppyOnlyGames = async (
         const match = pickCatalogueMatch(entry.title, suggestions);
         if (!match) {
           notInCatalogue.add(entry.mediaId);
-          result.unmatched.push(entry.title);
+          result.unmatched.push(toUnmatched(entry));
           continue;
         }
 
