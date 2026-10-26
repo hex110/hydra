@@ -138,7 +138,7 @@ in the sections below.
 11. **Distribution.**
     1. [ ] Export and import settings
     2. [ ] pacman updates
-    3. [ ] Sign the browser add-on
+    3. [x] Sign the browser add-on
     4. [ ] Translations
 12. **Mods.** Native mod support, after a design.
 
@@ -352,8 +352,8 @@ All of these plug into the `SaveImportSource` interface.
       `hydra-plus-bin` AUR package or a small pacman repo.
 - [ ] **Translations.** The Hydra Plus settings are English-only; other
       languages fall back to English.
-- [ ] **Sign the browser add-on** for Firefox Add-ons, and the Chrome Web
-      Store if wanted.
+- [x] **Sign the browser add-on.** Mozilla signs it as unlisted for Firefox
+      and Zen; a Chrome Web Store listing is still open.
 
 ## Postponed
 

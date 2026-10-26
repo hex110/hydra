@@ -24,7 +24,7 @@ cannot be listed and are extracted without the check.
 Pasting a Steam store link (`https://store.steampowered.com/app/<id>/…`, a
 Steam community or SteamDB app link, or `steam://store/<id>`) anywhere outside
 a text field, or into the header search, opens that game with its download
-options and the best repack preselected, as the
+options with the best repack marked **Recommended**, as the
 [browser add-on](browser-addon.md) does. It never starts the download on its
 own.
 

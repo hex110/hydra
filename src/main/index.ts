@@ -20,6 +20,7 @@ import {
   PowerSaveBlockerManager,
   DownloadOrchestrator,
   SSEClient,
+  startAddonBridge,
   emulators,
 } from "@main/services";
 import resources from "@locales";
@@ -199,6 +200,7 @@ const initializeApp = async () => {
   } catch (error) {
     logger.error("Failed to load app state during startup", error);
   }
+  startAddonBridge();
   // Optional integration failures must not interrupt launcher startup.
   await initializeEpicIntegration().catch(() => {
     logger.warn("Epic integration initialization unavailable");

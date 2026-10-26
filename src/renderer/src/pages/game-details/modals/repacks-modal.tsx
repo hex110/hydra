@@ -102,6 +102,9 @@ export function RepacksModal({
   } = useContext(gameDetailsContext);
   const { showWarningToast } = useToast();
   const [autoStartDownload, setAutoStartDownload] = useState(false);
+  const [recommendedRepackId, setRecommendedRepackId] = useState<string | null>(
+    null
+  );
   const { steam: steamGame, epic: epicGame } = getOfficialStoreMembers(
     presentation?.members ?? (game ? [game] : [])
   );
@@ -250,7 +253,8 @@ export function RepacksModal({
     setViewedRepackIds((prev) => new Set(prev).add(repack.id));
   };
 
-  // The browser add-on asked for this game: preselect the best repack.
+  // The browser add-on asked for this game: mark the best repack, and open its
+  // download settings straight away only when the download starts by itself.
   useEffect(() => {
     if (!visible || !autoDownloadRequest || !repacksLoaded) return;
 
@@ -297,7 +301,12 @@ export function RepacksModal({
       return;
     }
 
-    setAutoStartDownload(request === "start");
+    if (request === "select") {
+      setRecommendedRepackId(best.id);
+      return;
+    }
+
+    setAutoStartDownload(true);
     handleRepackClick(best);
     // handleRepackClick only sets state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -378,6 +387,7 @@ export function RepacksModal({
       setFilterTerm("");
       setSelectedFingerprints([]);
       setIsFilterDrawerOpen(false);
+      setRecommendedRepackId(null);
     }
   }, [visible]);
 
@@ -570,6 +580,9 @@ export function RepacksModal({
                         )}
                     </p>
 
+                    {repack.id === recommendedRepackId && (
+                      <Badge>{t("recommended_download_option")}</Badge>
+                    )}
                     {isLastDownloadedOption && (
                       <Badge>{t("last_downloaded_option")}</Badge>
                     )}

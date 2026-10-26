@@ -25,6 +25,7 @@ export * from "./wine";
 export * from "./umu";
 export * from "./lock";
 export * from "./decky-plugin";
+export * from "./addon-bridge";
 export * from "./user";
 export * from "./download-sources-checker";
 export * from "./notifications/local-notifications";

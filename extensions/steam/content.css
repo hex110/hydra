@@ -1,15 +1,41 @@
 .hydra-plus-box {
-  margin-bottom: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+  vertical-align: top;
 }
 
-.hydra-plus-box__actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
+.hydra-plus-box [hidden] {
+  display: none;
 }
 
-.hydra-plus-box__actions a span {
-  padding: 0 15px;
-  font-size: 15px;
-  line-height: 30px;
+.hydra-plus-box__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 2px;
+  background: rgba(103, 193, 245, 0.2);
+  color: #67c1f5;
+}
+
+.hydra-plus-box[data-state="installed"] .hydra-plus-box__status {
+  background: rgba(91, 163, 43, 0.25);
+  color: #a4d007;
+}
+
+.hydra-plus-box[data-state="unknown"] .hydra-plus-box__status {
+  opacity: 0.5;
+}
+
+.hydra-plus-box__icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

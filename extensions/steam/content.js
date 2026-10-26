@@ -1,14 +1,36 @@
-// Adds a Hydra Plus box to Steam store pages. The buttons are plain links to
-// Hydra Plus's own URL scheme, so the browser asks once before opening it.
+// Adds Hydra Plus buttons next to the Community Hub button on Steam store
+// pages. The buttons are plain links to Hydra Plus's own URL scheme, so the
+// browser asks once before opening it. The icon shows whether the game is in
+// the library or installed, as reported by the running app.
 const api = globalThis.browser ?? globalThis.chrome;
 const BOX_ID = "hydra-plus-box";
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Paths on a 16x16 grid.
+const ICONS = {
+  none: "M8 3v10M3 8h10",
+  library: "M3 2.5h3v11H3zM7 2.5h3v11H7zM11.2 3.2l2.6.7-2.4 9.4-2.6-.7z",
+  installed: "M3 8.5l3.2 3.2L13 4.8",
+  unknown: "M8 3v10M3 8h10",
+};
 
 const getAppId = () =>
   /^\/app\/(\d+)/.exec(globalThis.location.pathname)?.[1] ?? null;
 
-const createButton = (label, title, href, className) => {
+const createIcon = (state) => {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("class", "hydra-plus-box__icon");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", ICONS[state]);
+  svg.append(path);
+  return svg;
+};
+
+const createButton = (label, title, href) => {
   const link = document.createElement("a");
-  link.className = className;
+  link.className = "btnv6_blue_hoverfade btn_medium";
   link.href = href;
   link.title = title;
   const text = document.createElement("span");
@@ -17,58 +39,60 @@ const createButton = (label, title, href, className) => {
   return link;
 };
 
-const createBox = (appId, showOpenButton) => {
+const createBox = (appId) => {
   const box = document.createElement("div");
   box.id = BOX_ID;
-  box.className = "game_area_purchase_game hydra-plus-box";
+  box.className = "hydra-plus-box";
 
-  const title = document.createElement("h1");
-  title.textContent = api.i18n.getMessage("boxTitle");
-  box.append(title);
-
-  const actions = document.createElement("div");
-  actions.className = "hydra-plus-box__actions";
+  const status = document.createElement("span");
+  status.className = "hydra-plus-box__status";
+  box.append(status);
 
   const query = `shop=steam&objectId=${appId}`;
-  actions.append(
-    createButton(
-      api.i18n.getMessage("downloadButton"),
-      api.i18n.getMessage("downloadTooltip"),
-      `hydraplus://download?${query}`,
-      "btn_green_steamui btn_medium"
-    )
+  const download = createButton(
+    api.i18n.getMessage("downloadButton"),
+    api.i18n.getMessage("downloadTooltip"),
+    `hydraplus://download?${query}`
   );
-  if (showOpenButton) {
-    actions.append(
-      createButton(
-        api.i18n.getMessage("openButton"),
-        api.i18n.getMessage("openTooltip"),
-        `hydraplus://game?${query}`,
-        "btn_blue_steamui btn_medium"
-      )
-    );
-  }
+  const open = createButton(
+    api.i18n.getMessage("openButton"),
+    api.i18n.getMessage("openTooltip"),
+    `hydraplus://game?${query}`
+  );
+  box.append(download, open);
 
-  box.append(actions);
-  return box;
+  // Hydra Plus is not running when the state is unknown: both buttons still
+  // work, since the links start it.
+  const render = (state) => {
+    box.dataset.state = state;
+    status.title = api.i18n.getMessage(`state_${state}`);
+    status.replaceChildren(createIcon(state));
+    download.hidden = state === "installed";
+  };
+  render("unknown");
+
+  return { box, render };
 };
 
-const insertBox = async () => {
+const insertBox = () => {
   const appId = getAppId();
-  if (!appId || document.getElementById(BOX_ID)) return;
+  const area = document.querySelector(".apphub_OtherSiteInfo");
+  if (!appId || !area || document.getElementById(BOX_ID)) return;
 
-  const { showOpenButton = true } = await api.storage.sync
-    .get({ showOpenButton: true })
-    .catch(() => ({}));
-  const box = createBox(appId, showOpenButton);
+  const { box, render } = createBox(appId);
+  area.prepend(box);
 
-  // Above the first purchase option; next to the title on pages without one.
-  const purchaseArea = document.getElementById("game_area_purchase");
-  if (purchaseArea) {
-    purchaseArea.prepend(box);
-    return;
-  }
-  document.querySelector(".apphub_AppName")?.parentElement?.after(box);
+  const refresh = async () => {
+    const state = await api.runtime
+      .sendMessage({ type: "gameState", appId })
+      .catch(() => "unknown");
+    render(state ?? "unknown");
+  };
+  void refresh();
+  // The state changes while the app is used in another window.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) void refresh();
+  });
 };
 
-void insertBox();
+insertBox();

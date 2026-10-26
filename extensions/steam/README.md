@@ -1,16 +1,18 @@
 # Hydra Plus for Steam
 
-A browser add-on that adds a **Hydra Plus** box to Steam store pages, with two
-buttons:
+A browser add-on that puts Hydra Plus buttons in the top right of Steam store
+pages, next to **Community Hub**:
 
-- **Download** opens the game in Hydra Plus with the best download already
-  chosen, or starts it straight away. See
+- An icon shows whether the game is not in your library, in it, or downloaded.
+  It asks the running app, so it needs Hydra Plus open.
+- **Download** opens the game in Hydra Plus with the best download marked. It
+  is hidden once the game is downloaded. See
   [Browser add-on](../../docs/features/browser-addon.md).
-- **Open in Hydra Plus** opens the game's page.
+- **Open in Hydra Plus** opens the game's page, whatever the status.
 
 It works in Firefox 115+ and Chromium-based browsers. It only runs on
-`store.steampowered.com/app/*` pages, needs no permissions beyond storing its
-own option, and collects no data.
+`store.steampowered.com/app/*` pages, only talks to Hydra Plus on your own
+computer (`127.0.0.1`), and collects no data.
 
 ## Install
 
