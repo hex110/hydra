@@ -14,15 +14,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
   height: 30px;
-  border-radius: 2px;
-  background: rgba(103, 193, 245, 0.2);
+  margin-right: 2px;
   color: #67c1f5;
+  cursor: default;
 }
 
 .hydra-plus-box[data-state="installed"] .hydra-plus-box__status {
-  background: rgba(91, 163, 43, 0.25);
   color: #a4d007;
 }
 
@@ -31,8 +29,8 @@
 }
 
 .hydra-plus-box__icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.6;
