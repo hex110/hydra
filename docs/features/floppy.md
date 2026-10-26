@@ -40,7 +40,9 @@ the rest of the session rather than guessed.
 ## Library sync
 
 The sync runs in the background (four games at a time), so you can leave the
-settings page; coming back shows its progress or last result.
+settings page; coming back shows its progress or last result. The result
+lists every game that was (or would be) changed, with its old and new status
+and playtime, and the games that could not be matched.
 
 **Preview library sync** reports what would be created and updated without
 writing; **Sync library now** applies it. Both report the games that could not

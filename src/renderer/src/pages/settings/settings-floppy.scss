@@ -15,6 +15,35 @@
     color: globals.$muted-color;
   }
 
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+
+    summary {
+      cursor: pointer;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    max-height: 320px;
+    overflow-y: auto;
+    padding: globals.$spacing-unit 0 0 calc(globals.$spacing-unit * 2);
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: calc(globals.$spacing-unit * 2);
+    }
+
+    span {
+      color: globals.$muted-color;
+    }
+  }
+
   &__actions {
     display: flex;
     align-items: center;

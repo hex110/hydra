@@ -1,6 +1,7 @@
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import type {
   FloppyBackfillReport,
+  FloppyGameChange,
   FloppySyncStatus,
   Game,
   GameShop,
@@ -58,36 +59,46 @@ const resolveMediaId = async (client: FloppyClient, game: Game) => {
   return mediaId;
 };
 
-type SyncOutcome = "created" | "updated" | "unchanged" | "unmatched";
+type SyncResult =
+  | { outcome: "unchanged" | "unmatched" }
+  | { outcome: "created" | "updated"; change: FloppyGameChange };
 
 const syncGame = async (
   client: FloppyClient,
   game: Game,
   reason: FloppySyncReason,
   dryRun = false
-): Promise<SyncOutcome> => {
+): Promise<SyncResult> => {
   const mediaId = game.floppyMediaId ?? (await resolveMediaId(client, game));
-  if (!mediaId) return "unmatched";
+  if (!mediaId) return { outcome: "unmatched" };
 
   const state = await client.getState(mediaId);
   const patch: FloppyPatch = planPatch(game, state, reason);
+  const change: FloppyGameChange = {
+    title: game.title,
+    action: state.tracked ? "update" : "create",
+    fromStatus: state.tracked ? state.status : null,
+    toStatus: patch.status ?? (state.tracked ? state.status : null),
+    fromMinutes: state.progress,
+    toMinutes: patch.progress ?? state.progress,
+  };
 
   if (!state.tracked) {
-    if (patch.status === undefined) return "unchanged";
+    if (patch.status === undefined) return { outcome: "unchanged" };
     if (!dryRun)
       await client.track(mediaId, {
         status: patch.status,
         progress: patch.progress,
       });
-    return "created";
+    return { outcome: "created", change };
   }
 
   if (patch.status === undefined && patch.progress === undefined) {
-    return "unchanged";
+    return { outcome: "unchanged" };
   }
 
   if (!dryRun) await client.update(mediaId, patch);
-  return "updated";
+  return { outcome: "updated", change };
 };
 
 const runQueued = async (key: string, reason: FloppySyncReason) => {
@@ -147,6 +158,7 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
     created: 0,
     updated: 0,
     unchanged: 0,
+    changes: [],
     unmatched: [],
     failed: 0,
   };
@@ -158,9 +170,10 @@ const runBackfill = async (client: FloppyClient, dryRun: boolean) => {
       const game = games[next++];
 
       try {
-        const outcome = await syncGame(client, game, "backfill", dryRun);
-        if (outcome === "unmatched") report.unmatched.push(game.title);
-        else report[outcome] += 1;
+        const result = await syncGame(client, game, "backfill", dryRun);
+        if (result.outcome === "unmatched") report.unmatched.push(game.title);
+        else report[result.outcome] += 1;
+        if ("change" in result) report.changes.push(result.change);
       } catch (error) {
         report.failed += 1;
         logger.error("Floppy backfill failed for a game", {

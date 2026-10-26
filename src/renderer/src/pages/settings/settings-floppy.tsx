@@ -3,9 +3,60 @@ import { useTranslation } from "react-i18next";
 import { Button, CheckboxField, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
-import type { FloppySyncStatus } from "@types";
+import type { FloppyBackfillReport, FloppySyncStatus } from "@types";
 
 import "./settings-floppy.scss";
+
+function FloppySyncDetails({
+  report,
+}: Readonly<{ report: FloppyBackfillReport }>) {
+  const { t } = useTranslation("settings");
+
+  const statusLabel = (status: number | null) =>
+    status === null ? t("floppy_not_tracked") : t(`floppy_status_${status}`);
+
+  return (
+    <div className="settings-floppy__details">
+      {report.changes.length > 0 && (
+        <details open>
+          <summary>
+            {t(report.dryRun ? "floppy_would_change" : "floppy_changed", {
+              count: report.changes.length,
+            })}
+          </summary>
+          <ul className="settings-floppy__list">
+            {[...report.changes]
+              .sort((a, b) => a.title.localeCompare(b.title))
+              .map((change) => (
+                <li key={change.title}>
+                  <strong>{change.title}</strong>
+                  <span>
+                    {statusLabel(change.fromStatus)} →{" "}
+                    {statusLabel(change.toStatus)}
+                    {change.fromMinutes !== change.toMinutes &&
+                      ` · ${t("floppy_minutes", { from: change.fromMinutes, to: change.toMinutes })}`}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </details>
+      )}
+
+      {report.unmatched.length > 0 && (
+        <details>
+          <summary>
+            {t("floppy_unmatched", { count: report.unmatched.length })}
+          </summary>
+          <ul className="settings-floppy__list">
+            {[...report.unmatched].sort().map((title) => (
+              <li key={title}>{title}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+}
 
 export function SettingsFloppy() {
   const userPreferences = useAppSelector(
@@ -175,6 +226,10 @@ export function SettingsFloppy() {
                 {renderSyncStatus()}
               </span>
             </div>
+          )}
+
+          {syncStatus?.report && !syncStatus.running && (
+            <FloppySyncDetails report={syncStatus.report} />
           )}
         </>
       )}
