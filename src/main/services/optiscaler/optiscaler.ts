@@ -7,6 +7,7 @@ import { logger } from "@main/services/logger";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { WindowManager } from "@main/services/window-manager";
 import {
+  chooseOptiScalerProxyDll,
   compareOptiScalerVersions,
   evaluateOptiScalerEligibility,
   findOptiScalerCompatibilityEntry,
@@ -23,11 +24,13 @@ import type {
   OptiScalerAutoInstallOutcome,
   OptiScalerEligibility,
   OptiScalerOverview,
+  OptiScalerProxyDllChoice,
   UserPreferences,
 } from "@types";
 import {
   OPTISCALER_MANIFEST_FILE,
   findMissingOptiScalerFiles,
+  findOccupiedFileNames,
   findUpscalerLibraries,
   hasExternalOptiScaler,
   installOptiScaler,
@@ -36,6 +39,7 @@ import {
   resolveOptiScalerInstallDirectory,
   uninstallOptiScaler,
 } from "./game-files";
+import { detectGraphicsApis } from "./graphics-api";
 import { OptiScalerAssets } from "./optiscaler-assets";
 
 export type OptiScalerInstallError =
@@ -140,6 +144,40 @@ export class OptiScaler {
     );
   }
 
+  /**
+   * The DLL name OptiScaler loads through when the game's own options don't
+   * name one: the one chosen in settings, or else one picked for the game from
+   * its wiki page, its graphics API and the files already in its folder.
+   */
+  private static async resolveDefaultProxyDll(
+    game: Game,
+    settings: OptiScalerSettings,
+    executablePath: string,
+    installDirectory: string
+  ): Promise<OptiScalerProxyDllChoice> {
+    if (settings.proxyDll) {
+      return { proxyDll: settings.proxyDll, source: "settings" };
+    }
+
+    const manifest = await readOptiScalerManifest(installDirectory);
+    const slug = findOptiScalerCompatibilityEntry(
+      await OptiScalerAssets.getCompatibilityList(),
+      game.title
+    )?.wikiSlug;
+
+    const [wikiDlls, graphicsApis, occupied] = await Promise.all([
+      slug ? OptiScalerAssets.getWikiProxyDlls(slug) : [],
+      detectGraphicsApis(executablePath).catch(() => null),
+      findOccupiedFileNames(installDirectory, manifest),
+    ]);
+
+    return chooseOptiScalerProxyDll({
+      wikiDlls,
+      vulkanOnly: !!graphicsApis?.vulkan && !graphicsApis.direct3d,
+      occupied,
+    });
+  }
+
   public static async getGameStatus(
     shop: GameShop,
     objectId: string
@@ -160,6 +198,7 @@ export class OptiScaler {
         eligibility: null,
         autoInstallDisabled: game.optiScalerAutoInstallDisabled === true,
         latestVersion,
+        defaultProxyDll: null,
       };
     }
 
@@ -183,6 +222,12 @@ export class OptiScaler {
       eligibility: await this.evaluate(game, installDirectory, settings),
       autoInstallDisabled: game.optiScalerAutoInstallDisabled === true,
       latestVersion,
+      defaultProxyDll: await this.resolveDefaultProxyDll(
+        game,
+        settings,
+        executablePath,
+        installDirectory
+      ),
     };
   }
 
@@ -232,7 +277,16 @@ export class OptiScaler {
       const optiPatcher = compatibility?.optiPatcherSupported
         ? await OptiScalerAssets.ensureOptiPatcher()
         : null;
-      const proxyDll = game.optiScalerProxyDll ?? settings.proxyDll;
+      const proxyDll =
+        game.optiScalerProxyDll ??
+        (
+          await this.resolveDefaultProxyDll(
+            game,
+            settings,
+            executablePath,
+            installDirectory
+          )
+        ).proxyDll;
 
       const manifest = await installOptiScaler({
         releaseDirectory: release.directory,

@@ -4,6 +4,7 @@ import type {
   OptiScalerEligibility,
   OptiScalerEligibilityReason,
   OptiScalerProxyDll,
+  OptiScalerProxyDllChoice,
   UserPreferences,
 } from "@types";
 import { isSameTitle } from "./title-matching.js";
@@ -20,10 +21,84 @@ export const OPTISCALER_PROXY_DLLS: OptiScalerProxyDll[] = [
 
 export const DEFAULT_OPTISCALER_PROXY_DLL: OptiScalerProxyDll = "dxgi.dll";
 
+/**
+ * Names tried for a game that only renders through Vulkan, best first.
+ * OptiScaler loaded as dxgi.dll works as a DirectX hook and never sees such a
+ * game's swapchain, so there is no overlay and no upscaling.
+ */
+export const OPTISCALER_VULKAN_PROXY_DLLS: OptiScalerProxyDll[] = [
+  "winmm.dll",
+  "dbghelp.dll",
+  "version.dll",
+];
+
 export const isOptiScalerProxyDll = (
   value: unknown
 ): value is OptiScalerProxyDll =>
   OPTISCALER_PROXY_DLLS.includes(value as OptiScalerProxyDll);
+
+/**
+ * Reads the proxy DLL names a game's page on the OptiScaler wiki lists under
+ * "Filename", in the order the page gives them (the first is the preferred
+ * one). Names Hydra cannot install, such as `OptiScaler.asi`, are skipped.
+ */
+export const parseOptiScalerWikiProxyDlls = (
+  page: string
+): OptiScalerProxyDll[] => {
+  const label = /\bFilename\b/i.exec(page);
+  if (!label) return [];
+
+  // The value follows the label and ends at the next blank line.
+  const value = page
+    .slice(label.index + label[0].length)
+    .split(/\r?\n\s*\r?\n/)[0];
+
+  const names = [...value.matchAll(/[\w.-]+\.dll/gi)].map((match) =>
+    match[0].toLowerCase()
+  );
+  return [...new Set(names)].filter(isOptiScalerProxyDll);
+};
+
+export interface ProxyDllChoiceInput {
+  /** Names from the game's wiki page, best first. */
+  wikiDlls: OptiScalerProxyDll[];
+  /** The game renders through Vulkan and no DirectX version. */
+  vulkanOnly: boolean;
+  /** Lower-case names of files already in the game folder that are not OptiScaler's. */
+  occupied: ReadonlySet<string>;
+}
+
+/**
+ * Picks the proxy DLL when neither the game nor the settings name one: the
+ * wiki's choice, then the Vulkan names for a Vulkan-only game, then dxgi.dll.
+ * A name the game folder already has (a crack's winmm.dll, ReShade's dxgi.dll)
+ * is skipped, since installing over it would replace that file.
+ */
+export const chooseOptiScalerProxyDll = ({
+  wikiDlls,
+  vulkanOnly,
+  occupied,
+}: ProxyDllChoiceInput): OptiScalerProxyDllChoice => {
+  const isFree = (dll: OptiScalerProxyDll) => !occupied.has(dll);
+
+  const wiki = wikiDlls.find(isFree);
+  if (wiki) return { proxyDll: wiki, source: "wiki" };
+
+  if (vulkanOnly) {
+    const vulkan = OPTISCALER_VULKAN_PROXY_DLLS.find(isFree);
+    if (vulkan) return { proxyDll: vulkan, source: "vulkan" };
+  }
+
+  const fallback = [
+    DEFAULT_OPTISCALER_PROXY_DLL,
+    ...OPTISCALER_PROXY_DLLS,
+  ].find(isFree);
+  // Every name is taken: install over the best candidate, as before.
+  return {
+    proxyDll: fallback ?? wikiDlls[0] ?? DEFAULT_OPTISCALER_PROXY_DLL,
+    source: wikiDlls.length > 0 && !fallback ? "wiki" : "default",
+  };
+};
 
 /** Libraries whose presence means the game renders through a supported upscaler. */
 const UPSCALER_LIBRARY_PATTERNS = [
@@ -247,7 +322,8 @@ export const compareOptiScalerVersions = (a: string, b: string) =>
 export interface OptiScalerSettings extends OptiScalerDetectionSettings {
   autoInstall: boolean;
   channel: OptiScalerChannel;
-  proxyDll: OptiScalerProxyDll;
+  /** The DLL name chosen in settings, or null to pick one for each game. */
+  proxyDll: OptiScalerProxyDll | null;
   installOptiPatcher: boolean;
   iniOverrides: IniOverride[];
 }
@@ -260,7 +336,7 @@ export const resolveOptiScalerSettings = (
   channel: preferences?.optiScalerChannel === "nightly" ? "nightly" : "stable",
   proxyDll: isOptiScalerProxyDll(preferences?.optiScalerProxyDll)
     ? preferences.optiScalerProxyDll
-    : DEFAULT_OPTISCALER_PROXY_DLL,
+    : null,
   detectNativeUpscalers: preferences?.optiScalerDetectNativeUpscalers !== false,
   useCompatibilityList: preferences?.optiScalerUseCompatibilityList !== false,
   installOptiPatcher: preferences?.optiScalerInstallOptiPatcher !== false,

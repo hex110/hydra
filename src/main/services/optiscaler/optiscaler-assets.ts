@@ -2,10 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import axios from "axios";
-import type { OptiScalerChannel, OptiScalerCompatibilityEntry } from "@types";
+import type {
+  OptiScalerChannel,
+  OptiScalerCompatibilityEntry,
+  OptiScalerProxyDll,
+} from "@types";
 import {
   compareOptiScalerVersions,
   parseOptiScalerCompatibilityList,
+  parseOptiScalerWikiProxyDlls,
 } from "@shared";
 import { SevenZip } from "@main/services/7zip";
 import { downloadToFile } from "@main/services/download-to-file";
@@ -21,7 +26,13 @@ const OPTIPATCHER_REPOSITORY = "optiscaler/OptiPatcher";
 const COMPATIBILITY_LIST_URL =
   "https://raw.githubusercontent.com/wiki/optiscaler/OptiScaler/Compatibility-List.md";
 
+const WIKI_PAGES_URL =
+  "https://raw.githubusercontent.com/wiki/optiscaler/OptiScaler";
+/** The wiki stores game pages as AsciiDoc, older ones as Markdown. */
+const WIKI_PAGE_EXTENSIONS = ["asciidoc", "md"];
+
 const RELEASE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const WIKI_PAGE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 const COMPATIBILITY_LIST_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -44,6 +55,10 @@ interface CompatibilityCache {
   entries: OptiScalerCompatibilityEntry[];
 }
 
+interface WikiProxyDllCache {
+  [slug: string]: { fetchedAt: number; dlls: OptiScalerProxyDll[] };
+}
+
 interface GitHubRelease {
   tag_name: string;
   draft: boolean;
@@ -55,6 +70,8 @@ const getRootDirectory = () =>
 const getStatePath = () => path.join(getRootDirectory(), "state.json");
 const getCompatibilityPath = () =>
   path.join(getRootDirectory(), "compatibility-list.json");
+const getWikiProxyDllsPath = () =>
+  path.join(getRootDirectory(), "wiki-proxy-dlls.json");
 const getReleasesDirectory = (channel: OptiScalerChannel) =>
   path.join(getRootDirectory(), "releases", channel);
 const getOptiPatcherDirectory = () =>
@@ -374,6 +391,69 @@ export class OptiScalerAssets {
         return cache?.entries ?? [];
       }
     });
+  }
+
+  /**
+   * The proxy DLL names the wiki's page for a game lists, best first. Pages are
+   * cached for a week, and a failed request falls back to the cached names
+   * (or none): the install then picks a name without the wiki's help.
+   */
+  public static getWikiProxyDlls(slug: string): Promise<OptiScalerProxyDll[]> {
+    return this.once(`wiki-proxy-dlls:${slug}`, async () => {
+      const cache =
+        (await readJson<WikiProxyDllCache>(getWikiProxyDllsPath())) ?? {};
+      const cached = cache[slug];
+      if (cached && Date.now() - cached.fetchedAt < WIKI_PAGE_INTERVAL_MS) {
+        return cached.dlls;
+      }
+
+      try {
+        const dlls = await this.fetchWikiProxyDlls(slug);
+        await this.writeWikiProxyDlls(slug, dlls);
+        return dlls;
+      } catch (error) {
+        logger.warn("[OptiScaler] Failed to read the wiki page for a game", {
+          slug,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return cached?.dlls ?? [];
+      }
+    });
+  }
+
+  /** Empty when the wiki has no page for the slug; throws when it cannot be reached. */
+  private static async fetchWikiProxyDlls(slug: string) {
+    for (const extension of WIKI_PAGE_EXTENSIONS) {
+      try {
+        const response = await axios.get<string>(
+          `${WIKI_PAGES_URL}/${encodeURI(slug)}.${extension}`,
+          { responseType: "text", timeout: REQUEST_TIMEOUT_MS }
+        );
+        return parseOptiScalerWikiProxyDlls(response.data);
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          continue;
+        }
+        throw error;
+      }
+    }
+    return [];
+  }
+
+  private static wikiProxyDllsWrite: Promise<unknown> = Promise.resolve();
+
+  /** Games are looked up side by side; one at a time keeps the shared file whole. */
+  private static writeWikiProxyDlls(slug: string, dlls: OptiScalerProxyDll[]) {
+    const write = this.wikiProxyDllsWrite
+      .catch(() => undefined)
+      .then(async () => {
+        const cache =
+          (await readJson<WikiProxyDllCache>(getWikiProxyDllsPath())) ?? {};
+        cache[slug] = { fetchedAt: Date.now(), dlls };
+        await writeJson(getWikiProxyDllsPath(), cache);
+      });
+    this.wikiProxyDllsWrite = write;
+    return write.catch(() => undefined);
   }
 
   public static async getCacheSize() {

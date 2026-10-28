@@ -7,6 +7,19 @@ export type OptiScalerProxyDll =
   | "wininet.dll"
   | "winhttp.dll";
 
+/** Where the proxy DLL name for a game came from. */
+export type OptiScalerProxyDllSource =
+  | "game"
+  | "settings"
+  | "wiki"
+  | "vulkan"
+  | "default";
+
+export interface OptiScalerProxyDllChoice {
+  proxyDll: OptiScalerProxyDll;
+  source: OptiScalerProxyDllSource;
+}
+
 export type OptiScalerChannel = "stable" | "nightly";
 
 export type OptiScalerCompatibilityStatus = "working" | "not-working";
@@ -79,6 +92,8 @@ export interface GameOptiScalerStatus {
   eligibility: OptiScalerEligibility | null;
   autoInstallDisabled: boolean;
   latestVersion: string | null;
+  /** The DLL name used when the game's options don't name one; null without an executable. */
+  defaultProxyDll: OptiScalerProxyDllChoice | null;
 }
 
 export interface OptiScalerOverview {

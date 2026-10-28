@@ -298,16 +298,25 @@ export function SettingsContextOptiScaler() {
         <h3>{t("optiscaler_injection")}</h3>
         <SelectField
           label={t("optiscaler_proxy_dll")}
-          value={settings.proxyDll}
+          value={settings.proxyDll ?? ""}
           theme="dark"
-          options={OPTISCALER_PROXY_DLLS.map((proxyDll) => ({
-            key: proxyDll,
-            value: proxyDll,
-            label: proxyDll,
-          }))}
+          options={[
+            {
+              key: "automatic",
+              value: "",
+              label: t("optiscaler_proxy_dll_automatic"),
+            },
+            ...OPTISCALER_PROXY_DLLS.map((proxyDll) => ({
+              key: proxyDll,
+              value: proxyDll,
+              label: proxyDll,
+            })),
+          ]}
           onChange={(event) =>
             updateUserPreferences({
-              optiScalerProxyDll: event.target.value as OptiScalerProxyDll,
+              optiScalerProxyDll: event.target.value
+                ? (event.target.value as OptiScalerProxyDll)
+                : null,
             })
           }
         />

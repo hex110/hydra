@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import {
   findMissingOptiScalerFiles,
+  findOccupiedFileNames,
   findReleaseRoot,
   findUpscalerLibraries,
   hasExternalOptiScaler,
@@ -234,5 +235,53 @@ describe("installOptiScaler / uninstallOptiScaler", () => {
     );
     await assert.rejects(uninstallOptiScaler(path.join(root, "game")));
     assert.ok(has("victim.txt"));
+  });
+});
+
+describe("findOccupiedFileNames", () => {
+  const manifest = (files: string[], backups: string[] = []) => ({
+    version: "1",
+    channel: "stable" as const,
+    proxyDll: "dxgi.dll" as const,
+    optiPatcherVersion: null,
+    installedAt: "",
+    files,
+    directories: [],
+    backups,
+  });
+
+  it("lists the game's own files, lower-cased, without folders", async () => {
+    write("Winmm.dll");
+    write("game.exe");
+    write("data/dbghelp.dll");
+    assert.deepStrictEqual(
+      [...(await findOccupiedFileNames(root, null))].sort(),
+      ["game.exe", "winmm.dll"]
+    );
+  });
+
+  it("leaves out OptiScaler's own files and adds the ones it backed up", async () => {
+    write("dxgi.dll");
+    write("OptiScaler.ini");
+    write("winmm.dll");
+    assert.deepStrictEqual(
+      [
+        ...(await findOccupiedFileNames(
+          root,
+          manifest(
+            ["dxgi.dll", "OptiScaler.ini", "OptiScaler/x.dll"],
+            ["version.dll"]
+          )
+        )),
+      ].sort(),
+      ["version.dll", "winmm.dll"]
+    );
+  });
+
+  it("is empty for a folder that cannot be read", async () => {
+    assert.strictEqual(
+      (await findOccupiedFileNames(path.join(root, "missing"), null)).size,
+      0
+    );
   });
 });

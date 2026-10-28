@@ -433,7 +433,7 @@ export interface UserPreferences {
   ankerGamesBrowserDownloadsPath?: string;
   optiScalerAutoInstall?: boolean;
   optiScalerChannel?: OptiScalerChannel;
-  optiScalerProxyDll?: OptiScalerProxyDll;
+  optiScalerProxyDll?: OptiScalerProxyDll | null;
   optiScalerDetectNativeUpscalers?: boolean;
   optiScalerUseCompatibilityList?: boolean;
   optiScalerInstallOptiPatcher?: boolean;

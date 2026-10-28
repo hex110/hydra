@@ -114,6 +114,40 @@ export const findUpscalerLibraries = async (
   return found;
 };
 
+/**
+ * Lower-case names of the files at the top of the install directory that
+ * Hydra's OptiScaler did not put there, including the ones it moved to its
+ * backup folder: the names a proxy DLL must not take over.
+ */
+export const findOccupiedFileNames = async (
+  installDirectory: string,
+  manifest: OptiScalerManifest | null
+): Promise<Set<string>> => {
+  const topLevel = (relativePath: string) =>
+    relativePath.includes("/") || relativePath.includes("\\")
+      ? null
+      : relativePath.toLowerCase();
+  const ownFiles = new Set(
+    (manifest?.files ?? []).map(topLevel).filter((name) => name !== null)
+  );
+
+  const entries = await fs.promises
+    .readdir(installDirectory, { withFileTypes: true })
+    .catch(() => [] as fs.Dirent[]);
+
+  const occupied = new Set(
+    entries
+      .filter((entry) => !entry.isDirectory())
+      .map((entry) => entry.name.toLowerCase())
+      .filter((name) => !ownFiles.has(name))
+  );
+  for (const backup of manifest?.backups ?? []) {
+    const name = topLevel(backup);
+    if (name) occupied.add(name);
+  }
+  return occupied;
+};
+
 export const readOptiScalerManifest = async (
   installDirectory: string
 ): Promise<OptiScalerManifest | null> => {

@@ -1,11 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileDirectoryIcon } from "@primer/octicons-react";
-import {
-  OPTISCALER_PROXY_DLLS,
-  compareOptiScalerVersions,
-  resolveOptiScalerSettings,
-} from "@shared";
+import { OPTISCALER_PROXY_DLLS, compareOptiScalerVersions } from "@shared";
 
 import {
   Button,
@@ -15,12 +11,13 @@ import {
   TextField,
 } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
-import { useAppSelector, useToast } from "@renderer/hooks";
+import { useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
 import type {
   GameOptiScalerStatus,
   LibraryGame,
   OptiScalerProxyDll,
+  OptiScalerProxyDllChoice,
 } from "@types";
 
 const WIKI_URL = "https://github.com/optiscaler/OptiScaler/wiki";
@@ -31,10 +28,6 @@ export function OptiScalerSettingsSection({
   const { t } = useTranslation("game_details");
   const { updateGame } = useContext(gameDetailsContext);
   const { showSuccessToast, showErrorToast } = useToast();
-  const userPreferences = useAppSelector(
-    (state) => state.userPreferences.value
-  );
-  const defaultProxyDll = resolveOptiScalerSettings(userPreferences).proxyDll;
 
   const [status, setStatus] = useState<GameOptiScalerStatus | null>(null);
   const [busy, setBusy] = useState<"install" | "uninstall" | null>(null);
@@ -142,9 +135,28 @@ export function OptiScalerSettingsSection({
     !!installation &&
     !!status.latestVersion &&
     compareOptiScalerVersions(installation.version, status.latestVersion) < 0;
-  const configuredProxyDll = game.optiScalerProxyDll ?? defaultProxyDll;
+  const configuredProxyDll =
+    game.optiScalerProxyDll ?? status.defaultProxyDll?.proxyDll;
   const proxyDllPendingReinstall =
-    !!installation && installation.proxyDll !== configuredProxyDll;
+    !!installation &&
+    !!configuredProxyDll &&
+    installation.proxyDll !== configuredProxyDll;
+
+  const describeDefaultProxyDll = (choice: OptiScalerProxyDllChoice | null) => {
+    if (!choice) return t("optiscaler_proxy_dll_automatic");
+    const options = { proxyDll: choice.proxyDll };
+
+    switch (choice.source) {
+      case "wiki":
+        return t("optiscaler_proxy_dll_default_wiki", options);
+      case "vulkan":
+        return t("optiscaler_proxy_dll_default_vulkan", options);
+      case "settings":
+        return t("optiscaler_proxy_dll_default", options);
+      default:
+        return t("optiscaler_proxy_dll_default_auto", options);
+    }
+  };
 
   const statusText = status.externallyManaged
     ? t("optiscaler_status_external")
@@ -318,9 +330,7 @@ export function OptiScalerSettingsSection({
             {
               key: "default",
               value: "",
-              label: t("optiscaler_proxy_dll_default", {
-                proxyDll: defaultProxyDll,
-              }),
+              label: describeDefaultProxyDll(status.defaultProxyDll),
             },
             ...OPTISCALER_PROXY_DLLS.map((proxyDll) => ({
               key: proxyDll,

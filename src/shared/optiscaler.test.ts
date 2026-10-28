@@ -2,12 +2,15 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import {
   applyIniOverrides,
+  chooseOptiScalerProxyDll,
   compareOptiScalerVersions,
   evaluateOptiScalerEligibility,
   findOptiScalerCompatibilityEntry,
   isUpscalerLibrary,
   parseIniOverrides,
   parseOptiScalerCompatibilityList,
+  parseOptiScalerWikiProxyDlls,
+  resolveOptiScalerSettings,
 } from "./optiscaler.js";
 
 const WIKI_PAGE = `> [!TIP]
@@ -204,5 +207,152 @@ describe("evaluateOptiScalerEligibility", () => {
     });
     assert.strictEqual(result.eligible, false);
     assert.strictEqual(result.blocked, true);
+  });
+});
+
+const ENSHROUDED_WIKI_PAGE = `[cols="1,1"]
+|===
+|**Last Tested Version**
+|0.9.4
+
+|**Filename**
+|\`winmm.dll\`, \`dbghelp.dll\`
+
+|**OS**
+|W11 24H2, Linux
+
+|**Notes**
+a|
+* Game runs on Vulkan.
+* If winmm.dll isn't working, try with \`dbghelp.dll\`
+|===`;
+
+describe("parseOptiScalerWikiProxyDlls", () => {
+  it("reads the names under Filename, in order, and nothing else", () => {
+    assert.deepStrictEqual(parseOptiScalerWikiProxyDlls(ENSHROUDED_WIKI_PAGE), [
+      "winmm.dll",
+      "dbghelp.dll",
+    ]);
+  });
+
+  it("skips names Hydra cannot install and repeats", () => {
+    const page =
+      "|**Filename**\n|`dxgi.dll`, `OptiScaler.asi`, `DXGI.dll`\n\n|**OS**";
+    assert.deepStrictEqual(parseOptiScalerWikiProxyDlls(page), ["dxgi.dll"]);
+  });
+
+  it("reads a bold label on one line", () => {
+    assert.deepStrictEqual(
+      parseOptiScalerWikiProxyDlls(
+        "**Filename:** version.dll or winmm.dll\n\nNotes"
+      ),
+      ["version.dll", "winmm.dll"]
+    );
+  });
+
+  it("finds nothing without a Filename field or a DLL in it", () => {
+    assert.deepStrictEqual(parseOptiScalerWikiProxyDlls("No table here"), []);
+    assert.deepStrictEqual(
+      parseOptiScalerWikiProxyDlls(
+        "|**Filename**\n|`OptiScaler.asi`\n\n|**OS**"
+      ),
+      []
+    );
+  });
+});
+
+describe("chooseOptiScalerProxyDll", () => {
+  const free = new Set<string>();
+
+  it("uses the wiki's first name", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: ["winmm.dll", "dbghelp.dll"],
+        vulkanOnly: false,
+        occupied: free,
+      }),
+      { proxyDll: "winmm.dll", source: "wiki" }
+    );
+  });
+
+  it("skips a name the game folder already has", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: ["winmm.dll", "dbghelp.dll"],
+        vulkanOnly: true,
+        occupied: new Set(["winmm.dll"]),
+      }),
+      { proxyDll: "dbghelp.dll", source: "wiki" }
+    );
+  });
+
+  it("uses the Vulkan names for a Vulkan-only game the wiki does not list", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: [],
+        vulkanOnly: true,
+        occupied: free,
+      }),
+      { proxyDll: "winmm.dll", source: "vulkan" }
+    );
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: [],
+        vulkanOnly: true,
+        occupied: new Set(["winmm.dll"]),
+      }),
+      { proxyDll: "dbghelp.dll", source: "vulkan" }
+    );
+  });
+
+  it("keeps dxgi.dll for DirectX or unknown games", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: [],
+        vulkanOnly: false,
+        occupied: free,
+      }),
+      { proxyDll: "dxgi.dll", source: "default" }
+    );
+  });
+
+  it("goes round a taken dxgi.dll", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: ["dxgi.dll"],
+        vulkanOnly: false,
+        occupied: new Set(["dxgi.dll"]),
+      }),
+      { proxyDll: "winmm.dll", source: "default" }
+    );
+  });
+
+  it("falls back to the wiki's name when every name is taken", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: ["dbghelp.dll"],
+        vulkanOnly: false,
+        occupied: new Set([
+          "dxgi.dll",
+          "winmm.dll",
+          "version.dll",
+          "dbghelp.dll",
+          "d3d12.dll",
+          "wininet.dll",
+          "winhttp.dll",
+        ]),
+      }),
+      { proxyDll: "dbghelp.dll", source: "wiki" }
+    );
+  });
+});
+
+describe("resolveOptiScalerSettings proxy DLL", () => {
+  it("is automatic until a name is chosen", () => {
+    assert.strictEqual(resolveOptiScalerSettings(null).proxyDll, null);
+    assert.strictEqual(
+      resolveOptiScalerSettings({ optiScalerProxyDll: "version.dll" }).proxyDll,
+      "version.dll"
+    );
   });
 });

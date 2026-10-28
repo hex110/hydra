@@ -47,10 +47,35 @@ launched through a bootstrap executable at the root of the game, Hydra
 follows it to `<Project>/Binaries/Win64`, where the `-Shipping` executable
 is.
 
-`OptiScaler.dll` is renamed to the **Install OptiScaler as** DLL (`dxgi.dll`
-by default). Pick `winmm.dll` or `version.dll` when a game ignores
-`dxgi.dll` or already uses one, such as ReShade. Each game can override the
-default; reinstall to apply a change.
+`OptiScaler.dll` is renamed to a proxy DLL that the game loads. Which name
+works depends on the game: OptiScaler loaded as `dxgi.dll` hooks DirectX
+games, and never sees a game that renders through Vulkan, so there is no
+overlay and no upscaling.
+
+**Install OptiScaler as** is **Automatic** by default, and Hydra picks the
+name for each game, first match wins:
+
+1. The name(s) under **Filename** on the game's page of the OptiScaler wiki
+   (reached through the compatibility list), best first. Enshrouded, for
+   example, lists `winmm.dll` and `dbghelp.dll`. Pages are cached for a week
+   in `<userData>/optiscaler/wiki-proxy-dlls.json`; without a connection the
+   cached names are used, or none.
+2. `winmm.dll`, then `dbghelp.dll`, then `version.dll` when the game's
+   executable (or one beside it) names `vulkan-1.dll` and no Direct3D 9 to 12
+   loader. A game that names both, as many do, is treated as DirectX.
+3. `dxgi.dll`.
+
+A name the game folder already has is skipped, since installing over it would
+replace that file. Many cracks, for example, load through their own
+`winmm.dll`. If every name is taken, the first choice is installed over the
+file as before, and the original is backed up.
+
+Pick a name in **Settings → OptiScaler** to use it for every game, or in a
+game's options to use it for that game only; both skip all of the above.
+Each game's options show what Automatic resolves to ("Automatic (dbghelp.dll,
+from the OptiScaler wiki)"). Reinstall (or **Update games**) to apply a change
+to a game that already has OptiScaler; its page says when the name differs from
+the installed one.
 
 For games the compatibility list marks as OptiPatcher-supported, Hydra also
 installs [OptiPatcher](https://github.com/optiscaler/OptiPatcher) into
