@@ -1,9 +1,9 @@
 {
   "extensionName": {
-    "message": "Hydra Plus for Steam"
+    "message": "Hydra Plus"
   },
   "extensionDescription": {
-    "message": "Adds Hydra Plus buttons to Steam store pages: see whether a game is in your library and open or download it."
+    "message": "Adds Hydra Plus buttons to Steam, SteamDB, ProtonDB, Backloggd, OpenCritic, Metacritic and more: see whether a game is in your library and open or download it."
   },
   "downloadButton": {
     "message": "Download"
@@ -28,5 +28,16 @@
   },
   "state_unknown": {
     "message": "Hydra Plus isn't running, so the game's status is unknown"
+  },
+  "statusWithName": {
+    "message": "$NAME$: $STATE$",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      },
+      "state": {
+        "content": "$2"
+      }
+    }
   }
 }

@@ -2,12 +2,53 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-right: 6px;
   vertical-align: top;
 }
 
+.hydra-plus-box[hidden],
 .hydra-plus-box [hidden] {
   display: none;
+}
+
+/* Steam: sits among the store's own buttons. */
+.hydra-plus-box[data-variant="steam"] {
+  margin-right: 6px;
+}
+
+/* Everywhere else: a dark pill that reads on light and dark pages alike. */
+.hydra-plus-box:not([data-variant="steam"]) {
+  margin: 8px 0;
+  padding: 4px 8px;
+  border: 1px solid #2f4258;
+  border-radius: 6px;
+  background: #1b2838;
+  font:
+    600 13px/1 system-ui,
+    sans-serif;
+}
+
+.hydra-plus-box--floating {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483000;
+  margin: 0;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+}
+
+.hydra-plus-btn {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #2e5d8a;
+  color: #fff !important;
+  font: inherit;
+  text-decoration: none !important;
+  cursor: pointer;
+}
+
+.hydra-plus-btn:hover {
+  background: #3d78b0;
 }
 
 .hydra-plus-box__status {
@@ -18,6 +59,10 @@
   margin-right: 2px;
   color: #67c1f5;
   cursor: default;
+}
+
+.hydra-plus-box:not([data-variant="steam"]) .hydra-plus-box__status {
+  height: auto;
 }
 
 .hydra-plus-box[data-state="installed"] .hydra-plus-box__status {

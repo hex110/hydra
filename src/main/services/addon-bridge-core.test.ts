@@ -10,8 +10,12 @@ const good = {
   host: `127.0.0.1:${PORT}`,
   origin: "moz-extension://abc-123",
 };
+const hades = { objectId: "1145350", name: "Hades II" };
 const ask = (overrides = {}, state = "installed" as const) =>
-  handleAddonRequest({ ...good, ...overrides }, PORT, async () => state);
+  handleAddonRequest({ ...good, ...overrides }, PORT, {
+    getGameState: async () => state,
+    resolveTitle: async (title) => (title === "Hades II" ? hades : null),
+  });
 
 describe("add-on bridge", () => {
   it("reports the game's state to an extension", async () => {
@@ -37,5 +41,34 @@ describe("add-on bridge", () => {
       400
     );
     assert.equal((await ask({ url: "/other" })).status, 404);
+  });
+
+  it("resolves a title to a Steam game and its state", async () => {
+    const response = await ask({ url: "/resolve?title=Hades%20II" });
+    assert.equal(response.status, 200);
+    assert.deepEqual(JSON.parse(response.body), {
+      ...hades,
+      state: "installed",
+    });
+    assert.equal((await ask({ url: "/resolve?title=Nope" })).status, 404);
+  });
+
+  it("refuses an empty or oversized title", async () => {
+    assert.equal((await ask({ url: "/resolve?title=%20" })).status, 400);
+    assert.equal((await ask({ url: "/resolve" })).status, 400);
+    const long = "a".repeat(201);
+    assert.equal((await ask({ url: `/resolve?title=${long}` })).status, 400);
+  });
+
+  it("holds /resolve to the same origin checks", async () => {
+    const url = "/resolve?title=Hades%20II";
+    assert.equal(
+      (await ask({ url, origin: "https://evil.example" })).status,
+      403
+    );
+    assert.equal(
+      (await ask({ url, host: `evil.example:${PORT}` })).status,
+      403
+    );
   });
 });

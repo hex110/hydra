@@ -20,9 +20,11 @@ import {
   PowerSaveBlockerManager,
   DownloadOrchestrator,
   SSEClient,
+  resolveSteamTitle,
   startAddonBridge,
   emulators,
 } from "@main/services";
+import { MAX_ADDON_TITLE_LENGTH } from "@main/services/addon-bridge-core";
 import resources from "@locales";
 import { TorrentService } from "./services/torrent-service";
 import { DownloadManager } from "./services/download/download-manager";
@@ -325,13 +327,21 @@ const handleDeepLinkPath = (uri?: string) => {
     }
 
     // From the browser add-on: open a store game, optionally to download it.
+    // Sites without a Steam app id link by title instead.
     if (url.host === "game" || url.host === "download") {
+      const download = url.host === "download" ? "?download=1" : "";
       const target = parseStoreGameDeepLink(url);
+      const title = url.searchParams.get("title");
+
       if (target) {
         WindowManager.redirect(
-          `game/${target.shop}/${target.objectId}${
-            url.host === "download" ? "?download=1" : ""
-          }`
+          `game/${target.shop}/${target.objectId}${download}`
+        );
+      } else if (title && title.length <= MAX_ADDON_TITLE_LENGTH) {
+        void resolveSteamTitle(title).then((game) =>
+          WindowManager.redirect(
+            game ? `game/steam/${game.objectId}${download}` : "catalogue"
+          )
         );
       }
       return;

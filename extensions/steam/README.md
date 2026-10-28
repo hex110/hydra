@@ -1,7 +1,16 @@
-# Hydra Plus for Steam
+# Hydra Plus add-on
 
-A browser add-on that puts Hydra Plus buttons in the top right of Steam store
-pages, next to **Community Hub**:
+A browser add-on that puts Hydra Plus buttons on game pages: in the top right
+of Steam store pages, next to **Community Hub**, and under the game's title on
+the sites below.
+
+| Site                                                             | Finds the game by                           |
+| ---------------------------------------------------------------- | ------------------------------------------- |
+| Steam store, SteamDB, ProtonDB                                   | Steam app id in the URL                     |
+| PCGamingWiki                                                     | Steam app id in its infobox, else the title |
+| Backloggd, OpenCritic, Metacritic, IsThereAnyDeal, HowLongToBeat | Title, matched to a Steam game by the app   |
+
+The buttons:
 
 - An icon shows whether the game is not in your library, in it, or downloaded.
   It asks the running app, so it needs Hydra Plus open.
@@ -10,9 +19,11 @@ pages, next to **Community Hub**:
   [Browser add-on](../../docs/features/browser-addon.md).
 - **Open in Hydra Plus** opens the game's page, whatever the status.
 
-It works in Firefox 115+ and Chromium-based browsers. It only runs on
-`store.steampowered.com/app/*` pages, only talks to Hydra Plus on your own
-computer (`127.0.0.1`), and collects no data.
+It works in Firefox 115+ and Chromium-based browsers. It only runs on the
+sites above, only talks to Hydra Plus on your own computer (`127.0.0.1`), and
+collects no data. The add-on keeps the id `hydra-plus-steam@hex110.github.io`
+and the `hydra-plus-steam-*` file names from when it was Steam-only, so
+existing installs keep updating.
 
 ## Install
 
@@ -34,7 +45,14 @@ npx web-ext lint --source-dir extensions/steam    # validate for Firefox
 npx web-ext run --source-dir extensions/steam     # try it in a fresh Firefox profile
 ```
 
-Strings live in `_locales/<language>/messages.json`.
+Strings live in `_locales/<language>/messages.json`. `content.js` has one entry
+per site in `SITES`: how to read the game from the page and where to put the
+box. `npm test` covers it (`scripts/addon-content.test.mjs`), against
+trimmed-down copies of each site's markup.
+
+To add a site: add its host to `content_scripts.matches` in `manifest.json`
+(the whole host, since most of these sites change pages without reloading) and
+a `SITES` entry, then a test.
 
 ## Release a new version
 
