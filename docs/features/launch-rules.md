@@ -78,12 +78,13 @@ Steam with Steam's own launch options; the preview says so.
 A new install starts with these. They can be edited, disabled or removed;
 **Restore built-in rules** brings back removed ones.
 
-| Rule                         | Applies to                                                                    | Adds                                                               | Default |
-| ---------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
-| HDR                          | Every game                                                                    | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
-| ReShade                      | `ReShade.ini`                                                                 | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
-| Unity games: Vulkan renderer | `UnityPlayer.dll`                                                             | `%command% -force-vulkan`                                          | Off     |
-| Denuvo bypass (linuwux)      | `artifact.dll`, `artifact.json`, `DenuvOwO.dll`, `DenuvOwO.ini`, `Reflex.ini` | `linuwux %command%`                                                | On      |
+| Rule                               | Applies to                                                                    | Adds                                                               | Default |
+| ---------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
+| HDR                                | Every game                                                                    | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
+| HDR: switch the monitor (Hyprland) | Every game                                                                    | `hypr-hdr %command%`                                               | Off     |
+| ReShade                            | `ReShade.ini`                                                                 | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
+| Unity games: Vulkan renderer       | `UnityPlayer.dll`                                                             | `%command% -force-vulkan`                                          | Off     |
+| Denuvo bypass (linuwux)            | `artifact.dll`, `artifact.json`, `DenuvOwO.dll`, `DenuvOwO.ini`, `Reflex.ini` | `linuwux %command%`                                                | On      |
 
 ### HDR
 
@@ -97,6 +98,31 @@ and anti-cheat) can turn the rule off and use
 
 Installs that used the earlier HDR switch are moved onto this rule
 automatically, keeping the global setting and each game's choice.
+
+### HDR: switch the monitor (Hyprland)
+
+For games that never offer HDR even with the rule above. Wine's Wayland
+driver reports a monitor as HDR-capable only while the compositor already has
+it in HDR, and Hyprland's `render:cm_auto_hdr` switches a monitor only after
+a game asks for HDR, so a game that checks at startup never asks. The rule
+wraps the game in `hypr-hdr`, which puts the monitor in HDR before the game
+starts and back afterwards.
+
+It is off for every game. Turn it on in a game's **General** options (the rules that match it are listed there)
+for the games that need it, or on here to use it everywhere. After an update
+it appears under **Restore built-in rules**.
+
+`hypr-hdr` is not part of Hydra: it has to be on `PATH` (for example in
+`~/.local/bin`), and a game fails to start with the rule on and no such
+command. It takes the game command, so any script that does this works:
+
+1. switch the monitor to HDR (`hyprctl eval 'hl.monitor({ …, cm = "hdr" })'`,
+   with the monitor's current mode, position and scale);
+2. run the command, passing on its exit status and any signal;
+3. switch the monitor back, but only if the script switched it.
+
+It affects one monitor, so the game must open on it and run fullscreen. The
+rule changes nothing in the Hyprland configuration.
 
 ### Denuvo bypass (linuwux)
 

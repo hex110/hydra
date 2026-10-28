@@ -17,6 +17,19 @@ export const LAUNCH_RULE_PRESETS: LaunchRule[] = [
       "PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%",
   },
   {
+    id: "preset-hyprland-hdr",
+    presetId: "hyprland-hdr",
+    name: "HDR: switch the monitor to HDR (Hyprland)",
+    enabled: false,
+    matchAllGames: true,
+    files: [],
+    // Wine's Wayland driver reports HDR only for a monitor that is already in
+    // HDR, and Hyprland switches one only after a game asks for HDR, so games
+    // that check at startup never see it. The wrapper (not part of Hydra, see
+    // docs/features/launch-rules.md) switches the monitor around the game.
+    launchOptions: "hypr-hdr %command%",
+  },
+  {
     id: "preset-reshade",
     presetId: "reshade",
     name: "ReShade",
