@@ -237,6 +237,13 @@ export interface BrowserDownloadMatch {
 
 const BROWSER_ARCHIVE = /^(.+?)-AnkerGames(?: ?\(\d+\))?\.(?:zip|rar|7z)$/i;
 const PARTIAL_SUFFIX = /\.(?:part|crdownload)$/i;
+/** Firefox inserts a random token: `Game-AnkerGames.k3Jx9aQz.zip.part`. */
+const PARTIAL_TOKEN =
+  /(-AnkerGames(?: ?\(\d+\))?)\.[a-z0-9]+(?=\.(?:zip|rar|7z)$)/i;
+
+/** The archive name a browser's in-progress file will end up as. */
+const partialTarget = (name: string) =>
+  name.replace(PARTIAL_SUFFIX, "").replace(PARTIAL_TOKEN, "$1");
 
 const archiveMatchesSlug = (name: string, slug: string) => {
   const base = BROWSER_ARCHIVE.exec(name)?.[1];
@@ -248,7 +255,7 @@ const archiveMatchesSlug = (name: string, slug: string) => {
 
 /**
  * Finds this game's AnkerGames archive among a folder's file names. Firefox
- * writes `<name>.part` next to an empty `<name>`, Chromium `<name>.crdownload`;
+ * writes `<name>.<token>.part` next to an empty `<name>`, Chromium `<name>.crdownload`;
  * a newer duplicate ("Game-AnkerGames(1).zip") wins over an older one.
  */
 export const matchBrowserDownload = (
@@ -257,12 +264,9 @@ export const matchBrowserDownload = (
 ): BrowserDownloadMatch => {
   const partials = names.filter(
     (name) =>
-      PARTIAL_SUFFIX.test(name) &&
-      archiveMatchesSlug(name.replace(PARTIAL_SUFFIX, ""), slug)
+      PARTIAL_SUFFIX.test(name) && archiveMatchesSlug(partialTarget(name), slug)
   );
-  const inProgress = new Set(
-    partials.map((name) => name.replace(PARTIAL_SUFFIX, ""))
-  );
+  const inProgress = new Set(partials.map(partialTarget));
   const files = names
     .filter((name) => archiveMatchesSlug(name, slug) && !inProgress.has(name))
     .sort((a, b) => b.length - a.length || b.localeCompare(a));

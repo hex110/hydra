@@ -86,7 +86,7 @@ opens the page, the browser saves the file, and Hydra takes it from there.
    `AnkerGamesBrowserDownload` stands in for the HTTP downloader: once a
    second it looks in the browser downloads folder for this game's archive
    (matched by name against the slug) and reports the in-progress file's size
-   (`.part` for Firefox/Zen, `.crdownload` for Chromium) against the size from
+   (`.part` for Firefox/Zen, with a random token before the extension, `.crdownload` for Chromium) against the size from
    the game page.
 4. When the browser has finished (no in-progress file, size unchanged across
    two checks), Hydra moves the archive into the game's download folder and

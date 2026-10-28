@@ -244,6 +244,22 @@ describe("matchBrowserDownload", () => {
     );
   });
 
+  it("follows Firefox's tokenised in-progress file past its empty placeholder", () => {
+    assert.deepStrictEqual(
+      matchBrowserDownload(
+        [
+          "Chants-of-Sennaar-AnkerGames.zip",
+          "Chants-of-Sennaar-AnkerGames.RTAPxX3q.zip.part",
+        ],
+        slug
+      ),
+      {
+        file: null,
+        partial: "Chants-of-Sennaar-AnkerGames.RTAPxX3q.zip.part",
+      }
+    );
+  });
+
   it("prefers the newer duplicate and ignores other games", () => {
     assert.strictEqual(
       matchBrowserDownload(
