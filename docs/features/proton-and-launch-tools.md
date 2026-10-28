@@ -118,6 +118,45 @@ folder, next to upstream's Winetricks and Proton-switch reset:
   Hydra refuses when the game is running, or when the folder does not look
   like a prefix (no `drive_c` or `pfx`).
 
+## Games that close right after starting
+
+When umu-run exits cleanly within a minute of the launch and Hydra never saw
+the game running, the launcher window says **The game closed right after
+starting** instead of closing quietly. It has a **Show log** button that opens
+the Proton log (`steam-<id>.log` in the home folder, or in `PROTON_LOG_DIR`),
+or the umu log (`~/.config/hydra-plus/logs/umu-<id>.log`) when there is no
+Proton log. The game page treats it like a failed launch.
+
+The usual cause is a game that is meant to be started by its own launcher.
+Started directly, it uses its defaults, fails to reach its servers and exits
+with code 0, so there is no crash and no error to show. Check the game's own
+log for an empty command line and for connection attempts to a `-dev` host.
+
+Worked example, Soulframe (the same applies to Warframe):
+
+- `Soulframe.x64.exe` run on its own connects to `origin-dev.soulframe.com`,
+  times out and exits. `EE.log` shows `Process Command-line:` empty.
+- The official `Soulframe.msi` installs `Launcher.exe`, which updates the game
+  and starts it with `-cluster:public -graphicsDriver:dx11 ...`. Install it
+  into the game's prefix with
+  `WINEPREFIX=<prefix> umu-run msiexec /i Soulframe.msi /qn` (use the game's
+  Proton build and `GAMEID=umu-<id>`).
+- It lands in
+  `<prefix>/pfx/drive_c/users/steamuser/AppData/Local/Soulframe/Downloaded/Public/Tools/Launcher.exe`.
+  Set that file as the game's executable in Hydra.
+- The launcher asks where the game is installed. Pick the folder that
+  contains `Downloaded/Public`, not the default inside the prefix, so it
+  reuses the existing files instead of downloading them again.
+- Never run the launcher under `timeout`. It optimises `Cache.Windows` on
+  start and leaves multi-GB `.tmp` files behind if it is killed.
+
+The notice is a hint, not a diagnosis: a game that quits on its own within a
+minute, without Hydra seeing it run, gets the same message. For launchers that
+only exist to be skipped, see [Launcher redirects](#launcher-redirects).
+
+Code: `isSilentEarlyExit` in `src/main/services/umu-output-monitor.ts`, the
+`exited_early` status in `src/main/services/umu-launch-monitor.ts`.
+
 ## Launcher redirects
 
 Some games start a publisher launcher first, such as Cyberpunk's

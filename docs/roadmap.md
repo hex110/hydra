@@ -404,6 +404,17 @@ it's wanted.
 - [ ] **Backloggd or IGDB suggestions.** Backloggd has no API or export and
       sits behind a proof-of-work bot check; IGDB needs the user's own Twitch
       client id and secret. See [Home page](features/home.md#other-sources).
+- [ ] **Launcher-aware setup.** Recognise games that must be started by
+      their own launcher by their files (Soulframe and Warframe have
+      `Cache.Windows`, `Tools/CachePlan.txt` and `<Name>.x64.exe`). Offer
+      "Install launcher": run the installer MSI in the game's prefix
+      (`open-game-installer` already runs installers there; an MSI needs
+      `msiexec /i`), set the new `Launcher.exe` as the
+      executable once it appears, and tell the user to pick the existing game
+      folder in the launcher's prompt. Data as a small table of file
+      signature, installer and executable, like the built-in launch rules.
+      The manual steps are in
+      [Games that close right after starting](features/proton-and-launch-tools.md#games-that-close-right-after-starting).
 - [ ] **vkBasalt and lsfg-vk.** Per-game toggles written like the MangoHud
       layout (`ENABLE_VKBASALT=1` plus a config path; lsfg-vk's profile or
       environment). Not used as of 2026-10-19. vkBasalt is only installed
