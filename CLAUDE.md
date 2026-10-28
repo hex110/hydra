@@ -12,6 +12,45 @@ named exports, …):
 
 @.cursorrules
 
+## Git and testing
+
+- **Commit your own work.** When a task is done, commit it without waiting to
+  be asked: one commit per logical change, in the style of `git log`
+  (`feat(scope): …`, `fix(scope): …`). Stage only the files you changed; leave
+  anything else in the tree alone. Never push, tag or release unless asked.
+- **Make it testable, once, at the end.** Commit as often as makes sense while
+  working, but build and install only when the whole task is finished and
+  committed, never after each commit. If the task changed the running app (not
+  docs or tests only), run `scripts/build-install.sh` so the user can try it.
+  It builds the `.pacman` and installs it with `sudo pacman -U`, which opens a
+  consent dialog on the user's screen. Use `--no-install` to only build. Say in
+  your reply that it is installed and the app needs restarting.
+
+## Worktrees
+
+Several agents work in this repo at once, and the pre-commit hook runs
+`prettier --write .` over the whole tree. So every task that edits files gets
+its own worktree; never edit in the main checkout (`~/Development/hydra`),
+which stays on `main`.
+
+1. **Start:** `scripts/worktree-setup.sh <task-name>` creates
+   `~/Development/hydra-worktrees/<task-name>` on a branch of the same name,
+   with `.env`, `node_modules`, the Rust target and the downloaded binaries
+   copied in. Work there. Don't use the built-in worktree tool; it skips that
+   setup.
+2. **Work:** commit in the worktree as above. Run prettier on your files before
+   staging, since the hook formats after staging. Give the sandboxed dev
+   instance its own `--remoteDebuggingPort`, and never share a sandbox folder
+   between worktrees.
+3. **Finish:** commit, `git rebase main` and resolve any conflicts, rerun the
+   checks, then `scripts/build-install.sh` if the app changed. There is one
+   system install, so the last agent to install wins; only install at the end.
+4. **Land:** `scripts/worktree-land.sh` from the worktree rebases onto `main`,
+   fast-forwards `main` to the branch and removes the worktree and branch.
+   Afterwards your shell's directory is gone; `cd` to the main checkout. If it
+   fails because uncommitted changes in the main checkout are in the way, leave
+   them alone and tell the user. Never push.
+
 ## UI consistency
 
 The UI is being reworked page by page. These rules keep it one app, not a
