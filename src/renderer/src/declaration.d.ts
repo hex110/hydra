@@ -1767,6 +1767,7 @@ declare global {
       countPerApp?: number
     ) => Promise<GameNewsItem[]>;
     getGameReception: (steamAppId: string) => Promise<GameReception | null>;
+    getSteamPopularTags: () => Promise<SteamTag[]>;
     getGameSteamTags: (shop: GameShop, objectId: string) => Promise<SteamTag[]>;
     getSteamSimilarGames: (
       steamAppId: string

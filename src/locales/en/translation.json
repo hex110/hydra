@@ -339,7 +339,7 @@
     "ankergames_refreshing": "Reading AnkerGames for newer games",
     "recommended_for_you": "Recommended for you",
     "new_releases": "New releases on your sources",
-    "browse_by_genre": "Browse by genre",
+    "browse_by_tag": "Browse by tag",
     "discovery_queue": "Discovery queue",
     "discovery_queue_position": "{{position}} of {{count}}",
     "discovery_queue_open": "Open",

@@ -9,6 +9,7 @@ import {
   useAppSelector,
   useFormat,
   useLibrary,
+  usePopularSteamTags,
 } from "@renderer/hooks";
 import {
   lazy,
@@ -445,17 +446,31 @@ export default function Catalogue() {
       }));
   }, [steamGenresMapping, filters.genres]);
 
+  const popularTags = usePopularSteamTags();
+
+  // Most popular first, then the rest alphabetically; tags with no games are
+  // left out unless selected.
   const steamUserTagsFilterItems = useMemo(() => {
     if (!steamUserTags[language]) return [];
 
+    const rank = new Map(popularTags.tags.map((tag, index) => [tag.id, index]));
+
     return Object.entries(steamUserTags[language])
-      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .filter(
+        ([, value]) =>
+          !popularTags.empty.has(value) || filters.tags.includes(value)
+      )
+      .sort(
+        ([keyA, valueA], [keyB, valueB]) =>
+          (rank.get(valueA) ?? Infinity) - (rank.get(valueB) ?? Infinity) ||
+          keyA.localeCompare(keyB)
+      )
       .map(([key, value]) => ({
         label: key,
         value: value,
         checked: filters.tags.includes(value),
       }));
-  }, [steamUserTags, filters.tags, language]);
+  }, [steamUserTags, filters.tags, language, popularTags]);
 
   const classicsPlatforms = useMemo(
     () => filters.platforms ?? [],

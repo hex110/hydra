@@ -157,13 +157,13 @@
     margin-top: auto;
   }
 
-  &__genres {
+  &__tags {
     display: flex;
     flex-wrap: wrap;
     gap: globals.$spacing-unit;
   }
 
-  &__genre {
+  &__tag {
     padding: 6px 12px;
     border-radius: 999px;
     border: 1px solid globals.$border-color;

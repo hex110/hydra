@@ -18,13 +18,25 @@ With no search, no filters and the default sort, the catalogue opens with:
 - **New releases on your sources**: the newest games released up to this
   year. Sorting the whole catalogue by date shows mostly games nobody has
   uploaded, so this row only takes games your download sources have.
-- **Browse by genre**: a chip per Steam genre, which sets the genre filter.
+- **Browse by tag**: a chip for each of Steam's 30 most popular tags
+  (Indie, Action, Atmospheric, …), which sets the tag filter. Features such as
+  Singleplayer, 2D and Early Access are left out; they are filters, not
+  something to browse.
 
 Games already in your library are left out of every row except the two
 AnkerGames ones, which show the site's rows whole. The rows are kept
 for half an hour while Hydra runs (the AnkerGames rows come from a daily
 read instead). Searching, filtering or changing the sort
 hides the front page; the full list follows it under **All games**.
+
+## Tag filter
+
+The **Tags** filter lists Steam's tags with the most popular first (Steam's
+own ranking), then the rest alphabetically; the search box still finds any of
+them. The catalogue lists a few very common tags, such as Roguelike and
+Roguelite, with no games, so Hydra checks the 45 most popular ones once a day
+and hides those that return nothing. Clicking a tag on a game's page opens the
+catalogue filtered to it. The cards are links, so their tags are not clickable.
 
 ## Library state
 

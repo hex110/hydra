@@ -12,7 +12,13 @@ import {
 
 import { Button } from "@renderer/components";
 import { buildGameDetailsPath, ensureArray } from "@renderer/helpers";
-import { useAppDispatch, useAppSelector, useLibrary } from "@renderer/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLibrary,
+  usePopularSteamTags,
+  VERIFIED_POPULAR_TAGS,
+} from "@renderer/hooks";
 import { setFilters } from "@renderer/features";
 import { logger } from "@renderer/logger";
 import { CatalogueCategory, groupLibraryGames } from "@shared";
@@ -30,6 +36,16 @@ import { catalogueKey } from "./catalogue-library-state";
 import "./catalogue-front-page.scss";
 
 const SHELF_SIZE = 12;
+const SHELF_TAGS = 30;
+/** Features and game modes: useful as filters, not for browsing. */
+const SHELF_EXCLUDED_TAGS = new Set([
+  "Singleplayer",
+  "Multiplayer",
+  "2D",
+  "3D",
+  "Early Access",
+  "Free to Play",
+]);
 const CACHE_MS = 30 * 60 * 1000;
 
 interface FrontPageGame {
@@ -240,7 +256,8 @@ export function CatalogueFrontPage({
   const { t, i18n } = useTranslation("catalogue");
   const dispatch = useAppDispatch();
   const { library, updateLibrary } = useLibrary();
-  const { steamGenres } = useAppSelector((state) => state.catalogueSearch);
+  const { steamUserTags } = useAppSelector((state) => state.catalogueSearch);
+  const popularTags = usePopularSteamTags();
 
   const groupedLibrary = useMemo(
     () => groupLibraryGames(library, []),
@@ -402,28 +419,38 @@ export function CatalogueFrontPage({
   }, [recommended, featured, newReleases, ownedKeys]);
 
   const language = i18n.language.split("-")[0];
-  const genres = useMemo(() => {
-    const english = steamGenres["en"] ?? [];
-    const localised = steamGenres[language] ?? english;
-    return english
-      .map((value, index) => ({ value, label: localised[index] ?? value }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [steamGenres, language]);
+  const tags = useMemo(() => {
+    const labels = new Map(
+      Object.entries(steamUserTags[language] ?? {}).map(([name, id]) => [
+        id,
+        name,
+      ])
+    );
 
-  let genreList: ReactNode = null;
-  if (genres.length > 0) {
-    genreList = (
+    return popularTags.tags
+      .slice(0, VERIFIED_POPULAR_TAGS)
+      .filter(
+        (tag) =>
+          !SHELF_EXCLUDED_TAGS.has(tag.name) && !popularTags.empty.has(tag.id)
+      )
+      .slice(0, SHELF_TAGS)
+      .map((tag) => ({ id: tag.id, label: labels.get(tag.id) ?? tag.name }));
+  }, [popularTags, steamUserTags, language]);
+
+  let tagList: ReactNode = null;
+  if (tags.length > 0) {
+    tagList = (
       <section className="catalogue-front-page__shelf">
-        <h2>{t("browse_by_genre")}</h2>
-        <div className="catalogue-front-page__genres">
-          {genres.map((genre) => (
+        <h2>{t("browse_by_tag")}</h2>
+        <div className="catalogue-front-page__tags">
+          {tags.map((tag) => (
             <button
-              key={genre.value}
+              key={tag.id}
               type="button"
-              className="catalogue-front-page__genre"
-              onClick={() => dispatch(setFilters({ genres: [genre.value] }))}
+              className="catalogue-front-page__tag"
+              onClick={() => dispatch(setFilters({ tags: [tag.id] }))}
             >
-              {genre.label}
+              {tag.label}
             </button>
           ))}
         </div>
@@ -461,7 +488,7 @@ export function CatalogueFrontPage({
         games={notOwned(newReleases)}
         isLoading={isLoading}
       />
-      {genreList}
+      {tagList}
     </div>
   );
 }
