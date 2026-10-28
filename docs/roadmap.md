@@ -446,6 +446,11 @@ redirects shipped, nothing in use still needs `bgmod`.
       and the other popular mod sites. TorBox integration to get around Nexus
       Mods' slow free downloads. Large; needs a design first.
 
+- [ ] **RenoDX HDR mods, installed automatically.** Match games to RenoDX's
+      mod index by Steam ID, install ReShade with add-ons and the mod, and
+      remove it cleanly, like OptiScaler. Starts with a manual proof on one
+      game. See [HDR and RenoDX: plan](renodx-hdr-plan.md).
+
 ## Save import, later sources
 
 All of these plug into the `SaveImportSource` interface.
