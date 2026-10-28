@@ -16,6 +16,23 @@ describe("buildLaunchEnvironment", () => {
     );
   });
 
+  it("disables the given DLLs, once each, after the native ones", () => {
+    assert.strictEqual(
+      buildLaunchEnvironment({
+        nativeDlls: ["winmm"],
+        disabledDlls: ["lsteamclient", "LSteamClient"],
+      }),
+      "WINEDLLOVERRIDES=winmm=n,b;lsteamclient=d %command%"
+    );
+    assert.strictEqual(
+      buildLaunchEnvironment({
+        nativeDlls: [],
+        disabledDlls: ["lsteamclient"],
+      }),
+      "WINEDLLOVERRIDES=lsteamclient=d %command%"
+    );
+  });
+
   it("lets later layers win and joins DLL overrides", () => {
     const hdrRule = "PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%";
     const merged = applyDefaultLaunchOptions(

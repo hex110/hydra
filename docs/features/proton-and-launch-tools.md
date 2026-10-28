@@ -196,7 +196,8 @@ Proton, in Hydra's prefix, with the launch options Hydra would use:
   link back to themselves (Hydra adds it if it's missing), so Hydra and Steam
   share one prefix and its saves. Upstream instead pointed the game at a new,
   empty `compatdata` prefix.
-- Hydra's DLL overrides (OptiScaler, OnlineFix), launch rules, default and
+- Hydra's DLL overrides (OptiScaler, OnlineFix, and the one that turns
+  Proton's Steam bridge off), launch rules, default and
   per-game launch options, MangoHud and GameMode are written into the
   shortcut's launch options, quoted for the shell Steam runs them in. They are
   a snapshot: remove and add the shortcut again after changing them.

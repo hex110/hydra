@@ -29,8 +29,18 @@ const isWindowsExecutable = (executablePath: string) =>
   path.extname(executablePath).toLowerCase() === ".exe";
 
 /**
+ * Proton's bridge to a running Linux Steam. Hydra launches games through umu
+ * without Steam, so the bridge has nothing to talk to. Left on, Proton swaps
+ * it in for any `steamclient64.dll` the game loads, which breaks the Steam
+ * emulators and OnlineFix builds that ship their own. GE-Proton turns it off
+ * for umu launches itself; Proton-CachyOS does not.
+ */
+const STEAM_BRIDGE_DLL = "lsteamclient";
+
+/**
  * Environment Hydra adds when a Windows game runs under Proton: the DLL
- * overrides OptiScaler and OnlineFix need to load their proxy DLLs.
+ * overrides OptiScaler and OnlineFix need to load their proxy DLLs, and the
+ * one that keeps Proton's Steam bridge out of the way.
  */
 const getLinuxLaunchEnvironment = async (
   objectId: string,
@@ -71,6 +81,7 @@ const getLinuxLaunchEnvironment = async (
       ...(optiScalerDll ? [optiScalerDll] : []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
     ],
+    disabledDlls: [STEAM_BRIDGE_DLL],
   });
 };
 

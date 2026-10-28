@@ -1,6 +1,8 @@
 export interface LaunchEnvironmentOptions {
   /** DLL names (without ".dll") Wine must load from the game folder first. */
   nativeDlls: string[];
+  /** DLL names (without ".dll") Wine must not load at all. */
+  disabledDlls?: string[];
 }
 
 /**
@@ -10,14 +12,16 @@ export interface LaunchEnvironmentOptions {
  */
 export const buildLaunchEnvironment = ({
   nativeDlls,
+  disabledDlls = [],
 }: LaunchEnvironmentOptions): string | null => {
   const variables: string[] = [];
 
-  const dlls = [...new Set(nativeDlls.map((dll) => dll.toLowerCase()))];
-  if (dlls.length > 0) {
-    variables.push(
-      `WINEDLLOVERRIDES=${dlls.map((dll) => `${dll}=n,b`).join(";")}`
-    );
+  const overrides = [
+    ...new Set(nativeDlls.map((dll) => `${dll.toLowerCase()}=n,b`)),
+    ...new Set(disabledDlls.map((dll) => `${dll.toLowerCase()}=d`)),
+  ];
+  if (overrides.length > 0) {
+    variables.push(`WINEDLLOVERRIDES=${overrides.join(";")}`);
   }
 
   return variables.length > 0 ? `${variables.join(" ")} %command%` : null;

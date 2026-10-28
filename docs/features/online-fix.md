@@ -44,3 +44,25 @@ setting is stored per game (`onlineFixDisabled`).
 
 This replaces the standalone `hydra-prep` script, which edited the prefix's
 `user.reg` instead and had to wait for Proton to create it.
+
+## Steam emulators and Proton's Steam bridge
+
+Many cracks bring their own Steam: a `steamclient64.dll` and a loader DLL
+(RUNE's `winmm.dll`, for example) that answer the game's Steam calls. Proton
+has a bridge, `lsteamclient`, that forwards Steam calls to a running Linux
+Steam. When a game loads a `steamclient64.dll`, Proton swaps the bridge in
+and patches the DLL's exports to point at it. With no Steam running the game
+then stops at `Failed to initialize Steamworks system`, whatever the crack
+does, with errors such as `Cannot create IPC pipe to Steam client process`.
+
+Hydra launches games through umu, without Steam, so on Linux it adds
+`lsteamclient=d` to `WINEDLLOVERRIDES` for every Windows game. GE-Proton does
+the same for umu launches; Proton-CachyOS 11 (`proton-cachyos-slr`) only does
+it on the Steam branch of its launch script, which a Hydra launch never takes.
+The override is visible in the [launch command
+preview](launch-rules.md#launch-command-preview), and a game's own or the
+default launch options can still set `WINEDLLOVERRIDES` after it.
+
+The crack's loader DLL still needs its own `native,builtin` override, as for
+OnlineFix's proxy DLLs above. For anything not detected, add it with a
+[launch rule](launch-rules.md).

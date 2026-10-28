@@ -41,8 +41,10 @@ when two set the same variable, and `WINEDLLOVERRIDES` lists are combined
 instead:
 
 1. The DLL overrides [OptiScaler](optiscaler.md) and
-   [OnlineFix games](online-fix.md) need on Linux. These two stay separate
-   features because they also install or copy files.
+   [OnlineFix games](online-fix.md) need on Linux, and
+   [`lsteamclient=d`](online-fix.md#steam-emulators-and-protons-steam-bridge)
+   for every Windows game. The first two stay separate features because they
+   also install or copy files.
 2. The launch rules that apply to the game, in the order they are listed,
    then the gamescope wrapper of the last rule that runs the game in
    gamescope.
