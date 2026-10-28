@@ -80,8 +80,8 @@ Continue playing, are left out.
 Games similar to the ones you played most, that aren't in your library. Hydra
 takes up to five games, weighting play in the last 30 days three times over
 total playtime and adding ten hours for games marked **Finished** (dropped
-games don't count), and asks Hydra's catalogue for games similar to each
-(the list the game page shows under "Similar games"). A game similar to
+games don't count), and asks for games similar to each (the list the game
+page shows under "Similar games", which is Steam's, re-ranked). A game similar to
 several of them, or near the top of a more played one's list, ranks higher,
 and no single game supplies more than its share of the row. Each card says
 which game it came from. Only Steam catalogue games are used, since the

@@ -1,6 +1,8 @@
+import type { SteamSimilarGame } from "@shared";
 import type { GameShop } from "@types";
 
-export const SIMILAR_GAMES_LIMIT = 9;
+export const SIMILAR_GAMES_LIMIT = 24;
+export const SIMILAR_GAMES_SKELETON_COUNT = 9;
 
 export type SimilarGamesSectionState = "hidden" | "loading" | "ready" | "empty";
 
@@ -40,6 +42,10 @@ interface SimilarGamesRequestOptions {
   };
   needsAuth: false;
 }
+
+export type SteamSimilarGamesGet = (
+  appId: string
+) => Promise<SteamSimilarGame[] | null>;
 
 export type SimilarGamesGet = (
   path: string,
@@ -128,9 +134,17 @@ export const normalizeSimilarGamesResponse = (
 export const fetchSimilarGames = async (
   query: SimilarGamesQuery,
   get: SimilarGamesGet,
-  downloadSourceIds: string[] = []
+  downloadSourceIds: string[] = [],
+  getSteamSimilar?: SteamSimilarGamesGet
 ) => {
   if (!isSupportedShop(query.shop) || !query.objectId) return [];
+
+  if (query.shop === "steam" && getSteamSimilar) {
+    const steamGames = await getSteamSimilar(query.objectId).catch(() => null);
+    const results = normalizeSimilarGamesResponse(steamGames ?? [], query);
+
+    if (results.length > 0) return results;
+  }
 
   const response = await get(
     `/catalogue/${query.shop}/${encodeURIComponent(query.objectId)}/similar`,

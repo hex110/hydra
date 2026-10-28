@@ -66,6 +66,9 @@ export function useHomeSuggestions<T extends HomeGame>(
     const get: SimilarGamesGet = (path, options) =>
       window.electron.hydraApi.get<unknown>(path, options);
 
+    const getSteamSimilar = (appId: string) =>
+      window.electron.getSteamSimilarGames(appId);
+
     const load = async () => {
       const sources = (await levelDBService.values(
         "downloadSources"
@@ -83,7 +86,8 @@ export function useHomeSuggestions<T extends HomeGame>(
               objectId: identity.objectId,
             },
             get,
-            downloadSourceIds
+            downloadSourceIds,
+            getSteamSimilar
           ).catch(() => [] as SimilarGame[]);
           return { seedTitle: seed.title ?? "", games: similar };
         })

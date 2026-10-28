@@ -9,6 +9,7 @@ import {
   type SimilarGame,
   type SimilarGamesGet,
   type SimilarGamesQuery,
+  type SteamSimilarGamesGet,
 } from "./similar-games";
 
 export const useSimilarGames = (query: SimilarGamesQuery) => {
@@ -37,6 +38,9 @@ export const useSimilarGames = (query: SimilarGamesQuery) => {
     const get: SimilarGamesGet = (path, options) =>
       globalThis.window.electron.hydraApi.get<unknown>(path, options);
 
+    const getSteamSimilar: SteamSimilarGamesGet = (appId) =>
+      globalThis.window.electron.getSteamSimilarGames(appId);
+
     const loadSimilarGames = async () => {
       const sources = (await levelDBService.values(
         "downloadSources"
@@ -50,7 +54,8 @@ export const useSimilarGames = (query: SimilarGamesQuery) => {
       const results = await fetchSimilarGames(
         stableQuery,
         get,
-        downloadSourceIds
+        downloadSourceIds,
+        getSteamSimilar
       );
 
       if (requestId === requestIdRef.current) setGames(results);

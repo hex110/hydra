@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import type { SteamSimilarGame } from "@shared";
 import {
   fetchSimilarGames,
   getSimilarGamesSectionState,
   normalizeSimilarGamesResponse,
+  SIMILAR_GAMES_LIMIT,
   type SimilarGame,
   type SimilarGamesGet,
 } from "./similar-games.js";
@@ -34,6 +36,11 @@ const game = (
   ...overrides,
 });
 
+const steamGame = (objectId: string): SteamSimilarGame => ({
+  ...game(objectId),
+  shop: "steam",
+});
+
 describe("normalizeSimilarGamesResponse", () => {
   const query = { objectId: "current", shop: "steam" as const };
 
@@ -61,30 +68,35 @@ describe("normalizeSimilarGamesResponse", () => {
         game(" \t "),
         game("blank-title", { title: " \t " }),
         game(" padded-id ", { title: " Padded title " }),
-        ...Array.from({ length: 8 }, (_, index) => game(`valid-${index}`)),
+        ...Array.from({ length: SIMILAR_GAMES_LIMIT }, (_, index) =>
+          game(`valid-${index}`)
+        ),
       ],
       query
     );
 
-    assert.equal(results.length, 9);
+    assert.equal(results.length, SIMILAR_GAMES_LIMIT);
     assert.equal(results[0].objectId, "padded-id");
     assert.equal(results[0].title, "Padded title");
   });
 
-  it("drops malformed download sources and limits results to nine", () => {
-    const response = Array.from({ length: 12 }, (_, index) => ({
-      ...game(String(index)),
-      downloadSources: [
-        `Source ${index}`,
-        { id: `source-${index}` },
-        { name: "Legacy" },
-        "",
-      ],
-    }));
+  it("drops malformed download sources and limits the results", () => {
+    const response = Array.from(
+      { length: SIMILAR_GAMES_LIMIT + 3 },
+      (_, index) => ({
+        ...game(String(index)),
+        downloadSources: [
+          `Source ${index}`,
+          { id: `source-${index}` },
+          { name: "Legacy" },
+          "",
+        ],
+      })
+    );
 
     const results = normalizeSimilarGamesResponse(response, query);
 
-    assert.equal(results.length, 9);
+    assert.equal(results.length, SIMILAR_GAMES_LIMIT);
     assert.deepEqual(results[0].downloadSources, ["Source 0"]);
   });
 
@@ -128,7 +140,7 @@ describe("normalizeSimilarGamesResponse", () => {
 });
 
 describe("fetchSimilarGames", () => {
-  it("calls the similar endpoint with the shared nine-game limit", async () => {
+  it("calls the similar endpoint with the shared limit", async () => {
     const calls: {
       path: string;
       options: Parameters<SimilarGamesGet>[1];
@@ -150,13 +162,77 @@ describe("fetchSimilarGames", () => {
         path: "/catalogue/steam/game%2Fid/similar",
         options: {
           params: {
-            take: 9,
+            take: SIMILAR_GAMES_LIMIT,
             downloadSourceIds: ["source-b", "source-a"],
           },
           needsAuth: false,
         },
       },
     ]);
+  });
+
+  it("uses Steam's list for Steam games without asking the Hydra API", async () => {
+    let hydraCalls = 0;
+    const get: SimilarGamesGet = async () => {
+      hydraCalls += 1;
+      return [game("hydra")];
+    };
+
+    const results = await fetchSimilarGames(
+      { objectId: "current", shop: "steam" },
+      get,
+      [],
+      async () => [
+        steamGame("steam-a"),
+        steamGame("current"),
+        steamGame("steam-b"),
+      ]
+    );
+
+    assert.deepEqual(
+      results.map(({ objectId }) => objectId),
+      ["steam-a", "steam-b"]
+    );
+    assert.equal(hydraCalls, 0);
+  });
+
+  it("falls back to the Hydra API when Steam has no list or fails", async () => {
+    const get: SimilarGamesGet = async () => [game("hydra")];
+    const query = { objectId: "current", shop: "steam" as const };
+
+    for (const steam of [
+      async () => null,
+      async () => [],
+      async () => {
+        throw new Error("offline");
+      },
+    ]) {
+      const results = await fetchSimilarGames(query, get, [], steam);
+
+      assert.deepEqual(
+        results.map(({ objectId }) => objectId),
+        ["hydra"]
+      );
+    }
+  });
+
+  it("only asks Steam about Steam games", async () => {
+    let steamCalls = 0;
+    const results = await fetchSimilarGames(
+      { objectId: "mario", shop: "launchbox" },
+      async () => [game("hydra", { shop: "launchbox" })],
+      [],
+      async () => {
+        steamCalls += 1;
+        return [steamGame("steam")];
+      }
+    );
+
+    assert.deepEqual(
+      results.map(({ objectId }) => objectId),
+      ["hydra"]
+    );
+    assert.equal(steamCalls, 0);
   });
 
   it("does not request unsupported custom games", async () => {

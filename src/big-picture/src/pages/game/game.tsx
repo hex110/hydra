@@ -22,7 +22,7 @@ import {
 } from "../../helpers";
 import {
   getSimilarGamesSectionState,
-  SIMILAR_GAMES_LIMIT,
+  SIMILAR_GAMES_SKELETON_COUNT,
 } from "@renderer/hooks/similar-games";
 import { useSimilarGames } from "@renderer/hooks/use-similar-games";
 import type { LibraryToastSource } from "../../helpers/library-toast";
@@ -465,20 +465,23 @@ function SimilarGamesSkeleton({ title }: Readonly<{ title: string }>) {
       <div className="focus-carousel__viewport-wrapper">
         <div className="focus-carousel__viewport">
           <div className="focus-carousel__container">
-            {Array.from({ length: SIMILAR_GAMES_LIMIT }, (_, index) => (
-              <article
-                className="focus-carousel__slide"
-                key={`similar-game-skeleton-${index}`}
-              >
-                <div className="game-page__similar-games-skeleton-card">
-                  <Skeleton className="game-page__similar-games-skeleton-cover" />
-                  <div className="game-page__similar-games-skeleton-body">
-                    <Skeleton className="game-page__similar-games-skeleton-title" />
-                    <Skeleton className="game-page__similar-games-skeleton-subtitle" />
+            {Array.from(
+              { length: SIMILAR_GAMES_SKELETON_COUNT },
+              (_, index) => (
+                <article
+                  className="focus-carousel__slide"
+                  key={`similar-game-skeleton-${index}`}
+                >
+                  <div className="game-page__similar-games-skeleton-card">
+                    <Skeleton className="game-page__similar-games-skeleton-cover" />
+                    <div className="game-page__similar-games-skeleton-body">
+                      <Skeleton className="game-page__similar-games-skeleton-title" />
+                      <Skeleton className="game-page__similar-games-skeleton-subtitle" />
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              )
+            )}
           </div>
         </div>
       </div>

@@ -85,8 +85,24 @@ game's three latest Steam announcements, as on the home page.
 ## Genres and similar games
 
 The sidebar lists the game's genres; clicking one opens the library filtered
-to that genre. Under **Similar games**, the ones you own come first and are
-marked **In library** or **Installed**.
+to that genre.
+
+**Similar games** ("More like this") lists up to 24 games, as a carousel of
+three at a time. The ones you own come first and are marked **In library** or
+**Installed**. For a Steam game the list comes from Steam's own "More like
+this" page, which is far better for niche titles than Hydra's catalogue. Hydra
+re-ranks it (`src/shared/similar-games.ts`, `src/main/services/steam-similar.ts`):
+
+- Candidates are the page's released, top-selling, new-release and free
+  grids. Demos, prologues, test builds and anything that isn't a game are
+  dropped.
+- Each candidate scores the cosine similarity of its 20 vote-weighted Steam
+  tags against the game's, where a tag most candidates share counts for less
+  than a rare one, plus Steam's own order (it reflects what players actually
+  own) and a small bonus for review count. Tags alone favoured obscure games.
+- Results are cached for six hours per game. If Steam has no list or can't be
+  reached, and for non-Steam games, Hydra's catalogue endpoint is used as
+  before.
 
 ## Details
 

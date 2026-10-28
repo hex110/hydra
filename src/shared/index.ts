@@ -48,6 +48,7 @@ export * from "./artwork-resolver";
 export * from "./library-catalogue";
 export * from "./library-group-actions";
 export * from "./library-metadata";
+export * from "./similar-games";
 export * from "./play-activity";
 export * from "./completion-suggestion";
 export * from "./imported-games";

@@ -4,6 +4,7 @@ import type {
   Downloader,
   GameNewsItem,
   GameReception,
+  SteamSimilarGame,
 } from "@shared";
 import type {
   GameSetupStatusEvent,
@@ -1765,6 +1766,9 @@ declare global {
       countPerApp?: number
     ) => Promise<GameNewsItem[]>;
     getGameReception: (steamAppId: string) => Promise<GameReception | null>;
+    getSteamSimilarGames: (
+      steamAppId: string
+    ) => Promise<SteamSimilarGame[] | null>;
     getCatalogueRowDetails: (
       games: { shop: GameShop; objectId: string; title: string }[]
     ) => Promise<Record<string, CatalogueRowDetails>>;
