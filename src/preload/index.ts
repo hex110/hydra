@@ -16,6 +16,8 @@ import type {
   IntegrationName,
   LibraryImportSource,
   SaveStoreConfig,
+  ManualSaveBackupProgress,
+  ManualSaveBackupScope,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
@@ -1031,6 +1033,27 @@ contextBridge.exposeInMainWorld("electron", {
   cleanUpSaveStore: () => ipcRenderer.invoke("cleanUpSaveStore"),
   listSyncDevices: () => ipcRenderer.invoke("listSyncDevices"),
   syncCloudLibraryNow: () => ipcRenderer.invoke("syncCloudLibraryNow"),
+  listCloudLibraryImports: () => ipcRenderer.invoke("listCloudLibraryImports"),
+  importCloudLibrary: (deviceId: string) =>
+    ipcRenderer.invoke("importCloudLibrary", deviceId),
+  countManualSaveBackupGames: (scope: ManualSaveBackupScope) =>
+    ipcRenderer.invoke("countManualSaveBackupGames", scope),
+  runManualSaveBackup: (scope: ManualSaveBackupScope) =>
+    ipcRenderer.invoke("runManualSaveBackup", scope),
+  cancelManualSaveBackup: () => ipcRenderer.invoke("cancelManualSaveBackup"),
+  isManualSaveBackupRunning: () =>
+    ipcRenderer.invoke("isManualSaveBackupRunning"),
+  onManualSaveBackupProgress: (
+    cb: (progress: ManualSaveBackupProgress) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      progress: ManualSaveBackupProgress
+    ) => cb(progress);
+    ipcRenderer.on("on-manual-save-backup-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-manual-save-backup-progress", listener);
+  },
   testSteamGridDbApiKey: (apiKey: string) =>
     ipcRenderer.invoke("testSteamGridDbApiKey", apiKey),
   retryBackgroundTask: (id: BackgroundTaskKind) =>

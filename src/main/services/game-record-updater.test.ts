@@ -30,6 +30,57 @@ const game: Game = {
 describe("game record updater", () => {
   afterEach(() => AchievementMemoryStore.clear());
 
+  it("dates a profile edit, and keeps the date of a value adopted from another device", async () => {
+    let storedGame: Game = { ...game, notes: "old", rating: 5 };
+    const updateGame = createGameRecordUpdater({
+      get: async () => ({ ...storedGame }),
+      put: async (_key, value) => {
+        storedGame = { ...value };
+      },
+    });
+
+    await updateGame("steam:620", { notes: "new", rating: 5 });
+    assert.deepEqual(Object.keys(storedGame.profileEditedAt ?? {}), ["notes"]);
+
+    await updateGame("steam:620", {
+      rating: 9,
+      profileEditedAt: { ...storedGame.profileEditedAt, rating: "2026-01-01" },
+    });
+    assert.equal(storedGame.profileEditedAt?.rating, "2026-01-01");
+
+    const before = storedGame.profileEditedAt;
+    await updateGame("steam:620", { notes: "new" });
+    assert.deepEqual(storedGame.profileEditedAt, before);
+  });
+
+  it("dates a change to the local collections a game is in, not to account ones", async () => {
+    let storedGame: Game = { ...game, collectionIds: ["account-1"] };
+    let edits = 0;
+    const updateGame = createGameRecordUpdater(
+      {
+        get: async () => ({ ...storedGame }),
+        put: async (_key, value) => {
+          storedGame = { ...value };
+        },
+      },
+      () => {
+        edits += 1;
+      }
+    );
+
+    await updateGame("steam:620", {
+      collectionIds: ["account-1", "account-2"],
+    });
+    assert.equal(storedGame.profileEditedAt, undefined);
+    assert.equal(edits, 0);
+
+    await updateGame("steam:620", { collectionIds: ["account-1", "local-a"] });
+    assert.deepEqual(Object.keys(storedGame.profileEditedAt ?? {}), [
+      "collections",
+    ]);
+    assert.equal(edits, 1);
+  });
+
   it("preserves playtime and pending deltas across concurrent setting updates", async () => {
     let storedGame = { ...game };
     const updateGame = createGameRecordUpdater({

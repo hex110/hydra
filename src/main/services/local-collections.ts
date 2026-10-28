@@ -65,9 +65,22 @@ const gamesInCollection = async (id: string) =>
     (game) => !game.isDeleted && game.collectionIds?.includes(id)
   );
 
+/** Kept as a marker, so cloud sync does not bring it back from another device. */
+const markDeleted = async (id: string) => {
+  const collection = await localCollectionsSublevel.get(id);
+  if (!collection) return;
+  await localCollectionsSublevel.put(id, {
+    ...collection,
+    deleted: true,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
 export const LocalCollections = {
   async list(): Promise<GameCollection[]> {
-    const collections = await localCollectionsSublevel.values().all();
+    const collections = (await localCollectionsSublevel.values().all()).filter(
+      (collection) => !collection.deleted
+    );
     return collections.map((collection) => ({
       id: collection.id,
       name: collection.name,
@@ -83,7 +96,9 @@ export const LocalCollections = {
     const trimmed = name.trim();
     if (!trimmed) throw new Error("game/collection-name-required");
 
-    const existing = await localCollectionsSublevel.values().all();
+    const existing = (await localCollectionsSublevel.values().all()).filter(
+      (collection) => !collection.deleted
+    );
     if (
       existing.some(
         (collection) => normalizeName(collection.name) === normalizeName(name)
@@ -92,10 +107,12 @@ export const LocalCollections = {
       throw new Error("game/collection-name-already-in-use");
     }
 
+    const now = new Date().toISOString();
     const collection: LocalCollection = {
       id: `${LOCAL_COLLECTION_PREFIX}${randomUUID()}`,
       name: trimmed,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       savedFilter,
     };
     await localCollectionsSublevel.put(collection.id, collection);
@@ -110,6 +127,7 @@ export const LocalCollections = {
     await localCollectionsSublevel.put(id, {
       ...collection,
       name: name.trim(),
+      updatedAt: new Date().toISOString(),
     });
   },
 
@@ -122,7 +140,7 @@ export const LocalCollections = {
       });
     }
 
-    await localCollectionsSublevel.del(id);
+    await markDeleted(id);
   },
 
   /**
@@ -134,7 +152,7 @@ export const LocalCollections = {
     if (!HydraApi.isLoggedIn()) return 0;
 
     const locals = (await localCollectionsSublevel.values().all()).filter(
-      (collection) => !collection.savedFilter
+      (collection) => !collection.savedFilter && !collection.deleted
     );
     if (locals.length === 0) return 0;
 
@@ -164,7 +182,7 @@ export const LocalCollections = {
           );
         }
 
-        await localCollectionsSublevel.del(local.id);
+        await markDeleted(local.id);
         synced++;
       } catch (error) {
         logger.error(`Failed to sync local collection ${local.name}`, error);

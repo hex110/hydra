@@ -32,6 +32,10 @@ export const blobPath = (hash: string, sizeBytes: number) =>
 export const devicePath = (deviceId: string) =>
   `${ROOT}/devices/${deviceId}.json`;
 
+/** The games in one device's library, kept apart from its (smaller, merged) state. */
+export const libraryPath = (deviceId: string) =>
+  `${ROOT}/libraries/${deviceId}.json`;
+
 /**
  * A version is one file per device that wrote it (`3.<device>.json`), so two
  * devices never write the same key and a race shows up as two files for one

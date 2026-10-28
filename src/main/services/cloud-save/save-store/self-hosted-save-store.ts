@@ -16,6 +16,7 @@ import {
   blobPath,
   devicePath,
   gameDir,
+  libraryPath,
   parseSnapshotId,
   parseVersionFileName,
   pickVersionFile,
@@ -321,6 +322,33 @@ export class SelfHostedSaveStore {
       }
     }
     return states;
+  }
+
+  /** This device's library list; other devices import from it on request. */
+  async writeLibrary(library: unknown) {
+    await this.backend.writeText(
+      libraryPath(this.deviceId),
+      JSON.stringify(library)
+    );
+  }
+
+  /** Every device's library list, this one included. */
+  async readLibraries<T>(): Promise<T[]> {
+    const names = (await this.backend.list(`${ROOT}/libraries`)).map(
+      (entry) => entry.path
+    );
+    const texts = await this.backend.readTexts(
+      names.map((name) => `${ROOT}/libraries/${name}`)
+    );
+    const libraries: T[] = [];
+    for (const text of texts.values()) {
+      try {
+        libraries.push(JSON.parse(text) as T);
+      } catch {
+        // Half-written: the owning device rewrites it on its next sync.
+      }
+    }
+    return libraries;
   }
 
   /** Writes, reads back and removes a probe file. */

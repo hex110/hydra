@@ -32,6 +32,19 @@
       flex-direction: column;
       gap: calc(globals.$spacing-unit / 4);
     }
+
+    &--rows li {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(globals.$spacing-unit * 2);
+
+      div {
+        display: flex;
+        flex-direction: column;
+        gap: calc(globals.$spacing-unit / 4);
+      }
+    }
   }
 
   &__guide {

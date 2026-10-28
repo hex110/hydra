@@ -1,3 +1,4 @@
+import { queueCloudLibrarySync } from "@main/services/cloud-library-sync";
 import { LocalCollections } from "@main/services/local-collections";
 import type { SavedLibraryFilter } from "@types";
 
@@ -7,16 +8,28 @@ registerEvent("listLocalCollections", () => LocalCollections.list());
 
 registerEvent(
   "createLocalCollection",
-  (_event, name: string, savedFilter: SavedLibraryFilter | null = null) =>
-    LocalCollections.create(name, savedFilter)
+  async (
+    _event,
+    name: string,
+    savedFilter: SavedLibraryFilter | null = null
+  ) => {
+    const collection = await LocalCollections.create(name, savedFilter);
+    queueCloudLibrarySync();
+    return collection;
+  }
 );
 
-registerEvent("renameLocalCollection", (_event, id: string, name: string) =>
-  LocalCollections.rename(id, name)
+registerEvent(
+  "renameLocalCollection",
+  async (_event, id: string, name: string) => {
+    await LocalCollections.rename(id, name);
+    queueCloudLibrarySync();
+  }
 );
 
-registerEvent("deleteLocalCollection", (_event, id: string) =>
-  LocalCollections.delete(id)
-);
+registerEvent("deleteLocalCollection", async (_event, id: string) => {
+  await LocalCollections.delete(id);
+  queueCloudLibrarySync();
+});
 
 registerEvent("syncLocalCollections", () => LocalCollections.syncToAccount());

@@ -5,6 +5,7 @@ import { useAppSelector } from "@renderer/hooks";
 
 import { SettingsCloudLibrary } from "./settings-cloud-library";
 import { CloudR2GuideModal } from "./settings-cloud-r2-guide";
+import { SettingsCloudSaveBackup } from "./settings-cloud-save-backup";
 import { SettingsCloudStorage } from "./settings-cloud-storage";
 import { SettingsSaveSync } from "./settings-save-sync";
 import "./settings-cloud.scss";
@@ -12,6 +13,7 @@ import "./settings-cloud.scss";
 const HOW_IT_WORKS_KEYS = [
   "cloud_how_backup",
   "cloud_how_library",
+  "cloud_how_library_list",
   "cloud_how_devices",
   "cloud_how_conflicts",
   "cloud_how_private",
@@ -37,6 +39,10 @@ export function SettingsContextCloud() {
         <>
           <div className="settings-context-panel__group">
             <SettingsCloudLibrary />
+          </div>
+
+          <div className="settings-context-panel__group">
+            <SettingsCloudSaveBackup />
           </div>
 
           <div className="settings-context-panel__group">

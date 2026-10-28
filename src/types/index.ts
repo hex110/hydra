@@ -164,6 +164,10 @@ export interface LocalCollection {
   name: string;
   createdAt: string;
   savedFilter?: SavedLibraryFilter | null;
+  /** Last create, rename or delete, for cloud sync: the newest change wins. */
+  updatedAt?: string;
+  /** Deleted, but kept so cloud sync does not bring it back from another device. */
+  deleted?: boolean;
 }
 
 export interface GameRunning {

@@ -20,6 +20,11 @@ import type {
   SaveStoreCleanupResult,
   SaveStoreConfig,
   SaveStoreDevice,
+  CloudLibraryImportOption,
+  CloudLibraryImportResult,
+  ManualSaveBackupProgress,
+  ManualSaveBackupScope,
+  ManualSaveBackupSummary,
   SaveStoreUsage,
   FloppyPullResult,
   FloppySearchResult,
@@ -451,6 +456,19 @@ declare global {
     cleanUpSaveStore: () => Promise<SaveStoreCleanupResult>;
     listSyncDevices: () => Promise<SaveStoreDevice[]>;
     syncCloudLibraryNow: () => Promise<void>;
+    listCloudLibraryImports: () => Promise<CloudLibraryImportOption[]>;
+    importCloudLibrary: (deviceId: string) => Promise<CloudLibraryImportResult>;
+    countManualSaveBackupGames: (
+      scope: ManualSaveBackupScope
+    ) => Promise<number>;
+    runManualSaveBackup: (
+      scope: ManualSaveBackupScope
+    ) => Promise<ManualSaveBackupSummary>;
+    cancelManualSaveBackup: () => Promise<void>;
+    isManualSaveBackupRunning: () => Promise<boolean>;
+    onManualSaveBackupProgress: (
+      cb: (progress: ManualSaveBackupProgress) => void
+    ) => () => void;
     testSteamGridDbApiKey: (apiKey: string) => Promise<void>;
     retryBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     getIntegrationStatuses: () => Promise<IntegrationStatuses>;

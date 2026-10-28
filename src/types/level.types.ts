@@ -180,6 +180,8 @@ export interface Game extends LibraryCatalogueMetadata {
   wishlistedUpdatedAt?: string;
   /** Playtime the user's other devices tracked, from the save store; added to this device's own. */
   syncedPlayTimeInMilliseconds?: number;
+  /** When each synced profile field (notes, rating, favorite, …) last changed here. */
+  profileEditedAt?: Record<string, string>;
   /**
    * Added by the Steam history import: kept off Hydra's profile uploads, shown
    * under the Steam tab.

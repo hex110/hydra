@@ -3,8 +3,12 @@ import { useTranslation } from "react-i18next";
 import { SyncIcon } from "@primer/octicons-react";
 import { Button, CheckboxField } from "@renderer/components";
 import { settingsContext } from "@renderer/context";
-import { useAppSelector, useDate } from "@renderer/hooks";
-import type { IntegrationStatuses, SaveStoreDevice } from "@types";
+import { useAppSelector, useDate, useToast } from "@renderer/hooks";
+import type {
+  CloudLibraryImportOption,
+  IntegrationStatuses,
+  SaveStoreDevice,
+} from "@types";
 
 import {
   SettingsIntegrationCard,
@@ -15,7 +19,10 @@ import { IntegrationSection } from "./settings-tracking-shared";
 import "./settings-tracking.scss";
 import "./settings-cloud.scss";
 
-/** Playtime, play status and wishlist through the save store, and who syncs. */
+/**
+ * What follows you between devices through the save store, who syncs, and the
+ * on-request import of another device's list of games.
+ */
 export function SettingsCloudLibrary() {
   const { t } = useTranslation("settings");
   const { formatDateTime } = useDate();
@@ -27,6 +34,11 @@ export function SettingsCloudLibrary() {
   const [statuses, setStatuses] = useState<IntegrationStatuses | null>(null);
   const [devices, setDevices] = useState<SaveStoreDevice[] | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [imports, setImports] = useState<CloudLibraryImportOption[] | null>(
+    null
+  );
+  const [importing, setImporting] = useState<string | null>(null);
+  const { showSuccessToast, showErrorToast } = useToast();
 
   const refresh = useCallback(() => {
     window.electron
@@ -37,6 +49,10 @@ export function SettingsCloudLibrary() {
       .listSyncDevices()
       .then(setDevices)
       .catch(() => setDevices([]));
+    window.electron
+      .listCloudLibraryImports()
+      .then(setImports)
+      .catch(() => setImports([]));
   }, []);
 
   useEffect(() => {
@@ -50,6 +66,21 @@ export function SettingsCloudLibrary() {
       await window.electron.syncCloudLibraryNow();
     } finally {
       setIsSyncing(false);
+      refresh();
+    }
+  };
+
+  const importLibrary = async (option: CloudLibraryImportOption) => {
+    setImporting(option.deviceId);
+    try {
+      const { imported } = await window.electron.importCloudLibrary(
+        option.deviceId
+      );
+      showSuccessToast(t("cloud_library_import_done", { count: imported }));
+    } catch {
+      showErrorToast(t("cloud_library_import_failed"));
+    } finally {
+      setImporting(null);
       refresh();
     }
   };
@@ -121,6 +152,42 @@ export function SettingsCloudLibrary() {
                         date: formatDateTime(device.updatedAt),
                       })}
                     </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </IntegrationSection>
+
+          <IntegrationSection
+            title={t("cloud_library_import_title")}
+            description={t("cloud_library_import_description")}
+          >
+            {imports?.length === 0 ? (
+              <p className="settings-cloud__muted">
+                {t("cloud_library_import_empty")}
+              </p>
+            ) : (
+              <ul className="settings-cloud__devices settings-cloud__devices--rows">
+                {imports?.map((option) => (
+                  <li key={option.deviceId}>
+                    <div>
+                      <strong>
+                        {option.hostname ?? option.deviceId.slice(0, 8)}
+                      </strong>
+                      <span className="settings-cloud__muted">
+                        {t("cloud_library_import_row", {
+                          total: option.games,
+                          count: option.newGames,
+                        })}
+                      </span>
+                    </div>
+                    <Button
+                      theme="outline"
+                      disabled={importing !== null || option.newGames === 0}
+                      onClick={() => void importLibrary(option)}
+                    >
+                      {t("cloud_library_import_button")}
+                    </Button>
                   </li>
                 ))}
               </ul>

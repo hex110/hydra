@@ -1,8 +1,21 @@
 import os from "node:os";
 
-import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
+import {
+  db,
+  downloadsSublevel,
+  gamesSublevel,
+  levelKeys,
+  localCollectionsSublevel,
+} from "@main/level";
+import { addGameToLibrary } from "@main/events/library/add-game-to-library";
 import { isWishlistOnly } from "@shared";
-import type { Game, SaveStoreDevice, UserPreferences } from "@types";
+import type {
+  CloudLibraryImportOption,
+  CloudLibraryImportResult,
+  Game,
+  SaveStoreDevice,
+  UserPreferences,
+} from "@types";
 
 import { getActiveSaveStore } from "../cloud-save/save-store";
 import { updateGameRecord } from "../game-record-updater";
@@ -11,16 +24,26 @@ import {
   markIntegrationSynced,
 } from "../integration-status";
 import { describeTaskError } from "../background-task-errors";
+import { AchievementMemoryStore } from "../achievements/achievement-memory-store";
+import { AchievementWatcherManager } from "../achievements/achievement-watcher-manager";
+import { mergeAchievements } from "../achievements/merge-achievements";
 import { createWishlistOnlyRecord } from "../library-sync/create-wishlist-only-record";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import {
+  buildDeviceCollections,
   buildDeviceGames,
+  buildLibraryEntries,
   gameKey,
+  planLibraryImport,
   planMerge,
+  unionAchievements,
   type DeviceState,
+  type LibraryState,
   type LocalGameView,
+  type SyncedAchievement,
 } from "./cloud-library-core";
+import { PROFILE_FIELDS } from "./profile-fields";
 
 const DEBOUNCE_MS = 5_000;
 const STARTUP_DELAY_MS = 20_000;
@@ -49,7 +72,22 @@ const readLocalGames = async () => {
   return games;
 };
 
-const toViews = async (games: Game[]) => {
+/** Achievements are in memory only; they are read from game files after startup. */
+const readLocalAchievements = (games: Game[]) => {
+  const unlocked = new Map<string, SyncedAchievement[]>();
+  if (!AchievementWatcherManager.hasFinishedPreSearch) return unlocked;
+
+  for (const game of games) {
+    const entry = AchievementMemoryStore.get(game.shop, game.objectId);
+    if (entry) unlocked.set(gameKey(game), entry.unlockedAchievements);
+  }
+  return unlocked;
+};
+
+const toViews = async (
+  games: Game[],
+  unlocked: Map<string, SyncedAchievement[]>
+) => {
   const views = new Map<string, LocalGameView>();
   for (const game of games) {
     const download =
@@ -59,6 +97,14 @@ const toViews = async (games: Game[]) => {
             .catch(() => null)
         : null;
     views.set(gameKey(game), {
+      ...Object.fromEntries(
+        PROFILE_FIELDS.map((field) => [field, game[field]])
+      ),
+      collectionIds: game.collectionIds,
+      profileEditedAt: game.profileEditedAt,
+      unlockedAchievementNames: unlocked
+        .get(gameKey(game))
+        ?.map((achievement) => achievement.name.toUpperCase()),
       shop: game.shop,
       objectId: game.objectId,
       title: game.title,
@@ -87,11 +133,28 @@ const run = async () => {
     const others = states.filter(
       (state) => state.deviceId && state.deviceId !== store.deviceId
     );
+    const previous = states.find((state) => state.deviceId === store.deviceId);
+
+    const games = await readLocalGames();
+    const gamesByKey = new Map(games.map((game) => [gameKey(game), game]));
+    const unlocked = readLocalAchievements(games);
+    const views = await toViews(games, unlocked);
+
+    const collectionRecords = await localCollectionsSublevel.values().all();
+    const localCollections = buildDeviceCollections(collectionRecords);
 
     let changed = false;
-    const actions = planMerge(await toViews(await readLocalGames()), others);
-    for (const action of actions) {
-      if (action.kind === "patch") {
+    for (const action of planMerge(
+      views,
+      others,
+      new Map(Object.entries(localCollections))
+    )) {
+      if (action.kind === "collection") {
+        await localCollectionsSublevel.put(action.id, {
+          id: action.id,
+          ...action.collection,
+        });
+      } else if (action.kind === "patch") {
         await updateGameRecord(action.key, action.patch);
       } else if (action.kind === "createWishlist") {
         await createWishlistOnlyRecord(
@@ -100,6 +163,14 @@ const run = async () => {
           action.title,
           action.platform,
           action.stamp
+        );
+      } else if (action.kind === "achievements") {
+        const game = gamesByKey.get(action.key);
+        if (!game) continue;
+        // One game's achievements failing to merge must not stop the rest.
+        await mergeAchievements(game, action.achievements, false).catch(
+          (error) =>
+            logger.warn("Failed to merge cloud achievements", action.key, error)
         );
       } else {
         await updateGameRecord(
@@ -117,15 +188,43 @@ const run = async () => {
     }
     if (changed) WindowManager.sendToAppWindows("on-library-batch-complete");
 
+    // Games whose achievements this device has not read yet keep what it last
+    // published, so a sync soon after startup does not take unlocks back.
+    const published = new Map<string, SyncedAchievement[]>();
+    for (const [key, state] of Object.entries(previous?.games ?? {})) {
+      if (state.achievements) published.set(key, state.achievements);
+    }
+    for (const [key, list] of unlocked) {
+      published.set(key, unionAchievements(list));
+    }
+
+    const current = await readLocalGames();
     const state: DeviceState = {
       version: 1,
       deviceId: store.deviceId,
       hostname: os.hostname(),
       platform: process.platform,
       updatedAt: new Date().toISOString(),
-      games: buildDeviceGames(await readLocalGames()),
+      games: buildDeviceGames(current, published),
+      collections: buildDeviceCollections(
+        await localCollectionsSublevel.values().all()
+      ),
     };
     await store.writeDeviceState(state);
+
+    const library: LibraryState = {
+      version: 1,
+      deviceId: store.deviceId,
+      hostname: state.hostname,
+      updatedAt: state.updatedAt,
+      games: buildLibraryEntries(
+        current.map((game) => ({
+          ...game,
+          wishlistOnly: views.get(gameKey(game))?.wishlistOnly ?? false,
+        }))
+      ),
+    };
+    await store.writeLibrary(library);
     await markIntegrationSynced("cloud");
   } catch (error) {
     logger.warn("Failed to sync the library through the save store", error);
@@ -182,4 +281,83 @@ export const listSyncDevices = async (): Promise<SaveStoreDevice[]> => {
       games: Object.keys(state.games ?? {}).length,
     }))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+};
+
+const localLibraryKeys = async (games: Game[]) => {
+  const views = await toViews(games, new Map());
+  return new Set(
+    buildLibraryEntries(
+      games.map((game) => ({
+        ...game,
+        wishlistOnly: views.get(gameKey(game))?.wishlistOnly ?? false,
+      }))
+    ).map(gameKey)
+  );
+};
+
+const readOtherLibraries = async () => {
+  const store = getActiveSaveStore();
+  if (!store) return [];
+  const libraries = await store.readLibraries<LibraryState>();
+  return libraries.filter(
+    (library) =>
+      library.deviceId &&
+      library.deviceId !== store.deviceId &&
+      Array.isArray(library.games)
+  );
+};
+
+/** The other devices whose library list can be imported, with what it would add. */
+export const listCloudLibraryImports = async (): Promise<
+  CloudLibraryImportOption[]
+> => {
+  const localKeys = await localLibraryKeys(await readLocalGames());
+
+  return (await readOtherLibraries())
+    .map((library) => ({
+      deviceId: library.deviceId,
+      hostname: library.hostname ?? null,
+      updatedAt: library.updatedAt,
+      games: library.games.length,
+      newGames: planLibraryImport(localKeys, [library]).length,
+    }))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+};
+
+/**
+ * Adds the games another device has and this library lacks. Only ever run on
+ * request: the library list goes to the cloud, never back on its own.
+ */
+export const importCloudLibrary = async (
+  deviceId: string
+): Promise<CloudLibraryImportResult> => {
+  const library = (await readOtherLibraries()).find(
+    (candidate) => candidate.deviceId === deviceId
+  );
+  if (!library) return { imported: 0 };
+
+  const entries = planLibraryImport(
+    await localLibraryKeys(await readLocalGames()),
+    [library]
+  );
+
+  for (const entry of entries) {
+    await addGameToLibrary(
+      entry.shop,
+      entry.objectId,
+      entry.title,
+      entry.platform
+    );
+    if (entry.addedToLibraryAt) {
+      await updateGameRecord(gameKey(entry), {
+        addedToLibraryAt: new Date(entry.addedToLibraryAt),
+      });
+    }
+  }
+
+  if (entries.length > 0) {
+    WindowManager.sendToAppWindows("on-library-batch-complete");
+    queueCloudLibrarySync();
+  }
+  return { imported: entries.length };
 };
