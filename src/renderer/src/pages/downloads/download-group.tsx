@@ -41,24 +41,27 @@ import {
   DropdownMenu,
   DropdownMenuItem,
 } from "@renderer/components/dropdown-menu/dropdown-menu";
+import type { ContextMenuItemData } from "@renderer/components";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   ClockIcon,
   ColumnsIcon,
   DownloadIcon,
-  FileDirectoryIcon,
   LinkIcon,
   PlayIcon,
-  TrashIcon,
   UnlinkIcon,
   XCircleIcon,
   GraphIcon,
   GearIcon,
 } from "@primer/octicons-react";
-import { MoreVertical, Folder } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { average } from "color.js";
 import { getEpicManagedError } from "@renderer/helpers/epic-managed-error";
+import {
+  CompletedDownloadActions,
+  type CompletedDownloadState,
+} from "./completed-download-actions";
 
 function hexToRgb(hex: string): [number, number, number] {
   let h = hex.replace("#", "");
@@ -582,7 +585,6 @@ function HeroDownloadView({
 export interface DownloadGroupProps {
   library: LibraryGame[];
   title: string;
-  openDeleteGameModal: (shop: GameShop, objectId: string) => void;
   openGameInstaller: (shop: GameShop, objectId: string) => void;
   seedingStatus: SeedingStatus[];
   queuedGameIds?: string[];
@@ -591,13 +593,11 @@ export interface DownloadGroupProps {
 export function DownloadGroup({
   library,
   title,
-  openDeleteGameModal,
   openGameInstaller,
   seedingStatus,
   queuedGameIds = [],
 }: Readonly<DownloadGroupProps>) {
   const { t } = useTranslation("downloads");
-  const { t: tGameDetails } = useTranslation("game_details");
   const navigate = useNavigate();
 
   const userPreferences = useAppSelector(
@@ -696,8 +696,8 @@ export function DownloadGroup({
   const [gameToCancelObjectId, setGameToCancelObjectId] = useState<
     string | null
   >(null);
-  const [gameActionTypes, setGameActionTypes] = useState<
-    Record<string, "install" | "open-folder">
+  const [completedStates, setCompletedStates] = useState<
+    Record<string, CompletedDownloadState>
   >({});
 
   const extractDominantColor = useCallback(
@@ -906,60 +906,35 @@ export function DownloadGroup({
     [updateLibrary]
   );
 
-  const getGameActions = (game: LibraryGame): DropdownMenuItem[] => {
-    const download = game.download;
-    const isGameDownloading = isGameDownloadingMap[game.id];
+  const getSeedingMenuItems = (game: LibraryGame): ContextMenuItemData[] => {
+    if (game.download?.downloader !== Downloader.Torrent) return [];
 
     const deleting = isGameDeleting(game.id);
 
-    if (
-      game.download?.progress === 1 &&
-      (game.download.downloader !== Downloader.Epic ||
-        game.download.status === "complete")
-    ) {
-      const actions = [
-        {
-          label: t("extract"),
-          show: game.download.downloader !== Downloader.Epic,
-          disabled: game.download.extracting,
-          icon: <FileDirectoryIcon />,
-          onClick: () => {
-            extractGameDownload(game.shop, game.objectId);
+    return isGameSeeding(game)
+      ? [
+          {
+            id: "stop-seeding",
+            label: t("stop_seeding"),
+            icon: <UnlinkIcon size={16} />,
+            disabled: deleting,
+            onClick: () => pauseSeeding(game.shop, game.objectId),
           },
-        },
-        {
-          label: t("stop_seeding"),
-          disabled: deleting,
-          icon: <UnlinkIcon />,
-          show:
-            isGameSeeding(game) &&
-            game.download?.downloader === Downloader.Torrent,
-          onClick: () => {
-            pauseSeeding(game.shop, game.objectId);
+        ]
+      : [
+          {
+            id: "resume-seeding",
+            label: t("resume_seeding"),
+            icon: <LinkIcon size={16} />,
+            disabled: deleting,
+            onClick: () => resumeSeeding(game.shop, game.objectId),
           },
-        },
-        {
-          label: t("resume_seeding"),
-          disabled: deleting,
-          icon: <LinkIcon />,
-          show:
-            !isGameSeeding(game) &&
-            game.download?.downloader === Downloader.Torrent,
-          onClick: () => {
-            resumeSeeding(game.shop, game.objectId);
-          },
-        },
-        {
-          label: t("delete"),
-          disabled: deleting,
-          icon: <TrashIcon />,
-          onClick: () => {
-            openDeleteGameModal(game.shop, game.objectId);
-          },
-        },
-      ];
-      return actions.filter((action) => action.show !== false);
-    }
+        ];
+  };
+
+  const getGameActions = (game: LibraryGame): DropdownMenuItem[] => {
+    const download = game.download;
+    const isGameDownloading = isGameDownloadingMap[game.id];
 
     if (isGameDownloading) {
       return [
@@ -1065,42 +1040,73 @@ export function DownloadGroup({
     ]
   );
 
-  // Fetch action types for completed games
+  const isFinishedDownload = (game: LibraryGame) =>
+    game.download?.progress === 1 &&
+    (game.download.downloader !== Downloader.Epic ||
+      game.download.status === "complete");
+
+  // What each finished download offers depends on the files on disk, which
+  // can change outside Hydra, so look again whenever the window regains focus.
+  const [stateRefresh, setStateRefresh] = useState(0);
+
   useEffect(() => {
-    const fetchActionTypes = async () => {
-      const completedGames = library.filter(
-        (game) =>
-          game.download?.progress === 1 &&
-          (game.download.downloader !== Downloader.Epic ||
-            game.download.status === "complete")
+    const refresh = () => setStateRefresh((count) => count + 1);
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchCompletedStates = async () => {
+      const finished = library.filter(
+        (game) => isFinishedDownload(game) && !game.download?.extracting
       );
 
-      const actionTypesPromises = completedGames.map(async (game) => {
-        if (game.download?.downloader === Downloader.Epic) {
-          return { gameId: game.id, actionType: "open-folder" as const };
-        }
-        try {
-          const actionType = await window.electron.getGameInstallerActionType(
-            game.shop,
-            game.objectId
-          );
-          return { gameId: game.id, actionType };
-        } catch {
-          return { gameId: game.id, actionType: "open-folder" as const };
-        }
-      });
+      const results = await Promise.all(
+        finished.map(async (game) => {
+          try {
+            const state = await window.electron.getCompletedDownloadState(
+              game.shop,
+              game.objectId
+            );
+            return [game.id, state] as const;
+          } catch {
+            return [game.id, "open-folder" as const] as const;
+          }
+        })
+      );
 
-      const results = await Promise.all(actionTypesPromises);
-      const newActionTypes: Record<string, "install" | "open-folder"> = {};
-      results.forEach(({ gameId, actionType }) => {
-        newActionTypes[gameId] = actionType;
-      });
-
-      setGameActionTypes((prev) => ({ ...prev, ...newActionTypes }));
+      if (!cancelled) {
+        setCompletedStates((prev) => ({
+          ...prev,
+          ...Object.fromEntries(results),
+        }));
+      }
     };
 
-    fetchActionTypes();
-  }, [library]);
+    void fetchCompletedStates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [library, stateRefresh]);
+
+  const dismissDownloads = useCallback(
+    async (games: LibraryGame[]) => {
+      await window.electron.dismissDownloads(
+        games.map(({ shop, objectId }) => ({ shop, objectId }))
+      );
+      updateLibrary();
+    },
+    [updateLibrary]
+  );
+
+  const canDismiss = (game: LibraryGame) =>
+    isFinishedDownload(game) &&
+    !game.download?.extracting &&
+    !isGameSeeding(game) &&
+    extraction?.visibleId !== game.id;
 
   const handleConfirmPause = async () => {
     const target = pauseWarningTarget;
@@ -1193,6 +1199,16 @@ export function DownloadGroup({
             <h2>{title}</h2>
             <h3 className="download-group__header-count">{library.length}</h3>
           </div>
+
+          {isCompletedGroup && library.some(canDismiss) && (
+            <Button
+              theme="outline"
+              className="download-group__clear-all"
+              onClick={() => void dismissDownloads(library.filter(canDismiss))}
+            >
+              {t("clear_all_downloads")}
+            </Button>
+          )}
         </div>
 
         <ul className="download-group__simple-list">
@@ -1280,44 +1296,30 @@ export function DownloadGroup({
                 )}
 
                 <div className="download-group__simple-actions">
-                  {game.download?.progress === 1 &&
-                    (game.download.downloader !== Downloader.Epic ||
-                      game.download.status === "complete") &&
-                    (() => {
-                      const actionType =
-                        gameActionTypes[game.id] || "open-folder";
-                      const isInstall =
-                        game.download?.downloader !== Downloader.Epic &&
-                        actionType === "install";
-
-                      return (
-                        <Button
-                          theme="primary"
-                          onClick={() =>
-                            game.download?.downloader === Downloader.Epic
-                              ? window.electron.openGameInstallerPath(
-                                  game.shop,
-                                  game.objectId
-                                )
-                              : openGameInstaller(game.shop, game.objectId)
-                          }
-                          disabled={isGameDeleting(game.id)}
-                          className="download-group__simple-action-btn"
-                        >
-                          {isInstall ? (
-                            <>
-                              <DownloadIcon size={16} />
-                              {t("install")}
-                            </>
-                          ) : (
-                            <>
-                              <Folder size={16} />
-                              {tGameDetails("open_folder")}
-                            </>
-                          )}
-                        </Button>
-                      );
-                    })()}
+                  {isFinishedDownload(game) && (
+                    <CompletedDownloadActions
+                      game={game}
+                      state={completedStates[game.id] ?? "open-folder"}
+                      extraManageItems={getSeedingMenuItems(game)}
+                      onExtract={() =>
+                        extractGameDownload(game.shop, game.objectId)
+                      }
+                      onInstall={() =>
+                        openGameInstaller(game.shop, game.objectId)
+                      }
+                      onOpenFolder={() =>
+                        window.electron.openGameInstallerPath(
+                          game.shop,
+                          game.objectId
+                        )
+                      }
+                      onClear={
+                        canDismiss(game)
+                          ? () => void dismissDownloads([game])
+                          : undefined
+                      }
+                    />
+                  )}
                   {isQueuedGroup &&
                     (game.download?.progress !== 1 ||
                       (game.download.downloader === Downloader.Epic &&
@@ -1331,14 +1333,16 @@ export function DownloadGroup({
                         <DownloadIcon size={16} />
                       </Button>
                     )}
-                  <DropdownMenu align="end" items={getGameActions(game)}>
-                    <Button
-                      theme="outline"
-                      className="download-group__simple-menu-btn"
-                    >
-                      <MoreVertical size={16} />
-                    </Button>
-                  </DropdownMenu>
+                  {!isFinishedDownload(game) && (
+                    <DropdownMenu align="end" items={getGameActions(game)}>
+                      <Button
+                        theme="outline"
+                        className="download-group__simple-menu-btn"
+                      >
+                        <MoreVertical size={16} />
+                      </Button>
+                    </DropdownMenu>
+                  )}
                 </div>
               </li>
             );

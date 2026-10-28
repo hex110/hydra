@@ -243,7 +243,13 @@ export interface Download {
   queued: boolean;
   pinnedToHero?: boolean;
   timestamp: number;
+  /** When the download finished; older downloads only have `timestamp`. */
+  completedAt?: number;
+  /** Cleared from the Downloads page; the files and the record stay. */
+  dismissed?: boolean;
   extracting: boolean;
+  /** The last extraction failed, so a folder next to the archive may be half unpacked. */
+  extractionFailed?: boolean;
   extractionProgress?: number;
   automaticallyExtract: boolean;
   automaticallyDeleteArchiveFiles: boolean;

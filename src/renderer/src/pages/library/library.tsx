@@ -30,7 +30,11 @@ import {
   SyncIcon,
 } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
-import { groupLibraryGames, removeDiacritics } from "@shared";
+import {
+  groupLibraryGames,
+  isWishlistOnlyEntry,
+  removeDiacritics,
+} from "@shared";
 import type { GameCollection, LibraryGame, SavedLibraryFilter } from "@types";
 import { CreateCollectionModal, GameContextMenu } from "@renderer/components";
 import { useCollectionContextMenu } from "@renderer/context";
@@ -569,9 +573,17 @@ export default function Library() {
     userDetails,
   ]);
 
-  const groupedLibrary = useMemo(
+  const allGroupedLibrary = useMemo(
     () => groupLibraryGames(library, runningGameId ? [runningGameId] : []),
     [library, runningGameId]
+  );
+  // A wished-for game is only listed in the Wishlist collection.
+  const groupedLibrary = useMemo(
+    () =>
+      selectedCollectionId === WISHLIST_COLLECTION_ID
+        ? allGroupedLibrary
+        : allGroupedLibrary.filter((game) => !isWishlistOnlyEntry(game)),
+    [allGroupedLibrary, selectedCollectionId]
   );
   const groupedHiddenGames = useMemo(
     () => groupLibraryGames(hiddenGames, runningGameId ? [runningGameId] : []),
@@ -688,9 +700,10 @@ export default function Library() {
   }, [groupedLibrary]);
   const wishlistCount = useMemo(
     () =>
-      groupedLibrary.filter((game) => game.wishlisted && !isGameInstalled(game))
-        .length,
-    [groupedLibrary]
+      allGroupedLibrary.filter(
+        (game) => game.wishlisted && !isGameInstalled(game)
+      ).length,
+    [allGroupedLibrary]
   );
 
   const libraryCollections = useMemo<GameCollection[]>(() => {

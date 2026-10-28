@@ -4,6 +4,7 @@ import {
   GearIcon,
   PlayIcon,
   PlusCircleIcon,
+  StarFillIcon,
   StarIcon,
 } from "@primer/octicons-react";
 import { Button, ConfirmationModal, Modal } from "@renderer/components";
@@ -37,6 +38,7 @@ import { useEffect } from "react";
 import {
   applyLibraryGroupAction,
   isLibraryGameDownloading,
+  isWishlistOnly,
   getOfficialStoreMembers,
 } from "@shared";
 
@@ -67,6 +69,8 @@ export function HeroPanelActions() {
   } = useContext(gameDetailsContext);
 
   const isGameDownloading = isLibraryGameDownloading(downloadGame);
+  const isWishlistOnlyGame = game ? isWishlistOnly(game) : false;
+  const isInLibrary = Boolean(game) && !isWishlistOnlyGame;
 
   const { updateLibrary } = useLibrary();
 
@@ -200,18 +204,22 @@ export function HeroPanelActions() {
     }
   };
 
-  const addGameToWishlist = async () => {
+  const toggleWishlistForGameOutsideLibrary = async () => {
     setToggleLibraryGameDisabled(true);
 
     try {
-      await window.electron.addGameToLibrary(
+      await window.electron.setGameWishlisted(
         shop,
         objectId!,
+        !isWishlistOnlyGame,
         gameTitle,
         shopDetails?.platform ?? null
       );
-      await window.electron.setGameWishlisted(shop, objectId!, true);
-      showSuccessToast(t("added_to_wishlist", { ns: "library" }));
+      showSuccessToast(
+        t(isWishlistOnlyGame ? "removed_from_wishlist" : "added_to_wishlist", {
+          ns: "library",
+        })
+      );
     } catch {
       showErrorToast(t("failed_update_wishlist", { ns: "library" }));
     } finally {
@@ -455,12 +463,17 @@ export function HeroPanelActions() {
     <Button
       theme="outline"
       disabled={toggleLibraryGameDisabled}
-      onClick={addGameToWishlist}
+      onClick={toggleWishlistForGameOutsideLibrary}
       className="hero-panel-actions__action"
       title={t("empty_wishlist_description", { ns: "library" })}
     >
-      <StarIcon />
-      {t("add_to_wishlist", { ns: "library" })}
+      {isWishlistOnlyGame ? <StarFillIcon /> : <StarIcon />}
+      {t(
+        isWishlistOnlyGame ? "remove_from_wishlist_action" : "add_to_wishlist",
+        {
+          ns: "library",
+        }
+      )}
     </Button>
   );
 
@@ -560,7 +573,7 @@ export function HeroPanelActions() {
     );
   };
 
-  if (repacks.length && !game) {
+  if (repacks.length && !isInLibrary) {
     return (
       <>
         {addGameToLibraryButton}
@@ -571,7 +584,7 @@ export function HeroPanelActions() {
     );
   }
 
-  if (game) {
+  if (game && isInLibrary) {
     return (
       <div className="hero-panel-actions__container">
         <EpicCloudSaveConflictModal

@@ -10,14 +10,52 @@ pick a different folder for a single game.
 ## Free space
 
 The download dialog refuses a download that does not fit on the drive, as
-upstream does, and warns when the drive has less than twice the download's
-size free while automatic extraction is on: the unpacked game needs room too.
+upstream does. Below the download options it shows the drive's free space next
+to what each step needs and what is left afterwards: the download, extracting
+it (archive plus unpacked game at the peak) and running an installer (unpacked
+installer plus installed game at the peak). The numbers follow the **delete
+archive** tick. Hydra can't know the unpacked or installed size before
+downloading, so both are taken to be as big as the download; the extraction and
+installer rows are marked as estimates, and a figure that doesn't fit on the
+drive turns red.
 
 Before extracting an archive, Hydra lists its contents with 7-Zip and stops
 with **Not enough space to extract** when the unpacked size (plus a 512 MB
 margin) does not fit. Nothing is written in that case; free up space and
 extract again from the Downloads page. Archives whose file list is encrypted
 cannot be listed and are extracted without the check.
+
+## Finished downloads
+
+The **Completed** list shows the newest finished download first, by when it
+finished (older downloads by when they started). Each row offers what makes
+sense for the files on disk:
+
+| Files                                                                        | Button                             |
+| ---------------------------------------------------------------------------- | ---------------------------------- |
+| The game has an executable                                                   | **Play** (**Close** while it runs) |
+| An archive nobody has unpacked, or whose last extraction failed              | **Extract files**                  |
+| An unpacked folder with `setup.exe` (or a lone `.exe`) and no executable yet | **Install**                        |
+| An unpacked folder with nothing to install                                   | **Open folder**                    |
+| Nothing left on disk                                                         | "Files missing"                    |
+
+The ⋮ button opens the same menu as right-clicking the game in the sidebar
+(torrents also get seeding controls under **Manage game**). **Remove files** is
+in that menu's **Manage game** submenu. The ✕ button clears a row from the list
+and **Clear all** clears every finished one. Clearing only hides the row; the
+files, the game and its download record stay, so **Remove files** and **Open
+download location** keep working. Rows that are seeding or extracting are not
+cleared. Starting a new download of the game shows it again.
+
+If you unpack a download yourself, Hydra notices the next time the Downloads
+page looks at it (when it opens or the window regains focus): a folder named
+after the archive next to it counts as the unpacked game, the download points
+at that folder, and the executable is looked for as after Hydra's own
+extraction. Then the row offers **Play** or, if only an installer is there,
+**Install**. A folder left behind by a failed extraction is not trusted.
+Hydra does not watch an installer: after running it, set the game's
+executable under **Properties** (or let a library scan find it) and the row
+turns into **Play**.
 
 ## Pasting a Steam link
 

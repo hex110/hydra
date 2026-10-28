@@ -2128,6 +2128,7 @@ describe("Epic managed UI lifecycle", () => {
             getInstalledStoreMembers,
             getOfficialStoreMembers,
             isLibraryGameDownloading: () => false,
+            isWishlistOnly: () => false,
             applyLibraryGroupAction: async () => {},
           },
           "../modals/disc-selection-modal": { DiscSelectionModal: () => null },

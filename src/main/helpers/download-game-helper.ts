@@ -50,6 +50,8 @@ export const prepareGameEntry = async ({
         ...latest,
         isDeleted: false,
         source: "hydra",
+        // A wishlisted game becomes a library game once it is downloaded.
+        addedToLibraryAt: latest.addedToLibraryAt ?? new Date(),
         // Downloading makes an imported entry an ordinary game of the user's.
         ...IMPORT_FLAGS_CLEARED,
         ...(shop === "epic" ? { remoteId: null } : {}),

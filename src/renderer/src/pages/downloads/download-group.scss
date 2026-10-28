@@ -504,6 +504,19 @@
     border-radius: 8px;
   }
 
+  &__simple-missing {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0 calc(globals.$spacing-unit);
+  }
+
+  &__clear-all {
+    padding: calc(globals.$spacing-unit / 2) calc(globals.$spacing-unit * 1.5);
+    min-height: unset;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
   &__simple-action-btn {
     padding: calc(globals.$spacing-unit);
     min-height: unset;

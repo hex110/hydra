@@ -1092,6 +1092,9 @@ export class DownloadManager {
         shouldSeed: true,
         queued: false,
         pinnedToHero: false,
+        completedAt: Date.now(),
+        dismissed: false,
+        extractionFailed: false,
         extracting: shouldExtract,
       });
       WindowManager.sendDownloadsUpdated();
@@ -1104,6 +1107,9 @@ export class DownloadManager {
         shouldSeed: false,
         queued: false,
         pinnedToHero: false,
+        completedAt: Date.now(),
+        dismissed: false,
+        extractionFailed: false,
         extracting: shouldExtract,
       });
       WindowManager.sendDownloadsUpdated();

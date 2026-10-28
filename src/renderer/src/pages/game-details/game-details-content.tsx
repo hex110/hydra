@@ -25,7 +25,11 @@ import { SimilarGames } from "./similar-games/similar-games";
 import { YourStuff } from "./your-stuff/your-stuff";
 import { GameDlcAndNews } from "./dlc-and-news/game-dlc-and-news";
 
-import { AuthPage, getDisplayedPlayTimeInMilliseconds } from "@shared";
+import {
+  AuthPage,
+  getDisplayedPlayTimeInMilliseconds,
+  isWishlistOnly,
+} from "@shared";
 import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
 
 import cloudIconAnimated from "@renderer/assets/icons/cloud-animated.gif";
@@ -139,7 +143,10 @@ export function GameDetailsContent() {
   const isGameInLibrary = useMemo(() => {
     if (!library || !shop || !objectId) return false;
     return library.some(
-      (libItem) => libItem.shop === shop && libItem.objectId === objectId
+      (libItem) =>
+        libItem.shop === shop &&
+        libItem.objectId === objectId &&
+        !isWishlistOnly(libItem)
     );
   }, [library, shop, objectId]);
 

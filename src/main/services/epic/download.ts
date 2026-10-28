@@ -262,6 +262,7 @@ export class EpicDownloadService {
       status: "complete",
       queued: false,
       timestamp: Date.now(),
+      completedAt: Date.now(),
       extracting: false,
       automaticallyExtract: false,
       automaticallyDeleteArchiveFiles: false,
@@ -643,6 +644,7 @@ export class EpicDownloadService {
         bytesDownloaded: active.parser.state.fileSize,
         fileSize: active.parser.state.fileSize,
         status: "complete",
+        completedAt: Date.now(),
         epic: { ...current.epic, phase: "finalizing", error: undefined },
       };
       await this.options.putDownload(active.id, active.download);

@@ -1,5 +1,6 @@
 import "./add-game-to-queue";
 import "./cancel-game-download";
+import "./dismiss-downloads";
 import "./pause-game-download";
 import "./pause-game-seed";
 import "./resume-game-download";

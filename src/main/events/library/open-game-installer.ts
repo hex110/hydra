@@ -1,13 +1,14 @@
 import { shell } from "electron";
-import path from "node:path";
-import fs from "node:fs";
 import { spawn } from "node:child_process";
 
-import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { registerEvent } from "../register-event";
 import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { GameShop } from "@types";
 import { logger, Umu, Wine } from "@main/services";
+import {
+  findInstaller,
+  resolveDownloadFolder,
+} from "@main/services/download-game-folder";
 
 const launchInstallerWithWine = async (filePath: string): Promise<boolean> => {
   return await new Promise<boolean>((resolve) => {
@@ -107,53 +108,38 @@ const openGameInstaller = async (
     objectId
   );
 
-  if (!download?.folderName) return true;
+  if (!download) return true;
 
-  const gamePath = path.join(
-    download.downloadPath ?? (await getDownloadsPath()),
-    download.folderName
-  );
+  const folder = resolveDownloadFolder(download);
 
-  if (!fs.existsSync(gamePath)) {
+  if (folder.kind === "missing") return true;
+
+  if (folder.kind === "archive") {
+    shell.showItemInFolder(folder.archivePath);
     return true;
   }
 
-  if (fs.lstatSync(gamePath).isFile()) {
-    shell.showItemInFolder(gamePath);
+  if (folder.kind === "file") {
+    shell.showItemInFolder(folder.filePath);
     return true;
   }
 
   if (process.platform === "darwin") {
-    shell.openPath(gamePath);
+    shell.openPath(folder.folderPath);
     return true;
   }
 
-  const setupPath = path.join(gamePath, "setup.exe");
-  if (fs.existsSync(setupPath)) {
-    return await executeGameInstaller(setupPath, {
+  const installerPath = findInstaller(folder.folderPath);
+
+  if (installerPath) {
+    return await executeGameInstaller(installerPath, {
       gameId: objectId,
       winePrefixPath: effectiveWinePrefixPath,
       protonPath: game?.protonPath,
     });
   }
 
-  const gamePathFileNames = fs.readdirSync(gamePath);
-  const gamePathExecutableFiles = gamePathFileNames.filter(
-    (fileName: string) => path.extname(fileName).toLowerCase() === ".exe"
-  );
-
-  if (gamePathExecutableFiles.length === 1) {
-    return await executeGameInstaller(
-      path.join(gamePath, gamePathExecutableFiles[0]),
-      {
-        gameId: objectId,
-        winePrefixPath: effectiveWinePrefixPath,
-        protonPath: game?.protonPath,
-      }
-    );
-  }
-
-  shell.openPath(gamePath);
+  shell.openPath(folder.folderPath);
   return true;
 };
 

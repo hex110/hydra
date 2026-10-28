@@ -1,9 +1,8 @@
 import { shell } from "electron";
-import path from "node:path";
-import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { registerEvent } from "../register-event";
 import { GameShop } from "@types";
 import { downloadsSublevel, levelKeys } from "@main/level";
+import { resolveDownloadFolder } from "@main/services/download-game-folder";
 
 const openGameInstallerPath = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -14,12 +13,12 @@ const openGameInstallerPath = async (
 
   if (!download?.folderName || !download.downloadPath) return;
 
-  const gamePath = path.join(
-    download.downloadPath ?? (await getDownloadsPath()),
-    download.folderName
-  );
+  const folder = resolveDownloadFolder(download);
 
-  shell.showItemInFolder(gamePath);
+  if (folder.kind === "folder") shell.openPath(folder.folderPath);
+  else if (folder.kind === "archive")
+    shell.showItemInFolder(folder.archivePath);
+  else if (folder.kind === "file") shell.showItemInFolder(folder.filePath);
 };
 
 registerEvent("openGameInstallerPath", openGameInstallerPath);

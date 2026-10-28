@@ -376,6 +376,12 @@ export function useGameActions(requestedGame: GameContextMenuGame) {
       return;
 
     try {
+      if (downloadGame.download?.status === "seeding") {
+        await window.electron.pauseGameSeed(
+          downloadGame.shop,
+          downloadGame.objectId
+        );
+      }
       await removeGameInstaller(downloadGame.shop, downloadGame.objectId);
       await updateLibrary();
       showSuccessToast(t("files_removed_success"));

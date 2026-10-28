@@ -52,6 +52,8 @@ interface GameContextMenuProps extends Omit<ContextMenuProps, "items"> {
   game: GameContextMenuGame;
   onPinToggle?: () => void;
   isPinned?: boolean;
+  /** Entries a page adds at the top of Manage game, e.g. seeding controls. */
+  extraManageItems?: ContextMenuItemData[];
   onCollectionContextMenu?: (
     event: React.MouseEvent<HTMLElement>,
     collection: GameCollection
@@ -64,6 +66,7 @@ export function GameContextMenu({
   game,
   onPinToggle,
   isPinned,
+  extraManageItems = [],
   onCollectionContextMenu,
   visible,
   position,
@@ -443,6 +446,7 @@ export function GameContextMenu({
       icon: <GearIcon size={16} />,
       disabled: isDeleting,
       submenu: [
+        ...extraManageItems,
         {
           id: "hide-game",
           label: visibility.isHiddenFromOthers

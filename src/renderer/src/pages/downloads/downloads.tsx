@@ -7,10 +7,9 @@ import {
   useLibrary,
 } from "@renderer/hooks";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BinaryNotFoundModal } from "../shared-modals/binary-not-found-modal";
 import "./downloads.scss";
-import { DeleteGameModal } from "./delete-game-modal";
 import { DownloadGroup } from "./download-group";
 import { BackgroundTasksSection } from "./background-tasks-section";
 import { GameUpdatesSection } from "./game-updates-section";
@@ -38,21 +37,7 @@ export default function Downloads() {
 
   const { t } = useTranslation("downloads");
 
-  const gameToBeDeleted = useRef<[GameShop, string] | null>(null);
-
   const [showBinaryNotFoundModal, setShowBinaryNotFoundModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const { removeGameInstaller, pauseSeeding } = useDownload();
-
-  const handleDeleteGame = async () => {
-    if (gameToBeDeleted.current) {
-      const [shop, objectId] = gameToBeDeleted.current;
-
-      await pauseSeeding(shop, objectId);
-      await removeGameInstaller(shop, objectId);
-    }
-  };
 
   const { lastPacket } = useDownload();
 
@@ -79,11 +64,6 @@ export default function Downloads() {
       updateLibrary();
     });
 
-  const handleOpenDeleteGameModal = (shop: GameShop, objectId: string) => {
-    gameToBeDeleted.current = [shop, objectId];
-    setShowDeleteModal(true);
-  };
-
   const libraryGroup: Record<string, LibraryGame[]> = useMemo(() => {
     const initialValue: Record<string, LibraryGame[]> = {
       downloading: [],
@@ -99,7 +79,7 @@ export default function Downloads() {
     );
 
     const result = library.reduce((prev, next) => {
-      if (!next.download) return prev;
+      if (!next.download || next.download.dismissed) return prev;
 
       const bucket = getRendererDownloadBucket(next.download, {
         hasLiveProgress:
@@ -143,8 +123,11 @@ export default function Downloads() {
       return (leftDownload.timestamp ?? 0) - (rightDownload.timestamp ?? 0);
     });
 
-    const complete = orderBy(result.complete, (game) =>
-      game.download?.progress === 1 ? 0 : 1
+    // Newest first: by when it finished, falling back to when it started.
+    const complete = orderBy(
+      result.complete,
+      (game) => game.download?.completedAt ?? game.download?.timestamp ?? 0,
+      "desc"
     );
 
     return {
@@ -188,12 +171,6 @@ export default function Downloads() {
         onClose={() => setShowBinaryNotFoundModal(false)}
       />
 
-      <DeleteGameModal
-        visible={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        deleteGame={handleDeleteGame}
-      />
-
       <BackgroundTasksSection />
 
       {userPreferences?.checkGameUpdates !== false && (
@@ -208,7 +185,6 @@ export default function Downloads() {
                 key={group.title}
                 title={group.title}
                 library={group.library}
-                openDeleteGameModal={handleOpenDeleteGameModal}
                 openGameInstaller={handleOpenGameInstaller}
                 seedingStatus={seedingStatus}
                 queuedGameIds={group.queuedGameIds}

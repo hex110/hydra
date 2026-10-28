@@ -5,6 +5,7 @@ import {
   FilterIcon,
   HeartIcon,
   HourglassIcon,
+  PlusCircleIcon,
   SlidersIcon,
   SortDescIcon,
   TrophyIcon,
@@ -161,6 +162,11 @@ export function SidebarFilterMenu({
       value: "title_asc",
       label: t("sort_title", { ns: "library" }),
       icon: <SortDescIcon size={14} />,
+    },
+    {
+      value: "recently_added",
+      label: t("sort_recently_added", { ns: "library" }),
+      icon: <PlusCircleIcon size={14} />,
     },
     {
       value: "recently_played",

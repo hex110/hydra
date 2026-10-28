@@ -83,7 +83,7 @@ export class GameFilesManager {
     );
   }
 
-  private async resetExtractingState() {
+  private async resetExtractingState(failed = false) {
     const download = await downloadsSublevel.get(this.gameKey);
 
     if (!download) return;
@@ -100,6 +100,7 @@ export class GameFilesManager {
       status,
       queued: false,
       extracting: false,
+      extractionFailed: failed,
     });
     WindowManager.sendDownloadsUpdated();
   }
@@ -114,7 +115,7 @@ export class GameFilesManager {
       error
     );
 
-    await this.resetExtractingState();
+    await this.resetExtractingState(true);
 
     WindowManager.sendToAppWindows(
       "on-extraction-failed",

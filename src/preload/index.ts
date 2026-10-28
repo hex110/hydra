@@ -1004,8 +1004,21 @@ contextBridge.exposeInMainWorld("electron", {
     objectId: string,
     playStatus: PlayStatus | null
   ) => ipcRenderer.invoke("setGamePlayStatus", shop, objectId, playStatus),
-  setGameWishlisted: (shop: GameShop, objectId: string, wishlisted: boolean) =>
-    ipcRenderer.invoke("setGameWishlisted", shop, objectId, wishlisted),
+  setGameWishlisted: (
+    shop: GameShop,
+    objectId: string,
+    wishlisted: boolean,
+    title?: string,
+    platform?: string | null
+  ) =>
+    ipcRenderer.invoke(
+      "setGameWishlisted",
+      shop,
+      objectId,
+      wishlisted,
+      title,
+      platform
+    ),
   testFloppyConnection: (url: string, token: string) =>
     ipcRenderer.invoke("testFloppyConnection", url, token),
   getBackgroundTasks: () => ipcRenderer.invoke("getBackgroundTasks"),
@@ -1491,8 +1504,10 @@ contextBridge.exposeInMainWorld("electron", {
   } | null> => ipcRenderer.invoke("getActiveClassicsImport"),
   openGameInstaller: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("openGameInstaller", shop, objectId),
-  getGameInstallerActionType: (shop: GameShop, objectId: string) =>
-    ipcRenderer.invoke("getGameInstallerActionType", shop, objectId),
+  getCompletedDownloadState: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getCompletedDownloadState", shop, objectId),
+  dismissDownloads: (downloads: { shop: GameShop; objectId: string }[]) =>
+    ipcRenderer.invoke("dismissDownloads", downloads),
   openGameInstallerPath: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("openGameInstallerPath", shop, objectId),
   openGameWinetricks: (shop: GameShop, objectId: string) =>

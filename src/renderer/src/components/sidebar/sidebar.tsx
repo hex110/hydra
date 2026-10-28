@@ -7,6 +7,7 @@ import type { LibraryGame } from "@types";
 import {
   getGameCatalogueIdentity,
   groupLibraryGames,
+  isWishlistOnlyEntry,
   removeDiacritics,
 } from "@shared";
 
@@ -61,6 +62,7 @@ const SIDEBAR_GAME_ITEM_HEIGHT = 42;
 
 const SIDEBAR_SORT_OPTIONS = new Set<SortOption>([
   "title_asc",
+  "recently_added",
   "recently_played",
   "most_played",
   "achievements",
@@ -138,7 +140,9 @@ export function Sidebar() {
   const orderedLibrary = useMemo(
     () =>
       orderSidebarGames(
-        groupLibraryGames(library, runningGameId ? [runningGameId] : [])
+        groupLibraryGames(library, runningGameId ? [runningGameId] : []).filter(
+          (game) => !isWishlistOnlyEntry(game)
+        )
       ),
     [library, orderSidebarGames, runningGameId]
   );

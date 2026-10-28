@@ -432,7 +432,9 @@ declare global {
     setGameWishlisted: (
       shop: GameShop,
       objectId: string,
-      wishlisted: boolean
+      wishlisted: boolean,
+      title?: string,
+      platform?: string | null
     ) => Promise<void>;
     testFloppyConnection: (url: string, token: string) => Promise<void>;
     getBackgroundTasks: () => Promise<BackgroundTask[]>;
@@ -838,10 +840,13 @@ declare global {
     refreshLibraryAssets: () => Promise<void>;
     getRemoteLibrarySyncState: () => Promise<boolean>;
     openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
-    getGameInstallerActionType: (
+    getCompletedDownloadState: (
       shop: GameShop,
       objectId: string
-    ) => Promise<"install" | "open-folder">;
+    ) => Promise<"play" | "extract" | "install" | "open-folder" | "missing">;
+    dismissDownloads: (
+      downloads: { shop: GameShop; objectId: string }[]
+    ) => Promise<void>;
     openGameInstallerPath: (shop: GameShop, objectId: string) => Promise<void>;
     openGameWinetricks: (shop: GameShop, objectId: string) => Promise<boolean>;
     openGameExecutablePath: (shop: GameShop, objectId: string) => Promise<void>;

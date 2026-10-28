@@ -30,6 +30,7 @@ import {
   DownloadError,
   Downloader,
   MINIMUM_FREE_DISK_SPACE_BYTES,
+  estimateInstallSpace,
   formatBytes,
   getDownloadersForUri,
   parseBytes,
@@ -621,6 +622,39 @@ export function DownloadSettingsModal({
 
     return parseBytes(repack?.fileSize ?? null);
   }, [selectedTorrentSize, repack?.fileSize]);
+
+  const spaceRows = useMemo(() => {
+    if (requiredSpace === null || requiredSpace <= 0) return [];
+
+    const estimate = estimateInstallSpace({
+      downloadBytes: requiredSpace,
+      extract: automaticExtractionEnabled,
+      deleteArchive: deleteArchiveFilesAfterExtraction,
+    });
+
+    return [
+      {
+        key: "download",
+        label: t("space_step_download"),
+        ...estimate.download,
+      },
+      estimate.extraction && {
+        key: "extraction",
+        label: t("space_step_extraction"),
+        ...estimate.extraction,
+      },
+      estimate.installer && {
+        key: "installer",
+        label: t("space_step_installer"),
+        ...estimate.installer,
+      },
+    ].filter((row) => !!row);
+  }, [
+    requiredSpace,
+    automaticExtractionEnabled,
+    deleteArchiveFilesAfterExtraction,
+    t,
+  ]);
 
   const hasEnoughDiskSpace = useMemo(() => {
     if (diskFreeSpace === null || requiredSpace === null) return true;
@@ -1396,7 +1430,7 @@ export function DownloadSettingsModal({
       visible={visible}
       title={t("download_settings")}
       description={
-        diskFreeSpace === null
+        diskFreeSpace === null || spaceRows.length > 0
           ? undefined
           : t("space_left_on_disk", { space: formatBytes(diskFreeSpace) })
       }
@@ -1616,16 +1650,6 @@ export function DownloadSettingsModal({
           }
         />
 
-        {automaticExtractionEnabled &&
-          hasEnoughDiskSpace &&
-          diskFreeSpace !== null &&
-          requiredSpace !== null &&
-          diskFreeSpace < requiredSpace * 2 && (
-            <p className="download-settings-modal__hint-text">
-              {t("extraction_space_hint")}
-            </p>
-          )}
-
         <CheckboxField
           label={t("delete_archive_files_after_extraction")}
           checked={deleteArchiveFilesAfterExtraction}
@@ -1635,6 +1659,65 @@ export function DownloadSettingsModal({
             )
           }
         />
+
+        {spaceRows.length > 0 && (
+          <div className="download-settings-modal__space">
+            <div className="download-settings-modal__space-row download-settings-modal__space-row--head">
+              <span>
+                {diskFreeSpace === null
+                  ? t("space_estimate_title")
+                  : t("space_left_on_disk", {
+                      space: formatBytes(diskFreeSpace),
+                    })}
+              </span>
+              <span>{t("space_needs")}</span>
+              <span>{t("space_left_after")}</span>
+            </div>
+
+            {spaceRows.map((row) => {
+              const fits =
+                diskFreeSpace === null || diskFreeSpace >= row.peakBytes;
+              const leftAfter =
+                diskFreeSpace === null
+                  ? null
+                  : diskFreeSpace - row.remainingBytes;
+
+              return (
+                <div
+                  key={row.key}
+                  className="download-settings-modal__space-row"
+                >
+                  <span>{row.label}</span>
+                  <span
+                    className={
+                      fits ? undefined : "download-settings-modal__space-error"
+                    }
+                  >
+                    {row.key === "download" ? "" : "~"}
+                    {formatBytes(row.peakBytes)}
+                  </span>
+                  <span
+                    className={
+                      leftAfter !== null && leftAfter < 0
+                        ? "download-settings-modal__space-error"
+                        : undefined
+                    }
+                  >
+                    {leftAfter === null
+                      ? "—"
+                      : `${row.key === "download" ? "" : "~"}${formatBytes(Math.max(0, leftAfter))}`}
+                  </span>
+                </div>
+              );
+            })}
+
+            {automaticExtractionEnabled && (
+              <p className="download-settings-modal__hint-text">
+                {t("extraction_space_hint")}
+              </p>
+            )}
+          </div>
+        )}
 
         {isInstalled && (
           <div>

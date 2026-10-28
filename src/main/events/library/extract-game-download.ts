@@ -30,6 +30,7 @@ export const startGameExtraction = async (
   await downloadsSublevel.put(gameKey, {
     ...download,
     extracting: true,
+    extractionFailed: false,
   });
 
   const gameFilesManager = new GameFilesManager(shop, objectId);

@@ -140,8 +140,10 @@ duplicates**. Filters are remembered between sessions.
 Clicking a genre on a game page opens the library filtered to that genre.
 
 The sidebar's game list follows the library's tab, filters and **Installed**
-toggle, as Steam's left list does, and keeps its own sort. Its filter menu
-changes the same settings as the library page.
+toggle, as Steam's left list does, and keeps its own sort (title, recently
+added, recently played, most played or achievements). **Recently added** puts a
+game you just added at the top. Its filter menu changes the same settings as the
+library page.
 
 ### Saved filters
 
@@ -210,9 +212,17 @@ save; only the games you changed are updated.
 ## Wishlist
 
 Mark a game you want but can't download yet with **Add to wishlist**: on the
-game page of a game you don't have (it is added to the library as well), in
-the game page's **⋯** menu, the right-click menu or the selection bar. The
-**Wishlist** entry in the **Collections** dropdown lists them.
+game page of a game you don't have, in the game page's **⋯** menu, the
+right-click menu or the selection bar. The **Wishlist** entry in the
+**Collections** dropdown lists them.
+
+Wishlisting a game that is not in your library does not add it. It is listed
+only in the Wishlist collection (not in the library, the sidebar or its
+counts), and its game page still offers **Add to library** and **Remove from
+wishlist**. Removing the wish drops the entry. Downloading the game, or adding
+it to the library, makes it a library game; it stays wishlisted until you
+remove that. Games imported from a Steam wishlist stay listed in the library as
+before.
 
 When a download source adds downloads for a wishlisted game that isn't
 installed, Hydra shows a notification that opens the game (or the wishlist,
