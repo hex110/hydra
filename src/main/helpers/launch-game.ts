@@ -83,6 +83,14 @@ const createUmuStatusReporter =
       );
       return;
     }
+    if (status.type === "exited_early") {
+      logger.warn("Game exited right after launch without an error", {
+        gameKey,
+        logPath: status.logPath,
+      });
+      sendGameLauncherStatus(gameKey, "game_exited_early", status.logPath);
+      return;
+    }
     if (status.type === "failed") {
       sendGameLauncherStatus(
         gameKey,

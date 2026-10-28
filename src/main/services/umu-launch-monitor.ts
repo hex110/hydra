@@ -4,6 +4,7 @@ import {
   UmuOutputMonitor,
   getFileSize,
   getUmuSetupFailureMessage,
+  isSilentEarlyExit,
   tailUmuLog,
   type UmuOutputEvent,
 } from "./umu-output-monitor.js";
@@ -11,6 +12,7 @@ import {
 export type UmuStatus =
   | { type: "progress"; message: string | null }
   | { type: "ready" }
+  | { type: "exited_early"; logPath: string | null }
   | { type: "failed"; message: string };
 
 export type UmuStatusListener = (status: UmuStatus) => void;
@@ -82,6 +84,8 @@ export const observeUmuLaunch = ({
   umuLogPath,
   logStartOffset,
   quickExitThresholdMs,
+  silentExitWindowMs,
+  getExitLogPath,
   onStatus,
   wasGameDetected,
   onLateFailure,
@@ -90,6 +94,10 @@ export const observeUmuLaunch = ({
   umuLogPath: string | null;
   logStartOffset?: number;
   quickExitThresholdMs: number;
+  /** Report a clean, undetected exit within this time of spawning. Off when unset. */
+  silentExitWindowMs?: number;
+  /** Picks the log shown with the "exited early" status, once the game is gone. */
+  getExitLogPath?: () => string | null;
   onStatus?: UmuStatusListener;
   wasGameDetected?: () => boolean;
   onLateFailure?: (failure: UmuLateFailure) => void;
@@ -98,6 +106,7 @@ export const observeUmuLaunch = ({
     const setupWatcher = watchUmuSetup(umuLogPath, onStatus, logStartOffset);
     let settled = false;
     let quickExitTimer: NodeJS.Timeout | null = null;
+    let spawnedAt = Date.now();
 
     const clearQuickExitTimer = () => {
       if (quickExitTimer) clearTimeout(quickExitTimer);
@@ -105,6 +114,7 @@ export const observeUmuLaunch = ({
     };
 
     child.once("spawn", () => {
+      spawnedAt = Date.now();
       quickExitTimer = setTimeout(() => {
         if (settled) return;
         settled = true;
@@ -134,6 +144,22 @@ export const observeUmuLaunch = ({
       if (message) {
         onLateFailure?.({ code, signal, gameDetected, message });
         onStatus?.({ type: "failed", message });
+        return;
+      }
+
+      if (
+        silentExitWindowMs !== undefined &&
+        isSilentEarlyExit({
+          exitCode: code,
+          gameDetected,
+          runtimeMs: Date.now() - spawnedAt,
+          windowMs: silentExitWindowMs,
+        })
+      ) {
+        onStatus?.({
+          type: "exited_early",
+          logPath: getExitLogPath?.() ?? null,
+        });
         return;
       }
 

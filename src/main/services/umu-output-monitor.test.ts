@@ -7,6 +7,7 @@ import { describe, it } from "node:test";
 import {
   UmuOutputMonitor,
   getUmuSetupFailureMessage,
+  isSilentEarlyExit,
   parseUmuOutputLine,
   tailUmuLog,
 } from "./umu-output-monitor.js";
@@ -224,5 +225,25 @@ describe("umu output monitor", () => {
       monitor.failureMessage,
       "Aborting steamrt install due to network error"
     );
+  });
+});
+
+describe("isSilentEarlyExit", () => {
+  const base = {
+    exitCode: 0,
+    gameDetected: false,
+    runtimeMs: 20_000,
+    windowMs: 60_000,
+  };
+
+  it("flags a clean exit shortly after start with no game seen", () => {
+    assert.equal(isSilentEarlyExit(base), true);
+  });
+
+  it("ignores exits after the window, detected games and failures", () => {
+    assert.equal(isSilentEarlyExit({ ...base, runtimeMs: 60_001 }), false);
+    assert.equal(isSilentEarlyExit({ ...base, gameDetected: true }), false);
+    assert.equal(isSilentEarlyExit({ ...base, exitCode: 1 }), false);
+    assert.equal(isSilentEarlyExit({ ...base, exitCode: null }), false);
   });
 });

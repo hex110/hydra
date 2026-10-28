@@ -8,6 +8,7 @@ const COMPATIBILITY_STATUSES = new Set<GameLauncherStatus>([
   "preparing_compatibility_layer",
   "compatibility_layer_ready",
   "compatibility_layer_failed",
+  "game_exited_early",
   "game_started",
   "launch_cancelled",
 ]);

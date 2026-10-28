@@ -32,7 +32,10 @@ afterEach(() => {
 
 const launchFakeUmu = (
   script: string,
-  options: { wasGameDetected?: () => boolean } = {}
+  options: {
+    wasGameDetected?: () => boolean;
+    silentExitWindowMs?: number;
+  } = {}
 ) => {
   const statuses: UmuStatus[] = [];
   const logStartOffset = fs.statSync(logPath).size;
@@ -49,6 +52,8 @@ const launchFakeUmu = (
     quickExitThresholdMs: QUICK_EXIT_THRESHOLD_MS,
     onStatus: (status) => statuses.push(status),
     wasGameDetected: options.wasGameDetected,
+    silentExitWindowMs: options.silentExitWindowMs,
+    getExitLogPath: () => logPath,
   });
   return { child, statuses, exited, launched };
 };
@@ -149,6 +154,46 @@ describe("umu launch monitor", () => {
       { type: "progress", message: null },
       { type: "ready" },
     ]);
+  });
+
+  it("reports a clean exit without a detected game as exited early", async () => {
+    const { statuses, exited, launched } = launchFakeUmu(
+      `setTimeout(() => process.exit(0), 400);`,
+      { silentExitWindowMs: 5_000 }
+    );
+
+    await launched;
+    await exited;
+
+    assert.deepEqual(statuses.at(-1), { type: "exited_early", logPath });
+    assert.equal(
+      statuses.some((status) => status.type === "ready"),
+      false
+    );
+  });
+
+  it("does not report an early exit once the game was detected", async () => {
+    const { statuses, exited, launched } = launchFakeUmu(
+      `setTimeout(() => process.exit(0), 400);`,
+      { silentExitWindowMs: 5_000, wasGameDetected: () => true }
+    );
+
+    await launched;
+    await exited;
+
+    assert.deepEqual(statuses.at(-1), { type: "ready" });
+  });
+
+  it("does not report an early exit after the window has passed", async () => {
+    const { statuses, exited, launched } = launchFakeUmu(
+      `setTimeout(() => process.exit(0), 400);`,
+      { silentExitWindowMs: 100 }
+    );
+
+    await launched;
+    await exited;
+
+    assert.deepEqual(statuses.at(-1), { type: "ready" });
   });
 
   it("rejects early exits with the umu failure detail", async () => {

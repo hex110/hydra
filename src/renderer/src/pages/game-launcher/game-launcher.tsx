@@ -79,6 +79,10 @@ export default function GameLauncher() {
   const [compatibilityLayerDetail, setCompatibilityLayerDetail] = useState<
     string | null
   >(null);
+  const [exitedEarlyLogPath, setExitedEarlyLogPath] = useState<string | null>(
+    null
+  );
+  const [exitedEarly, setExitedEarly] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [launchPhases, setLaunchPhases] = useState<LaunchPhase[]>(["start"]);
   const [exiting, setExiting] = useState(false);
@@ -157,6 +161,14 @@ export default function GameLauncher() {
       if (status === "compatibility_layer_failed") {
         setCompatibilityLayerStatus("failed");
         setCompatibilityLayerDetail(detail);
+        return;
+      }
+
+      if (status === "game_exited_early") {
+        setCompatibilityLayerStatus("failed");
+        setCompatibilityLayerDetail(null);
+        setExitedEarly(true);
+        setExitedEarlyLogPath(detail);
         return;
       }
 
@@ -298,6 +310,8 @@ export default function GameLauncher() {
         break;
     }
 
+    if (exitedEarly) return t("game_exited_early");
+
     if (compatibilityLayerStatus === "failed") {
       return t("compatibility_layer_failed");
     }
@@ -328,6 +342,7 @@ export default function GameLauncher() {
     preflightDetail,
     compatibilityLayerStatus,
     compatibilityLayerDetail,
+    exitedEarly,
     achievementsExportStatus,
     achievementsExportDetail,
     t,
@@ -558,8 +573,25 @@ export default function GameLauncher() {
               </p>
             )}
 
+            {exitedEarly && (
+              <p className="game-launcher__status-detail">
+                {t("game_exited_early_hint")}
+              </p>
+            )}
+
             {launcherAction && (
               <div className="game-launcher__actions">
+                {exitedEarly && exitedEarlyLogPath && (
+                  <Button
+                    theme="outline"
+                    className="game-launcher__button"
+                    onClick={() =>
+                      void window.electron.showItemInFolder(exitedEarlyLogPath)
+                    }
+                  >
+                    {t("show_log")}
+                  </Button>
+                )}
                 <Button
                   theme="outline"
                   className="game-launcher__button"

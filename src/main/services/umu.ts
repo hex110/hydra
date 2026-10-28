@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -39,6 +40,13 @@ const getVersionName = (directoryPath: string) => {
 };
 
 const getSharedUmuLogPath = () => path.join(logsPath, "umu.log");
+
+// PROTON_LOG=1 writes steam-<SteamGameId>.log to PROTON_LOG_DIR, or $HOME.
+const getProtonLogPath = (gameId?: string | null) =>
+  path.join(
+    process.env.PROTON_LOG_DIR || os.homedir(),
+    `steam-${gameId || 0}.log`
+  );
 
 const getUmuLogPath = (gameId?: string | null) =>
   gameId
@@ -530,6 +538,7 @@ export class Umu {
     }
   ): Promise<void> {
     const QUICK_EXIT_THRESHOLD_MS = 3000;
+    const SILENT_EXIT_WINDOW_MS = 60_000;
     const workingDirectory = path.dirname(executablePath);
     const umuLogPath = getUmuLogPath(options?.gameId);
     const umuBinaryPath = getUmuBinaryPath();
@@ -589,6 +598,11 @@ export class Umu {
         umuLogPath: shouldPipeToTerminal ? null : umuLogPath,
         logStartOffset,
         quickExitThresholdMs: QUICK_EXIT_THRESHOLD_MS,
+        silentExitWindowMs: SILENT_EXIT_WINDOW_MS,
+        getExitLogPath: () =>
+          [getProtonLogPath(options?.gameId), umuLogPath].find((logPath) =>
+            fs.existsSync(logPath)
+          ) ?? null,
         onStatus: options?.onStatus,
         wasGameDetected: options?.wasGameDetected,
         onLateFailure: (failure) =>

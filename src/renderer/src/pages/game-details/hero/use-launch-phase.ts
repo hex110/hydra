@@ -53,7 +53,10 @@ export function useLaunchPhase(
           compatibilityLayerStatus = "preparing";
         } else if (payload.status === "launch_cancelled") {
           setEnded(true);
-        } else if (payload.status === "compatibility_layer_failed") {
+        } else if (
+          payload.status === "compatibility_layer_failed" ||
+          payload.status === "game_exited_early"
+        ) {
           compatibilityLayerStatus = "failed";
           setEnded(true);
         } else if (payload.status === "game_started") {

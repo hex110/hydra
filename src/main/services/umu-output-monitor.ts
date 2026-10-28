@@ -93,6 +93,20 @@ export const getUmuSetupFailureMessage = ({
     : `umu-run exited with code ${exitCode ?? "null"}`;
 };
 
+// umu-run exiting cleanly, shortly after start, with no game ever seen running:
+// the game closed itself without an error (wrong executable, missing launcher).
+export const isSilentEarlyExit = ({
+  exitCode,
+  gameDetected,
+  runtimeMs,
+  windowMs,
+}: {
+  exitCode: number | null;
+  gameDetected: boolean;
+  runtimeMs: number;
+  windowMs: number;
+}) => exitCode === 0 && !gameDetected && runtimeMs <= windowMs;
+
 export class UmuOutputMonitor {
   private buffer = "";
   private lastErrorMessage: string | null = null;
