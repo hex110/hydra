@@ -93,25 +93,25 @@ export function GameDetailsSkeleton() {
               </div>
 
               <div className="sidebar-section__content">
-                <div className="stats__section">
-                  <div className="stats__category">
-                    <div className="stats__category-title">
+                <div className="reception">
+                  <div className="reception__row">
+                    <div className="reception__row-title">
                       <Skeleton height={14} width={14} />
                       <Skeleton height={14} width={80} />
                     </div>
                     <Skeleton height={14} width={40} />
                   </div>
 
-                  <div className="stats__category">
-                    <div className="stats__category-title">
+                  <div className="reception__row">
+                    <div className="reception__row-title">
                       <Skeleton height={14} width={14} />
                       <Skeleton height={14} width={70} />
                     </div>
                     <Skeleton height={14} width={35} />
                   </div>
 
-                  <div className="stats__category">
-                    <div className="stats__category-title">
+                  <div className="reception__row">
+                    <div className="reception__row-title">
                       <Skeleton height={14} width={14} />
                       <Skeleton height={14} width={60} />
                     </div>

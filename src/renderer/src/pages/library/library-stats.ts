@@ -26,7 +26,8 @@ export interface LibraryStats {
 const playTimeOf = (game: LibraryFilterableGame) =>
   (game.playTimeInMilliseconds ?? 0) +
   (game.steamPlayTimeInMilliseconds ?? 0) +
-  (game.epicPlayTimeInMilliseconds ?? 0);
+  (game.epicPlayTimeInMilliseconds ?? 0) +
+  (game.syncedPlayTimeInMilliseconds ?? 0);
 
 export const getLibraryStats = <T extends LibraryFilterableGame>(
   games: T[],

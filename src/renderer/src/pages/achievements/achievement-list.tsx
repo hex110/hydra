@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import "./achievements.scss";
 import { EyeClosedIcon, SearchIcon } from "@primer/octicons-react";
 import HydraIcon from "@renderer/assets/icons/hydra.svg?react";
-import { useSubscription } from "@renderer/hooks/use-subscription";
 import { useState } from "react";
 import { FullscreenMediaModal } from "@renderer/components";
 
@@ -16,7 +15,6 @@ export function AchievementList({
   achievements,
 }: Readonly<AchievementListProps>) {
   const { t } = useTranslation("achievement");
-  const { showHydraCloudModal } = useSubscription();
   const { formatDateTime } = useDate();
 
   const [souvenir, setSouvenir] = useState<{
@@ -94,7 +92,7 @@ export function AchievementList({
             )}
 
             <div className="achievements__item-meta-details">
-              {achievement.points != undefined ? (
+              {achievement.points != undefined && (
                 <div
                   className="achievements__item-points"
                   title={t("achievement_earn_points", {
@@ -106,15 +104,6 @@ export function AchievementList({
                     {achievement.points}
                   </p>
                 </div>
-              ) : (
-                <button
-                  onClick={() => showHydraCloudModal("achievements")}
-                  className="achievements__item-points achievements__item-points--locked"
-                  title={t("achievement_earn_points", { points: "???" })}
-                >
-                  <HydraIcon className="achievements__item-points-icon" />
-                  <p className="achievements__item-points-value">???</p>
-                </button>
               )}
               {achievement.unlockTime != null && (
                 <div

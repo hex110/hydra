@@ -37,7 +37,7 @@ export const getCloudGameSettingsCategories = (
   legacyPurpose: "active" | "archive"
 ): GameSettingsCategoryId[] => {
   const categories: GameSettingsCategoryId[] = [];
-  const showHydra = availability.cloudSaveAccessAction !== "sign-in";
+  const showHydra = availability.cloudSaveAccessAction === "open";
   if (showHydra && availability.showCloudSaveV2Settings) {
     categories.push("hydra_cloud");
   }

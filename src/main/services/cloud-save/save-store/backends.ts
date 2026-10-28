@@ -1,6 +1,7 @@
 import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import type { SaveStoreConfig } from "@types";
@@ -11,16 +12,26 @@ import type { SaveStoreConfig } from "@types";
  */
 export interface SaveStoreBackend {
   readText(relative: string): Promise<string | null>;
-  /** Writes a small file; with `exclusive`, returns false when it exists. */
-  writeText(
-    relative: string,
-    text: string,
-    options?: { exclusive?: boolean }
-  ): Promise<boolean>;
+  /** Several small files in one go; missing files are left out. */
+  readTexts(relatives: string[]): Promise<Map<string, string>>;
+  writeText(relative: string, text: string): Promise<void>;
   exists(relative: string): Promise<boolean>;
+  /** Files under a directory, with paths relative to it; none when it is missing. */
+  list(
+    relative: string,
+    options?: { recursive?: boolean }
+  ): Promise<StoreEntry[]>;
   putFile(localPath: string, relative: string): Promise<void>;
   getFile(relative: string, localPath: string): Promise<void>;
+  removeFile(relative: string): Promise<void>;
   removeDir(relative: string): Promise<void>;
+}
+
+export interface StoreEntry {
+  path: string;
+  sizeBytes: number;
+  /** Milliseconds since the epoch, as the store reports it. */
+  modifiedAt: number;
 }
 
 const isMissing = (error: unknown) =>
@@ -53,30 +64,61 @@ export class FolderBackend implements SaveStoreBackend {
     }
   }
 
-  async writeText(
-    relative: string,
-    text: string,
-    { exclusive = false }: { exclusive?: boolean } = {}
-  ) {
+  async readTexts(relatives: string[]) {
+    const texts = new Map<string, string>();
+    for (const relative of relatives) {
+      const text = await this.readText(relative);
+      if (text !== null) texts.set(relative, text);
+    }
+    return texts;
+  }
+
+  async writeText(relative: string, text: string) {
     const target = this.resolve(relative);
     const temp = await this.writeTemp(target, (file) =>
       fs.promises.writeFile(file, text, "utf8")
     );
-
     try {
-      if (!exclusive) {
-        await fs.promises.rename(temp, target);
-        return true;
-      }
-      // A hard link fails when the target exists, unlike rename.
-      await fs.promises.link(temp, target);
-      return true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException)?.code === "EEXIST") return false;
-      throw error;
+      await fs.promises.rename(temp, target);
     } finally {
       await fs.promises.rm(temp, { force: true });
     }
+  }
+
+  async list(
+    relative: string,
+    { recursive = false }: { recursive?: boolean } = {}
+  ) {
+    const entries: StoreEntry[] = [];
+    const walk = async (dir: string, prefix: string) => {
+      let children: fs.Dirent[];
+      try {
+        children = await fs.promises.readdir(dir, { withFileTypes: true });
+      } catch (error) {
+        if (isMissing(error)) return;
+        throw error;
+      }
+      for (const child of children) {
+        if (child.name.endsWith(".tmp")) continue;
+        const childPath = path.join(dir, child.name);
+        if (child.isDirectory()) {
+          if (recursive) await walk(childPath, `${prefix}${child.name}/`);
+        } else {
+          const stat = await fs.promises.stat(childPath);
+          entries.push({
+            path: `${prefix}${child.name}`,
+            sizeBytes: stat.size,
+            modifiedAt: stat.mtimeMs,
+          });
+        }
+      }
+    };
+    await walk(this.resolve(relative), "");
+    return entries;
+  }
+
+  async removeFile(relative: string) {
+    await fs.promises.rm(this.resolve(relative), { force: true });
   }
 
   async exists(relative: string) {
@@ -172,15 +214,90 @@ export class RcloneBackend implements SaveStoreBackend {
     }
   }
 
-  async writeText(
-    relative: string,
-    text: string,
-    { exclusive = false }: { exclusive?: boolean } = {}
-  ) {
-    // Remotes have no atomic create; a check first narrows the race to seconds.
-    if (exclusive && (await this.exists(relative))) return false;
+  async readTexts(relatives: string[]) {
+    const texts = new Map<string, string>();
+    if (relatives.length === 0) return texts;
+
+    // One process for all files: rclone copies the listed paths to a temp folder.
+    const temp = await fs.promises.mkdtemp(
+      path.join(os.tmpdir(), "hydra-store-read-")
+    );
+    try {
+      const listFile = path.join(temp, "files.txt");
+      const destination = path.join(temp, "out");
+      await fs.promises.writeFile(listFile, relatives.join("\n"));
+      await this.run([
+        "copy",
+        this.target("").replace(/\/$/, "") || this.remote,
+        destination,
+        "--files-from-raw",
+        listFile,
+      ]);
+      for (const relative of relatives) {
+        try {
+          texts.set(
+            relative,
+            await fs.promises.readFile(
+              path.join(destination, ...relative.split("/")),
+              "utf8"
+            )
+          );
+        } catch (error) {
+          if (!isMissing(error)) throw error;
+        }
+      }
+    } finally {
+      await fs.promises.rm(temp, { recursive: true, force: true });
+    }
+    return texts;
+  }
+
+  async writeText(relative: string, text: string) {
     await this.run(["rcat", this.target(relative)], text);
-    return true;
+  }
+
+  async list(
+    relative: string,
+    { recursive = false }: { recursive?: boolean } = {}
+  ) {
+    try {
+      const output = await this.run([
+        "lsjson",
+        "--files-only",
+        ...(recursive ? ["-R"] : []),
+        this.target(relative),
+      ]);
+      const items = JSON.parse(output || "[]") as {
+        Path: string;
+        Size: number;
+        ModTime: string;
+      }[];
+      return items.map((item) => ({
+        path: item.Path,
+        sizeBytes: item.Size,
+        modifiedAt: Date.parse(item.ModTime) || 0,
+      }));
+    } catch (error) {
+      if (
+        error instanceof RcloneError &&
+        RCLONE_NOT_FOUND.has(error.exitCode ?? -1)
+      )
+        return [];
+      throw error;
+    }
+  }
+
+  async removeFile(relative: string) {
+    try {
+      await this.run(["deletefile", this.target(relative)]);
+    } catch (error) {
+      if (
+        error instanceof RcloneError &&
+        RCLONE_NOT_FOUND.has(error.exitCode ?? -1)
+      )
+        return;
+      throw error;
+    }
   }
 
   async exists(relative: string) {

@@ -18,6 +18,7 @@ export type SettingsCategoryId =
   | "compatibility"
   | "library_folders"
   | "save_import"
+  | "cloud"
   | "optiscaler"
   | "launch_rules"
   | "account_privacy"
@@ -44,6 +45,7 @@ const isSettingsCategoryId = (value: string): value is SettingsCategoryId => {
     "compatibility",
     "library_folders",
     "save_import",
+    "cloud",
     "optiscaler",
     "launch_rules",
     "account_privacy",

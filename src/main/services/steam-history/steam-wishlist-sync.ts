@@ -21,6 +21,7 @@ import {
   markIntegrationFailed,
   markIntegrationSynced,
 } from "../integration-status";
+import { queueCloudLibrarySync } from "../cloud-library-sync";
 import { queueFloppySync } from "../floppy";
 import { updateGameRecord } from "../game-record-updater";
 import { libraryWriteQueue } from "../library-sync/library-write-queue";
@@ -83,6 +84,7 @@ const listUpcomingGame = async (entry: SteamWishlistEntry) => {
     if (existing.isDeleted || existing.wishlisted) return false;
     await updateGameRecord(key, { wishlisted: true });
     queueFloppySync("steam", entry.appId, "wishlist");
+    queueCloudLibrarySync();
     return false;
   }
 
@@ -122,7 +124,10 @@ const listUpcomingGame = async (entry: SteamWishlistEntry) => {
     return true;
   });
 
-  if (created) queueFloppySync("steam", entry.appId, "wishlist");
+  if (created) {
+    queueFloppySync("steam", entry.appId, "wishlist");
+    queueCloudLibrarySync();
+  }
   return created;
 };
 

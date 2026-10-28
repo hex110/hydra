@@ -33,6 +33,7 @@ export const getIntegrationStatuses =
       steamHistory: status("steamHistory"),
       steamWishlist: status("steamWishlist"),
       floppy: status("floppy"),
+      cloud: status("cloud"),
     };
   };
 

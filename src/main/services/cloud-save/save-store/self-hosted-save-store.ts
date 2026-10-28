@@ -12,9 +12,21 @@ import type {
 } from "@types";
 
 import type { SaveStoreBackend } from "./backends";
+import {
+  blobPath,
+  devicePath,
+  gameDir,
+  parseSnapshotId,
+  parseVersionFileName,
+  pickVersionFile,
+  ROOT,
+  snapshotIdFor,
+  versionFileName,
+} from "./layout.js";
 
-const ROOT = "hydra-plus-saves/v1";
-// Older versions stay as history; their blobs are kept too.
+export { blobPath } from "./layout.js";
+
+// Older versions stay as history until a cleanup prunes them.
 const PENDING_TTL_MS = 60 * 60_000;
 
 /** Raised when another device committed the version this one meant to write. */
@@ -38,42 +50,11 @@ interface StoredSnapshot {
   files: SnapshotFile[];
 }
 
-interface StoredHead {
-  version: number;
-  createdAt: string;
-}
-
 interface PendingSnapshot {
   request: PrepareSnapshotRequest;
   uploads: Pick<SnapshotFile, "hash" | "sizeBytes">[];
   createdAt: number;
 }
-
-const encode = (value: string) => Buffer.from(value).toString("base64url");
-
-/**
- * Snapshot ids carry the game, so a restore needs no extra lookup. Only
- * letters, digits and dashes: restore uses the id as a folder name.
- */
-const snapshotIdFor = (shop: GameShop, objectId: string) =>
-  `hp1-${shop}-${Buffer.from(objectId).toString("hex")}`;
-
-const parseSnapshotId = (snapshotId: string) => {
-  const [prefix, shop, objectId] = snapshotId.split("-");
-  if (prefix !== "hp1" || !shop || !objectId) {
-    throw new Error(`Unknown self-hosted snapshot id ${snapshotId}`);
-  }
-  return {
-    shop: shop as GameShop,
-    objectId: Buffer.from(objectId, "hex").toString(),
-  };
-};
-
-const gameDir = (shop: GameShop, objectId: string) =>
-  `${ROOT}/games/${shop}/${encode(objectId)}`;
-
-export const blobPath = (hash: string, sizeBytes: number) =>
-  `${ROOT}/blobs/${hash.slice(0, 2)}/${hash}-${sizeBytes}`;
 
 const blobKey = (file: Pick<SnapshotFile, "hash" | "sizeBytes">) =>
   `${file.hash}:${file.sizeBytes}`;
@@ -85,22 +66,52 @@ const parseJson = <T>(text: string | null): T | null =>
  * Hydra Cloud's snapshot model on storage the user owns: one active snapshot
  * per game whose version number guards against two devices overwriting each
  * other, and files stored once by content hash.
+ *
+ * Remotes have no atomic "create only if absent", so a commit never relies on
+ * one: each device writes its own file for a version, then lists the folder.
+ * Whoever sees another device's file for the same version backs out, and since
+ * a write always precedes its own listing, two devices cannot both succeed.
  */
 export class SelfHostedSaveStore {
   private readonly pending = new Map<string, PendingSnapshot>();
 
-  constructor(private readonly backend: SaveStoreBackend) {}
+  constructor(
+    readonly backend: SaveStoreBackend,
+    readonly deviceId: string
+  ) {}
+
+  private versionsDir(shop: GameShop, objectId: string) {
+    return `${gameDir(shop, objectId)}/versions`;
+  }
+
+  /** Version number to the names of the files written for it. */
+  private async listVersions(shop: GameShop, objectId: string) {
+    const versions = new Map<number, string[]>();
+    for (const entry of await this.backend.list(
+      this.versionsDir(shop, objectId)
+    )) {
+      const parsed = parseVersionFileName(entry.path);
+      if (!parsed) continue;
+      versions.set(parsed.version, [
+        ...(versions.get(parsed.version) ?? []),
+        entry.path,
+      ]);
+    }
+    return versions;
+  }
 
   private async readHead(shop: GameShop, objectId: string) {
-    return parseJson<StoredHead>(
-      await this.backend.readText(`${gameDir(shop, objectId)}/head.json`)
-    );
+    const versions = await this.listVersions(shop, objectId);
+    const version = Math.max(0, ...versions.keys());
+    return version === 0 ? null : { version, names: versions.get(version)! };
   }
 
   private async readVersion(shop: GameShop, objectId: string, version: number) {
+    const names = (await this.listVersions(shop, objectId)).get(version);
+    if (!names?.length) return null;
     return parseJson<StoredSnapshot>(
       await this.backend.readText(
-        `${gameDir(shop, objectId)}/versions/${version}.json`
+        `${this.versionsDir(shop, objectId)}/${pickVersionFile(names)}`
       )
     );
   }
@@ -112,14 +123,18 @@ export class SelfHostedSaveStore {
     const head = await this.readHead(shop, objectId);
     if (!head) return [];
 
-    const stored = await this.readVersion(shop, objectId, head.version);
+    const stored = parseJson<StoredSnapshot>(
+      await this.backend.readText(
+        `${this.versionsDir(shop, objectId)}/${pickVersionFile(head.names)}`
+      )
+    );
     if (!stored) return [];
 
     return [
       {
         id: stored.snapshot.id,
         version: stored.snapshot.version,
-        createdAt: head.createdAt,
+        createdAt: stored.createdAt,
         updatedAt: stored.updatedAt,
         fileCount: stored.fileCount,
         totalSizeBytes: stored.totalSizeBytes,
@@ -202,6 +217,10 @@ export class SelfHostedSaveStore {
 
     const { request } = pending;
     const head = await this.readHead(request.shop, request.objectId);
+    if ((head?.version ?? 0) !== request.baseVersion) {
+      throw new SaveStoreConflictError();
+    }
+
     const version = request.baseVersion + 1;
     const now = new Date().toISOString();
     const stored: StoredSnapshot = {
@@ -226,23 +245,19 @@ export class SelfHostedSaveStore {
       files: request.files,
     };
 
-    const dir = gameDir(request.shop, request.objectId);
-    const written = await this.backend.writeText(
-      `${dir}/versions/${version}.json`,
-      JSON.stringify(stored),
-      { exclusive: true }
-    );
-    if (!written || (head?.version ?? 0) !== request.baseVersion) {
+    const dir = this.versionsDir(request.shop, request.objectId);
+    const ownName = versionFileName(version, this.deviceId);
+    await this.backend.writeText(`${dir}/${ownName}`, JSON.stringify(stored));
+
+    const rivals = (
+      (await this.listVersions(request.shop, request.objectId)).get(version) ??
+      []
+    ).filter((name) => name !== ownName);
+    if (rivals.length > 0) {
+      await this.backend.removeFile(`${dir}/${ownName}`);
       throw new SaveStoreConflictError();
     }
 
-    await this.backend.writeText(
-      `${dir}/head.json`,
-      JSON.stringify({
-        version,
-        createdAt: head?.createdAt ?? now,
-      } satisfies StoredHead)
-    );
     this.pending.delete(pendingSnapshotId);
 
     return {
@@ -279,6 +294,33 @@ export class SelfHostedSaveStore {
 
   async deleteGame(objectId: string, shop: GameShop) {
     await this.backend.removeDir(gameDir(shop, objectId));
+  }
+
+  /** Each device writes only its own file, so syncing state needs no locking. */
+  async writeDeviceState(state: unknown) {
+    await this.backend.writeText(
+      devicePath(this.deviceId),
+      JSON.stringify(state)
+    );
+  }
+
+  /** Every device's state file, this one included. */
+  async readDeviceStates<T>(): Promise<T[]> {
+    const names = (await this.backend.list(`${ROOT}/devices`)).map(
+      (entry) => entry.path
+    );
+    const texts = await this.backend.readTexts(
+      names.map((name) => `${ROOT}/devices/${name}`)
+    );
+    const states: T[] = [];
+    for (const text of texts.values()) {
+      try {
+        states.push(JSON.parse(text) as T);
+      } catch {
+        // A half-written or foreign file: skip it, the next sync rewrites its own.
+      }
+    }
+    return states;
   }
 
   /** Writes, reads back and removes a probe file. */

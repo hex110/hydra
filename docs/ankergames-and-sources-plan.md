@@ -72,6 +72,8 @@ was passed by hand in Zen, outside Hydra.
 - **Verify in browser** (2026-10-26) still needs its end-to-end check against
   a blocked source; the Electron fingerprint finding above suggests it may
   fail for Turnstile-protected sources too.
-- Later: "Trending / Latest on AnkerGames" rows on the catalogue page from the
-  home page; showing an AnkerGames version newer than the installed one as an
+- Later: showing an AnkerGames version newer than the installed one as an
   update.
+
+"Trending / New on AnkerGames" rows on the catalogue page are done (2026-10-28);
+see [AnkerGames](features/ankergames.md#catalogue-rows).

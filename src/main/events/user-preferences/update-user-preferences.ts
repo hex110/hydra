@@ -1,6 +1,7 @@
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { registerEvent } from "../register-event";
 import path from "node:path";
+import { queueCloudLibrarySync } from "@main/services/cloud-library-sync";
 import { configureSaveStore } from "@main/services/cloud-save/save-store";
 
 import type { Game, UserPreferences } from "@types";
@@ -158,7 +159,9 @@ const updateUserPreferences = async (
   Wine.syncUserPreferences(updatedPreferences);
   if (preferences.saveStore !== undefined) {
     configureSaveStore(updatedPreferences.saveStore);
+    queueCloudLibrarySync();
   }
+  if (preferences.saveStoreSyncLibrary === true) queueCloudLibrarySync();
 
   await updateAchievementSouvenirPreference(preferences);
 

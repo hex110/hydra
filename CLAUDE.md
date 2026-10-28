@@ -12,6 +12,31 @@ named exports, …):
 
 @.cursorrules
 
+## UI consistency
+
+The UI is being reworked page by page. These rules keep it one app, not a
+collection of cards. The game page is the reference; check new work against it.
+
+- **One home per fact.** Before adding UI, find the fact's row in the ownership
+  table in `docs/features/game-page.md`. A fact is shown in one place; a second
+  place (a summary elsewhere) must link to the first, not repeat it. A new fact
+  gets a row in the same change.
+- **Build from `src/renderer/src/components/`.** Right-hand sidebar content is a
+  `SidebarSection`. No native `<select>`, checkbox or other form control, and no
+  new card or section chrome in a feature folder. If a primitive is missing
+  (e.g. an interactive rating), add it to `components/` first, then use it.
+- **No raw colours or sizes in feature SCSS.** No hex or `rgba()` literals
+  except inside `globals.scss`; repeated values become tokens there. Use
+  `$spacing-unit` multiples and the font-size tokens.
+- **Animation:** use `opacity` and `transform` only, and gate it behind
+  `prefers-reduced-motion`. Don't animate inside `backdrop-filter` or
+  `overflow: hidden` panels with anything that can leave stale paint on Linux.
+- **Before you finish a UI change**, ask: where does this live, does the fact
+  already appear elsewhere, is there an empty and a loading state, is the text
+  translated.
+- **Verify visually.** Run the sandboxed dev instance (see Dev testing) and look
+  at the page, at a narrow and a wide window.
+
 ## Release
 
 Bump `package.json` to `X.Y.Z-plus.N`, push tag `vX.Y.Z-plus.N`;

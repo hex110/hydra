@@ -57,6 +57,11 @@
     }
   }
 
+  &__update {
+    color: globals.$brand-teal;
+    border-color: rgba(globals.$brand-teal, 0.5);
+  }
+
   &__play {
     position: relative;
     display: flex;

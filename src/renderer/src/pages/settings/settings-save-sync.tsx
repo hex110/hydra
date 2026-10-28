@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileDirectoryIcon, SyncIcon } from "@primer/octicons-react";
 import { Button, SelectField, TextField } from "@renderer/components";
@@ -9,11 +9,18 @@ import type { SaveStoreConfig } from "@types";
 import { SettingsIntegrationCard } from "./settings-integration-card";
 
 import "./settings-tracking.scss";
+import "./settings-cloud.scss";
 
 type TargetKind = SaveStoreConfig["kind"];
 
+interface SettingsSaveSyncProps {
+  onOpenR2Guide: () => void;
+}
+
 /** Self-hosted save sync: a folder or an rclone remote instead of Hydra Cloud. */
-export function SettingsSaveSync() {
+export function SettingsSaveSync({
+  onOpenR2Guide,
+}: Readonly<SettingsSaveSyncProps>) {
   const { t } = useTranslation("settings");
   const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
@@ -27,12 +34,16 @@ export function SettingsSaveSync() {
   const [isBusy, setIsBusy] = useState(false);
   const [rcloneAvailable, setRcloneAvailable] = useState<boolean | null>(null);
 
-  useEffect(() => {
+  const checkRclone = useCallback(() => {
     window.electron
       .isRcloneAvailable()
       .then(setRcloneAvailable)
       .catch(() => setRcloneAvailable(false));
   }, []);
+
+  useEffect(() => {
+    checkRclone();
+  }, [checkRclone]);
 
   const config: SaveStoreConfig =
     kind === "folder"
@@ -64,6 +75,19 @@ export function SettingsSaveSync() {
     }
   };
 
+  const testConnection = async () => {
+    if (!saveStore) return;
+    setIsBusy(true);
+    try {
+      await window.electron.testSaveStore(saveStore);
+      showSuccessToast(t("cloud_test_ok"));
+    } catch {
+      showErrorToast(t("save_sync_test_failed"));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const turnOff = async () => {
     await updateUserPreferences({ saveStore: null });
     showSuccessToast(t("save_sync_disabled"));
@@ -71,15 +95,26 @@ export function SettingsSaveSync() {
 
   return (
     <SettingsIntegrationCard
-      title={t("save_sync_title")}
+      title={t("cloud_storage_title")}
       logo={<SyncIcon />}
       status={saveStore ? t("save_sync_on") : t("save_sync_off")}
       statusTone={saveStore ? "success" : "neutral"}
       actions={
         saveStore ? (
-          <Button theme="danger" onClick={() => void turnOff()}>
-            {t("save_sync_turn_off")}
-          </Button>
+          <>
+            {saveStore.kind === "rclone" && (
+              <Button
+                theme="outline"
+                disabled={isBusy}
+                onClick={() => void testConnection()}
+              >
+                {t("cloud_test_connection")}
+              </Button>
+            )}
+            <Button theme="danger" onClick={() => void turnOff()}>
+              {t("save_sync_turn_off")}
+            </Button>
+          </>
         ) : (
           <Button disabled={!canTurnOn} onClick={() => void turnOn()}>
             {t("save_sync_turn_on")}
@@ -117,7 +152,7 @@ export function SettingsSaveSync() {
               {
                 key: "rclone",
                 value: "rclone",
-                label: t("save_sync_target_rclone"),
+                label: t("cloud_target_rclone_option"),
               },
             ]}
             onChange={(event) => setKind(event.target.value as TargetKind)}
@@ -143,11 +178,31 @@ export function SettingsSaveSync() {
                 hint={t("save_sync_rclone_hint")}
                 onChange={(event) => setRemote(event.target.value)}
               />
-              {rcloneAvailable === false && (
+              {rcloneAvailable === false ? (
                 <p className="settings-integration-card__message settings-tracking__error">
-                  {t("save_sync_rclone_missing")}
+                  {t("save_sync_rclone_missing")}{" "}
+                  <button
+                    type="button"
+                    className="settings-cloud__link"
+                    onClick={checkRclone}
+                  >
+                    {t("cloud_rclone_check_again")}
+                  </button>
                 </p>
+              ) : (
+                rcloneAvailable && (
+                  <p className="settings-integration-card__description">
+                    {t("cloud_rclone_found")}
+                  </p>
+                )
               )}
+              <button
+                type="button"
+                className="settings-cloud__link"
+                onClick={onOpenR2Guide}
+              >
+                {t("cloud_r2_guide_link")}
+              </button>
             </>
           )}
         </div>

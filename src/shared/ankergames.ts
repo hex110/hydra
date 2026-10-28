@@ -22,7 +22,18 @@ export interface AnkerGamesGamePage {
   version: string | null;
   fileSize: string | null;
   modifiedAt: string | null;
+  /** The game's Steam app id, which is how it is found in the catalogue. */
+  steamAppId: string | null;
   downloads: AnkerGamesDownloadRow[];
+}
+
+export interface AnkerGamesFeedEntry {
+  slug: string;
+  name: string;
+  /** The release shown on the game's card; the trending chart has none. */
+  version: string | null;
+  /** The game's place on the weekly trending chart. */
+  rank: number | null;
 }
 
 export const ankerGamesPageUri = (slug: string) =>
@@ -130,8 +141,81 @@ export const parseGamePage = (html: string): AnkerGamesGamePage | null => {
     version: asText(game.softwareVersion),
     fileSize: asText(game.fileSize),
     modifiedAt: asText(game.dateModified),
+    steamAppId: parseSteamAppId(html),
     downloads: parseDownloadRows(html),
   };
+};
+
+/** The page embeds its game data as HTML-escaped JSON in a component attribute. */
+const parseSteamAppId = (html: string) =>
+  /steam_app_id(?:&quot;|")\s*:\s*(?:&quot;|")(\d+)/.exec(html)?.[1] ?? null;
+
+/** The "Latest Games" row of the home page, newest first. */
+export const parseLatestGames = (html: string): AnkerGamesFeedEntry[] => {
+  const start = html.search(/<h2[^>]*>\s*Latest Games\s*<\/h2>/);
+  if (start === -1) return [];
+  const next = html.indexOf("<h2", start + 1);
+  const section = html.slice(start, next === -1 ? undefined : next);
+
+  const entries: AnkerGamesFeedEntry[] = [];
+  const seen = new Set<string>();
+  for (const [card] of section.matchAll(/<article\b[\s\S]*?<\/article>/g)) {
+    const href = /href="([^"]*\/game\/[^"]+)"/.exec(card)?.[1];
+    const slug = href ? parseAnkerGamesPageUri(decodeEntities(href)) : null;
+    const name = /<h3[^>]*\stitle="([^"]+)"/.exec(card)?.[1];
+    if (!slug || !name || seen.has(slug)) continue;
+    seen.add(slug);
+    const version = /<span[^>]*tabular-nums[^>]*\stitle="([^"]*)"/.exec(
+      card
+    )?.[1];
+    entries.push({
+      slug,
+      name: decodeEntities(name).trim(),
+      version: version ? decodeEntities(version).trim() || null : null,
+      rank: null,
+    });
+  }
+  return entries;
+};
+
+/**
+ * The weekly "Trending" chart, best first: the No. 1 card (`tw-throne`) and
+ * a `tw-row` per other game, each with this week's place in `<span class="to">`.
+ */
+export const parseTrendingChart = (html: string): AnkerGamesFeedEntry[] => {
+  const entries: AnkerGamesFeedEntry[] = [];
+
+  const throne = /<a\b[^>]*class="tw-throne"[^>]*>[\s\S]*?<\/a>/.exec(
+    html
+  )?.[0];
+  if (throne) {
+    const entry = parseChartCard(throne, 1);
+    if (entry) entries.push(entry);
+  }
+
+  for (const [row] of html.matchAll(
+    /<a\b[^>]*class="tw-row[^"]*"[^>]*>[\s\S]*?<\/a>/g
+  )) {
+    const rank = /<span class="to">\s*(\d+)\s*<\/span>/.exec(row)?.[1];
+    const entry = rank ? parseChartCard(row, Number(rank)) : null;
+    if (entry) entries.push(entry);
+  }
+
+  const seen = new Set<string>();
+  return entries
+    .filter((entry) => !seen.has(entry.slug) && seen.add(entry.slug))
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+};
+
+const parseChartCard = (
+  card: string,
+  rank: number
+): AnkerGamesFeedEntry | null => {
+  const href = /href="([^"]*\/game\/[^"]+)"/.exec(card)?.[1];
+  const slug = href ? parseAnkerGamesPageUri(decodeEntities(href)) : null;
+  const name = /<h3[^>]*>\s*([^<]*?)\s*(?:<|$)/.exec(card)?.[1];
+  if (!slug || !name) return null;
+  return { slug, name: decodeEntities(name), version: null, rank };
 };
 
 const EXTRA_ROW = /\b(online[ -]?fix|fix|patch|crack|update|dlc)\b/i;

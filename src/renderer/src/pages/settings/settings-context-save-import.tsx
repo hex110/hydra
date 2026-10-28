@@ -12,7 +12,6 @@ import type {
 } from "@types";
 
 import { SettingsSaveBackups } from "./settings-save-backups";
-import { SettingsSaveSync } from "./settings-save-sync";
 import "./settings-save-import.scss";
 
 const SAVE_IMPORT_MODES: SaveImportMode[] = ["ask", "automatic", "never"];
@@ -105,12 +104,6 @@ export function SettingsContextSaveImport() {
 
   return (
     <div className="settings-context-panel settings-save-import">
-      <div className="settings-context-panel__group">
-        <SettingsSaveSync />
-      </div>
-
-      <hr className="settings-context-panel__divider" />
-
       <div className="settings-context-panel__group">
         <p className="settings-save-import__muted">
           {t("save_import_description")}

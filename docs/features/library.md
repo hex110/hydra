@@ -29,7 +29,7 @@ becomes All.
 
 Each game can be marked **Playing**, **Backlog**, **Finished** or
 **Dropped**, from the right-click menu (**Play status**), the selection bar,
-the details pane, or the **Your game** card on the game page. The status shows as a badge on library cards
+the details pane, or the **Your game** section in the game page sidebar. The status shows as a badge on library cards
 (a coloured dot on narrow cards), and is hidden together with the playtime
 badge by **Hide the playtime badge on library cards**.
 
@@ -104,7 +104,7 @@ or selects it in the details pane when that is open. The home page's
 ## Notes
 
 A free text field per game, in the details pane and on the game page's
-**Your game** card, saved as you type. Notes are stored with the game record
+**Your game** sidebar section, saved as you type. Notes are stored with the game record
 on this machine; for a game with several copies they are written to each.
 
 ## Statistics

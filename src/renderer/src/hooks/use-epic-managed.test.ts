@@ -2157,7 +2157,6 @@ describe("Epic managed UI lifecycle", () => {
                 : null,
           },
           "./hero-panel-actions.scss": {},
-          "./game-more-menu": { GameMoreMenu: () => null },
           "./play-status-menu": { PlayStatusMenu: () => null },
         }
       ).HeroPanelActions as React.FunctionComponent;

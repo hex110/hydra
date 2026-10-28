@@ -1027,6 +1027,10 @@ contextBridge.exposeInMainWorld("electron", {
   testSaveStore: (config: SaveStoreConfig) =>
     ipcRenderer.invoke("testSaveStore", config),
   isRcloneAvailable: () => ipcRenderer.invoke("isRcloneAvailable"),
+  getSaveStoreUsage: () => ipcRenderer.invoke("getSaveStoreUsage"),
+  cleanUpSaveStore: () => ipcRenderer.invoke("cleanUpSaveStore"),
+  listSyncDevices: () => ipcRenderer.invoke("listSyncDevices"),
+  syncCloudLibraryNow: () => ipcRenderer.invoke("syncCloudLibraryNow"),
   testSteamGridDbApiKey: (apiKey: string) =>
     ipcRenderer.invoke("testSteamGridDbApiKey", apiKey),
   retryBackgroundTask: (id: BackgroundTaskKind) =>
@@ -1157,6 +1161,13 @@ contextBridge.exposeInMainWorld("electron", {
   refreshAnkerGames: () => ipcRenderer.invoke("refreshAnkerGames"),
   getAnkerGamesBrowserDownloadsPath: () =>
     ipcRenderer.invoke("getAnkerGamesBrowserDownloadsPath"),
+  getAnkerGamesFeed: () => ipcRenderer.invoke("getAnkerGamesFeed"),
+  onAnkerGamesFeedUpdated: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on("on-ankergames-feed-updated", listener);
+    return () =>
+      ipcRenderer.removeListener("on-ankergames-feed-updated", listener);
+  },
   onAnkerGamesBrowserOpened: (cb: (title: string) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, title: string) =>
       cb(title);
@@ -2439,6 +2450,8 @@ contextBridge.exposeInMainWorld("electron", {
   prefetchFriends: () => ipcRenderer.invoke("prefetchFriends"),
   getGameNews: (steamAppIds: string[], countPerApp?: number) =>
     ipcRenderer.invoke("getGameNews", steamAppIds, countPerApp),
+  getGameReception: (steamAppId: string) =>
+    ipcRenderer.invoke("getGameReception", steamAppId),
   getCatalogueRowDetails: (
     games: { shop: GameShop; objectId: string; title: string }[]
   ) => ipcRenderer.invoke("getCatalogueRowDetails", games),

@@ -18,6 +18,7 @@ import {
   ShieldCheckIcon,
 } from "@primer/octicons-react";
 import {
+  CloudUpload,
   FolderSearch,
   FolderSync,
   Gamepad2,
@@ -36,6 +37,7 @@ import { SettingsContextOptiScaler } from "./settings-context-optiscaler";
 import { SettingsContextLaunchRules } from "./settings-context-launch-rules";
 import { SettingsContextLibraryFolders } from "./settings-context-library-folders";
 import { SettingsContextSaveImport } from "./settings-context-save-import";
+import { SettingsContextCloud } from "./settings-context-cloud";
 import { SettingsContextBigPicture } from "./settings-context-big-picture";
 import { SettingsContextEmulation } from "./emulation/settings-context-emulation";
 
@@ -95,6 +97,11 @@ export default function Settings() {
         id: "save_import" as const,
         label: t("save_import"),
         icon: <FolderSync size={16} />,
+      },
+      {
+        id: "cloud" as const,
+        label: t("cloud"),
+        icon: <CloudUpload size={16} />,
       },
       {
         id: "optiscaler" as const,
@@ -173,6 +180,10 @@ export default function Settings() {
 
             if (selectedCategoryId === "save_import") {
               return <SettingsContextSaveImport />;
+            }
+
+            if (selectedCategoryId === "cloud") {
+              return <SettingsContextCloud />;
             }
 
             if (selectedCategoryId === "optiscaler") {

@@ -12,11 +12,13 @@ const durationTranslation: Record<string, string> = {
 export interface HowLongToBeatSectionProps {
   howLongToBeatData: HowLongToBeatCategory[] | null;
   isLoading: boolean;
+  gameTitle: string;
 }
 
 export function HowLongToBeatSection({
   howLongToBeatData,
   isLoading,
+  gameTitle,
 }: HowLongToBeatSectionProps) {
   const { t } = useTranslation("game_details");
 
@@ -30,7 +32,11 @@ export function HowLongToBeatSection({
 
   return (
     <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
-      <SidebarSection title="HowLongToBeat">
+      <SidebarSection
+        title="HowLongToBeat"
+        subtitle={t("open_on_howlongtobeat")}
+        subtitleHref={`https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`}
+      >
         <ul className="how-long-to-beat__categories-list">
           {howLongToBeatData
             ? howLongToBeatData.map((category) => (

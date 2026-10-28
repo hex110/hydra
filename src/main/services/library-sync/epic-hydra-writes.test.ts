@@ -225,6 +225,7 @@ function fixture() {
         "@main/constants": { INTERVALS: { processWatcher: 1000 } },
         "./launched-game-pids": { launchedGamePids: new Map() },
         "./floppy": { queueFloppySync: () => {} },
+        "./cloud-library-sync": { queueCloudLibrarySync: () => {} },
         "../../shared/imported-games": importedGames,
         "./cloud-save": {
           getCloudSaveAutomaticSyncMode: async () =>

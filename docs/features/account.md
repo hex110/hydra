@@ -17,6 +17,21 @@ While signed out none of these show: no sign-in prompts, no Hydra Cloud
 offers (the checkout page is not even loaded), no reviews section, no points
 panel, and the Epic and RetroAchievements cards are hidden.
 
+## Hydra Cloud is not the account
+
+A Hydra account does not switch Hydra Cloud on. Cloud features show only when
+saves can actually sync: a [save sync](save-sync.md) location is set, or the
+account has a Hydra Cloud subscription. Otherwise there is no cloud tab in a
+game's options, no save widget on the game page, no "will not be synced"
+notices, no locked points or souvenir rows, no VikingFile entry in the
+download dialog and no locked emulator-save section. Nothing opens a sign-in
+window or the checkout from those places; subscribing stays in **Settings →
+Integrations → Hydra services → Hydra account**. The check is
+`useCloudSaveAccess()`.
+
+Not covered: the profile pages (reached only with an account) still show
+their own subscription prompts.
+
 ## Signing in and out
 
 **Settings → Integrations → Hydra services → Hydra account** signs in, opens
@@ -34,6 +49,8 @@ profile (and points) needs an account.
 
 ## Code
 
+- `useCloudSaveAccess()` (`"open"` / `"paywall"` / `"sign-in"`) gates the save
+  widget, the game options cloud tabs and the save manager.
 - `useSubscription().showHydraCloudModal` does nothing signed out, and the
   Hydra Cloud modal is only mounted signed in (`app.tsx`).
 - Achievement metadata is requested with `needsAuth: false`

@@ -15,17 +15,22 @@ export function SidebarSection({
   subtitleHref,
   children,
 }: SidebarSectionProps) {
-  const content = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(true);
-  const [height, setHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
 
+  // Follows the content as it reflows (window resize, wrapping text, async data).
   useEffect(() => {
-    if (content.current && content.current.scrollHeight !== height) {
-      setHeight(isOpen ? content.current.scrollHeight : 0);
-    } else if (!isOpen) {
-      setHeight(0);
-    }
-  }, [isOpen, children, height]);
+    const element = inner.current;
+    if (!element) return;
+
+    const measure = () => setContentHeight(element.scrollHeight);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="sidebar-section">
@@ -60,11 +65,10 @@ export function SidebarSection({
       </div>
 
       <div
-        ref={content}
         className="sidebar-section__content"
-        style={{ maxHeight: `${height}px` }}
+        style={{ maxHeight: `${isOpen ? contentHeight : 0}px` }}
       >
-        {children}
+        <div ref={inner}>{children}</div>
       </div>
     </div>
   );

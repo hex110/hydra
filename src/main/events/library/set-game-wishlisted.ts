@@ -1,51 +1,13 @@
-import {
-  downloadsSublevel,
-  gamesShopAssetsSublevel,
-  gamesSublevel,
-  levelKeys,
-} from "@main/level";
+import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { queueFloppySync } from "@main/services/floppy";
-import { libraryWriteQueue } from "@main/services/library-sync/library-write-queue";
+import { queueCloudLibrarySync } from "@main/services/cloud-library-sync";
+import { createWishlistOnlyRecord } from "@main/services/library-sync/create-wishlist-only-record";
 import { WindowManager } from "@main/services/window-manager";
 import { isWishlistOnly } from "@shared";
 import type { GameShop } from "@types";
 
 import { registerEvent } from "../register-event";
-
-/** Remembers a wish for a game that is not in the library, without adding it. */
-const createWishlistOnlyRecord = async (
-  shop: GameShop,
-  objectId: string,
-  title: string,
-  platform: string | null
-) => {
-  const gameKey = levelKeys.game(shop, objectId);
-  const assets = await gamesShopAssetsSublevel.get(gameKey).catch(() => null);
-
-  await libraryWriteQueue.run(async () => {
-    const existing = await gamesSublevel.get(gameKey).catch(() => null);
-
-    await gamesSublevel.put(gameKey, {
-      ...(existing ?? {
-        title,
-        iconUrl: assets?.iconUrl ?? null,
-        libraryHeroImageUrl: assets?.libraryHeroImageUrl ?? null,
-        logoImageUrl: assets?.logoImageUrl ?? null,
-        objectId,
-        shop,
-        remoteId: null,
-        playTimeInMilliseconds: 0,
-        lastTimePlayed: null,
-        platform,
-      }),
-      isDeleted: false,
-      addedToLibraryAt: null,
-      source: "hydra",
-      wishlisted: true,
-    });
-  });
-};
 
 const setGameWishlisted = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -74,6 +36,7 @@ const setGameWishlisted = async (
 
   WindowManager.sendToAppWindows("on-library-batch-complete");
   queueFloppySync(shop, objectId, "wishlist");
+  queueCloudLibrarySync();
 };
 
 registerEvent("setGameWishlisted", setGameWishlisted);

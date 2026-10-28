@@ -21,6 +21,7 @@ import { Wine } from "./wine";
 import { NativeAddon } from "./native-addon";
 import { emulatorSessions } from "./emulators/emulator-session-tracker";
 import { launchedGamePids } from "./launched-game-pids";
+import { queueCloudLibrarySync } from "./cloud-library-sync";
 import { queueFloppySync } from "./floppy";
 import {
   IMPORT_FLAGS_CLEARED,
@@ -717,6 +718,7 @@ const onCloseGame = (game: Game) => {
 
   void persistGamePlaytime(gameKey, updatedGame, authContext, delta);
   queueFloppySync(game.shop, game.objectId, "playtime");
+  queueCloudLibrarySync();
 
   if (game.shop === "custom") return;
 

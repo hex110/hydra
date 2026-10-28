@@ -55,6 +55,7 @@ export * from "./wishlist";
 export * from "./install-space";
 export * from "./local-collections";
 export * from "./steam-news";
+export * from "./steam-reception";
 export * from "./catalogue-row-details";
 export * from "./official-store-options";
 export * from "./download-directories";

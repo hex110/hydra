@@ -7,6 +7,7 @@ import {
   PlusCircleIcon,
   StarFillIcon,
   StarIcon,
+  SyncIcon,
 } from "@primer/octicons-react";
 import { Button, ConfirmationModal, Modal } from "@renderer/components";
 import type { LibraryGame } from "@types";
@@ -17,34 +18,30 @@ import {
 } from "@renderer/helpers/epic-managed-error";
 import cn from "classnames";
 import { XCircle } from "lucide-react";
-import {
-  useDownload,
-  useLibrary,
-  useToast,
-  useUserDetails,
-} from "@renderer/hooks";
+import { useDownload, useLibrary, useToast } from "@renderer/hooks";
 import { useCallback, useContext, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { gameDetailsContext } from "@renderer/context";
 import {
+  buildGameDetailsPath,
   canDownloadOnSteam,
   handleClassicsLaunchError,
 } from "@renderer/helpers";
 import { DiscSelectionModal } from "../modals/disc-selection-modal";
 import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-modal";
 
-import { GameMoreMenu } from "./game-more-menu";
 import { useLaunchPhase } from "./use-launch-phase";
 import { formatSessionLength, useSessionEnd } from "../use-session-end";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
-  applyLibraryGroupAction,
   getDisplayedPlayTimeInMilliseconds,
   isLibraryGameDownloading,
   isWishlistOnly,
   getOfficialStoreMembers,
+  formatReleaseVersion,
+  parseReleaseVersion,
 } from "@shared";
 
 export function HeroPanelActions() {
@@ -52,7 +49,6 @@ export function HeroPanelActions() {
     useState(false);
 
   const { isGameDeleting } = useDownload();
-  const { userDetails } = useUserDetails();
 
   const {
     game,
@@ -95,13 +91,6 @@ export function HeroPanelActions() {
   const officialMembers = getOfficialStoreMembers(
     presentation?.members ?? (game ? [game] : [])
   );
-  const steamAppId =
-    officialMembers.steam?.objectId ??
-    (game?.catalogueGame?.shop === "steam"
-      ? game.catalogueGame.objectId
-      : shop === "steam"
-        ? (objectId ?? null)
-        : null);
   const [pendingClassicsLaunch, setPendingClassicsLaunch] = useState<{
     discPath: string | undefined;
   } | null>(null);
@@ -246,73 +235,6 @@ export function HeroPanelActions() {
     } finally {
       updateLibrary();
       updateGame();
-      setToggleLibraryGameDisabled(false);
-    }
-  };
-
-  const toggleGameWishlisted = async () => {
-    if (!game) return;
-    const members = presentation?.members ?? [game];
-    const wishlisted = members.some((member) => member.wishlisted);
-
-    try {
-      await applyLibraryGroupAction(members, (member) =>
-        window.electron.setGameWishlisted(
-          member.shop,
-          member.objectId,
-          !wishlisted
-        )
-      );
-    } catch {
-      showErrorToast(t("failed_update_wishlist", { ns: "library" }));
-    } finally {
-      await Promise.all([updateLibrary(), updateGame()]);
-    }
-  };
-
-  const toggleGameFavorite = async () => {
-    setToggleLibraryGameDisabled(true);
-
-    try {
-      if (!game) return;
-      const favorite = presentation?.favorite ?? game.favorite;
-      await applyLibraryGroupAction(
-        presentation?.members ?? [game],
-        (member) =>
-          favorite
-            ? window.electron.removeGameFromFavorites(
-                member.shop,
-                member.objectId
-              )
-            : window.electron.addGameToFavorites(member.shop, member.objectId)
-      );
-      showSuccessToast(
-        t(favorite ? "game_removed_from_favorites" : "game_added_to_favorites")
-      );
-    } catch {
-      showErrorToast(t("failed_update_favorites"));
-    } finally {
-      await Promise.all([updateLibrary(), updateGame()]);
-      setToggleLibraryGameDisabled(false);
-    }
-  };
-
-  const toggleGamePinned = async () => {
-    setToggleLibraryGameDisabled(true);
-
-    try {
-      if (!game) return;
-      const pinned = presentation?.isPinned ?? game.isPinned;
-      await applyLibraryGroupAction(presentation?.members ?? [game], (member) =>
-        window.electron.toggleGamePin(member.shop, member.objectId, !pinned)
-      );
-      showSuccessToast(
-        t(pinned ? "game_removed_from_pinned" : "game_added_to_pinned")
-      );
-    } catch {
-      showErrorToast(t("failed_update_pinned"));
-    } finally {
-      await Promise.all([updateLibrary(), updateGame()]);
       setToggleLibraryGameDisabled(false);
     }
   };
@@ -656,12 +578,15 @@ export function HeroPanelActions() {
         {addGameToLibraryButton}
         {addToWishlistButton}
         {showDownloadOptionsButton}
-        <GameMoreMenu title={gameTitle} steamAppId={steamAppId} />
       </>
     );
   }
 
   if (game && isInLibrary) {
+    const availableUpdate = (presentation?.members ?? [game]).find(
+      (member) => member.availableUpdate
+    )?.availableUpdate;
+
     return (
       <div className="hero-panel-actions__container">
         <EpicCloudSaveConflictModal
@@ -698,6 +623,26 @@ export function HeroPanelActions() {
             )}
           </div>
         </Modal>
+        {availableUpdate && (
+          <Button
+            theme="outline"
+            className="hero-panel-actions__action hero-panel-actions__update"
+            title={availableUpdate.release.title}
+            onClick={() =>
+              navigate(
+                buildGameDetailsPath(presentation ?? game, { update: "1" })
+              )
+            }
+          >
+            <SyncIcon size={14} />
+            {t("update_to_version", {
+              version:
+                formatReleaseVersion(
+                  parseReleaseVersion(availableUpdate.release.title)
+                ) ?? availableUpdate.release.title,
+            })}
+          </Button>
+        )}
         {gameActionButton()}
         <div className="hero-panel-actions__separator" />
         <Button
@@ -712,22 +657,6 @@ export function HeroPanelActions() {
           <GearIcon />
           {t("options")}
         </Button>
-
-        <GameMoreMenu
-          title={game.title}
-          steamAppId={steamAppId}
-          favorite={presentation?.favorite ?? game.favorite}
-          pinned={presentation?.isPinned ?? game.isPinned}
-          wishlisted={(presentation?.members ?? [game]).some(
-            (member) => member.wishlisted
-          )}
-          onToggleWishlisted={toggleGameWishlisted}
-          onToggleFavorite={toggleGameFavorite}
-          onTogglePinned={
-            userDetails && game.shop !== "custom" ? toggleGamePinned : undefined
-          }
-          disabled={deleting}
-        />
 
         {game.shop === "launchbox" && (
           <DiscSelectionModal

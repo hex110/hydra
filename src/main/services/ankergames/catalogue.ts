@@ -31,6 +31,11 @@ interface CachedCatalogue {
   entries: AnkerGamesSitemapEntry[];
 }
 
+interface GetPageOptions {
+  fresh?: boolean;
+  lane?: "downloads" | "feed";
+}
+
 interface CachedPage {
   fetchedAt: number;
   /** null when the page could not be read. */
@@ -88,6 +93,8 @@ export class AnkerGamesCatalogue {
   private static pages: Record<string, CachedPage> | null = null;
   private static refreshing: Promise<void> | null = null;
   private static pageRequests: Promise<unknown> = Promise.resolve();
+  /** The home feed reads its pages in a lane of its own, so it never holds up a download lookup. */
+  private static feedPageRequests: Promise<unknown> = Promise.resolve();
   private static lastError: string | null = null;
 
   public static async isEnabled() {
@@ -173,19 +180,22 @@ export class AnkerGamesCatalogue {
     );
   }
 
-  /** A game page's details, from cache when fresh. One request at a time. */
+  /** A game page's details, from cache when fresh. One request at a time per lane. */
   public static async getPage(
     slug: string,
-    { fresh = false } = {}
+    { fresh = false, lane = "downloads" }: GetPageOptions = {}
   ): Promise<AnkerGamesGamePage | null> {
     this.pages ??= (await readJson(getPagesPath())) ?? {};
     const cached = this.pages[slug];
-    if (cached && !fresh) {
+    // Copies saved before the Steam app id was read lack the field.
+    const readable = !cached?.page || cached.page.steamAppId !== undefined;
+    if (cached && readable && !fresh) {
       const ttl = cached.page ? PAGE_TTL_MS : FAILED_PAGE_TTL_MS;
       if (Date.now() - cached.fetchedAt < ttl) return cached.page;
     }
 
-    const request = this.pageRequests.then(async () => {
+    const queue = lane === "feed" ? this.feedPageRequests : this.pageRequests;
+    const request = queue.then(async () => {
       try {
         const page = parseGamePage(await fetchText(ankerGamesPageUri(slug)));
         await this.savePage(slug, { fetchedAt: Date.now(), page });
@@ -203,7 +213,8 @@ export class AnkerGamesCatalogue {
         await sleep(PAGE_REQUEST_GAP_MS);
       }
     });
-    this.pageRequests = request.catch(() => null);
+    if (lane === "feed") this.feedPageRequests = request.catch(() => null);
+    else this.pageRequests = request.catch(() => null);
     return request;
   }
 

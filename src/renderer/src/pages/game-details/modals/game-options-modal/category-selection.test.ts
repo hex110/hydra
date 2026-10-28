@@ -159,6 +159,13 @@ describe("game options category selection", () => {
       ),
       ["epic_cloud"]
     );
+    assert.deepEqual(
+      getCloudGameSettingsCategories(
+        { ...availability, cloudSaveAccessAction: "paywall" },
+        "archive"
+      ),
+      ["epic_cloud"]
+    );
   });
 
   it("returns to General when the Epic category is no longer available", () => {

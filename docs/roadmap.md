@@ -164,6 +164,12 @@ in the sections below.
     Shipped: [Hydra account](features/account.md),
     [Save sync](features/save-sync.md).
 
+    Also shipped with the save store: a Cloud settings tab with a Cloudflare R2
+    guide, playtime, status and wishlist sync between devices
+    ([Library sync](features/save-sync.md#library-sync)), a commit protocol
+    that needs no atomic create on rclone, and storage retention and cleanup
+    ([Storage](features/save-sync.md#storage)).
+
 12. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
@@ -265,9 +271,9 @@ replacement are deleted (the upstream Steam integration).
 
 ### Follow-ups
 
-Not scheduled: delete unreferenced save blobs; a history view of older save
-versions (they are kept); emulator memory-card cloud saves
-(`emulation-cloud-saves.ts`) still use Hydra Cloud only.
+Not scheduled: a history view of older save versions (the newest few are
+kept, see [Storage](features/save-sync.md#storage)); emulator memory-card
+cloud saves (`emulation-cloud-saves.ts`) still use Hydra Cloud only.
 
 ## Design and QoL
 

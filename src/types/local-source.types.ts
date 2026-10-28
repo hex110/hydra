@@ -22,3 +22,24 @@ export interface AnkerGamesStatus {
   fetchedAt: string | null;
   error: string | null;
 }
+
+/** A game from AnkerGames' latest or trending lists, found in the catalogue by its Steam app id. */
+export interface AnkerGamesFeedGame {
+  shop: "steam";
+  objectId: string;
+  title: string;
+  libraryImageUrl: string;
+  /** The release AnkerGames has, e.g. "V 1.0.23.3". Latest games only. */
+  version: string | null;
+  /** The place on AnkerGames' weekly trending chart. Trending games only. */
+  rank: number | null;
+}
+
+/** AnkerGames' trending and latest rows, as of the last daily read. */
+export interface AnkerGamesFeed {
+  enabled: boolean;
+  /** When the home page was last read successfully. */
+  fetchedAt: string | null;
+  trending: AnkerGamesFeedGame[];
+  latest: AnkerGamesFeedGame[];
+}

@@ -41,10 +41,10 @@
   }
 }
 
+// Opacity only: a transform inside this blurred, clipped panel can leave stale paint.
 @keyframes playtime-rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
 }
 

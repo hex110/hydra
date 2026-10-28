@@ -11,7 +11,6 @@ import { Modal } from "@renderer/components";
 import {
   formatBytes,
   GAMEMODE_SITE_URL,
-  getCloudSaveAccessAction,
   getGameExecutableFilters,
   getGameCatalogueIdentity,
   applyLibraryGroupAction,
@@ -32,6 +31,7 @@ import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
 import { DeleteGameModal } from "@renderer/pages/downloads/delete-game-modal";
 import {
   useAppSelector,
+  useCloudSaveAccess,
   useDownload,
   useGameCollections,
   useIsNonSteamExecutable,
@@ -40,7 +40,6 @@ import {
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
-import { useSubscription } from "@renderer/hooks/use-subscription";
 import { useGameLinuxCompatibility } from "@renderer/hooks/use-game-linux-compatibility";
 import { RemoveGameFromLibraryModal } from "./remove-from-library-modal";
 import { ResetAchievementsModal } from "./reset-achievements-modal";
@@ -262,15 +261,10 @@ export function GameOptionsModal({
     useDownload();
   const { userDetails, hasActiveSubscription } = useUserDetails();
   const { artifacts } = useContext(cloudSyncContext);
-  const { showHydraCloudModal } = useSubscription();
   const hasSelfHostedStore = useAppSelector((state) =>
     Boolean(state.userPreferences.value?.saveStore)
   );
-  const cloudSaveAccessAction = getCloudSaveAccessAction(
-    Boolean(userDetails),
-    hasActiveSubscription,
-    hasSelfHostedStore
-  );
+  const cloudSaveAccessAction = useCloudSaveAccess();
   const cloudSaveSettings = getCloudSaveVisibility(
     game.shop,
     game.platform
@@ -279,6 +273,7 @@ export function GameOptionsModal({
   // Legacy backups live on Hydra's servers; save sync does not replace them.
   const showLegacyCloudSaveSettings =
     Boolean(userDetails) &&
+    hasActiveSubscription &&
     isLegacyCloudSaveSettingsAvailable(
       cloudSaveSettings,
       hasActiveSubscription,
@@ -1076,17 +1071,6 @@ export function GameOptionsModal({
     });
 
     setSelectedCategory(availableCategory);
-
-    const isRequestedCloudCategoryAvailable =
-      (category === "hydra_cloud" && showCloudSaveV2Settings) ||
-      (category === "hydra_cloud_legacy" && showLegacyCloudSaveSettings);
-
-    if (
-      isRequestedCloudCategoryAvailable &&
-      cloudSaveAccessAction === "paywall"
-    ) {
-      showHydraCloudModal("backup");
-    }
   }, [
     cloudSaveAccessAction,
     initialCategory,
@@ -1094,7 +1078,6 @@ export function GameOptionsModal({
     showCloudSaveV2Settings,
     showLegacyCloudSaveSettings,
     showEpicCloudSettings,
-    showHydraCloudModal,
     visible,
   ]);
 
@@ -1132,9 +1115,6 @@ export function GameOptionsModal({
       (category === "hydra_cloud" || category === "hydra_cloud_legacy") &&
       cloudSaveAccessAction !== "open"
     ) {
-      if (cloudSaveAccessAction === "paywall") {
-        showHydraCloudModal("backup");
-      }
       return;
     }
     setSelectedCategory(category);

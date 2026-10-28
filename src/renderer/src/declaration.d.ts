@@ -3,6 +3,7 @@ import type {
   CatalogueRowDetails,
   Downloader,
   GameNewsItem,
+  GameReception,
 } from "@shared";
 import type {
   GameSetupStatusEvent,
@@ -16,7 +17,10 @@ import type {
   IntegrationName,
   IntegrationStatuses,
   LibraryImportSource,
+  SaveStoreCleanupResult,
   SaveStoreConfig,
+  SaveStoreDevice,
+  SaveStoreUsage,
   FloppyPullResult,
   FloppySearchResult,
   SteamGameHistory,
@@ -36,6 +40,7 @@ import type {
   GameOptiScalerStatus,
   OptiScalerBulkProgress,
   LocalSourceStatus,
+  AnkerGamesFeed,
   AnkerGamesStatus,
   OptiScalerOverview,
   OptiScalerProxyDll,
@@ -442,6 +447,10 @@ declare global {
     dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     testSaveStore: (config: SaveStoreConfig) => Promise<void>;
     isRcloneAvailable: () => Promise<boolean>;
+    getSaveStoreUsage: () => Promise<SaveStoreUsage>;
+    cleanUpSaveStore: () => Promise<SaveStoreCleanupResult>;
+    listSyncDevices: () => Promise<SaveStoreDevice[]>;
+    syncCloudLibraryNow: () => Promise<void>;
     testSteamGridDbApiKey: (apiKey: string) => Promise<void>;
     retryBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     getIntegrationStatuses: () => Promise<IntegrationStatuses>;
@@ -564,6 +573,8 @@ declare global {
     getAnkerGamesStatus: () => Promise<AnkerGamesStatus>;
     refreshAnkerGames: () => Promise<void>;
     getAnkerGamesBrowserDownloadsPath: () => Promise<string>;
+    getAnkerGamesFeed: () => Promise<AnkerGamesFeed>;
+    onAnkerGamesFeedUpdated: (cb: () => void) => () => Electron.IpcRenderer;
     onAnkerGamesBrowserOpened: (
       cb: (title: string) => void
     ) => () => Electron.IpcRenderer;
@@ -1735,6 +1746,7 @@ declare global {
       steamAppIds: string[],
       countPerApp?: number
     ) => Promise<GameNewsItem[]>;
+    getGameReception: (steamAppId: string) => Promise<GameReception | null>;
     getCatalogueRowDetails: (
       games: { shop: GameShop; objectId: string; title: string }[]
     ) => Promise<Record<string, CatalogueRowDetails>>;

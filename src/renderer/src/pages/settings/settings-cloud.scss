@@ -1,0 +1,117 @@
+@use "../../scss/globals.scss";
+
+.settings-cloud {
+  &__muted {
+    margin: 0;
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+    line-height: 1.5;
+  }
+
+  &__link {
+    align-self: flex-start;
+    color: globals.$brand-teal;
+    font-size: globals.$small-font-size;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__devices {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      flex-direction: column;
+      gap: calc(globals.$spacing-unit / 4);
+    }
+  }
+
+  &__guide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 2);
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+
+    h4 {
+      margin: 0 0 calc(globals.$spacing-unit / 2);
+    }
+  }
+
+  &__facts {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin: 0;
+    padding-left: calc(globals.$spacing-unit * 2);
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    line-height: 1.5;
+  }
+
+  &__steps {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    max-height: 60vh;
+    overflow-y: auto;
+
+    li {
+      display: flex;
+      flex-direction: column;
+      gap: globals.$spacing-unit;
+      counter-increment: step;
+    }
+
+    h4 {
+      margin: 0;
+
+      &::before {
+        content: counter(step) ". ";
+      }
+    }
+
+    p {
+      margin: 0;
+      color: globals.$body-color;
+      font-size: globals.$small-font-size;
+      line-height: 1.5;
+    }
+  }
+
+  &__code {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+    padding: globals.$spacing-unit;
+    border-radius: 4px;
+    background-color: globals.$dark-background-color;
+
+    pre {
+      margin: 0;
+      overflow-x: auto;
+      font-size: globals.$small-font-size;
+    }
+  }
+
+  &__warning {
+    margin: calc(globals.$spacing-unit * 2) 0 0;
+    color: globals.$warning-color;
+    font-size: globals.$small-font-size;
+  }
+}

@@ -16,6 +16,8 @@ import { setFilters } from "@renderer/features";
 import { logger } from "@renderer/logger";
 import { CatalogueCategory, groupLibraryGames } from "@shared";
 import type {
+  AnkerGamesFeed,
+  AnkerGamesFeedGame,
   CatalogueSearchResult,
   DownloadSource,
   GameShop,
@@ -59,6 +61,15 @@ const toFrontPageGame = (
   libraryImageUrl: game.libraryImageUrl,
   reason,
 });
+
+const fromAnkerGames = (
+  game: AnkerGamesFeedGame,
+  rankLabel: (rank: number) => string
+): FrontPageGame =>
+  toFrontPageGame(
+    game,
+    game.rank === null ? (game.version ?? undefined) : rankLabel(game.rank)
+  );
 
 function Capsule({ game }: Readonly<{ game: FrontPageGame }>) {
   const navigate = useNavigate();
@@ -198,8 +209,9 @@ function DiscoveryQueue({
 }
 
 /**
- * What the catalogue shows before a search: featured games, suggestions from
- * your play history, new releases on your sources, genres and a queue.
+ * What the catalogue shows before a search: featured games, what is new and
+ * trending on AnkerGames, suggestions from your play history, new releases on
+ * your sources, genres and a queue.
  */
 export function CatalogueFrontPage({
   downloadSources,
@@ -227,6 +239,29 @@ export function CatalogueFrontPage({
     cachedShelves?.newReleases ?? []
   );
   const [isLoading, setIsLoading] = useState(!cachedShelves);
+  const [ankerGames, setAnkerGames] = useState<AnkerGamesFeed | null>(null);
+
+  // The main process reads AnkerGames' home page once a day and says when a
+  // new copy is ready, which can be after the catalogue is already open.
+  useEffect(() => {
+    let current = true;
+    const load = () =>
+      window.electron
+        .getAnkerGamesFeed()
+        .then((feed) => {
+          if (current) setAnkerGames(feed);
+        })
+        .catch((error) =>
+          logger.error("Failed to load the AnkerGames rows", error)
+        );
+
+    void load();
+    const unsubscribe = window.electron.onAnkerGamesFeedUpdated(load);
+    return () => {
+      current = false;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const cached = shelvesCache.get(sourcesKey);
@@ -316,6 +351,13 @@ export function CatalogueFrontPage({
       .filter((game) => !ownedKeys.has(catalogueKey(game)))
       .slice(0, SHELF_SIZE);
 
+  const ankerGamesRow = (games: AnkerGamesFeedGame[] = []) =>
+    notOwned(
+      games.map((game) =>
+        fromAnkerGames(game, (rank) => t("ankergames_rank", { rank }))
+      )
+    );
+
   const recommended = useMemo(
     () =>
       suggestions.map(({ game, becauseOf }) =>
@@ -375,6 +417,16 @@ export function CatalogueFrontPage({
         title={t("featured")}
         games={notOwned(featured)}
         isLoading={isLoading}
+      />
+      <Shelf
+        title={t("ankergames_new")}
+        games={ankerGamesRow(ankerGames?.latest)}
+        isLoading={ankerGames === null}
+      />
+      <Shelf
+        title={t("ankergames_trending")}
+        games={ankerGamesRow(ankerGames?.trending)}
+        isLoading={ankerGames === null}
       />
       <Shelf
         title={t("recommended_for_you")}

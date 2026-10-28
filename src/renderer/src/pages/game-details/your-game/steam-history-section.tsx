@@ -20,7 +20,7 @@ export function SteamHistorySection({
     .sort((a, b) => (b.unlockTime ?? 0) - (a.unlockTime ?? 0));
 
   return (
-    <div className="your-stuff__list">
+    <div className="your-game__list">
       <h3>{t("steam_history_title")}</h3>
       <ul>
         <li>
@@ -39,20 +39,12 @@ export function SteamHistorySection({
             <span>{formatDateTime(history.lastPlayedAt * 1000)}</span>
           </li>
         )}
-        {achievements.length > 0 && (
-          <li>
-            <span>{t("steam_history_achievements")}</span>
-            <span>
-              {unlocked.length} / {achievements.length}
-            </span>
-          </li>
-        )}
       </ul>
 
       {unlocked.length > 0 && (
         <details>
           <summary>{t("steam_history_unlock_dates")}</summary>
-          <ul className="your-stuff__achievements">
+          <ul>
             {unlocked.map((item) => (
               <li key={item.apiName}>
                 <span title={item.description ?? undefined}>

@@ -172,8 +172,14 @@ export interface Game extends LibraryCatalogueMetadata {
   mangoHud?: MangoHudSettings | null;
   favorite?: boolean;
   playStatus?: PlayStatus | null;
+  /** When the status last changed here, for save-store sync: the latest edit wins. */
+  playStatusUpdatedAt?: string;
   /** On the wishlist: notify when a download source adds the game. */
   wishlisted?: boolean;
+  /** When the wish last changed here, for save-store sync. */
+  wishlistedUpdatedAt?: string;
+  /** Playtime the user's other devices tracked, from the save store; added to this device's own. */
+  syncedPlayTimeInMilliseconds?: number;
   /**
    * Added by the Steam history import: kept off Hydra's profile uploads, shown
    * under the Steam tab.
@@ -335,6 +341,10 @@ export interface UserPreferences {
   steamGridDbApiKey?: string | null;
   /** Self-hosted save backups; when set, they replace Hydra Cloud. */
   saveStore?: SaveStoreConfig | null;
+  /** Versions kept per game in the save store; 0 keeps them all. */
+  saveStoreKeepVersions?: number;
+  /** Also sync playtime, play status and wishlist through the save store; on unless false. */
+  saveStoreSyncLibrary?: boolean;
   preferQuitInsteadOfHiding?: boolean;
   runAtStartup?: boolean;
   startMinimized?: boolean;

@@ -22,19 +22,19 @@ import { GameLogo } from "./game-logo";
 import { CloudSaveWidget } from "./cloud-save-v2";
 import { getCloudSaveVisibility } from "./cloud-save-visibility";
 import { SimilarGames } from "./similar-games/similar-games";
-import { YourStuff } from "./your-stuff/your-stuff";
 import { GameDlcAndNews } from "./dlc-and-news/game-dlc-and-news";
 
-import {
-  AuthPage,
-  getDisplayedPlayTimeInMilliseconds,
-  isWishlistOnly,
-} from "@shared";
+import { getDisplayedPlayTimeInMilliseconds, isWishlistOnly } from "@shared";
 import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
 
 import cloudIconAnimated from "@renderer/assets/icons/cloud-animated.gif";
 import tvEffectVideo from "@renderer/assets/emulation/tv-effect.mp4";
-import { useUserDetails, useLibrary, useAppSelector } from "@renderer/hooks";
+import {
+  useUserDetails,
+  useLibrary,
+  useAppSelector,
+  useCloudSaveAccess,
+} from "@renderer/hooks";
 import {
   CLASSICS_PS_PLATFORM_LABELS,
   resolveClassicsBadge,
@@ -97,7 +97,8 @@ export function GameDetailsContent() {
     setGameOptionsInitialCategory,
   } = useContext(gameDetailsContext);
 
-  const { userDetails } = useUserDetails();
+  const { userDetails, hasActiveSubscription } = useUserDetails();
+  const cloudSaveAccess = useCloudSaveAccess();
   const { library } = useLibrary();
 
   const { getGameArtifacts } = useContext(cloudSyncContext);
@@ -164,6 +165,7 @@ export function GameDetailsContent() {
       playTimeInMilliseconds: game?.playTimeInMilliseconds ?? 0,
       steamPlayTimeInMilliseconds: game?.steamPlayTimeInMilliseconds,
       epicPlayTimeInMilliseconds: game?.epicPlayTimeInMilliseconds,
+      syncedPlayTimeInMilliseconds: game?.syncedPlayTimeInMilliseconds,
     }),
     userDetailsId: userDetails?.id,
     isGameInLibrary,
@@ -214,11 +216,6 @@ export function GameDetailsContent() {
   }, [aboutTheGame]);
 
   const handleLegacyCloudSaveButtonClick = () => {
-    if (!userDetails) {
-      globalThis.window.electron.openAuthWindow(AuthPage.SignIn);
-      return;
-    }
-
     setGameOptionsInitialCategory("hydra_cloud_legacy");
     setShowGameOptionsModal(true);
   };
@@ -460,6 +457,7 @@ export function GameDetailsContent() {
 
                 {game &&
                   userDetails &&
+                  hasActiveSubscription &&
                   cloudSaveVisibility?.hero === "legacy" && (
                     <button
                       type="button"
@@ -479,7 +477,7 @@ export function GameDetailsContent() {
 
                 {game &&
                   objectId &&
-                  (userDetails || userPreferences?.saveStore) &&
+                  cloudSaveAccess === "open" &&
                   cloudSaveVisibility?.hero === "v2" && <CloudSaveWidget />}
               </div>
             </div>
@@ -500,8 +498,6 @@ export function GameDetailsContent() {
                 onLaterClick={handleReviewPromptLater}
               />
             )}
-
-            <YourStuff />
 
             <GallerySlider />
 

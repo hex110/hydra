@@ -11,16 +11,13 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
-  AuthPage,
-  getCloudSaveAccessAction,
   getCloudSaveEmulatorProvider,
   hasCloudSaveExecutableSelection,
   isCloudSaveV2Eligible,
 } from "@shared";
 import { Button, ConfirmationModal, Modal } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
-import { useAppSelector, useToast, useUserDetails } from "@renderer/hooks";
-import { useSubscription } from "@renderer/hooks/use-subscription";
+import { useCloudSaveAccess, useToast } from "@renderer/hooks";
 import type {
   CloudSaveConflictResolution,
   CloudSaveCustomPathApproval,
@@ -179,8 +176,6 @@ export function CloudSaveV2Provider({
   const { t } = useTranslation("game_details");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { userDetails, hasActiveSubscription } = useUserDetails();
-  const { showHydraCloudModal } = useSubscription();
   const { showErrorToast, showSuccessToast, showWarningToast } = useToast();
   const {
     game,
@@ -188,14 +183,7 @@ export function CloudSaveV2Provider({
     setShowGameOptionsModal,
     setGameOptionsInitialCategory,
   } = useContext(gameDetailsContext);
-  const hasSelfHostedStore = useAppSelector((state) =>
-    Boolean(state.userPreferences.value?.saveStore)
-  );
-  const cloudSaveAccessAction = getCloudSaveAccessAction(
-    Boolean(userDetails),
-    hasActiveSubscription,
-    hasSelfHostedStore
-  );
+  const cloudSaveAccessAction = useCloudSaveAccess();
   const canUseCloudSaves = cloudSaveAccessAction === "open";
   const isV2Eligible = isCloudSaveV2Eligible(shop, game?.platform);
   const isRetroArchGame =
@@ -467,14 +455,7 @@ export function CloudSaveV2Provider({
     nextSearchParams.delete("openCloudSaveConflict");
     setSearchParams(nextSearchParams, { replace: true });
 
-    if (cloudSaveAccessAction === "sign-in") {
-      window.electron.openAuthWindow(AuthPage.SignIn);
-      return;
-    }
-    if (cloudSaveAccessAction === "paywall") {
-      showHydraCloudModal("backup");
-      return;
-    }
+    if (cloudSaveAccessAction !== "open") return;
 
     setIsFileBrowserVisible(false);
     setWasOpenedFromLaunchConflict(true);
@@ -485,7 +466,6 @@ export function CloudSaveV2Provider({
     searchParams,
     setSearchParams,
     shop,
-    showHydraCloudModal,
   ]);
 
   useEffect(() => {
@@ -651,17 +631,10 @@ export function CloudSaveV2Provider({
   ]);
 
   const openManager = useCallback(() => {
-    if (cloudSaveAccessAction === "sign-in") {
-      window.electron.openAuthWindow(AuthPage.SignIn);
-      return;
-    }
-    if (cloudSaveAccessAction === "paywall") {
-      showHydraCloudModal("backup");
-      return;
-    }
+    if (cloudSaveAccessAction !== "open") return;
     setWasOpenedFromLaunchConflict(false);
     setIsModalVisible(true);
-  }, [cloudSaveAccessAction, showHydraCloudModal]);
+  }, [cloudSaveAccessAction]);
 
   const handleSelectExecutable = () => {
     setIsModalVisible(false);
@@ -809,12 +782,7 @@ export function CloudSaveV2Provider({
         throw new Error("cloud_save_retroarch_not_configured");
       }
       if (cloudSaveAccessAction !== "open") {
-        if (cloudSaveAccessAction === "sign-in") {
-          window.electron.openAuthWindow(AuthPage.SignIn);
-        } else {
-          showHydraCloudModal("backup");
-        }
-        throw new Error("Cloud Saves require an active subscription");
+        throw new Error("Cloud saves are not available");
       }
       try {
         await window.electron.setCloudSaveAutomaticSyncEnabled(
@@ -839,7 +807,6 @@ export function CloudSaveV2Provider({
       refresh,
       shop,
       showErrorToast,
-      showHydraCloudModal,
       t,
     ]
   );
@@ -1087,14 +1054,8 @@ export function CloudSaveV2Provider({
       errorMessageKey = null;
   }
   const openFileBrowser = useCallback(() => {
-    if (cloudSaveAccessAction === "open") {
-      setIsFileBrowserVisible(true);
-    } else if (cloudSaveAccessAction === "sign-in") {
-      window.electron.openAuthWindow(AuthPage.SignIn);
-    } else {
-      showHydraCloudModal("backup");
-    }
-  }, [cloudSaveAccessAction, showHydraCloudModal]);
+    if (cloudSaveAccessAction === "open") setIsFileBrowserVisible(true);
+  }, [cloudSaveAccessAction]);
   const value = useMemo<CloudSaveV2ContextValue>(
     () => ({
       overview,

@@ -37,7 +37,11 @@ export interface BackgroundTask {
 /** A library import whose entries can be removed again. */
 export type LibraryImportSource = "steam-history" | "steam-wishlist" | "floppy";
 
-export type IntegrationName = "steamHistory" | "steamWishlist" | "floppy";
+export type IntegrationName =
+  | "steamHistory"
+  | "steamWishlist"
+  | "floppy"
+  | "cloud";
 
 export interface IntegrationStatus {
   /** Epoch milliseconds of the last run that finished. */

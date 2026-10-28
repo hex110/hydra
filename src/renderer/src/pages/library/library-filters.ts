@@ -37,6 +37,7 @@ export interface LibraryFilterableGame extends LibraryCategoryGame {
   playTimeInMilliseconds?: number;
   steamPlayTimeInMilliseconds?: number;
   epicPlayTimeInMilliseconds?: number;
+  syncedPlayTimeInMilliseconds?: number;
   lastTimePlayed?: Date | string | null;
   members?: LibraryFilterableGame[];
 }
@@ -232,7 +233,8 @@ export const getLibraryGenres = (games: LibraryFilterableGame[]): string[] =>
 const getTotalPlayTime = (game: LibraryFilterableGame) =>
   (game.playTimeInMilliseconds ?? 0) +
   (game.steamPlayTimeInMilliseconds ?? 0) +
-  (game.epicPlayTimeInMilliseconds ?? 0);
+  (game.epicPlayTimeInMilliseconds ?? 0) +
+  (game.syncedPlayTimeInMilliseconds ?? 0);
 
 const inAnyRange = (
   value: number | null | undefined,

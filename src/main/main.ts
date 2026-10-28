@@ -39,7 +39,11 @@ import { isDebridPendingError } from "./services/download/debrid-files";
 import { GofileApi } from "./services/hosters";
 import { clearLegacyAchievementPersistence } from "./level/clear-legacy-achievements";
 import { startFloppyPullSchedule } from "./services/floppy";
-import { loadSaveStoreConfig } from "./services/cloud-save/save-store";
+import {
+  loadSaveStoreConfig,
+  startSaveStoreMaintenance,
+} from "./services/cloud-save/save-store";
+import { startCloudLibrarySchedule } from "./services/cloud-library-sync";
 import {
   startSteamHistorySchedule,
   startSteamWishlistSchedule,
@@ -50,6 +54,7 @@ import { migrateGameVisibilityFields } from "./services/library-sync/game-visibi
 import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migration";
 import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
+import { AnkerGamesHomeFeed } from "@main/services/ankergames";
 import { AppLauncherEntries } from "./services/app-launcher-entries";
 import { GameUpdates } from "./services/game-updates";
 import { ProtonManager } from "./services/proton-manager";
@@ -136,6 +141,8 @@ export const loadState = async () => {
 
   void watchSteamLibraries();
   await loadSaveStoreConfig();
+  startCloudLibrarySchedule();
+  startSaveStoreMaintenance();
   startFloppyPullSchedule();
   startSteamHistorySchedule();
   startSteamWishlistSchedule();
@@ -153,6 +160,7 @@ export const loadState = async () => {
     void syncDownloadSourcesFromApi();
 
     void LocalSources.refreshAll().then(() => GameUpdates.checkAllIfEnabled());
+    void AnkerGamesHomeFeed.refreshIfNewDay();
 
     if (userPreferences?.scanLibraryOnStartup) {
       void import("./events/library/scan-installed-games").then(

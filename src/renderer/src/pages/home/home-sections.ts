@@ -9,6 +9,7 @@ export interface HomeGame {
   playTimeInMilliseconds?: number;
   steamPlayTimeInMilliseconds?: number;
   epicPlayTimeInMilliseconds?: number;
+  syncedPlayTimeInMilliseconds?: number;
   catalogueGame?: { shop: string; objectId: string };
   members?: HomeGame[];
   metadata?: { howLongToBeat: { mainStory: number | null } | null } | null;
@@ -54,7 +55,8 @@ const toTime = (value: Date | string | null | undefined) => {
 const totalPlayTime = (game: HomeGame) =>
   (game.playTimeInMilliseconds ?? 0) +
   (game.steamPlayTimeInMilliseconds ?? 0) +
-  (game.epicPlayTimeInMilliseconds ?? 0);
+  (game.epicPlayTimeInMilliseconds ?? 0) +
+  (game.syncedPlayTimeInMilliseconds ?? 0);
 
 export const gameKey = (game: { shop: string; objectId: string }) =>
   `${game.shop}:${game.objectId}`;

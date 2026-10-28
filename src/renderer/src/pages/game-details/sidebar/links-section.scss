@@ -1,0 +1,18 @@
+@use "../../../scss/globals.scss";
+
+.links-section {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  margin: 0;
+  padding: calc(globals.$spacing-unit * 2);
+  list-style: none;
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    color: globals.$muted-color;
+    font-size: globals.$body-font-size;
+  }
+}

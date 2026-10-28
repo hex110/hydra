@@ -27,6 +27,42 @@ by **List AnkerGames downloads** in **Settings → Download sources**.
   AnkerGames first unless the preferred-source order lists it elsewhere.
 - Everything here reads pages robots.txt allows; no download link is stored.
 
+## Catalogue rows
+
+The catalogue's front page has **New on AnkerGames** and **Trending on
+AnkerGames** rows, so you can see what the site added or is downloading
+without opening it. They follow **List AnkerGames downloads**: switched off,
+the rows are gone.
+
+- **New** is the "Latest Games" row of `https://ankergames.net/`, newest
+  first, with the release shown on each card (`V 1.0.23.3`).
+- **Trending** is the weekly chart at `https://ankergames.net/trending`
+  ("Trending This Week", ranked by the last seven days of downloads), best
+  first, each card showing `No. 4 this week`. The first 16 places are kept.
+  The home page's own "Trending Games" row is not used: it is mostly the
+  same games as the latest row.
+- **Read once a day.** Hydra reads both pages the first time it starts on a
+  new calendar day (local time), in the background after startup, and keeps
+  the result in `<userData>/ankergames/home.json`. Opening the catalogue
+  later the same day reads nothing. If the app stays open past midnight,
+  the next catalogue visit does the read. A read that failed, or left some
+  games unresolved, is tried again at most once an hour. A new copy reaches
+  an open catalogue by itself.
+- **Opening a game.** AnkerGames' cards carry no Steam id, so each game's
+  page is read (through the same one-a-day page cache as
+  [game lists](#game-list), in its own request lane so it never delays a
+  download lookup) for its `steam_app_id`. A card opens that Steam game's
+  normal page. Games without a Steam id (console titles such as
+  Bloodborne, Minecraft) can't be opened in Hydra and are left out, so a row
+  can show fewer games than the site does. Images and titles come from Steam
+  through Hydra's API, which is where the hashed `header.jpg` URL of newer
+  games is.
+- Games already in your library are left out, as in every catalogue row.
+
+Files: `parseLatestGames` / `parseTrendingChart` in `src/shared/ankergames.ts`,
+`src/main/services/ankergames/home-feed.ts`, `getAnkerGamesFeed` (IPC) and
+the two shelves in `catalogue-front-page.tsx`.
+
 ## Downloading
 
 AnkerGames' download page needs its Cloudflare "Verify you are human" check
@@ -71,8 +107,8 @@ Details:
 **Browser downloads folder** in the AnkerGames settings is the folder Hydra
 watches. It defaults to the system Downloads folder (XDG).
 
-Files: `src/shared/ankergames.ts` (URIs, sitemap and page parsing, archive
-matching), `src/main/services/ankergames/` (catalogue, download page,
+Files: `src/shared/ankergames.ts` (URIs, sitemap, page and home-feed parsing,
+archive matching), `src/main/services/ankergames/` (catalogue, download page,
 browser-download watcher), `start-game-download.ts`,
 `DownloadManager.getAnkerGamesDownloadOptions`, `settings-ankergames.tsx`,
 `ankergames-browser-notice.tsx`.

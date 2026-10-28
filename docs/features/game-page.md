@@ -1,5 +1,20 @@
 # Game page and interface
 
+## Where things live
+
+Each fact on the game page has one home. Anything else that mentions it is a
+summary that links there. Add a row here when a feature adds a new fact.
+
+| Fact                                                 | Lives in                                                                    |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| Playtime, last played, launch state, update chip     | Hero bar                                                                    |
+| Play status, rating, favourite, pin, wishlist, notes | **Your game** sidebar section                                               |
+| Copies and other versions in your library            | **Your game** sidebar section, only when there are any                      |
+| Achievements                                         | Sidebar summary (icon, name, description), details on the achievements page |
+| Outside ratings and player counts                    | **Reception** sidebar section (Steam games)                                 |
+| ProtonDB, How Long to Beat                           | Their own sidebar sections, each with its site link in the header           |
+| Other external links (Steam, SteamDB, PCGamingWiki)  | **Links** sidebar section                                                   |
+
 ## Options
 
 The game page's **Options** button and the **Options** entry in the
@@ -8,37 +23,56 @@ calls the menu entry "Properties".) The right-click submenu with hide, pin,
 folders and remove is called **Manage**, as on Steam, so the menu no longer
 shows two "Options" entries.
 
-## More menu
-
-The **…** button next to Options holds what used to take the most prominent
-spot beside Play, and links to the game elsewhere:
-
-- **Add to favorites** / **Remove from favorites**, **Add to wishlist** /
-  **Remove from wishlist**, and **Pin game** / **Unpin game** (signed in,
-  store games only);
-- **Open on Steam**, **SteamDB**, **ProtonDB** and **PCGamingWiki** for games
-  with a Steam app id, and **PCGamingWiki** search otherwise;
-- **Open on HowLongToBeat** (a search for the title).
-
-Games not in the library show the links only. Next to **Add to library**
-they get **Add to wishlist**, which adds the game and puts it on the
-[wishlist](library.md#wishlist), so Hydra tells you when a source adds it.
-
 ## Your game
 
-For a game in the library, a card above the screenshots keeps your own data
-apart from the store's, like Steam's "Your stuff":
+For a game in the library, the top of the right-hand sidebar keeps your own
+data apart from the store's, like Steam's "Your stuff":
 
-- **Play status** (moved here from the button row), playtime, last played,
-  and achievement progress with a bar.
-- **Installed version**, and **Update to …** when a download source has a
-  newer release ([updates](updates.md)); it opens the update.
+- **Play status** (set, change or clear) and **Your rating**, one to ten stars;
+  click the current rating again to clear it.
+- **Favorite**, **Pin** (signed in, store games only) and **Wishlist**
+  toggles; each shows filled and teal while on.
+- A **Mark as finished** offer when you have everything unlocked or have
+  played as long as the main story takes ([finished suggestion](#finished-suggestion)).
 - **Your copies**, when the game has copies from several stores or folders:
   each one's source, whether it is installed and its playtime.
 - **Other versions in your library**: games whose title is this one's plus
   more words, or the other way round ("Dark Souls" and "Dark Souls III"),
   linking to their pages.
+- [Steam history](steam-history.md) (playtime breakdown and unlock dates), when
+  imported.
 - [Notes](library.md#notes).
+
+Playtime, last played and achievements are not repeated here; they live in the
+hero bar and the achievements section. When a download source has a newer
+release ([updates](updates.md)), an **Update to …** button appears next to
+**Play** in the hero bar and opens the update.
+
+## Sidebar sections
+
+Top to bottom: **Your game**, ProtonDB (Linux), **Achievements**,
+**Reception**, genres, HowLongToBeat, controller support, requirements,
+language, **Links**.
+
+- **Achievements** lists up to four, each with icon, name and description
+  (cut to two lines); unlock dates are on the achievements page.
+- **Reception** is for Steam games and shows what players think, with no
+  account or key: Steam's review summary (label, percentage positive, number
+  of reviews), the number of players in game right now, and the Metacritic
+  score Steam lists, linking to Metacritic. A line is left out when Steam has
+  no data for it, and the whole section when it has none. Results are cached
+  for 15 minutes; the code is in `main/services/steam-reception.ts`.
+- **ProtonDB** and **HowLongToBeat** link to their site from their own
+  headers. When a site has no data for the game the section, and so its link,
+  is not shown.
+- **Links** opens Steam, SteamDB and PCGamingWiki for games with a Steam app
+  id, and a PCGamingWiki search otherwise. The page has no "More" menu any
+  more; favorite, pin and wishlist moved to **Your game**.
+
+Games not in the library show the same sidebar without **Your game**; next to
+**Add to library** they get **Add to wishlist**, which adds the game and puts
+it on the [wishlist](library.md#wishlist), so Hydra tells you when a source
+adds it.
 
 ## DLC and news
 
@@ -133,8 +167,7 @@ When a game that was running closes while its page is open, the page marks it
 for a few seconds: **Play** comes back with a pop and a ripple ring, a
 `+42m` chip appears beside it once Hydra has recorded the session
 (sessions under a minute show no chip), the "Played for / Last played" lines
-rise in with a teal flash, and the **Your game** box glows while **Playtime**
-counts up to its new value and **Last played** updates. The logic is in
+rise in with a teal flash. The logic is in
 `pages/game-details/use-session-end.ts`.
 
 ## Middle-click autoscroll

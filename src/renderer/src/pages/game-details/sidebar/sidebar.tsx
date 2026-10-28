@@ -7,28 +7,18 @@ import type {
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components/button/button";
 import { Link } from "@renderer/components/link/link";
-import { StarRating } from "@renderer/components/star-rating/star-rating";
 
 import { gameDetailsContext } from "@renderer/context";
-import {
-  useAppSelector,
-  useDate,
-  useFormat,
-  useUserDetails,
-} from "@renderer/hooks";
-import {
-  AlertIcon,
-  DownloadIcon,
-  PeopleIcon,
-  StarIcon,
-} from "@primer/octicons-react";
+import { useAppSelector } from "@renderer/hooks";
 import { HowLongToBeatSection } from "./how-long-to-beat-section";
 import { LaunchboxDetailsSection } from "./launchbox-details-section";
 import { GenresSection } from "./genres-section";
-import { getGenreNames } from "@shared";
+import { LinksSection } from "./links-section";
+import { ReceptionSection } from "./reception-section";
+import { YourGameSection } from "../your-game/your-game-section";
+import { getGenreNames, getOfficialStoreMembers } from "@shared";
 import { SidebarSection } from "../sidebar-section/sidebar-section";
 import { buildGameAchievementPath } from "@renderer/helpers";
-import { useSubscription } from "@renderer/hooks/use-subscription";
 import { RetroAchievementsConnectBanner } from "@renderer/components/retro-achievements-connect-banner/retro-achievements-connect-banner";
 import "./sidebar.scss";
 import { GameLanguageSection } from "./game-language-section";
@@ -85,7 +75,6 @@ export function Sidebar() {
     data: ProtonDBData | null;
   }>({ isLoading: shouldShowProtonFeatures, data: null });
 
-  const { userDetails, hasActiveSubscription } = useUserDetails();
   const [activeRequirement, setActiveRequirement] =
     useState<keyof SteamAppDetails["pc_requirements"]>("minimum");
 
@@ -95,10 +84,14 @@ export function Sidebar() {
     objectId,
     shop,
     catalogueGame,
-    stats,
     achievements,
     game,
+    presentation,
   } = useContext(gameDetailsContext);
+  const steamAppId =
+    getOfficialStoreMembers(presentation?.members ?? (game ? [game] : [])).steam
+      ?.objectId ??
+    (catalogueGame.shop === "steam" ? catalogueGame.objectId : null);
   const genres = game?.customGenres?.length
     ? game.customGenres
     : getGenreNames(shopDetails?.genres);
@@ -106,10 +99,7 @@ export function Sidebar() {
     (state) => state.userPreferences.value
   );
 
-  const { showHydraCloudModal } = useSubscription();
   const { t } = useTranslation("game_details");
-  const { formatDateTime } = useDate();
-  const { numberFormatter } = useFormat();
   const achievementsCount = achievements?.length ?? 0;
   const shouldRenderAchievementsSection =
     achievementsCount > 0 ||
@@ -165,6 +155,8 @@ export function Sidebar() {
 
   return (
     <aside className="content-sidebar">
+      <YourGameSection />
+
       {shouldShowProtonFeatures && (
         <Suspense fallback={null}>
           <ProtonDBSection
@@ -190,17 +182,6 @@ export function Sidebar() {
           <ul className="list">
             <RetroAchievementsConnectBanner />
 
-            {userDetails && !hasActiveSubscription && achievementsCount > 0 && (
-              <button
-                type="button"
-                className="subscription-required-button"
-                onClick={() => showHydraCloudModal("achievements")}
-              >
-                <AlertIcon size={14} />
-                <span>{t("achievements_not_sync")}</span>
-              </button>
-            )}
-
             {(achievements ?? []).slice(0, 4).map((achievement) => (
               <li key={achievement.displayName}>
                 <Link
@@ -219,12 +200,13 @@ export function Sidebar() {
                     src={achievement.icon}
                     alt={achievement.displayName}
                   />
-                  <div>
+                  <div className="list__item-text">
                     <p>{achievement.displayName}</p>
-                    <small>
-                      {achievement.unlockTime != null &&
-                        formatDateTime(achievement.unlockTime)}
-                    </small>
+                    {achievement.description && (
+                      <small className="list__item-description">
+                        {achievement.description}
+                      </small>
+                    )}
                   </div>
                 </Link>
               </li>
@@ -245,42 +227,7 @@ export function Sidebar() {
         </SidebarSection>
       )}
 
-      {stats && (
-        <SidebarSection title={t("stats")}>
-          <div className="stats__section">
-            <div className="stats__category">
-              <p className="stats__category-title">
-                <DownloadIcon size={18} />
-                {t("download_count")}
-              </p>
-              <p>{numberFormatter.format(stats?.downloadCount)}</p>
-            </div>
-
-            <div className="stats__category">
-              <p className="stats__category-title">
-                <PeopleIcon size={18} />
-                {t("player_count")}
-              </p>
-              <p>{numberFormatter.format(stats?.playerCount)}</p>
-            </div>
-
-            <div className="stats__category">
-              <p className="stats__category-title">
-                <StarIcon size={18} />
-                {t("rating_count")}
-              </p>
-              <StarRating
-                rating={
-                  stats?.averageScore === 0
-                    ? null
-                    : (stats?.averageScore ?? null)
-                }
-                size={16}
-              />
-            </div>
-          </div>
-        </SidebarSection>
-      )}
+      <ReceptionSection steamAppId={steamAppId} />
 
       {shop === "launchbox" && (
         <LaunchboxDetailsSection
@@ -295,6 +242,7 @@ export function Sidebar() {
       <HowLongToBeatSection
         howLongToBeatData={howLongToBeat.data}
         isLoading={howLongToBeat.isLoading}
+        gameTitle={gameTitle}
       />
 
       <ControllerSupportSection />
@@ -335,6 +283,8 @@ export function Sidebar() {
       )}
 
       <GameLanguageSection />
+
+      <LinksSection title={gameTitle} steamAppId={steamAppId} />
     </aside>
   );
 }

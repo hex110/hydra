@@ -25,7 +25,6 @@ import {
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
-import { useSubscription } from "@renderer/hooks/use-subscription";
 import {
   DownloadError,
   Downloader,
@@ -363,7 +362,6 @@ export function DownloadSettingsModal({
 
   const { isFeatureEnabled, Feature } = useFeature();
   const { hasActiveSubscription } = useUserDetails();
-  const { showHydraCloudModal } = useSubscription();
 
   const selectedUri = useMemo(() => {
     if (!repack || selectedDownloader === null) return null;
@@ -456,6 +454,10 @@ export function DownloadSettingsModal({
       .filter((downloader) => {
         if (downloader === Downloader.Hydra) return false; // Temporarily comment out Nimbus
         if (!downloaderMap.has(downloader)) return false;
+        // Needs a Hydra Cloud subscription; nothing to show without one.
+        if (downloader === Downloader.VikingFile && !hasActiveSubscription) {
+          return false;
+        }
         if (
           downloader === Downloader.Premiumize &&
           !isFeatureEnabled(Feature.Premiumize)
@@ -485,8 +487,6 @@ export function DownloadSettingsModal({
           isConfigured = !!userPreferences?.allDebridApiToken;
         } else if (downloader === Downloader.TorBox) {
           isConfigured = !!userPreferences?.torBoxApiToken;
-        } else if (downloader === Downloader.VikingFile) {
-          isConfigured = hasActiveSubscription;
         }
         // } else if (downloader === Downloader.Hydra) {
         //   isConfigured = isFeatureEnabled(Feature.Nimbus);
@@ -1477,11 +1477,7 @@ export function DownloadSettingsModal({
                       <span
                         className={`download-settings-modal__availability-indicator download-settings-modal__availability-indicator--warning`}
                         data-tooltip-id={tooltipId}
-                        data-tooltip-content={
-                          option.downloader === Downloader.VikingFile
-                            ? t("downloader_requires_hydra_cloud")
-                            : t("downloader_not_configured")
-                        }
+                        data-tooltip-content={t("downloader_not_configured")}
                       />
                     );
                   }
@@ -1524,19 +1520,6 @@ export function DownloadSettingsModal({
                     );
                   }
 
-                  if (
-                    option.downloader === Downloader.VikingFile &&
-                    option.isAvailableButNotConfigured
-                  ) {
-                    return (
-                      <div className="download-settings-modal__recommendation-badge">
-                        <span className="download-settings-modal__hydra-cloud-badge">
-                          Hydra Cloud
-                        </span>
-                      </div>
-                    );
-                  }
-
                   return null;
                 };
 
@@ -1567,11 +1550,6 @@ export function DownloadSettingsModal({
                           option.isAvailableButNotConfigured
                         ) {
                           setShowRealDebridModal(true);
-                        } else if (
-                          option.downloader === Downloader.VikingFile &&
-                          option.isAvailableButNotConfigured
-                        ) {
-                          showHydraCloudModal("vikingfile");
                         } else {
                           setSelectedDownloader(option.downloader);
                         }

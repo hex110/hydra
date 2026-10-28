@@ -34,6 +34,7 @@ export function HeroPanelPlaytime() {
           playTimeInMilliseconds: game.playTimeInMilliseconds || 0,
           steamPlayTimeInMilliseconds: game.steamPlayTimeInMilliseconds,
           epicPlayTimeInMilliseconds: game.epicPlayTimeInMilliseconds,
+          syncedPlayTimeInMilliseconds: game.syncedPlayTimeInMilliseconds,
         })
       : 0,
     isGameRunning
@@ -59,6 +60,7 @@ export function HeroPanelPlaytime() {
       playTimeInMilliseconds: game?.playTimeInMilliseconds || 0,
       steamPlayTimeInMilliseconds: game?.steamPlayTimeInMilliseconds,
       epicPlayTimeInMilliseconds: game?.epicPlayTimeInMilliseconds,
+      syncedPlayTimeInMilliseconds: game?.syncedPlayTimeInMilliseconds,
     });
     const seconds = milliseconds / 1000;
     const minutes = seconds / 60;
@@ -75,6 +77,7 @@ export function HeroPanelPlaytime() {
     game?.playTimeInMilliseconds,
     game?.steamPlayTimeInMilliseconds,
     game?.epicPlayTimeInMilliseconds,
+    game?.syncedPlayTimeInMilliseconds,
     numberFormatter,
     t,
   ]);
@@ -85,6 +88,7 @@ export function HeroPanelPlaytime() {
     playTimeInMilliseconds: game.playTimeInMilliseconds || 0,
     steamPlayTimeInMilliseconds: game.steamPlayTimeInMilliseconds,
     epicPlayTimeInMilliseconds: game.epicPlayTimeInMilliseconds,
+    syncedPlayTimeInMilliseconds: game.syncedPlayTimeInMilliseconds,
   });
 
   const hasDownload =

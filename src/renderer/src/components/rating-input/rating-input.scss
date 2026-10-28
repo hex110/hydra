@@ -1,0 +1,49 @@
+@use "../../scss/globals.scss";
+
+.rating-input {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1px;
+
+  &__star {
+    display: inline-flex;
+    padding: 2px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: globals.$body-color;
+    opacity: 0.55;
+    cursor: pointer;
+    transition:
+      opacity ease 0.15s,
+      color ease 0.15s;
+
+    &--active {
+      color: globals.$warning-color;
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 1px solid globals.$brand-teal;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: globals.$disabled-opacity;
+    }
+  }
+
+  &__value {
+    margin-left: globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    color: globals.$muted-color;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-input__star {
+    transition: none;
+  }
+}

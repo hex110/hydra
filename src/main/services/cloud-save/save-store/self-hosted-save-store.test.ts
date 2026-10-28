@@ -17,6 +17,7 @@ import {
   SaveStoreConflictError,
   SelfHostedSaveStore,
 } from "./self-hosted-save-store.ts";
+import { cleanUpSaveStore, scanSaveStore } from "./store-maintenance.ts";
 
 const VARIANT = "a".repeat(64);
 
@@ -74,7 +75,10 @@ const suite = (name: string, makeBackend: (root: string) => SaveStoreBackend) =>
     const setup = () => {
       const root = fs.mkdtempSync(path.join(os.tmpdir(), "hydra-store-"));
       const work = fs.mkdtempSync(path.join(os.tmpdir(), "hydra-saves-"));
-      return { root, work, store: new SelfHostedSaveStore(makeBackend(root)) };
+      const store = new SelfHostedSaveStore(makeBackend(root), "device-a");
+      // A second device on the same storage.
+      const other = new SelfHostedSaveStore(makeBackend(root), "device-b");
+      return { root, work, store, other };
     };
 
     it("round-trips a snapshot and stores each file once", async () => {
@@ -108,20 +112,151 @@ const suite = (name: string, makeBackend: (root: string) => SaveStoreBackend) =>
     });
 
     it("refuses a version another device already wrote", async () => {
-      const { work, store } = setup();
+      const { work, store, other } = setup();
       const save = makeFile(work, "slot1.sav", "a");
 
       const deviceA = await upload(store, [save], 0);
-      const deviceB = await upload(store, [save], 0);
+      const deviceB = await upload(other, [save], 0);
       await store.commit(deviceA.pendingSnapshotId);
       await assert.rejects(
-        store.commit(deviceB.pendingSnapshotId),
+        other.commit(deviceB.pendingSnapshotId),
         SaveStoreConflictError
       );
       await assert.rejects(
-        store.prepare(request([save.file], 0)),
+        other.prepare(request([save.file], 0)),
         SaveStoreConflictError
       );
+      // The loser left nothing behind; the winner's version is the head.
+      const [head] = await other.listSnapshots("620", "steam");
+      assert.equal(head.version, 1);
+    });
+
+    it("lets only one of two devices commit the same version at once", async () => {
+      const { work, store, other } = setup();
+      const save = makeFile(work, "slot1.sav", "a");
+
+      const deviceA = await upload(store, [save], 0);
+      const deviceB = await upload(other, [save], 0);
+      const results = await Promise.allSettled([
+        store.commit(deviceA.pendingSnapshotId),
+        other.commit(deviceB.pendingSnapshotId),
+      ]);
+
+      const won = results.filter((result) => result.status === "fulfilled");
+      assert.ok(won.length <= 1, "both devices claimed version 1");
+      // When both see each other's file, both back out: nothing is lost, and
+      // the next sync reports a conflict to resolve.
+      const heads = await store.listSnapshots("620", "steam");
+      assert.equal(heads.length, won.length);
+      for (const result of results) {
+        if (result.status === "rejected") {
+          assert.ok(result.reason instanceof SaveStoreConflictError);
+        }
+      }
+    });
+
+    it("reads versions written before devices got their own files", async () => {
+      const { root, work, store } = setup();
+      const save = makeFile(work, "slot1.sav", "old");
+      const prepared = await upload(store, [save], 0);
+      const committed = await store.commit(prepared.pendingSnapshotId);
+
+      // Rename to the old `<version>.json` layout.
+      const dir = path.join(
+        root,
+        "hydra-plus-saves/v1/games/steam",
+        fs.readdirSync(path.join(root, "hydra-plus-saves/v1/games/steam"))[0],
+        "versions"
+      );
+      fs.renameSync(
+        path.join(dir, "1.device-a.json"),
+        path.join(dir, "1.json")
+      );
+
+      const [head] = await store.listSnapshots("620", "steam");
+      assert.equal(head.version, 1);
+      const manifest = await store.getRestoreManifest(committed.snapshotId, 1);
+      assert.equal(manifest.files.length, 1);
+    });
+
+    it("keeps each device's state in its own file", async () => {
+      const { store, other } = setup();
+      await store.writeDeviceState({ deviceId: "device-a", games: {} });
+      await other.writeDeviceState({ deviceId: "device-b", games: {} });
+      await store.writeDeviceState({ deviceId: "device-a", games: { x: 1 } });
+
+      const states = await other.readDeviceStates<{ deviceId: string }>();
+      assert.deepEqual(states.map((state) => state.deviceId).sort(), [
+        "device-a",
+        "device-b",
+      ]);
+    });
+
+    it("prunes old versions and unused files but never the newest version", async () => {
+      const { work, store } = setup();
+      const backend = store.backend;
+      const first = makeFile(work, "slot1.sav", "version one");
+      const second = makeFile(work, "slot1.sav", "version two");
+      const third = makeFile(work, "slot1.sav", "version three");
+
+      await store.commit((await upload(store, [first], 0)).pendingSnapshotId);
+      await store.commit((await upload(store, [second], 1)).pendingSnapshotId);
+      await store.commit((await upload(store, [third], 2)).pendingSnapshotId);
+
+      const usage = await scanSaveStore(backend, {
+        keepVersions: 1,
+        blobGraceMs: 0,
+        now: Date.now() + 60_000,
+      });
+      assert.equal(usage.games, 1);
+      assert.equal(usage.versions, 3);
+      assert.equal(usage.reclaimableVersions, 2);
+      assert.equal(usage.reclaimableBlobs, 2);
+
+      // New files are protected by the grace period.
+      const guarded = await scanSaveStore(backend, {
+        keepVersions: 1,
+        now: Date.now(),
+      });
+      assert.equal(guarded.reclaimableBlobs, 0);
+
+      const result = await cleanUpSaveStore(backend, {
+        keepVersions: 1,
+        blobGraceMs: 0,
+        now: Date.now() + 60_000,
+      });
+      assert.equal(result.removedVersions, 2);
+      assert.equal(result.removedBlobs, 2);
+
+      const [head] = await store.listSnapshots("620", "steam");
+      assert.equal(head.version, 3);
+      const restored = path.join(work, "restored.sav");
+      const manifest = await store.getRestoreManifest(head.id, 3);
+      await store.downloadBlob(manifest.files[0], restored);
+      assert.equal(fs.readFileSync(restored, "utf8"), "version three");
+
+      const after = await scanSaveStore(backend, {
+        keepVersions: 1,
+        blobGraceMs: 0,
+        now: Date.now() + 60_000,
+      });
+      assert.equal(after.reclaimableBytes, 0);
+    });
+
+    it("keeps every version when asked to", async () => {
+      const { work, store } = setup();
+      const first = makeFile(work, "slot1.sav", "one");
+      const second = makeFile(work, "slot1.sav", "two");
+      await store.commit((await upload(store, [first], 0)).pendingSnapshotId);
+      await store.commit((await upload(store, [second], 1)).pendingSnapshotId);
+
+      const usage = await scanSaveStore(store.backend, {
+        keepVersions: 0,
+        blobGraceMs: 0,
+        now: Date.now() + 60_000,
+      });
+      assert.equal(usage.reclaimableVersions, 0);
+      assert.equal(usage.reclaimableBlobs, 0);
     });
 
     it("asks for a new prepare when the pending snapshot is unknown or incomplete", async () => {
