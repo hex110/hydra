@@ -63,7 +63,7 @@ export function GallerySlider() {
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
-  const autoplayEnabled = userPreferences?.autoplayGameTrailers !== false;
+  const autoplayEnabled = userPreferences?.autoplayGameTrailers === true;
 
   const hasScreenshots = shopDetails && shopDetails.screenshots?.length;
 

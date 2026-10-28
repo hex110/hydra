@@ -49,7 +49,7 @@ interface ContentItem {
 }
 
 const DEFAULT_FORM: ContentForm = {
-  autoplayGameTrailers: true,
+  autoplayGameTrailers: false,
   disableNsfwAlert: false,
   showHiddenAchievementsDescription: false,
   enableSteamAchievements: false,
@@ -64,7 +64,7 @@ const DEFAULT_FORM: ContentForm = {
 const buildForm = (preferences: UserPreferences | null): ContentForm =>
   preferences
     ? {
-        autoplayGameTrailers: preferences.autoplayGameTrailers ?? true,
+        autoplayGameTrailers: preferences.autoplayGameTrailers ?? false,
         disableNsfwAlert: preferences.disableNsfwAlert ?? false,
         showHiddenAchievementsDescription:
           preferences.showHiddenAchievementsDescription ?? false,

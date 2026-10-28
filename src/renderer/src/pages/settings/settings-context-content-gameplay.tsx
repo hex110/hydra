@@ -18,7 +18,7 @@ import type { UserPreferences } from "@types";
 import "./settings-behavior.scss";
 
 const buildForm = (preferences: UserPreferences | null) => ({
-  autoplayGameTrailers: preferences?.autoplayGameTrailers ?? true,
+  autoplayGameTrailers: preferences?.autoplayGameTrailers ?? false,
   disableNsfwAlert: preferences?.disableNsfwAlert ?? false,
   showHiddenAchievementsDescription:
     preferences?.showHiddenAchievementsDescription ?? false,

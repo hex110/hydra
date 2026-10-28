@@ -176,7 +176,7 @@ export function ScreenshotCarousel({
   const userPreferences = useUserPreferences();
   const preferencesLoaded = userPreferences != null;
   const autoplayEnabled = preferencesLoaded
-    ? userPreferences.autoplayGameTrailers !== false
+    ? userPreferences.autoplayGameTrailers === true
     : false;
 
   const mediaItems: MediaItem[] = useMemo(() => {

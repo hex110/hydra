@@ -36,7 +36,7 @@ export function SettingsBehavior() {
     showDownloadSpeedInMegabytes: false,
     extractFilesByDefault: true,
     enableSteamAchievements: false,
-    autoplayGameTrailers: true,
+    autoplayGameTrailers: false,
     hideToTrayOnGameStart: false,
     enableNewDownloadOptionsBadges: true,
     createStartMenuShortcut: true,
@@ -82,7 +82,7 @@ export function SettingsBehavior() {
         extractFilesByDefault: userPreferences.extractFilesByDefault ?? true,
         enableSteamAchievements:
           userPreferences.enableSteamAchievements ?? false,
-        autoplayGameTrailers: userPreferences.autoplayGameTrailers ?? true,
+        autoplayGameTrailers: userPreferences.autoplayGameTrailers ?? false,
         hideToTrayOnGameStart: userPreferences.hideToTrayOnGameStart ?? false,
         enableNewDownloadOptionsBadges:
           userPreferences.enableNewDownloadOptionsBadges ?? true,
