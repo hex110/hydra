@@ -20,6 +20,35 @@
     width: 50%;
   }
 
+  &--session-ended {
+    animation: your-stuff-glow 2.4s ease-out;
+  }
+
+  // The stats a session just changed light up, then settle.
+  &__stat--updated {
+    border-radius: 8px;
+    animation: your-stuff-stat 2.6s ease-out;
+
+    dd {
+      animation: your-stuff-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    &:last-of-type dd {
+      animation-delay: 0.12s;
+    }
+  }
+
+  &__session-delta {
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: globals.$brand-teal;
+    background-color: rgba(globals.$brand-teal, 0.12);
+    border: 1px solid rgba(globals.$brand-teal, 0.4);
+    animation: your-stuff-chip 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+  }
+
   &__header {
     display: flex;
     align-items: center;
@@ -168,5 +197,50 @@
     &:focus-visible {
       text-decoration: underline;
     }
+  }
+}
+
+@keyframes your-stuff-glow {
+  0% {
+    border-color: rgba(globals.$brand-teal, 0.8);
+    box-shadow: 0 0 28px rgba(globals.$brand-teal, 0.25);
+  }
+  100% {
+    border-color: globals.$border-color;
+    box-shadow: 0 0 0 rgba(globals.$brand-teal, 0);
+  }
+}
+
+@keyframes your-stuff-stat {
+  0% {
+    background-color: rgba(globals.$brand-teal, 0.16);
+    box-shadow: 0 0 0 8px rgba(globals.$brand-teal, 0.16);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+@keyframes your-stuff-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes your-stuff-chip {
+  from {
+    opacity: 0;
+    transform: scale(0.5) translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .your-stuff--session-ended,
+  .your-stuff__stat--updated,
+  .your-stuff__stat--updated dd,
+  .your-stuff__session-delta {
+    animation: none;
   }
 }

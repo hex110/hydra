@@ -6,6 +6,7 @@ import "./change-game-playtime";
 import "./cleanup-unused-assets";
 import "./clear-new-download-options";
 import "./close-game";
+import "./cancel-game-launch";
 import "./copy-custom-game-asset";
 import "./create-game-shortcut";
 import "./create-steam-shortcut";

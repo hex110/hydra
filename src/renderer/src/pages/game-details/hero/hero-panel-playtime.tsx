@@ -13,6 +13,7 @@ import { MAX_MINUTES_TO_SHOW_IN_PLAYTIME } from "@renderer/constants";
 import { getDisplayedPlayTimeInMilliseconds } from "@shared";
 import { AlertFillIcon } from "@primer/octicons-react";
 import { Tooltip } from "react-tooltip";
+import { useSessionEnd } from "../use-session-end";
 import "./hero-panel-playtime.scss";
 
 export function HeroPanelPlaytime() {
@@ -26,6 +27,17 @@ export function HeroPanelPlaytime() {
   const game = presentation ?? operationalGame;
   const { t } = useTranslation("game_details");
   const { numberFormatter } = useFormat();
+  const sessionEnd = useSessionEnd(
+    game?.id,
+    game
+      ? getDisplayedPlayTimeInMilliseconds({
+          playTimeInMilliseconds: game.playTimeInMilliseconds || 0,
+          steamPlayTimeInMilliseconds: game.steamPlayTimeInMilliseconds,
+          epicPlayTimeInMilliseconds: game.epicPlayTimeInMilliseconds,
+        })
+      : 0,
+    isGameRunning
+  );
   const { progress, lastPacket } = useDownload();
   const { formatDistance } = useDate();
   const extraction = useAppSelector((state) => state.download.extraction);
@@ -131,7 +143,10 @@ export function HeroPanelPlaytime() {
   return (
     <>
       <p
-        className="hero-panel-playtime__play-time"
+        key={sessionEnd.endedAt ?? "idle"}
+        className={`hero-panel-playtime__play-time${
+          sessionEnd.justEnded ? " hero-panel-playtime__play-time--updated" : ""
+        }`}
         data-tooltip-place="right"
         data-tooltip-content={
           game.hasManuallyUpdatedPlaytime
@@ -158,7 +173,14 @@ export function HeroPanelPlaytime() {
       {isExtracting && extractionInProgressInfo}
       {!isExtracting && hasDownload && downloadInProgressInfo}
       {!isExtracting && !hasDownload && !!lastTimePlayed && (
-        <p>
+        <p
+          key={sessionEnd.endedAt ?? "idle"}
+          className={
+            sessionEnd.justEnded
+              ? "hero-panel-playtime__last-played"
+              : undefined
+          }
+        >
           {t("last_time_played", {
             period: lastTimePlayed,
           })}

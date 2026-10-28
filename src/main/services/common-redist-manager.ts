@@ -360,10 +360,12 @@ export class CommonRedistManager {
     status: "checking" | "downloading" | "installing" | "complete" | "error",
     detail: string | null
   ) {
-    WindowManager.gameLauncherWindow?.webContents.send("preflight-progress", {
-      status,
-      detail,
-    });
+    const payload = { status, detail };
+    WindowManager.sendToAppWindows("preflight-progress", payload);
+    WindowManager.gameLauncherWindow?.webContents.send(
+      "preflight-progress",
+      payload
+    );
   }
 
   /**

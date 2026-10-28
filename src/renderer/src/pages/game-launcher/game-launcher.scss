@@ -1,6 +1,16 @@
 @use "../../scss/globals.scss";
 
+@property --launcher-ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 .game-launcher {
+  --launcher-accent: #{globals.$brand-teal};
+  --launcher-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --launcher-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -81,11 +91,51 @@
     z-index: 5;
   }
 
+  // The ring is the frame's background; the cover covers all but its padding.
+  &__cover-frame {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    height: 100%;
+    padding: 3px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    background: conic-gradient(
+      from var(--launcher-ring-angle),
+      transparent 0%,
+      transparent 45%,
+      var(--launcher-accent) 100%
+    );
+    box-shadow: 0 0 24px
+      color-mix(in srgb, var(--launcher-accent) 35%, transparent);
+    animation: launcher-ring-spin 1.6s linear infinite;
+  }
+
+  &__cover-check {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--launcher-accent);
+    color: #0d0d0d;
+    opacity: 0;
+    transform: scale(0);
+
+    svg {
+      fill: currentColor;
+    }
+  }
+
   &__cover {
     height: 100%;
     width: auto;
     max-width: 180px;
-    border-radius: 8px;
+    border-radius: 9px;
     object-fit: contain;
     flex-shrink: 0;
     background-color: globals.$dark-background-color;
@@ -94,7 +144,7 @@
   &__cover-placeholder {
     height: 100%;
     width: 180px;
-    border-radius: 8px;
+    border-radius: 9px;
     background-color: globals.$dark-background-color;
     display: flex;
     align-items: center;
@@ -183,6 +233,54 @@
     }
   }
 
+  &__steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(globals.$spacing-unit * 1.5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__step {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color 0.3s ease;
+
+    &--active {
+      color: globals.$muted-color;
+    }
+
+    &--done {
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  &__step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+
+    .game-launcher__step--active & {
+      border-color: var(--launcher-accent);
+      background: var(--launcher-accent);
+      animation: launcher-dot-pulse 1.2s ease-in-out infinite;
+    }
+
+    .game-launcher__step--done & {
+      border-color: var(--launcher-accent);
+      background: var(--launcher-accent);
+    }
+  }
+
   &__stats {
     display: flex;
     align-items: center;
@@ -209,5 +307,142 @@
     flex: 1;
     width: 100%;
     margin-top: calc(globals.$spacing-unit * 2);
+  }
+}
+
+// Entrance: everything starts once the window is actually shown.
+.game-launcher--shown {
+  .game-launcher__background {
+    animation: launcher-backdrop-in 0.9s ease-out both;
+  }
+
+  .game-launcher__cover-frame {
+    animation:
+      launcher-cover-in 0.7s var(--launcher-spring) both,
+      launcher-ring-spin 1.6s linear 0.7s infinite;
+  }
+
+  .game-launcher__title {
+    animation: launcher-rise 0.6s var(--launcher-ease) 0.15s both;
+  }
+
+  .game-launcher__status {
+    animation: launcher-rise 0.6s var(--launcher-ease) 0.25s both;
+  }
+
+  .game-launcher__steps {
+    animation: launcher-rise 0.6s var(--launcher-ease) 0.35s both;
+  }
+
+  .game-launcher__actions {
+    animation: launcher-rise 0.6s var(--launcher-ease) 0.4s both;
+  }
+
+  .game-launcher__stats {
+    animation: launcher-rise 0.6s var(--launcher-ease) 0.5s both;
+  }
+
+  .game-launcher__logo-badge {
+    animation: launcher-fade 1s ease-out 0.6s both;
+  }
+}
+
+// Success beat: the ring closes, the cover pops and a check lands.
+.game-launcher--started {
+  .game-launcher__cover-frame {
+    background: var(--launcher-accent);
+    animation: launcher-cover-pop 0.6s var(--launcher-spring);
+    box-shadow: 0 0 36px
+      color-mix(in srgb, var(--launcher-accent) 60%, transparent);
+  }
+
+  .game-launcher__cover-check {
+    animation: launcher-check-in 0.5s var(--launcher-spring) 0.1s both;
+  }
+}
+
+.game-launcher--failed {
+  --launcher-accent: #{globals.$error-color};
+
+  .game-launcher__cover-frame {
+    animation: none;
+    background: var(--launcher-accent);
+  }
+}
+
+.game-launcher--exiting {
+  animation: launcher-exit 0.4s ease-in both;
+}
+
+@keyframes launcher-ring-spin {
+  to {
+    --launcher-ring-angle: 360deg;
+  }
+}
+
+@keyframes launcher-backdrop-in {
+  from {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes launcher-cover-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.85);
+  }
+}
+
+@keyframes launcher-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes launcher-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes launcher-dot-pulse {
+  50% {
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--launcher-accent) 25%, transparent);
+  }
+}
+
+@keyframes launcher-cover-pop {
+  40% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes launcher-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(-40deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes launcher-exit {
+  to {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-launcher,
+  .game-launcher * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

@@ -2,6 +2,7 @@ import { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { SyncIcon } from "@primer/octicons-react";
+import cn from "classnames";
 import type { LibraryGame, PlayStatus } from "@types";
 import {
   applyLibraryGroupAction,
@@ -16,6 +17,7 @@ import { gameDetailsContext } from "@renderer/context";
 import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
 import { useDate, useGameCard, useLibrary, useToast } from "@renderer/hooks";
 import { PlayStatusMenu } from "../hero/play-status-menu";
+import { formatSessionLength, useSessionEnd } from "../use-session-end";
 import { GameNotesField } from "@renderer/pages/library/game-notes-field";
 import { libraryTabIncludes } from "@renderer/pages/library/library-filters";
 import { SteamHistorySection } from "./steam-history-section";
@@ -36,12 +38,18 @@ const describeRelease = (title: string) =>
 export function YourStuff() {
   const { t } = useTranslation(["game_details", "library"]);
   const navigate = useNavigate();
-  const { game, presentation, updateGame } = useContext(gameDetailsContext);
+  const { game, presentation, updateGame, isGameRunning } =
+    useContext(gameDetailsContext);
   const { library, updateLibrary } = useLibrary();
   const { formatDistance } = useDate();
   const { showErrorToast } = useToast();
   const shown = (presentation ?? game) as LibraryGame | null;
   const { formatPlayTime } = useGameCard(shown as LibraryGame, noop);
+  const sessionEnd = useSessionEnd(
+    shown?.id,
+    shown ? getDisplayedPlayTimeInMilliseconds(shown) : 0,
+    isGameRunning
+  );
 
   const members = useMemo(
     () => presentation?.members ?? (game ? [game] : []),
@@ -72,6 +80,10 @@ export function YourStuff() {
   if (!game || !shown || game.isDeleted) return null;
 
   const playTime = getDisplayedPlayTimeInMilliseconds(shown);
+  const displayedPlayTime = sessionEnd.displayPlayTimeMs;
+  const sessionLength = sessionEnd.deltaMs
+    ? formatSessionLength(sessionEnd.deltaMs, t)
+    : null;
   const achievementGame = presentation?.achievementGame ?? shown;
   // Hydra's own achievement data first; Steam's import fills in what it lacks.
   const steamAchievements = steamHistory?.achievements ?? [];
@@ -149,7 +161,12 @@ export function YourStuff() {
   };
 
   return (
-    <section className="your-stuff" aria-labelledby="your-stuff-title">
+    <section
+      className={cn("your-stuff", {
+        "your-stuff--session-ended": sessionEnd.justEnded,
+      })}
+      aria-labelledby="your-stuff-title"
+    >
       <div className="your-stuff__header">
         <h2 id="your-stuff-title">{t("your_stuff")}</h2>
         <PlayStatusMenu
@@ -204,15 +221,24 @@ export function YourStuff() {
             </select>
           </dd>
         </div>
-        <div>
+        <div
+          className={cn({ "your-stuff__stat--updated": sessionEnd.justEnded })}
+        >
           <dt>{t("details_playtime", { ns: "library" })}</dt>
           <dd>
-            {playTime > 0
-              ? formatPlayTime(playTime)
+            {displayedPlayTime > 0
+              ? formatPlayTime(displayedPlayTime)
               : t("details_never_played", { ns: "library" })}
+            {sessionLength && (
+              <span className="your-stuff__session-delta">
+                {t("session_added", { amount: sessionLength })}
+              </span>
+            )}
           </dd>
         </div>
-        <div>
+        <div
+          className={cn({ "your-stuff__stat--updated": sessionEnd.justEnded })}
+        >
           <dt>{t("details_last_played", { ns: "library" })}</dt>
           <dd>
             {shown.lastTimePlayed

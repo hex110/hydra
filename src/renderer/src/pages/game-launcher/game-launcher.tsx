@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
+  CheckIcon,
   ImageIcon,
   ClockIcon,
   TrophyIcon,
@@ -15,6 +16,7 @@ import { darkenColor } from "@renderer/helpers";
 import { logger } from "@renderer/logger";
 import { getDisplayedPlayTimeInMilliseconds } from "@shared";
 import { average } from "color.js";
+import cn from "classnames";
 import type {
   Game,
   GameLauncherStatus,
@@ -23,11 +25,16 @@ import type {
   ShopAssets,
 } from "@types";
 import {
+  GAME_LAUNCHER_EXIT_ANIMATION_MS,
+  addLaunchPhase,
   canGameLauncherAutoClose,
   createLauncherStatusReplay,
-  getGameLauncherActions,
+  getGameLauncherAction,
   getGameLauncherAutoCloseDelay,
+  getLaunchPhase,
+  getLauncherRingColor,
   type CompatibilityLayerStatus,
+  type LaunchPhase,
 } from "./game-launcher-state";
 import "./game-launcher.scss";
 
@@ -57,7 +64,6 @@ export default function GameLauncher() {
   const [accentColor, setAccentColor] = useState<string | null>(null);
   const [colorExtracted, setColorExtracted] = useState(false);
   const [windowShown, setWindowShown] = useState(false);
-  const [isMainWindowOpen, setIsMainWindowOpen] = useState(false);
   const [preflightStatus, setPreflightStatus] =
     useState<PreflightStatus>("idle");
   const [preflightDetail, setPreflightDetail] = useState<string | null>(null);
@@ -74,6 +80,8 @@ export default function GameLauncher() {
     string | null
   >(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [launchPhases, setLaunchPhases] = useState<LaunchPhase[]>(["start"]);
+  const [exiting, setExiting] = useState(false);
 
   const formatPlayTime = useCallback(
     (playTimeInMilliseconds = 0) => {
@@ -99,10 +107,6 @@ export default function GameLauncher() {
         setGameAssets(assets);
       });
     }
-
-    window.electron.isMainWindowOpen().then((isOpen) => {
-      setIsMainWindowOpen(isOpen);
-    });
   }, [shop, objectId]);
 
   useEffect(() => {
@@ -129,6 +133,8 @@ export default function GameLauncher() {
     const statusReplay = createLauncherStatusReplay(`${shop}:${objectId}`);
 
     const applyStatus = ({ status, detail }: GameLauncherStatusPayload) => {
+      if (status === "launch_cancelled") return;
+
       if (status === "preparing_compatibility_layer") {
         setCompatibilityLayerStatus("preparing");
         setCompatibilityLayerDetail(detail);
@@ -204,16 +210,34 @@ export default function GameLauncher() {
     // Don't start timer until window is shown AND preflight is done
     if (!windowShown || !canAutoClose) return;
 
-    const timer = setTimeout(() => {
-      void window.electron.closeGameLauncherWindow();
-    }, getGameLauncherAutoCloseDelay(gameStarted));
+    const delay = getGameLauncherAutoCloseDelay(gameStarted);
 
-    return () => clearTimeout(timer);
+    const exitTimer = setTimeout(
+      () => setExiting(true),
+      Math.max(0, delay - GAME_LAUNCHER_EXIT_ANIMATION_MS)
+    );
+    const closeTimer = setTimeout(() => {
+      void window.electron.closeGameLauncherWindow();
+    }, delay);
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(closeTimer);
+    };
   }, [windowShown, canAutoClose, gameStarted]);
 
-  const handleOpenHydra = () => {
-    void window.electron.openMainWindow();
-    void window.electron.closeGameLauncherWindow();
+  const currentPhase = getLaunchPhase({
+    preflightStatus,
+    compatibilityLayerStatus,
+    achievementsExportStatus,
+  });
+
+  useEffect(() => {
+    setLaunchPhases((seen) => addLaunchPhase(seen, currentPhase));
+  }, [currentPhase]);
+
+  const handleCancel = () => {
+    void window.electron.cancelGameLaunch(shop, objectId!);
   };
 
   const handleClose = () => {
@@ -259,6 +283,8 @@ export default function GameLauncher() {
   }, []);
 
   const getStatusMessage = useCallback(() => {
+    if (gameStarted) return t("game_started");
+
     switch (preflightStatus) {
       case "checking":
         return t("preflight_checking");
@@ -297,6 +323,7 @@ export default function GameLauncher() {
         return t("launching_base");
     }
   }, [
+    gameStarted,
     preflightStatus,
     preflightDetail,
     compatibilityLayerStatus,
@@ -307,10 +334,7 @@ export default function GameLauncher() {
   ]);
 
   const isCompatibilityLayerFailed = compatibilityLayerStatus === "failed";
-  const launcherActions = getGameLauncherActions({
-    isMainWindowOpen,
-    compatibilityLayerStatus,
-  });
+  const launcherAction = getGameLauncherAction(compatibilityLayerStatus);
 
   useEffect(() => {
     let cancelled = false;
@@ -411,6 +435,12 @@ export default function GameLauncher() {
       }
     : undefined;
 
+  const ringColor = accentColor ? getLauncherRingColor(accentColor) : null;
+
+  const activePhaseIndex = launchPhases.includes(currentPhase)
+    ? launchPhases.indexOf(currentPhase)
+    : launchPhases.length - 1;
+
   const glowStyle = accentColor
     ? {
         background: `radial-gradient(ellipse at top right, ${darkenColor(accentColor, 0.3, 0.15)} 0%, transparent 50%)`,
@@ -418,7 +448,22 @@ export default function GameLauncher() {
     : undefined;
 
   return (
-    <div className="game-launcher" style={backgroundStyle}>
+    <div
+      className={cn("game-launcher", {
+        "game-launcher--shown": windowShown,
+        "game-launcher--started": gameStarted,
+        "game-launcher--failed": isCompatibilityLayerFailed,
+        "game-launcher--exiting": exiting,
+      })}
+      style={
+        {
+          ...backgroundStyle,
+          ...(ringColor && !isCompatibilityLayerFailed
+            ? { "--launcher-accent": ringColor }
+            : {}),
+        } as React.CSSProperties
+      }
+    >
       {coverImage && (
         <div
           className="game-launcher__background"
@@ -433,27 +478,33 @@ export default function GameLauncher() {
       </div>
 
       <div className="game-launcher__content">
-        {imageError || !coverImage ? (
-          <div className="game-launcher__cover-placeholder">
-            <ImageIcon size={32} />
-          </div>
-        ) : (
-          <>
-            {!isReady && (
-              <div className="game-launcher__cover-placeholder">
-                <ImageIcon size={32} />
-              </div>
-            )}
-            <img
-              src={coverImage}
-              alt={gameTitle}
-              className="game-launcher__cover"
-              style={{ display: isReady ? "block" : "none" }}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-            />
-          </>
-        )}
+        <div className="game-launcher__cover-frame">
+          {imageError || !coverImage ? (
+            <div className="game-launcher__cover-placeholder">
+              <ImageIcon size={32} />
+            </div>
+          ) : (
+            <>
+              {!isReady && (
+                <div className="game-launcher__cover-placeholder">
+                  <ImageIcon size={32} />
+                </div>
+              )}
+              <img
+                src={coverImage}
+                alt={gameTitle}
+                className="game-launcher__cover"
+                style={{ display: isReady ? "block" : "none" }}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+              />
+            </>
+          )}
+
+          <span className="game-launcher__cover-check">
+            <CheckIcon size={16} />
+          </span>
+        </div>
 
         <div className="game-launcher__info">
           <div className="game-launcher__center">
@@ -468,11 +519,35 @@ export default function GameLauncher() {
             >
               <span>
                 {getStatusMessage()}
-                {!isCompatibilityLayerFailed && (
+                {!isCompatibilityLayerFailed && !gameStarted && (
                   <span className="game-launcher__dots" />
                 )}
               </span>
             </p>
+
+            {launchPhases.length > 1 && (
+              <ol className="game-launcher__steps">
+                {launchPhases.map((phase, index) => {
+                  const state = gameStarted
+                    ? "done"
+                    : index < activePhaseIndex
+                      ? "done"
+                      : index === activePhaseIndex
+                        ? "active"
+                        : "pending";
+
+                  return (
+                    <li
+                      key={phase}
+                      className={`game-launcher__step game-launcher__step--${state}`}
+                    >
+                      <span className="game-launcher__step-dot" />
+                      {t(`phase_${phase}`)}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
 
             {isCompatibilityLayerFailed && compatibilityLayerDetail && (
               <p
@@ -483,27 +558,17 @@ export default function GameLauncher() {
               </p>
             )}
 
-            {(launcherActions.showOpenHydra || launcherActions.showClose) && (
+            {launcherAction && (
               <div className="game-launcher__actions">
-                {launcherActions.showOpenHydra && (
-                  <Button
-                    theme="primary"
-                    className="game-launcher__button"
-                    onClick={handleOpenHydra}
-                  >
-                    {t("open_hydra")}
-                  </Button>
-                )}
-
-                {launcherActions.showClose && (
-                  <Button
-                    theme="outline"
-                    className="game-launcher__button"
-                    onClick={handleClose}
-                  >
-                    {t("close")}
-                  </Button>
-                )}
+                <Button
+                  theme="outline"
+                  className="game-launcher__button"
+                  onClick={
+                    launcherAction === "cancel" ? handleCancel : handleClose
+                  }
+                >
+                  {t(launcherAction)}
+                </Button>
               </div>
             )}
           </div>

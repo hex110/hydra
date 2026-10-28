@@ -103,6 +103,40 @@ been mounted since); if the files are still missing, it opens the game's
 **Locations** options to pick the executable. Picking an executable clears
 the status. Upstream's scan still clears executables that are gone for good.
 
+## Launch animation
+
+Pressing **Play** answers at once: the button presses in and turns into a
+glowing pill with a spinner and the current step (Dependencies, Compatibility
+layer, Achievements, Starting), then a check when the game is detected, until
+the game shows as running. A failed or cancelled launch puts **Play** back.
+
+The launcher window that opens next plays an entrance (backdrop, cover, title
+and stats rise in one after another). The cover wears a ring in a lifted
+version of its own colour that spins while Hydra prepares the game; the steps
+seen so far are listed below the status line. When the game is detected the
+ring closes, the cover pops and a check lands, then the window zooms out and
+closes. A failed compatibility layer turns the ring red.
+
+While the compatibility layer is being prepared the window offers **Cancel**,
+which closes the game process that was started and the window; after a failure
+it offers **Close**. Hydra's main window is already open behind the launcher, so
+there is no "Open Hydra" button.
+
+All of it honours `prefers-reduced-motion`. The code is in
+`pages/game-launcher/` and `pages/game-details/hero/use-launch-phase.ts`; the
+launcher statuses are also sent to the app windows so the button can follow
+them.
+
+## When the game closes
+
+When a game that was running closes while its page is open, the page marks it
+for a few seconds: **Play** comes back with a pop and a ripple ring, a
+`+42m` chip appears beside it once Hydra has recorded the session
+(sessions under a minute show no chip), the "Played for / Last played" lines
+rise in with a teal flash, and the **Your game** box glows while **Playtime**
+counts up to its new value and **Last played** updates. The logic is in
+`pages/game-details/use-session-end.ts`.
+
 ## Middle-click autoscroll
 
 Chromium has no middle-click autoscroll on Linux, so Hydra adds it: press the

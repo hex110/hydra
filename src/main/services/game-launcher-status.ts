@@ -9,6 +9,7 @@ const COMPATIBILITY_STATUSES = new Set<GameLauncherStatus>([
   "compatibility_layer_ready",
   "compatibility_layer_failed",
   "game_started",
+  "launch_cancelled",
 ]);
 
 const latestStatuses = new Map<
@@ -47,6 +48,9 @@ export const sendGameLauncherStatus = (
   const statuses = latestStatuses.get(gameKey) ?? new Map();
   statuses.set(getStatusGroup(status), payload);
   latestStatuses.set(gameKey, statuses);
+
+  // The launcher window isn't an app window, so this never reaches it twice.
+  WindowManager.sendToAppWindows("game-launcher-status", payload);
 
   const gameLauncherWindow = WindowManager.gameLauncherWindow;
 

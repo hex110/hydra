@@ -2130,6 +2130,18 @@ describe("Epic managed UI lifecycle", () => {
             isLibraryGameDownloading: () => false,
             isWishlistOnly: () => false,
             applyLibraryGroupAction: async () => {},
+            getDisplayedPlayTimeInMilliseconds: () => 0,
+          },
+          "./use-launch-phase": {
+            useLaunchPhase: () => ({
+              phase: "start",
+              gameStarted: false,
+              ended: false,
+            }),
+          },
+          "../use-session-end": {
+            useSessionEnd: () => ({ justEnded: false, deltaMs: null }),
+            formatSessionLength: () => null,
           },
           "../modals/disc-selection-modal": { DiscSelectionModal: () => null },
           "../modals/epic-cloud-save-conflict-modal": {

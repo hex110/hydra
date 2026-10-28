@@ -1,5 +1,6 @@
 import {
   AlertIcon,
+  CheckIcon,
   DownloadIcon,
   GearIcon,
   PlayIcon,
@@ -14,6 +15,7 @@ import {
   getEpicLaunchError,
   getEpicManagedError,
 } from "@renderer/helpers/epic-managed-error";
+import cn from "classnames";
 import { XCircle } from "lucide-react";
 import {
   useDownload,
@@ -33,10 +35,13 @@ import { DiscSelectionModal } from "../modals/disc-selection-modal";
 import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-modal";
 
 import { GameMoreMenu } from "./game-more-menu";
+import { useLaunchPhase } from "./use-launch-phase";
+import { formatSessionLength, useSessionEnd } from "../use-session-end";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
   applyLibraryGroupAction,
+  getDisplayedPlayTimeInMilliseconds,
   isLibraryGameDownloading,
   isWishlistOnly,
   getOfficialStoreMembers,
@@ -102,6 +107,22 @@ export function HeroPanelActions() {
   } | null>(null);
 
   const { t } = useTranslation("game_details");
+  const { t: tLauncher } = useTranslation("game_launcher");
+  const [launching, setLaunching] = useState(false);
+  const launchRelease = useRef<ReturnType<typeof setTimeout>>();
+  const {
+    phase: launchPhase,
+    gameStarted,
+    ended: launchEnded,
+  } = useLaunchPhase(shop, objectId, launching);
+  const sessionEnd = useSessionEnd(
+    game?.id,
+    game ? getDisplayedPlayTimeInMilliseconds(game) : 0,
+    isGameRunning
+  );
+  const sessionLength = sessionEnd.deltaMs
+    ? formatSessionLength(sessionEnd.deltaMs, t)
+    : null;
   const launchGeneration = useRef(0);
   const invalidateLaunch = useCallback(() => {
     launchGeneration.current++;
@@ -358,6 +379,24 @@ export function HeroPanelActions() {
     await launchClassicsWithErrorHandling(discPath);
   };
 
+  useEffect(() => {
+    if (isGameRunning || launchEnded) setLaunching(false);
+  }, [isGameRunning, launchEnded]);
+
+  useEffect(() => () => clearTimeout(launchRelease.current), []);
+
+  // The button keeps its launching look until the game shows up as running;
+  // the grace period covers a launch that returns without a detected process.
+  const runLaunch = async (launch: () => Promise<unknown>) => {
+    clearTimeout(launchRelease.current);
+    setLaunching(true);
+    try {
+      await launch();
+    } finally {
+      launchRelease.current = setTimeout(() => setLaunching(false), 8000);
+    }
+  };
+
   const openGame = async () => {
     if (!game) return;
 
@@ -367,7 +406,7 @@ export function HeroPanelActions() {
     }
 
     if (game.executablePath) {
-      await launchMember(game);
+      await runLaunch(() => launchMember(game));
       return;
     }
 
@@ -404,6 +443,8 @@ export function HeroPanelActions() {
             : undefined
       );
     } catch (error) {
+      clearTimeout(launchRelease.current);
+      setLaunching(false);
       if (generation !== launchGeneration.current) return;
       const code =
         member.shop === "epic" ? getEpicLaunchError(error) : undefined;
@@ -546,17 +587,53 @@ export function HeroPanelActions() {
       );
     }
 
-    if (game?.executablePath || isPlayableClassics) {
+    if (launching) {
       return (
+        <Button
+          theme="outline"
+          disabled
+          aria-live="polite"
+          className="hero-panel-actions__action hero-panel-actions__action--launching"
+        >
+          {gameStarted ? (
+            <CheckIcon className="hero-panel-actions__launch-check" />
+          ) : (
+            <span className="hero-panel-actions__launch-spinner" />
+          )}
+          <span key={gameStarted ? "started" : launchPhase}>
+            {tLauncher(gameStarted ? "game_started" : `phase_${launchPhase}`)}
+          </span>
+        </Button>
+      );
+    }
+
+    if (game?.executablePath || isPlayableClassics) {
+      const playButton = (
         <Button
           onClick={openGame}
           theme="outline"
           disabled={deleting || isGameRunning}
-          className="hero-panel-actions__action"
+          className={cn("hero-panel-actions__action", {
+            "hero-panel-actions__action--returned": sessionEnd.justEnded,
+          })}
         >
           <PlayIcon />
           {t("play")}
         </Button>
+      );
+
+      if (!sessionEnd.justEnded) return playButton;
+
+      return (
+        <div className="hero-panel-actions__play">
+          {playButton}
+          {sessionLength && (
+            <span className="hero-panel-actions__session-chip">
+              <CheckIcon size={12} />
+              {t("session_added", { amount: sessionLength })}
+            </span>
+          )}
+        </div>
       );
     }
 

@@ -3,10 +3,12 @@ import { describe, it } from "node:test";
 
 import {
   GAME_LAUNCHER_AUTO_CLOSE_DELAY_MS,
+  addLaunchPhase,
+  getLaunchPhase,
   GAME_STARTED_AUTO_CLOSE_DELAY_MS,
   canGameLauncherAutoClose,
   createLauncherStatusReplay,
-  getGameLauncherActions,
+  getGameLauncherAction,
   getGameLauncherAutoCloseDelay,
   getLauncherStatusGroup,
 } from "./game-launcher-state.js";
@@ -28,6 +30,7 @@ describe("game launcher close delay", () => {
 
   it("treats game detection as a compatibility status", () => {
     assert.equal(getLauncherStatusGroup("game_started"), "compatibility");
+    assert.equal(getLauncherStatusGroup("launch_cancelled"), "compatibility");
   });
 });
 
@@ -90,42 +93,17 @@ describe("game launcher status replay", () => {
   });
 });
 
-describe("game launcher actions", () => {
-  it("offers a close button for failed setup even with Hydra open", () => {
-    assert.deepEqual(
-      getGameLauncherActions({
-        isMainWindowOpen: true,
-        compatibilityLayerStatus: "failed",
-      }),
-      { showOpenHydra: false, showClose: true }
-    );
+describe("game launcher action", () => {
+  it("can cancel while the compatibility layer is preparing", () => {
+    assert.equal(getGameLauncherAction("preparing"), "cancel");
   });
 
-  it("offers a close button while the compatibility layer is preparing", () => {
-    assert.deepEqual(
-      getGameLauncherActions({
-        isMainWindowOpen: true,
-        compatibilityLayerStatus: "preparing",
-      }),
-      { showOpenHydra: false, showClose: true }
-    );
+  it("only offers closing once setup failed", () => {
+    assert.equal(getGameLauncherAction("failed"), "close");
   });
 
-  it("keeps the existing open Hydra behavior otherwise", () => {
-    assert.deepEqual(
-      getGameLauncherActions({
-        isMainWindowOpen: false,
-        compatibilityLayerStatus: "idle",
-      }),
-      { showOpenHydra: true, showClose: false }
-    );
-    assert.deepEqual(
-      getGameLauncherActions({
-        isMainWindowOpen: true,
-        compatibilityLayerStatus: "idle",
-      }),
-      { showOpenHydra: false, showClose: false }
-    );
+  it("offers nothing otherwise", () => {
+    assert.equal(getGameLauncherAction("idle"), null);
   });
 });
 
@@ -158,5 +136,53 @@ describe("game launcher auto close", () => {
       }),
       false
     );
+  });
+});
+
+describe("launch phases", () => {
+  const idle = {
+    preflightStatus: "idle",
+    compatibilityLayerStatus: "idle" as const,
+    achievementsExportStatus: "idle",
+  };
+
+  it("prefers dependencies, then the compatibility layer, then achievements", () => {
+    assert.equal(getLaunchPhase(idle), "start");
+    assert.equal(
+      getLaunchPhase({
+        ...idle,
+        preflightStatus: "installing",
+        compatibilityLayerStatus: "preparing",
+      }),
+      "dependencies"
+    );
+    assert.equal(
+      getLaunchPhase({ ...idle, compatibilityLayerStatus: "failed" }),
+      "compatibility"
+    );
+    assert.equal(
+      getLaunchPhase({
+        ...idle,
+        achievementsExportStatus: "generating_achievements",
+      }),
+      "achievements"
+    );
+    assert.equal(
+      getLaunchPhase({ ...idle, preflightStatus: "complete" }),
+      "start"
+    );
+  });
+
+  it("keeps seen phases in order and always ends with start", () => {
+    let seen = addLaunchPhase(["start"], "start");
+    assert.deepEqual(seen, ["start"]);
+
+    seen = addLaunchPhase(seen, "compatibility");
+    assert.deepEqual(seen, ["compatibility", "start"]);
+
+    seen = addLaunchPhase(seen, "achievements");
+    assert.deepEqual(seen, ["compatibility", "achievements", "start"]);
+
+    assert.equal(addLaunchPhase(seen, "compatibility"), seen);
   });
 });

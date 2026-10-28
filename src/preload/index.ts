@@ -1569,6 +1569,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getEmulatorRomExtensions", system),
   closeGame: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("closeGame", shop, objectId),
+  cancelGameLaunch: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("cancelGameLaunch", shop, objectId),
   removeGameFromLibrary: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("removeGameFromLibrary", shop, objectId),
   removeGame: (shop: GameShop, objectId: string) =>

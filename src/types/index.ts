@@ -688,6 +688,7 @@ export type GameLauncherStatus =
   | "compatibility_layer_ready"
   | "compatibility_layer_failed"
   | "game_started"
+  | "launch_cancelled"
   | "complete";
 
 export interface GameLauncherStatusPayload {
