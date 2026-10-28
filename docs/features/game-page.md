@@ -86,9 +86,11 @@ game's three latest Steam announcements, as on the home page.
 
 The sidebar lists the game's eight most voted Steam tags (Souls-like,
 Atmospheric, …) under **Genres**, in English so they match the library's genre
-filter; clicking one opens the library filtered to it. When the catalogue has
-no tags for a Steam game yet (new releases), Hydra asks Steam for them. A game
-with none anywhere shows the store's genres instead.
+filter; clicking one opens the [catalogue](catalogue.md) filtered to that tag.
+When the catalogue has no tags for a Steam game yet (new releases), Hydra asks
+Steam for them. A game with none anywhere shows the store's genres instead, and
+so does one with genres of your own ([Details](#details)); those open the
+library filtered to the genre.
 
 **Similar games** ("More like this") lists up to 24 games, as a carousel of
 three at a time. The ones you own come first and are marked **In library** or

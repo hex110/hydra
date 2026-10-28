@@ -1,9 +1,6 @@
 import axios from "axios";
-import {
-  getSteamTagNames,
-  invertSteamTags,
-  type SteamTagWeight,
-} from "@shared";
+import { getSteamTags, invertSteamTags, type SteamTagWeight } from "@shared";
+import type { SteamTag } from "@types";
 import { HydraApi } from "./hydra-api";
 import { logger } from "./logger";
 
@@ -75,7 +72,7 @@ const fetchSteamStoreTagIds = (appId: string): Promise<string[] | null> => {
 };
 
 /**
- * A game's most voted Steam tag names: the catalogue's tags, or Steam's own for
+ * A game's most voted Steam tags: the catalogue's tags, or Steam's own for
  * a Steam game the catalogue has none for. `complete` is false when a source
  * could not be reached, so callers can ask again soon.
  */
@@ -83,7 +80,7 @@ export const getGameSteamTags = async (
   shop: string,
   objectId: string,
   catalogueTagIds: (string | number)[] | null | undefined
-): Promise<{ tags: string[]; complete: boolean }> => {
+): Promise<{ tags: SteamTag[]; complete: boolean }> => {
   let ids: (string | number)[] | null = catalogueTagIds ?? [];
 
   if (ids.length === 0 && shop === "steam") {
@@ -93,7 +90,7 @@ export const getGameSteamTags = async (
   const names = await getSteamTagNamesById();
 
   return {
-    tags: getSteamTagNames(ids, names),
+    tags: getSteamTags(ids, names),
     complete: ids !== null && names.size > 0,
   };
 };

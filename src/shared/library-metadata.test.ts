@@ -5,6 +5,7 @@ import {
   getEffectiveGenres,
   getGenreNames,
   getSteamTagNames,
+  getSteamTags,
   invertSteamTags,
   isLibraryMetadataStale,
   LIBRARY_METADATA_MAX_AGE_MS,
@@ -96,6 +97,16 @@ describe("getEffectiveGenres", () => {
       ["Action"]
     );
     assert.deepEqual(getEffectiveGenres({}), []);
+  });
+});
+
+describe("getSteamTags", () => {
+  it("returns numeric ids with their names", () => {
+    const names = invertSteamTags({ "Souls-like": 29482, RPG: 122 });
+    assert.deepEqual(getSteamTags(["29482", 122, "122"], names), [
+      { id: 29482, name: "Souls-like" },
+      { id: 122, name: "RPG" },
+    ]);
   });
 });
 

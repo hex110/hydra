@@ -1443,6 +1443,7 @@
     "failed_update_rating": "Couldn't update the rating",
     "failed_update_play_status": "Couldn't update the play status",
     "show_genre_in_library": "Show games of this genre in the library",
+    "show_tag_in_catalogue": "Find games with this tag in the catalogue",
     "settings_category_details": "Details",
     "details_section_title": "Details",
     "details_section_description": "Replace what the store shows for this game. Your genres are also used by the library's genre filter.",

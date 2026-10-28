@@ -183,6 +183,7 @@ import type {
   ResolveEpicCloudSaveConflictPayload,
   EpicLaunchOptions,
   EpicLinuxCompatibility,
+  SteamTag,
 } from "@types";
 import type { AxiosProgressEvent } from "axios";
 
@@ -1766,7 +1767,7 @@ declare global {
       countPerApp?: number
     ) => Promise<GameNewsItem[]>;
     getGameReception: (steamAppId: string) => Promise<GameReception | null>;
-    getGameSteamTags: (shop: GameShop, objectId: string) => Promise<string[]>;
+    getGameSteamTags: (shop: GameShop, objectId: string) => Promise<SteamTag[]>;
     getSteamSimilarGames: (
       steamAppId: string
     ) => Promise<SteamSimilarGame[] | null>;

@@ -6,6 +6,12 @@ export interface HowLongToBeatHours {
   completionist: number | null;
 }
 
+/** A Steam user tag; the id is the one the catalogue filters by. */
+export interface SteamTag {
+  id: number;
+  name: string;
+}
+
 /** Catalogue data the library filters and sorts by, cached per catalogue game. */
 export interface GameLibraryMetadata {
   /** Steam's user tags where the catalogue has them, otherwise its genres. */

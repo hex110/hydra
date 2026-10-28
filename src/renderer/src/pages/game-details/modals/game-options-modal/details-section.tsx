@@ -62,7 +62,9 @@ export function DetailsSection({ game }: Readonly<{ game: LibraryGame }>) {
   const catalogueGame = getGameCatalogueIdentity(game);
   const steamTags = useSteamTags(catalogueGame.shop, catalogueGame.objectId);
   const storeGenres =
-    steamTags.length > 0 ? steamTags : getGenreNames(shopDetails?.genres);
+    steamTags.length > 0
+      ? steamTags.map((tag) => tag.name)
+      : getGenreNames(shopDetails?.genres);
   const isDirty =
     description.trim() !== (game.customDescription ?? "") ||
     parseGenres(genres).join(",") !== (game.customGenres ?? []).join(",");

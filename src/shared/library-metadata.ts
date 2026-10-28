@@ -3,6 +3,7 @@ import type {
   HowLongToBeatCategory,
   HowLongToBeatHours,
   PlayStatus,
+  SteamTag,
 } from "@types";
 
 export const PLAY_STATUSES: readonly PlayStatus[] = [
@@ -85,19 +86,32 @@ export const invertSteamTags = (
 ): Map<string, string> =>
   new Map(Object.entries(tags ?? {}).map(([name, id]) => [String(id), name]));
 
-/** A game's most voted Steam tags by name; ids the map doesn't know are dropped. */
+/** A game's most voted Steam tags; ids the map doesn't know are dropped. */
+export const getSteamTags = (
+  tagIds: (string | number)[] | null | undefined,
+  namesById: ReadonlyMap<string, string>,
+  limit = STEAM_TAG_LIMIT
+): SteamTag[] => {
+  if (!Array.isArray(tagIds)) return [];
+  const seen = new Set<number>();
+  const tags: SteamTag[] = [];
+
+  for (const rawId of tagIds) {
+    const id = Number(rawId);
+    const name = namesById.get(String(rawId));
+    if (!name || seen.has(id)) continue;
+    seen.add(id);
+    tags.push({ id, name });
+  }
+
+  return tags.slice(0, limit);
+};
+
 export const getSteamTagNames = (
   tagIds: (string | number)[] | null | undefined,
   namesById: ReadonlyMap<string, string>,
   limit = STEAM_TAG_LIMIT
-): string[] => {
-  if (!Array.isArray(tagIds)) return [];
-  const names = tagIds.flatMap((id) => {
-    const name = namesById.get(String(id));
-    return name ? [name] : [];
-  });
-  return Array.from(new Set(names)).slice(0, limit);
-};
+): string[] => getSteamTags(tagIds, namesById, limit).map((tag) => tag.name);
 
 export const getEffectiveGenres = (game: {
   customGenres?: string[] | null;

@@ -94,11 +94,10 @@ export function Sidebar() {
     (catalogueGame.shop === "steam" ? catalogueGame.objectId : null);
   const steamTags = useSteamTags(catalogueGame.shop, catalogueGame.objectId);
   const storeGenres = getGenreNames(shopDetails?.genres);
-  const genres = game?.customGenres?.length
-    ? game.customGenres
-    : steamTags.length > 0
-      ? steamTags
-      : storeGenres;
+  // The user's own genres win; without Steam tags the store's genres show.
+  const customGenres = game?.customGenres?.length ? game.customGenres : null;
+  const genres = customGenres ?? (steamTags.length > 0 ? [] : storeGenres);
+  const tags = customGenres ? [] : steamTags;
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
@@ -241,7 +240,7 @@ export function Sidebar() {
         />
       )}
 
-      {shop !== "launchbox" && <GenresSection genres={genres} />}
+      {shop !== "launchbox" && <GenresSection genres={genres} tags={tags} />}
 
       <HowLongToBeatSection
         howLongToBeatData={howLongToBeat.data}

@@ -129,7 +129,7 @@ const fetchMetadata = async (
 
   return {
     metadata: {
-      genres: tags.length > 0 ? tags : fallbackGenres,
+      genres: tags.length > 0 ? tags.map((tag) => tag.name) : fallbackGenres,
       releaseDate:
         parseReleaseDate(record?.releaseDate) ??
         parseReleaseDate(steamDetails?.release_date?.date),

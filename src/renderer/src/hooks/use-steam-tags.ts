@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { GameShop } from "@types";
+import type { GameShop, SteamTag } from "@types";
 
-const tagsByGame = new Map<string, Promise<string[]>>();
+const tagsByGame = new Map<string, Promise<SteamTag[]>>();
 
 const loadGameTags = (shop: GameShop, objectId: string) => {
   const key = `${shop}:${objectId}`;
@@ -19,11 +19,11 @@ const loadGameTags = (shop: GameShop, objectId: string) => {
 };
 
 /**
- * The game's most voted Steam tags (English, to match the library's genre
- * filter), or an empty list while loading and for games without any.
+ * The game's most voted Steam tags (English names, with the ids the catalogue
+ * filters by), or an empty list while loading and for games without any.
  */
-export function useSteamTags(shop: GameShop, objectId: string): string[] {
-  const [loaded, setLoaded] = useState<{ key: string; tags: string[] }>();
+export function useSteamTags(shop: GameShop, objectId: string): SteamTag[] {
+  const [loaded, setLoaded] = useState<{ key: string; tags: SteamTag[] }>();
   const key = `${shop}:${objectId}`;
 
   useEffect(() => {
