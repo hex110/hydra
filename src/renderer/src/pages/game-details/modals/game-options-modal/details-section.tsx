@@ -4,9 +4,9 @@ import { orderBy } from "lodash-es";
 
 import { Button, SelectField, TextField } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
-import { useToast } from "@renderer/hooks";
+import { useSteamTags, useToast } from "@renderer/hooks";
 import languageResources from "@locales";
-import { getGenreNames } from "@shared";
+import { getGameCatalogueIdentity, getGenreNames } from "@shared";
 import type { GameMetadataOverrides, LibraryGame } from "@types";
 
 import { FloppyMatchSection } from "./floppy-match-section";
@@ -59,7 +59,10 @@ export function DetailsSection({ game }: Readonly<{ game: LibraryGame }>) {
     }
   };
 
-  const storeGenres = getGenreNames(shopDetails?.genres);
+  const catalogueGame = getGameCatalogueIdentity(game);
+  const steamTags = useSteamTags(catalogueGame.shop, catalogueGame.objectId);
+  const storeGenres =
+    steamTags.length > 0 ? steamTags : getGenreNames(shopDetails?.genres);
   const isDirty =
     description.trim() !== (game.customDescription ?? "") ||
     parseGenres(genres).join(",") !== (game.customGenres ?? []).join(",");

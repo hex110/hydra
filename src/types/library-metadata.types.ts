@@ -8,6 +8,7 @@ export interface HowLongToBeatHours {
 
 /** Catalogue data the library filters and sorts by, cached per catalogue game. */
 export interface GameLibraryMetadata {
+  /** Steam's user tags where the catalogue has them, otherwise its genres. */
   genres: string[];
   /** ISO date. */
   releaseDate: string | null;
@@ -18,6 +19,8 @@ export interface GameLibraryMetadata {
   protonDbTier: string | null;
   howLongToBeat: HowLongToBeatHours | null;
   fetchedAt: number;
+  /** `LIBRARY_METADATA_VERSION` when fetched; entries without it refetch. */
+  version?: number;
 }
 
 /** User edits to a game's details; undefined leaves a field as it is, null clears it. */

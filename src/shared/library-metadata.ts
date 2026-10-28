@@ -15,6 +15,12 @@ export const PLAY_STATUSES: readonly PlayStatus[] = [
 /** Refetch catalogue metadata a week after it was fetched. */
 export const LIBRARY_METADATA_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** Bumped when cached metadata changes meaning, so older entries refetch. */
+export const LIBRARY_METADATA_VERSION = 2;
+
+/** Steam tags kept per game, most voted first. */
+export const STEAM_TAG_LIMIT = 8;
+
 const FRACTIONS: Record<string, number> = {
   "½": 0.5,
   "¼": 0.25,
@@ -73,6 +79,26 @@ export const getGenreNames = (
   return Array.from(new Set(names));
 };
 
+/** Steam tag name → id, as `/catalogue/steam/tags` returns it, flipped to id → name. */
+export const invertSteamTags = (
+  tags: Record<string, number> | null | undefined
+): Map<string, string> =>
+  new Map(Object.entries(tags ?? {}).map(([name, id]) => [String(id), name]));
+
+/** A game's most voted Steam tags by name; ids the map doesn't know are dropped. */
+export const getSteamTagNames = (
+  tagIds: (string | number)[] | null | undefined,
+  namesById: ReadonlyMap<string, string>,
+  limit = STEAM_TAG_LIMIT
+): string[] => {
+  if (!Array.isArray(tagIds)) return [];
+  const names = tagIds.flatMap((id) => {
+    const name = namesById.get(String(id));
+    return name ? [name] : [];
+  });
+  return Array.from(new Set(names)).slice(0, limit);
+};
+
 export const getEffectiveGenres = (game: {
   customGenres?: string[] | null;
   metadata?: Pick<GameLibraryMetadata, "genres"> | null;
@@ -82,6 +108,12 @@ export const getEffectiveGenres = (game: {
     : (game.metadata?.genres ?? []);
 
 export const isLibraryMetadataStale = (
-  metadata: Pick<GameLibraryMetadata, "fetchedAt"> | null | undefined,
+  metadata:
+    | Pick<GameLibraryMetadata, "fetchedAt" | "version">
+    | null
+    | undefined,
   now = Date.now()
-) => !metadata || now - metadata.fetchedAt > LIBRARY_METADATA_MAX_AGE_MS;
+) =>
+  !metadata ||
+  metadata.version !== LIBRARY_METADATA_VERSION ||
+  now - metadata.fetchedAt > LIBRARY_METADATA_MAX_AGE_MS;

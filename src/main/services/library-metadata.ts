@@ -13,13 +13,16 @@ import {
 import {
   getGameCatalogueIdentity,
   getGenreNames,
+  getSteamTagNames,
   isLibraryMetadataStale,
   LIBRARY_METADATA_MAX_AGE_MS,
+  LIBRARY_METADATA_VERSION,
   parseHowLongToBeat,
   parseReleaseDate,
 } from "@shared";
 import { HydraApi } from "./hydra-api";
 import { logger } from "./logger";
+import { getSteamTagNamesById } from "./steam-tags";
 import { WindowManager } from "./window-manager";
 
 const REFRESH_DEBOUNCE_MS = 30_000;
@@ -30,6 +33,8 @@ const STEAM_BATCH_SIZE = 30;
 
 interface CatalogueGameRecord {
   genres?: string[];
+  /** Steam tag ids, most voted first. */
+  tags?: (string | number)[];
   releaseDate?: string | null;
   averageReviewScore?: number | null;
   reviewCount?: number;
@@ -86,7 +91,7 @@ const fetchMetadata = async (
   const base = `/games/${shop}/${encodeURIComponent(objectId)}`;
   const isPcGame = shop !== "launchbox";
 
-  const [record, howLongToBeat, protonDb] = await Promise.all([
+  const [record, howLongToBeat, protonDb, tagNames] = await Promise.all([
     settle(
       HydraApi.get<CatalogueGameRecord | null>(base, null, requestOptions)
     ),
@@ -108,17 +113,21 @@ const fetchMetadata = async (
           )
         )
       : Promise.resolve(null),
+    getSteamTagNamesById(),
   ]);
 
   if (record === undefined && howLongToBeat === undefined && !steamDetails) {
     return null;
   }
 
+  const tags = getSteamTagNames(record?.tags, tagNames);
   const genres = getGenreNames(record?.genres);
+  const fallbackGenres =
+    genres.length > 0 ? genres : getGenreNames(steamDetails?.genres);
 
   return {
     metadata: {
-      genres: genres.length > 0 ? genres : getGenreNames(steamDetails?.genres),
+      genres: tags.length > 0 ? tags : fallbackGenres,
       releaseDate:
         parseReleaseDate(record?.releaseDate) ??
         parseReleaseDate(steamDetails?.release_date?.date),
@@ -130,9 +139,11 @@ const fetchMetadata = async (
       protonDbTier: protonDb?.tier ?? null,
       howLongToBeat: parseHowLongToBeat(howLongToBeat),
       fetchedAt: Date.now(),
+      version: LIBRARY_METADATA_VERSION,
     },
     complete:
       record !== undefined &&
+      (record?.tags === undefined || tagNames.size > 0) &&
       howLongToBeat !== undefined &&
       protonDb !== undefined,
   };

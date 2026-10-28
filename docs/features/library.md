@@ -120,16 +120,16 @@ so it starts in 4.1.6-plus.11.
 
 The **Filters** button holds:
 
-| Filter           | Values                                                                                                     |
-| ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| Play status      | The four statuses, plus **No status**.                                                                     |
-| Genre            | Every genre in the library (your own genres, see [Game page](game-page.md#details), win over the store's). |
-| ProtonDB         | Platinum, Gold, Silver, Bronze, Borked. Linux only.                                                        |
-| How Long to Beat | Main story length: under 2 h, 2–6 h, 6–15 h, 15–30 h, 30–60 h, over 60 h.                                  |
-| Metacritic score | 90 and up, 80–89, 70–79, under 70.                                                                         |
-| Installed size   | Under 10 GB, 10–50 GB, 50–100 GB, over 100 GB.                                                             |
-| Never played     | No playtime from Hydra, Steam or Epic.                                                                     |
-| Hide duplicates  | See below.                                                                                                 |
+| Filter           | Values                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Play status      | The four statuses, plus **No status**.                                                                                          |
+| Genre            | Every genre in the library: each game's top Steam tags (your own genres, see [Game page](game-page.md#details), win over them). |
+| ProtonDB         | Platinum, Gold, Silver, Bronze, Borked. Linux only.                                                                             |
+| How Long to Beat | Main story length: under 2 h, 2–6 h, 6–15 h, 15–30 h, 30–60 h, over 60 h.                                                       |
+| Metacritic score | 90 and up, 80–89, 70–79, under 70.                                                                                              |
+| Installed size   | Under 10 GB, 10–50 GB, 50–100 GB, over 100 GB.                                                                                  |
+| Never played     | No playtime from Hydra, Steam or Epic.                                                                                          |
+| Hide duplicates  | See below.                                                                                                                      |
 
 Values within a filter are alternatives (RPG _or_ Action); different filters
 all have to match. A game without the value (no Metacritic score, not
@@ -186,12 +186,14 @@ Games without the value go last, in title order.
 
 ## Catalogue data
 
-Genres, release dates, Metacritic scores, ProtonDB tiers and How Long to Beat
+Genres (a game's eight most voted Steam tags, or the store's genres when the
+catalogue has none), release dates, Metacritic scores, ProtonDB tiers and How Long to Beat
 times come from Hydra's API (the same endpoints the game page uses, plus the
 batched Steam store details for Metacritic). Hydra fetches them in the
 background 30 seconds after it starts and whenever games are added, three
 games at a time, and keeps them in the local database (`gameLibraryMetadata`)
-for a week. Data that only partly arrived is fetched again a day later. When
+for a week; entries from before tags were used are fetched once more. Data
+that only partly arrived is fetched again a day later. When
 the API can't be reached at all, Hydra waits half an hour before trying again.
 
 Custom games have no catalogue data; give them genres yourself.

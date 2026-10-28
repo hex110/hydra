@@ -9,7 +9,7 @@ import { Button } from "@renderer/components/button/button";
 import { Link } from "@renderer/components/link/link";
 
 import { gameDetailsContext } from "@renderer/context";
-import { useAppSelector } from "@renderer/hooks";
+import { useAppSelector, useSteamTags } from "@renderer/hooks";
 import { HowLongToBeatSection } from "./how-long-to-beat-section";
 import { LaunchboxDetailsSection } from "./launchbox-details-section";
 import { GenresSection } from "./genres-section";
@@ -92,9 +92,13 @@ export function Sidebar() {
     getOfficialStoreMembers(presentation?.members ?? (game ? [game] : [])).steam
       ?.objectId ??
     (catalogueGame.shop === "steam" ? catalogueGame.objectId : null);
+  const steamTags = useSteamTags(catalogueGame.shop, catalogueGame.objectId);
+  const storeGenres = getGenreNames(shopDetails?.genres);
   const genres = game?.customGenres?.length
     ? game.customGenres
-    : getGenreNames(shopDetails?.genres);
+    : steamTags.length > 0
+      ? steamTags
+      : storeGenres;
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );

@@ -84,8 +84,10 @@ game's three latest Steam announcements, as on the home page.
 
 ## Genres and similar games
 
-The sidebar lists the game's genres; clicking one opens the library filtered
-to that genre.
+The sidebar lists the game's eight most voted Steam tags (Souls-like,
+Atmospheric, …) under **Genres**, in English so they match the library's genre
+filter; clicking one opens the library filtered to it. A game the catalogue has
+no tags for shows the store's genres instead.
 
 **Similar games** ("More like this") lists up to 24 games, as a carousel of
 three at a time. The ones you own come first and are marked **In library** or
@@ -111,7 +113,7 @@ re-ranks it (`src/shared/similar-games.ts`, `src/main/services/steam-similar.ts`
 - **Description**: plain text shown under "About this game" instead of the
   store description. Line breaks are kept.
 - **Genres**: a comma-separated list used on the game page and by the
-  library's genre filter instead of the store's genres.
+  library's genre filter instead of the Steam tags.
 - **Store details language**: the language the game page asks the store for
   (description, requirements, …), for games whose store page is better in
   another language. **Same as Hydra** follows the app language. Steam and

@@ -26,3 +26,4 @@ export * from "./use-middle-click-autoscroll";
 export * from "./use-active-game-setups";
 export * from "./use-library-view";
 export * from "./use-cloud-save-access";
+export * from "./use-steam-tags";

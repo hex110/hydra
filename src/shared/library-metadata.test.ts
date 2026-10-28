@@ -4,8 +4,11 @@ import { describe, it } from "node:test";
 import {
   getEffectiveGenres,
   getGenreNames,
+  getSteamTagNames,
+  invertSteamTags,
   isLibraryMetadataStale,
   LIBRARY_METADATA_MAX_AGE_MS,
+  LIBRARY_METADATA_VERSION,
   parseHowLongToBeat,
   parseHowLongToBeatDuration,
   parseReleaseDate,
@@ -96,17 +99,57 @@ describe("getEffectiveGenres", () => {
   });
 });
 
+describe("getSteamTagNames", () => {
+  const names = invertSteamTags({
+    "Souls-like": 29482,
+    RPG: 122,
+    Atmospheric: 4166,
+  });
+
+  it("maps ids to names in order and drops unknown ids and duplicates", () => {
+    assert.deepEqual(getSteamTagNames(["29482", 999, 122, "122"], names), [
+      "Souls-like",
+      "RPG",
+    ]);
+  });
+
+  it("keeps only the most voted tags", () => {
+    assert.deepEqual(getSteamTagNames(["29482", "122", "4166"], names, 2), [
+      "Souls-like",
+      "RPG",
+    ]);
+  });
+
+  it("returns nothing without tags", () => {
+    assert.deepEqual(getSteamTagNames(undefined, names), []);
+    assert.deepEqual(getSteamTagNames(["1"], invertSteamTags(null)), []);
+  });
+});
+
 describe("isLibraryMetadataStale", () => {
   it("is stale when missing or older than the max age", () => {
     const now = 10 * LIBRARY_METADATA_MAX_AGE_MS;
     assert.equal(isLibraryMetadataStale(null, now), true);
-    assert.equal(isLibraryMetadataStale({ fetchedAt: now - 1000 }, now), false);
     assert.equal(
       isLibraryMetadataStale(
-        { fetchedAt: now - LIBRARY_METADATA_MAX_AGE_MS - 1 },
+        { fetchedAt: now - 1000, version: LIBRARY_METADATA_VERSION },
+        now
+      ),
+      false
+    );
+    assert.equal(
+      isLibraryMetadataStale(
+        {
+          fetchedAt: now - LIBRARY_METADATA_MAX_AGE_MS - 1,
+          version: LIBRARY_METADATA_VERSION,
+        },
         now
       ),
       true
     );
+  });
+
+  it("is stale when fetched before the current metadata version", () => {
+    assert.equal(isLibraryMetadataStale({ fetchedAt: 1000 }, 2000), true);
   });
 });
