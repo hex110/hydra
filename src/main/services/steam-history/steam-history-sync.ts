@@ -22,6 +22,7 @@ import {
   markIntegrationFailed,
   markIntegrationSynced,
 } from "../integration-status";
+import { AchievementWatcherManager } from "../achievements/achievement-watcher-manager";
 import { updateGameRecord } from "../game-record-updater";
 import { libraryWriteQueue } from "../library-sync/library-write-queue";
 import { queueFloppySync } from "../floppy";
@@ -300,6 +301,9 @@ const run = async (
             status.gamesWithAchievements + (result.hasAchievements ? 1 : 0),
           gamesAdded: status.gamesAdded + (result.added ? 1 : 0),
         };
+        if (result.added) {
+          AchievementWatcherManager.trackBatchGame("steam", String(game.appid));
+        }
       } catch (error) {
         logger.error("Steam history sync failed for a game", {
           appId: game.appid,
@@ -342,7 +346,9 @@ export const startSteamHistorySync = async (quiet = false) => {
     result: null,
   });
 
-  void run(credentials, options)
+  // A batch keeps the achievement watcher off the new games until their
+  // existing unlocks are recorded, so none of them is announced as new.
+  void AchievementWatcherManager.runBatch(() => run(credentials, options))
     .then(() => {
       status = { ...status, running: false, finishedAt: Date.now() };
 

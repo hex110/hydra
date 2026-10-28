@@ -207,6 +207,10 @@ const hasUnmergedUnlocks = (game: Game, files: AchievementFile[]) => {
 
 const BATCH_SYNC_CONCURRENCY = 4;
 
+// Games the Steam import added: their unlocks are old history, so they are
+// recorded without announcing them.
+const isSilentGame = (game: Game) => game.steamHistoryImported === true;
+
 export class AchievementWatcherManager {
   private static _hasFinishedPreSearch = false;
   private static batchDepth = 0;
@@ -306,7 +310,11 @@ export class AchievementWatcherManager {
       this.alreadySyncedGames.delete(gameKey);
     }
 
-    if (newAchievements > 0 && this.hasFinishedPreSearch) {
+    if (
+      newAchievements > 0 &&
+      !isSilentGame(game) &&
+      this.hasFinishedPreSearch
+    ) {
       if (this.batchDepth > 0) {
         this.addToBatchNotification(gameKey, newAchievements);
       } else {
@@ -430,6 +438,8 @@ export class AchievementWatcherManager {
       if (newAchievements <= 0) return;
 
       totalNewAchievements += newAchievements;
+      if (isSilentGame(game)) return;
+
       this.addToBatchNotification(
         levelKeys.game(game.shop, game.objectId),
         newAchievements
@@ -613,11 +623,15 @@ export class AchievementWatcherManager {
         })
       );
 
-      const totalNewGamesWithAchievements = preProcessResults.filter(
+      const announced = preProcessResults.filter(
+        (_, index) => !isSilentGame(gameAchievementFiles[index].game)
+      );
+
+      const totalNewGamesWithAchievements = announced.filter(
         (result) => result.newAchievements > 0
       ).length;
 
-      const totalNewAchievements = preProcessResults.reduce(
+      const totalNewAchievements = announced.reduce(
         (acc, result) => acc + result.newAchievements,
         0
       );

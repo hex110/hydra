@@ -56,6 +56,11 @@ hour. Demos and betas are always skipped.
   on it is an ordinary game of yours: uploaded like any other, no longer
   under the Steam tab, and never removed by the options below.
 - Installing one works like any uninstalled game.
+- Achievements you already have on Steam are recorded silently: with **Steam
+  achievements** on, Hydra reads them from Steam's local cache, but for these
+  games that never produces an unlock popup or notification. Only an unlock
+  that happens later does. The import holds the achievement watcher back until
+  the new games are recorded.
 - A game below the playtime limit that you later add from the catalogue gets
   its Steam history, Floppy status and rating straight away.
 
