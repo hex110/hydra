@@ -6,6 +6,7 @@ import {
   HeartIcon,
   HourglassIcon,
   PlusCircleIcon,
+  PulseIcon,
   SlidersIcon,
   SortDescIcon,
   TrophyIcon,
@@ -159,6 +160,11 @@ export function SidebarFilterMenu({
     icon: JSX.Element;
   }[] = [
     {
+      value: "recent_activity",
+      label: t("sort_recent_activity", { ns: "library" }),
+      icon: <PulseIcon size={14} />,
+    },
+    {
       value: "title_asc",
       label: t("sort_title", { ns: "library" }),
       icon: <SortDescIcon size={14} />,
@@ -271,22 +277,6 @@ export function SidebarFilterMenu({
                 {t("sort_by", { ns: "library" })}
               </DropdownMenuPrimitive.Label>
 
-              <DropdownMenuPrimitive.CheckboxItem
-                checked={showFavoritesFirst}
-                onCheckedChange={onToggleFavoritesFirst}
-                onSelect={(event) => event.preventDefault()}
-                className="sidebar-filter-menu__item"
-              >
-                <HeartIcon size={14} />
-                <span>{t("show_favorites_first")}</span>
-                <DropdownMenuPrimitive.ItemIndicator
-                  forceMount
-                  className="sidebar-filter-menu__item-indicator"
-                >
-                  <CheckIcon size={14} />
-                </DropdownMenuPrimitive.ItemIndicator>
-              </DropdownMenuPrimitive.CheckboxItem>
-
               <DropdownMenuPrimitive.RadioGroup
                 value={sortBy}
                 onValueChange={(value) => onSortChange(value as SortOption)}
@@ -309,6 +299,28 @@ export function SidebarFilterMenu({
                   </DropdownMenuPrimitive.RadioItem>
                 ))}
               </DropdownMenuPrimitive.RadioGroup>
+            </DropdownMenuPrimitive.Group>
+
+            <DropdownMenuPrimitive.Separator className="sidebar-filter-menu__separator" />
+
+            {/* A switch, not a check, so it doesn't read as another sort option. */}
+            <DropdownMenuPrimitive.Group className="sidebar-filter-menu__group">
+              <DropdownMenuPrimitive.CheckboxItem
+                checked={showFavoritesFirst}
+                onCheckedChange={onToggleFavoritesFirst}
+                onSelect={(event) => event.preventDefault()}
+                className="sidebar-filter-menu__item sidebar-filter-menu__item--switch"
+              >
+                <HeartIcon size={14} />
+                <span className="sidebar-filter-menu__item-label">
+                  {t("show_favorites_first")}
+                </span>
+                <span
+                  className="sidebar-filter-menu__switch"
+                  data-state={showFavoritesFirst ? "checked" : "unchecked"}
+                  aria-hidden="true"
+                />
+              </DropdownMenuPrimitive.CheckboxItem>
             </DropdownMenuPrimitive.Group>
           </div>
 

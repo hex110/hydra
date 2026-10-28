@@ -14,6 +14,7 @@ import {
 } from "..";
 import { AlertIcon, HeartFillIcon } from "@primer/octicons-react";
 import { useAppSelector, useToast } from "@renderer/hooks";
+import { isGameInstalled } from "@renderer/helpers";
 import { useCollectionContextMenu } from "@renderer/context";
 import { getLibraryPresentationBadgeSource } from "@renderer/pages/library/library-category";
 
@@ -100,6 +101,7 @@ export function SidebarGameItem({
             location.pathname ===
             `/game/${catalogueIdentity.shop}/${catalogueIdentity.objectId}`,
           "sidebar__menu-item--muted": game.download?.status === "removed",
+          "sidebar__menu-item--not-installed": !isGameInstalled(game),
         })}
       >
         <button

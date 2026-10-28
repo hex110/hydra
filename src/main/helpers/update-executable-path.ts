@@ -13,6 +13,9 @@ export function updateGameExecutablePath<TGame extends Game>(
     executablePath,
     executablePathUpdatedAt: executablePath ? new Date() : null,
     executableStatus: null,
+    ...(executablePath && !game.executablePath
+      ? { installedAt: new Date() }
+      : {}),
   };
 }
 

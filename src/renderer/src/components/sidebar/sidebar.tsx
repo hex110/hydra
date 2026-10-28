@@ -61,6 +61,7 @@ const SIDEBAR_MAX_WIDTH = 450;
 const SIDEBAR_GAME_ITEM_HEIGHT = 42;
 
 const SIDEBAR_SORT_OPTIONS = new Set<SortOption>([
+  "recent_activity",
   "title_asc",
   "recently_added",
   "recently_played",
@@ -102,7 +103,7 @@ export function Sidebar() {
     if (SIDEBAR_SORT_OPTIONS.has(saved as SortOption)) {
       return saved as SortOption;
     }
-    return "title_asc";
+    return "recent_activity";
   });
 
   const [showFavoritesFirst, setShowFavoritesFirst] = useState<boolean>(() => {

@@ -182,6 +182,9 @@ const projectGroup = (
       new Set(members.flatMap(getLibraryCollectionIds))
     ),
     lastTimePlayed: latestDate(members.map((member) => member.lastTimePlayed)),
+    installedAt: latestDate(
+      members.map((member) => member.installedAt ?? null)
+    ),
     playStatus:
       customCandidates.find((member) => member.playStatus)?.playStatus ?? null,
     customGenres:

@@ -4,6 +4,7 @@ import "./filter-options.scss";
 
 export type SortOption =
   | "title_asc"
+  | "recent_activity"
   | "recently_played"
   | "most_played"
   | "achievements"
@@ -32,6 +33,7 @@ export const SORT_OPTIONS: SortOption[] = [
 const SORT_LABEL_KEYS: Record<SortOption, string> = {
   title_asc: "sort_title_asc",
   title_desc: "sort_title_desc",
+  recent_activity: "sort_recent_activity",
   recently_played: "recently_played",
   most_played: "sort_most_played",
   recently_added: "sort_recently_added",

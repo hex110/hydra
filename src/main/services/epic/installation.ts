@@ -1063,6 +1063,7 @@ export class EpicInstallationService {
         return {
           executablePath: installed.executablePath,
           executablePathUpdatedAt: new Date(),
+          ...(latest.executablePath ? {} : { installedAt: new Date() }),
           installedSizeInBytes: installed.install_size,
           epicInstallation: {
             ...(sameInstallation ? latest.epicInstallation : {}),

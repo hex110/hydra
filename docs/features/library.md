@@ -140,10 +140,18 @@ duplicates**. Filters are remembered between sessions.
 Clicking a genre on a game page opens the library filtered to that genre.
 
 The sidebar's game list follows the library's tab, filters and **Installed**
-toggle, as Steam's left list does, and keeps its own sort (title, recently
-added, recently played, most played or achievements). **Recently added** puts a
-game you just added at the top. Its filter menu changes the same settings as the
-library page.
+toggle, as Steam's left list does, and keeps its own sort (recent activity,
+title, recently added, recently played, most played or achievements).
+**Recent activity**, the default, puts the game you last installed or played at
+the top; adding a game to the library doesn't count, that is what **Recently
+added** is for. The install time (`installedAt`) is stamped when a game goes
+from having no executable to having one — a finished download, a picked
+executable, a scan or a Steam/Epic import — so games installed before this
+existed sort by last played until they are played or reinstalled.
+**Favorites on top** is a switch below the sorts and applies to all of them.
+Games that are in the library but not installed show with a gray name and a
+faded, grayscale icon, as in Steam.
+Its filter menu changes the same settings as the library page.
 
 ### Saved filters
 

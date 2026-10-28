@@ -30,6 +30,9 @@ const stubs: Record<string, unknown> = {
     useAppSelector: () => ({}),
     useToast: () => ({ showWarningToast: () => {} }),
   },
+  "@renderer/helpers": {
+    isGameInstalled: (game: LibraryGame) => Boolean(game.executablePath),
+  },
   "@renderer/context": {
     useCollectionContextMenu: () => ({ openCollectionContextMenu: () => {} }),
   },
@@ -99,4 +102,26 @@ it("keeps the Epic sidebar fallback while navigating to its Steam catalogue", ()
   } finally {
     dom.window.close();
   }
+});
+
+it("grays out games that are in the library but not installed", () => {
+  const render = (game: LibraryGame) => {
+    const dom = new JSDOM(
+      renderToStaticMarkup(
+        React.createElement(exports.SidebarGameItem, {
+          game,
+          handleSidebarGameClick: () => {},
+          getGameTitle: (item: LibraryGame) => item.title,
+        })
+      )
+    );
+    const notInstalled = Boolean(
+      dom.window.document.querySelector(".sidebar__menu-item--not-installed")
+    );
+    dom.window.close();
+    return notInstalled;
+  };
+
+  assert.equal(render(epic), true);
+  assert.equal(render({ ...epic, executablePath: "/games/game.exe" }), false);
 });

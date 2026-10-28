@@ -520,6 +520,11 @@ const toTime = (value: Date | string | null | undefined): number | null => {
   return Number.isNaN(time) ? null : time;
 };
 
+/** Installing or playing a game counts as activity; adding it does not. */
+const getLastActivityTime = (game: LibraryGame): number | null =>
+  Math.max(toTime(game.lastTimePlayed) ?? 0, toTime(game.installedAt) ?? 0) ||
+  null;
+
 /** Larger values first (or smaller with `ascending`); games without one go last. */
 const compareKnownValues = (
   a: number | null | undefined,
@@ -552,6 +557,15 @@ export const sortLibraryGames = (
 ): LibraryGame[] => {
   return [...games].sort((a, b) => {
     switch (sortBy) {
+      case "recent_activity": {
+        const difference = compareKnownValues(
+          getLastActivityTime(a),
+          getLastActivityTime(b)
+        );
+        if (difference !== 0) return difference;
+        break;
+      }
+
       case "recently_played": {
         const difference = getPlayTimeDifference(a, b);
         if (difference !== 0) return difference;

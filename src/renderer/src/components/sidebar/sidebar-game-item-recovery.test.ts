@@ -55,6 +55,7 @@ async function setup(t: TestContext) {
     },
     "@primer/octicons-react": { HeartFillIcon: () => null },
     "@renderer/hooks": { useAppSelector: () => ({}), useToast: () => ({}) },
+    "@renderer/helpers": { isGameInstalled: () => true },
     "@renderer/context": { useCollectionContextMenu: () => ({}) },
     "@renderer/pages/library/library-category": {
       getLibraryPresentationBadgeSource: () => null,

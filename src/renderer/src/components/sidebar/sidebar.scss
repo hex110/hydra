@@ -136,6 +136,16 @@
       }
     }
 
+    // Like Steam: in the library but not installed.
+    &--not-installed {
+      color: rgba(255, 255, 255, 0.4);
+
+      .sidebar__game-icon {
+        filter: grayscale(1);
+        opacity: 0.5;
+      }
+    }
+
     &--decky {
       background: linear-gradient(
         135deg,

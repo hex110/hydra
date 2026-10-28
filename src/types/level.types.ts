@@ -134,6 +134,8 @@ export interface Game extends LibraryCatalogueMetadata {
   protonPath?: string | null;
   executablePath?: string | null;
   executablePathUpdatedAt?: Date | null;
+  /** When the game last went from having no executable to having one. */
+  installedAt?: Date | null;
   /** Set when the executable is gone ("missing") or its drive is not mounted ("offline"). */
   executableStatus?: "missing" | "offline" | null;
   trackingExecutablePaths?: string[] | null;
