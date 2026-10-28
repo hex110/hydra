@@ -6,6 +6,7 @@ import { logger } from "@main/services/logger";
 import { SystemPath } from "@main/services/system-path";
 import { getSourceSession } from "./source-session";
 import { verifySourceInBrowser } from "./source-verification";
+import { AnkerGamesCatalogue } from "@main/services/ankergames/catalogue";
 import {
   buildSourceIndex,
   parseSourceDocument,
@@ -185,6 +186,9 @@ export class LocalSources {
   }
 
   public static async refreshAll(force = false) {
+    if (await AnkerGamesCatalogue.isEnabled()) {
+      await AnkerGamesCatalogue.refresh(force);
+    }
     if (!(await this.isEnabled())) return;
     const sources = await downloadSourcesSublevel.values().all();
     for (const source of sources) {
@@ -214,13 +218,20 @@ export class LocalSources {
     return index;
   }
 
-  /** Downloads from every source whose release title names this game. */
+  /** Downloads from AnkerGames and every source whose release title names this game. */
   public static async findRepacks(title: string): Promise<GameRepack[]> {
+    const ankerGames = await AnkerGamesCatalogue.findRepacks(title).catch(
+      (error: unknown) => {
+        logger.warn("[AnkerGames] Lookup failed", error);
+        return [] as GameRepack[];
+      }
+    );
+
     const key = sourceMatchKey(title);
-    if (!key || !(await this.isEnabled())) return [];
+    if (!key || !(await this.isEnabled())) return ankerGames;
 
     const sources = await downloadSourcesSublevel.values().all();
-    const repacks: GameRepack[] = [];
+    const repacks: GameRepack[] = [...ankerGames];
 
     for (const source of sources) {
       const index = await this.getIndex(source.id);

@@ -18,6 +18,7 @@ import {
 } from "date-fns/locale";
 
 import { isArchiveOrgFileUri } from "./archive-org";
+import { isAnkerGamesUri } from "./ankergames";
 import { charMap } from "./char-map";
 import { Downloader } from "./constants";
 import { format } from "date-fns";
@@ -29,6 +30,7 @@ export * from "./window-layout";
 export * from "./title-matching";
 export * from "./optiscaler";
 export * from "./local-source-matching";
+export * from "./ankergames";
 export * from "./release-version";
 export * from "./linux-launch";
 export * from "./launch-rules";
@@ -177,6 +179,7 @@ export const formatName = pipe<string>(
 const realDebridHosts = ["https://1fichier.com", "https://mediafire.com"];
 
 export const getDownloadersForUri = (uri: string) => {
+  if (isAnkerGamesUri(uri)) return [Downloader.AnkerGames];
   if (uri.startsWith("https://gofile.io")) return [Downloader.Gofile];
 
   if (uri.startsWith("https://pixeldrain.com")) return [Downloader.PixelDrain];

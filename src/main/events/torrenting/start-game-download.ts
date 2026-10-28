@@ -9,7 +9,11 @@ import {
 } from "@main/services";
 import { createGame } from "@main/services/library-sync";
 import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
-import { parseBytes } from "@shared";
+import { Downloader, parseBytes } from "@shared";
+import {
+  hasBrowserDownload,
+  openAnkerGamesDownloadPage,
+} from "@main/services/ankergames";
 import {
   getGlobalTrackers,
   handleDownloadError,
@@ -46,6 +50,13 @@ const startGameDownload = async (
   let didWriteDownload = false;
 
   try {
+    if (
+      downloader === Downloader.AnkerGames &&
+      !(await hasBrowserDownload(uri))
+    ) {
+      await openAnkerGamesDownloadPage(uri, title);
+    }
+
     const globalTrackers = await getGlobalTrackers();
 
     const download: Download = {

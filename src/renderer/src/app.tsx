@@ -49,6 +49,7 @@ import { ArchiveDeletionModal } from "./pages/downloads/archive-deletion-error-m
 import { CloudSubscriptionModal } from "./pages/shared-modals/hydra-cloud/cloud-subscription-modal";
 import { AddFriendModal } from "./pages/profile/profile-content/add-friend-modal";
 import { ClassicsScanModal } from "./pages/settings/emulation/classics-scan-modal";
+import { AnkerGamesBrowserNotice } from "./pages/shared-modals/ankergames-browser-notice";
 import { RetroArchScanModal } from "./pages/settings/emulation/retroarch-scan-modal";
 import { CloudGiftNotificationModal } from "./pages/shared-modals/cloud-gift-notification-modal";
 import { playMessageSound } from "./pages/chat-window/chat-sounds";
@@ -777,6 +778,7 @@ export function App() {
       />
 
       <ClassicsScanModal />
+      <AnkerGamesBrowserNotice />
       <RetroArchScanModal />
 
       <main>

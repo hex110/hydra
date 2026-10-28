@@ -1,4 +1,5 @@
 import type { GameRepack, UserPreferences } from "@types";
+import { ANKERGAMES_SOURCE_ID } from "./ankergames.js";
 
 export type RepackSortPreference = "newest" | "smallest";
 
@@ -25,10 +26,18 @@ export const parseRepackSize = (size: string | null): number | null => {
   return Math.round(value * 1024 ** unit);
 };
 
+/** AnkerGames is not in the sources list the order is picked from, so it leads unless listed. */
+const withAnkerGamesFirst = (sourceIds: string[]) =>
+  sourceIds.includes(ANKERGAMES_SOURCE_ID)
+    ? sourceIds
+    : [ANKERGAMES_SOURCE_ID, ...sourceIds];
+
 export const resolveRepackPreferences = (
   preferences: UserPreferences | null | undefined
 ): RepackPreferences => ({
-  sourceOrder: preferences?.preferredDownloadSourceIds ?? [],
+  sourceOrder: withAnkerGamesFirst(
+    preferences?.preferredDownloadSourceIds ?? []
+  ),
   sortBy:
     preferences?.repackSortPreference === "smallest" ? "smallest" : "newest",
   excludedWords: (preferences?.repackExcludedWords ?? "")

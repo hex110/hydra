@@ -17,6 +17,7 @@ import {
   TrashIcon,
 } from "@primer/octicons-react";
 import { AddDownloadSourceModal } from "./add-download-source-modal";
+import { SettingsAnkerGames } from "./settings-ankergames";
 import {
   useAppDispatch,
   useAppSelector,
@@ -266,6 +267,8 @@ export function SettingsDownloadSources() {
       />
 
       <p>{t("download_sources_description")}</p>
+
+      <SettingsAnkerGames />
 
       <div className="settings-download-sources__local-matching">
         <CheckboxField

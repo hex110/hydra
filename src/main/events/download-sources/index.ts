@@ -5,3 +5,4 @@ import "./get-download-sources";
 import "./remove-download-source";
 import "./sync-download-sources";
 import "./local-sources";
+import "./ankergames";

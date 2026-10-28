@@ -12,3 +12,13 @@ export interface LocalSourceStatus {
   /** The host serves a browser challenge that can be passed in a window. */
   needsVerification?: boolean;
 }
+
+/** How Hydra's AnkerGames catalogue is doing. */
+export interface AnkerGamesStatus {
+  enabled: boolean;
+  refreshing: boolean;
+  games: number;
+  /** When the sitemaps were last read successfully. */
+  fetchedAt: string | null;
+  error: string | null;
+}

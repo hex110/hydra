@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { IS_DESKTOP } from "../../constants";
 import type { DownloadSource, Game, GameRepack } from "@types";
 import {
+  ANKERGAMES_SOURCE_ID,
   applyHosterAvailability,
   fetchHosterAvailability,
   filterDownloadableRepacks,
@@ -117,10 +118,16 @@ function setNoDownloadOptionsState(
   });
 }
 
+// AnkerGames downloads need the link dialog, which only the desktop window has.
 const fetchLocalRepacks = (title: string | undefined) =>
   title
     ? globalThis.window.electron
         .getLocalSourceRepacks(title)
+        .then((repacks) =>
+          repacks.filter(
+            (repack) => repack.downloadSourceId !== ANKERGAMES_SOURCE_ID
+          )
+        )
         .catch(() => [] as GameRepack[])
     : Promise.resolve([] as GameRepack[]);
 

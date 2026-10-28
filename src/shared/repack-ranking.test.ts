@@ -60,6 +60,26 @@ describe("rankRepacks", () => {
     );
   });
 
+  it("puts the built-in AnkerGames source first unless the order lists it", () => {
+    const builtIn = repack("builtin", "ankergames", "61 GB", "2026-01-01");
+    const ranked = rankRepacks(
+      [...repacks, builtIn],
+      resolveRepackPreferences({ preferredDownloadSourceIds: ["fitgirl"] })
+    );
+    assert.strictEqual(ranked[0].id, "builtin");
+
+    const listed = rankRepacks(
+      [...repacks, builtIn],
+      resolveRepackPreferences({
+        preferredDownloadSourceIds: ["fitgirl", "ankergames"],
+      })
+    );
+    assert.deepStrictEqual(
+      listed.slice(0, 3).map((item) => item.id),
+      ["new-fitgirl", "old-fitgirl", "builtin"]
+    );
+  });
+
   it("drops repacks the user cannot download", () => {
     const ranked = rankRepacks(
       repacks,

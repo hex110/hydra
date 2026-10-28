@@ -1153,6 +1153,18 @@ contextBridge.exposeInMainWorld("electron", {
   refreshLocalSources: () => ipcRenderer.invoke("refreshLocalSources"),
   verifyLocalSource: (sourceId: string) =>
     ipcRenderer.invoke("verifyLocalSource", sourceId),
+  getAnkerGamesStatus: () => ipcRenderer.invoke("getAnkerGamesStatus"),
+  refreshAnkerGames: () => ipcRenderer.invoke("refreshAnkerGames"),
+  getAnkerGamesBrowserDownloadsPath: () =>
+    ipcRenderer.invoke("getAnkerGamesBrowserDownloadsPath"),
+  onAnkerGamesBrowserOpened: (cb: (title: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, title: string) =>
+      cb(title);
+    ipcRenderer.on("on-ankergames-browser-opened", listener);
+    return () =>
+      ipcRenderer.removeListener("on-ankergames-browser-opened", listener);
+  },
+
   getOptiScalerOverview: () => ipcRenderer.invoke("getOptiScalerOverview"),
   checkOptiScalerUpdates: () => ipcRenderer.invoke("checkOptiScalerUpdates"),
   downloadOptiScaler: () => ipcRenderer.invoke("downloadOptiScaler"),

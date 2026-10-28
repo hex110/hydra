@@ -413,6 +413,10 @@ export interface UserPreferences {
   prepareOnlineFixGames?: boolean;
   /** Also match games against Hydra's own copy of each download source. */
   matchDownloadSourcesLocally?: boolean;
+  /** List AnkerGames releases from Hydra's own reading of ankergames.net. */
+  ankerGamesSource?: boolean;
+  /** Where the browser saves AnkerGames archives; the system Downloads folder when unset. */
+  ankerGamesBrowserDownloadsPath?: string;
   optiScalerAutoInstall?: boolean;
   optiScalerChannel?: OptiScalerChannel;
   optiScalerProxyDll?: OptiScalerProxyDll;

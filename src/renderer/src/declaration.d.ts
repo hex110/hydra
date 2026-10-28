@@ -36,6 +36,7 @@ import type {
   GameOptiScalerStatus,
   OptiScalerBulkProgress,
   LocalSourceStatus,
+  AnkerGamesStatus,
   OptiScalerOverview,
   OptiScalerProxyDll,
   SaveImportBulkProgress,
@@ -560,6 +561,12 @@ declare global {
     getLocalSourceStatuses: () => Promise<LocalSourceStatus[]>;
     refreshLocalSources: () => Promise<void>;
     verifyLocalSource: (sourceId: string) => Promise<void>;
+    getAnkerGamesStatus: () => Promise<AnkerGamesStatus>;
+    refreshAnkerGames: () => Promise<void>;
+    getAnkerGamesBrowserDownloadsPath: () => Promise<string>;
+    onAnkerGamesBrowserOpened: (
+      cb: (title: string) => void
+    ) => () => Electron.IpcRenderer;
     getOptiScalerOverview: () => Promise<OptiScalerOverview>;
     checkOptiScalerUpdates: () => Promise<void>;
     downloadOptiScaler: () => Promise<string>;

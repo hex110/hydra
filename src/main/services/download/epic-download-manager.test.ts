@@ -189,6 +189,7 @@ function fixture() {
   for (const module of [
     "@main/services/game-record-updater",
     "../hosters",
+    "../ankergames/browser-download",
     "./helpers",
     "./download-filename",
     "./real-debrid",

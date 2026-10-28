@@ -77,6 +77,7 @@ import {
   sampleJsBatchSpeed,
 } from "./js-http-downloader-helpers";
 import { getDirectorySize } from "@main/events/helpers/get-directory-size";
+import { AnkerGamesBrowserDownload } from "../ankergames/browser-download";
 import {
   getDownloadLayoutStateRecord,
   getNextQueuedDownloadFromLayout,
@@ -1693,9 +1694,18 @@ export class DownloadManager {
         return this.getRootzDownloadOptions(download, resumingFilename);
       case Downloader.ArchiveOrg:
         return this.getArchiveOrgDownloadOptions(download, resumingFilename);
+      case Downloader.AnkerGames:
+        return this.getAnkerGamesDownloadOptions(download);
       default:
         return null;
     }
+  }
+
+  /** The browser downloads the archive; `AnkerGamesBrowserDownload` follows it. */
+  private static async getAnkerGamesDownloadOptions(
+    download: Download
+  ): Promise<JsDownloadOptions> {
+    return { url: download.uri, savePath: download.downloadPath };
   }
 
   private static async resolveBatchEntryUrl(
@@ -2521,6 +2531,8 @@ export class DownloadManager {
   ): Promise<void> {
     signal?.throwIfAborted();
     if (!this.isHttpDownloader(download.downloader)) return;
+    // The browser fetches AnkerGames archives; there is no link to check.
+    if (download.downloader === Downloader.AnkerGames) return;
 
     const downloadId = levelKeys.game(download.shop, download.objectId);
     this.preparedJsDownloads.delete(downloadId);
@@ -3081,7 +3093,10 @@ export class DownloadManager {
       return;
     }
 
-    this.jsDownloader = new JsHttpDownloader();
+    this.jsDownloader =
+      download.downloader === Downloader.AnkerGames
+        ? new AnkerGamesBrowserDownload()
+        : new JsHttpDownloader();
     this.jsDownloader.setMaxDownloadSpeedBytesPerSecond(
       this.maxDownloadSpeedBytesPerSecond
     );

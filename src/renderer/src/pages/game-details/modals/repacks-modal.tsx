@@ -21,6 +21,7 @@ import type { DownloadSource, Game, GameRepack } from "@types";
 import { DownloadSettingsModal } from "./download-settings-modal";
 import { gameDetailsContext } from "@renderer/context";
 import {
+  ANKERGAMES_SOURCE_ID,
   Downloader,
   getDownloadersForUri,
   getOfficialStoreMembers,
@@ -204,7 +205,14 @@ export function RepacksModal({
   }, [visible, game, dispatch]);
 
   const sortedRepacks = useMemo(() => {
-    return orderBy(repacks, [(repack) => repack.uploadDate], ["desc"]);
+    return orderBy(
+      repacks,
+      [
+        (repack) => repack.downloadSourceId === ANKERGAMES_SOURCE_ID,
+        (repack) => repack.uploadDate,
+      ],
+      ["desc", "desc"]
+    );
   }, [repacks]);
 
   const getRepackAvailabilityStatus = (

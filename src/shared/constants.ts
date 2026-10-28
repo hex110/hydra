@@ -14,6 +14,7 @@ export enum Downloader {
   AllDebrid = 13,
   ArchiveOrg = 14,
   Epic = 15,
+  AnkerGames = 16,
 }
 
 export enum DownloadSourceStatus {
@@ -101,6 +102,11 @@ export enum DownloadError {
   TorBoxLinkUnavailable = "download_error_torbox_link_unavailable",
   NetworkUnreachable = "download_error_network_unreachable",
   NetworkCertificateRejected = "download_error_network_certificate_rejected",
+  AnkerGamesLimitReached = "download_error_ankergames_limit_reached",
+  AnkerGamesSubscriptionRequired = "download_error_ankergames_subscription_required",
+  AnkerGamesRegionBlocked = "download_error_ankergames_region_blocked",
+  AnkerGamesUnavailable = "download_error_ankergames_unavailable",
+  AnkerGamesBrowserDownloadMissing = "download_error_ankergames_browser_download_missing",
 }
 
 export const MINIMUM_FREE_DISK_SPACE_BYTES = 512 * 1024 * 1024;
