@@ -25,15 +25,20 @@ const FAILED_PAGE_TTL_MS = 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 30_000;
 /** Gap between game page requests, so an update check over a big library stays gentle. */
 const PAGE_REQUEST_GAP_MS = 1000;
+const RATE_LIMIT_PENALTY_MS = 5000;
+const MAX_RATE_LIMIT_PENALTY_MS = 60_000;
 
 interface CachedCatalogue {
   fetchedAt: number;
   entries: AnkerGamesSitemapEntry[];
 }
 
+/** The home feed is read before download lookups and update checks that queued earlier. */
+type PageLane = "downloads" | "feed";
+
 interface GetPageOptions {
   fresh?: boolean;
-  lane?: "downloads" | "feed";
+  lane?: PageLane;
 }
 
 interface CachedPage {
@@ -92,9 +97,10 @@ export class AnkerGamesCatalogue {
   private static index: Map<string, AnkerGamesSitemapEntry[]> | null = null;
   private static pages: Record<string, CachedPage> | null = null;
   private static refreshing: Promise<void> | null = null;
-  private static pageRequests: Promise<unknown> = Promise.resolve();
-  /** The home feed reads its pages in a lane of its own, so it never holds up a download lookup. */
-  private static feedPageRequests: Promise<unknown> = Promise.resolve();
+  private static pageJobs: { lane: PageLane; run: () => Promise<void> }[] = [];
+  private static pumpingPages = false;
+  /** Extra wait between page requests while the site answers 429. */
+  private static rateLimitPenaltyMs = 0;
   private static lastError: string | null = null;
 
   public static async isEnabled() {
@@ -180,7 +186,40 @@ export class AnkerGamesCatalogue {
     );
   }
 
-  /** A game page's details, from cache when fresh. One request at a time per lane. */
+  /** Runs page requests one at a time, feed jobs first, with a gap that grows while rate-limited. */
+  private static schedulePage<T>(lane: PageLane, task: () => Promise<T>) {
+    return new Promise<T>((resolve, reject) => {
+      this.pageJobs.push({ lane, run: () => task().then(resolve, reject) });
+      void this.pumpPages();
+    });
+  }
+
+  private static async pumpPages() {
+    if (this.pumpingPages) return;
+    this.pumpingPages = true;
+    try {
+      for (;;) {
+        const feedIndex = this.pageJobs.findIndex((job) => job.lane === "feed");
+        const [job] = this.pageJobs.splice(Math.max(feedIndex, 0), 1);
+        if (!job) break;
+        await job.run();
+        await sleep(PAGE_REQUEST_GAP_MS + this.rateLimitPenaltyMs);
+      }
+    } finally {
+      this.pumpingPages = false;
+    }
+  }
+
+  private static noteRateLimit(limited: boolean) {
+    this.rateLimitPenaltyMs = limited
+      ? Math.min(
+          Math.max(this.rateLimitPenaltyMs * 2, RATE_LIMIT_PENALTY_MS),
+          MAX_RATE_LIMIT_PENALTY_MS
+        )
+      : 0;
+  }
+
+  /** A game page's details, from cache when fresh. One request at a time across both lanes. */
   public static async getPage(
     slug: string,
     { fresh = false, lane = "downloads" }: GetPageOptions = {}
@@ -194,28 +233,25 @@ export class AnkerGamesCatalogue {
       if (Date.now() - cached.fetchedAt < ttl) return cached.page;
     }
 
-    const queue = lane === "feed" ? this.feedPageRequests : this.pageRequests;
-    const request = queue.then(async () => {
+    return this.schedulePage(lane, async () => {
       try {
         const page = parseGamePage(await fetchText(ankerGamesPageUri(slug)));
+        this.noteRateLimit(false);
         await this.savePage(slug, { fetchedAt: Date.now(), page });
         return page;
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.noteRateLimit(message === "HTTP 429");
         logger.warn("[AnkerGames] Could not read game page", {
           slug,
-          error: error instanceof Error ? error.message : String(error),
+          error: message,
         });
         // An older copy beats none; only remember the failure when there is none.
         if (cached?.page) return cached.page;
         await this.savePage(slug, { fetchedAt: Date.now(), page: null });
         return null;
-      } finally {
-        await sleep(PAGE_REQUEST_GAP_MS);
       }
     });
-    if (lane === "feed") this.feedPageRequests = request.catch(() => null);
-    else this.pageRequests = request.catch(() => null);
-    return request;
   }
 
   /** AnkerGames releases of the game with this title. */

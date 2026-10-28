@@ -4,8 +4,7 @@ import { logger } from "@main/services/logger";
 import { WindowManager } from "@main/services/window-manager";
 import {
   ANKERGAMES_ORIGIN,
-  parseLatestGames,
-  parseTrendingChart,
+  parseHomeFeed,
   type AnkerGamesFeedEntry,
 } from "@shared";
 import type { AnkerGamesFeed, AnkerGamesFeedGame } from "@types";
@@ -19,8 +18,7 @@ import {
 
 const RETRY_AFTER_FAILURE_MS = 60 * 60 * 1000;
 const RETRY_UNREAD_AFTER_MS = 10_000;
-/** Each game costs a page read, so the chart is cut well short of its twenty places. */
-const TRENDING_LIMIT = 16;
+const STEAM_DETAILS_BATCH = 10;
 
 interface ResolvedEntry extends AnkerGamesFeedEntry {
   /** null when the game has no Steam app id, so it can't be opened in Hydra. */
@@ -31,10 +29,15 @@ interface ResolvedEntry extends AnkerGamesFeedEntry {
 
 interface CachedFeed {
   fetchedAt: number;
-  /** A page or some game pages could not be read, so a row is old or incomplete. */
+  /** Some game pages could not be read, so the Steam ids are incomplete. */
   partial: boolean;
   trending: ResolvedEntry[];
   latest: ResolvedEntry[];
+}
+
+interface SteamDetailsEntry {
+  objectId: string;
+  data?: { data?: { name?: string; header_image?: string } } | null;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -47,13 +50,6 @@ const isSameLocalDay = (a: number, b: number) =>
 const steamHeaderUrl = (appId: string) =>
   `https://shared.steamstatic.com/store_item_assets/steam/apps/${appId}/header.jpg`;
 
-const STEAM_DETAILS_BATCH = 10;
-
-interface SteamDetailsEntry {
-  objectId: string;
-  data?: { data?: { name?: string; header_image?: string } } | null;
-}
-
 const toFeedGames = (entries: ResolvedEntry[]): AnkerGamesFeedGame[] =>
   entries.flatMap((entry) =>
     entry.steamAppId
@@ -64,15 +60,15 @@ const toFeedGames = (entries: ResolvedEntry[]): AnkerGamesFeedGame[] =>
             title: entry.name,
             libraryImageUrl: entry.imageUrl ?? steamHeaderUrl(entry.steamAppId),
             version: entry.version,
-            rank: entry.rank,
           },
         ]
       : []
   );
 
 /**
- * AnkerGames' weekly trending chart and its latest games, read once per day
- * (the first time Hydra starts that day) for the catalogue front page. Games are opened by their Steam app id, which only the game
+ * The "Trending Games" and "Latest Games" rows of the AnkerGames home page,
+ * read once per day (the first time Hydra starts that day) for the catalogue
+ * front page. Games are opened by their Steam app id, which only the game
  * pages carry, so each is read once through the page cache.
  */
 export class AnkerGamesHomeFeed {
@@ -87,27 +83,28 @@ export class AnkerGamesHomeFeed {
     return this.cached;
   }
 
-  private static isCurrent(feed: CachedFeed | null) {
-    return (
-      feed !== null &&
-      !feed.partial &&
-      isSameLocalDay(feed.fetchedAt, Date.now())
-    );
-  }
-
-  /** Reads the home page unless today's copy is complete or a try failed within the hour. */
-  public static async refreshIfNewDay(): Promise<void> {
-    if (!(await AnkerGamesCatalogue.isEnabled())) return;
-    if (this.isCurrent(await this.load())) return;
-    if (Date.now() - this.lastAttemptAt < RETRY_AFTER_FAILURE_MS) {
-      return this.refreshing ?? undefined;
-    }
+  /** Starts a read unless today's copy is complete or a try failed within the hour. */
+  private static startRefresh() {
+    const feed = this.cached ?? null;
+    const current =
+      feed && !feed.partial && isSameLocalDay(feed.fetchedAt, Date.now());
+    if (current) return this.refreshing;
+    if (this.refreshing) return this.refreshing;
+    if (Date.now() - this.lastAttemptAt < RETRY_AFTER_FAILURE_MS) return null;
 
     this.lastAttemptAt = Date.now();
-    this.refreshing ??= this.runRefresh().finally(() => {
+    this.refreshing = this.runRefresh().finally(() => {
       this.refreshing = null;
+      // Also on failure, so a catalogue showing a loading state can stop.
+      WindowManager.sendToAppWindows("on-ankergames-feed-updated");
     });
     return this.refreshing;
+  }
+
+  public static async refreshIfNewDay(): Promise<void> {
+    if (!(await AnkerGamesCatalogue.isEnabled())) return;
+    await this.load();
+    await this.startRefresh();
   }
 
   private static async resolve(entries: AnkerGamesFeedEntry[]) {
@@ -157,40 +154,18 @@ export class AnkerGamesHomeFeed {
     return details;
   }
 
-  private static async readPage<T>(
-    pathname: string,
-    parse: (html: string) => T[]
-  ): Promise<T[] | null> {
-    try {
-      const response = await fetchAnkerGames(`${ANKERGAMES_ORIGIN}${pathname}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const entries = parse(await response.text());
-      if (entries.length === 0) throw new Error("The page lists no games");
-      return entries;
-    } catch (error) {
-      logger.warn("[AnkerGames] Could not read a feed page", {
-        pathname,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return null;
-    }
-  }
-
   private static async runRefresh() {
     try {
-      const previous = await this.load();
-      const trending = await this.readPage("/trending", parseTrendingChart);
-      const latest = await this.readPage("/", parseLatestGames);
-      // A row that can't be read keeps its last copy until the next try.
-      const rows = {
-        trending: trending?.slice(0, TRENDING_LIMIT) ?? null,
-        latest,
-      };
-      if (!rows.trending && !rows.latest) return;
+      const response = await fetchAnkerGames(`${ANKERGAMES_ORIGIN}/`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const feed = parseHomeFeed(await response.text());
+      if (feed.trending.length === 0 && feed.latest.length === 0) {
+        throw new Error("The home page lists no games");
+      }
 
       const { steamAppIds, partial } = await this.resolve([
-        ...(rows.trending ?? []),
-        ...(rows.latest ?? []),
+        ...feed.trending,
+        ...feed.latest,
       ]);
       const steamDetails = await this.fetchSteamDetails(
         [...steamAppIds.values()].filter((id) => id !== null)
@@ -208,38 +183,40 @@ export class AnkerGamesHomeFeed {
 
       this.cached = {
         fetchedAt: Date.now(),
-        partial: partial || !rows.trending || !rows.latest,
-        trending: rows.trending?.map(withSteamId) ?? previous?.trending ?? [],
-        latest: rows.latest?.map(withSteamId) ?? previous?.latest ?? [],
+        partial,
+        trending: feed.trending.map(withSteamId),
+        latest: feed.latest.map(withSteamId),
       };
       await writeJson(getFeedPath(), this.cached);
-      WindowManager.sendToAppWindows("on-ankergames-feed-updated");
     } catch (error) {
-      logger.warn("[AnkerGames] Could not read the home feed", {
+      logger.warn("[AnkerGames] Could not read the home page", {
         error: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
   /**
-   * The rows from the last read. With no copy yet, waits for the first read so
-   * the catalogue can show a loading state instead of nothing.
+   * The rows from the last read, at once, and whether a newer read is running
+   * (the catalogue is told when it ends) instead of holding the catalogue up.
    */
   public static async get(): Promise<AnkerGamesFeed> {
     const enabled = await AnkerGamesCatalogue.isEnabled();
     if (!enabled) {
-      return { enabled, fetchedAt: null, trending: [], latest: [] };
+      return {
+        enabled,
+        refreshing: false,
+        fetchedAt: null,
+        trending: [],
+        latest: [],
+      };
     }
 
-    const refresh = this.refreshIfNewDay();
-    let feed = await this.load();
-    if (!feed) {
-      await refresh;
-      feed = await this.load();
-    }
+    const feed = await this.load();
+    void this.startRefresh();
 
     return {
       enabled,
+      refreshing: this.refreshing !== null,
       fetchedAt: feed ? new Date(feed.fetchedAt).toISOString() : null,
       trending: toFeedGames(feed?.trending ?? []),
       latest: toFeedGames(feed?.latest ?? []),

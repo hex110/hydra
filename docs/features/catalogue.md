@@ -9,7 +9,7 @@ With no search, no filters and the default sort, the catalogue opens with:
 
 - **Featured**: Hydra's "Hot now" list.
 - **New on AnkerGames** and **Trending on AnkerGames**: the site's latest
-  additions and its weekly download chart ([details](ankergames.md#catalogue-rows)).
+  additions and its trending games ([details](ankergames.md#catalogue-rows)).
 - **Recommended for you**: the home page's
   [suggestions](home.md#suggested-for-you), each with the game it came from.
 - **Discovery queue**: one game at a time from the two rows above and the
@@ -20,7 +20,8 @@ With no search, no filters and the default sort, the catalogue opens with:
   uploaded, so this row only takes games your download sources have.
 - **Browse by genre**: a chip per Steam genre, which sets the genre filter.
 
-Games already in your library are left out of every row. The rows are kept
+Games already in your library are left out of every row except the two
+AnkerGames ones, which show the site's rows whole. The rows are kept
 for half an hour while Hydra runs (the AnkerGames rows come from a daily
 read instead). Searching, filtering or changing the sort
 hides the front page; the full list follows it under **All games**.

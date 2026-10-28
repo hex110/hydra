@@ -6,8 +6,7 @@ import {
   parseAnkerGamesPageUri,
   parseGamePage,
   parseGameSitemap,
-  parseLatestGames,
-  parseTrendingChart,
+  parseHomeFeed,
   parseSitemapIndex,
   pickMainDownload,
   slugMatchKey,
@@ -134,67 +133,32 @@ const card = (slug: string, name: string, version?: string) => `
 
 const HOME_PAGE = `<html><body>
 <h2 class="text-lg">Trending Games</h2>
-<div class="poster-grid">${card("trending-only", "Trending Only", "V 9")}</div>
+<div class="poster-grid">${card("reka", "REKA", "V 1.0.23.3")}${card("hades-ii", "Hades &amp; II")}</div>
 <h2 class="text-lg">Latest Games</h2>
-<div class="poster-grid">${card("reka", "REKA", "V 1.0.23.3")}${card("hades-ii", "Hades &amp; II")}${card("reka", "REKA")}${card("sable", "Sable", "V 2")}</div>
+<div class="poster-grid">${card("reka", "REKA", "V 1.0.23.3")}${card("sable", "Sable", "V 2")}${card("reka", "REKA")}</div>
 <h2 class="text-lg">Epic Collections</h2>
 <div>${card("not-a-row", "Not a row")}</div>
 </body></html>`;
 
-describe("parseLatestGames", () => {
-  it("reads the latest row, newest first", () => {
-    assert.deepStrictEqual(parseLatestGames(HOME_PAGE), [
-      { slug: "reka", name: "REKA", version: "V 1.0.23.3", rank: null },
-      { slug: "hades-ii", name: "Hades & II", version: null, rank: null },
-      { slug: "sable", name: "Sable", version: "V 2", rank: null },
-    ]);
+describe("parseHomeFeed", () => {
+  it("reads the trending and latest rows in site order", () => {
+    assert.deepStrictEqual(parseHomeFeed(HOME_PAGE), {
+      trending: [
+        { slug: "reka", name: "REKA", version: "V 1.0.23.3" },
+        { slug: "hades-ii", name: "Hades & II", version: null },
+      ],
+      latest: [
+        { slug: "reka", name: "REKA", version: "V 1.0.23.3" },
+        { slug: "sable", name: "Sable", version: "V 2" },
+      ],
+    });
   });
 
-  it("returns nothing for a page without the row", () => {
-    assert.deepStrictEqual(parseLatestGames("<html></html>"), []);
-  });
-});
-
-const chartRow = (slug: string, name: string, rank: string, fold = "") => `
-<a class="tw-row${fold}" href="https://ankergames.net/game/${slug}"
-        data-band="climbing" style="--mag:0.71"><div><span class="tw-tr climbing"><span class="from">7</span><span class="arw">&rarr;</span><span class="to">${rank}</span></span></div>
-<div><h3> ${name} <span>Steam agrees</span></h3><div class="gn">Action</div></div></a>`;
-
-const TRENDING_PAGE = `<html><body>
-<a class="tw-head" href="https://ankergames.net/game/moon-sweepers"><h2>Moon Sweepers</h2></a>
-<a class="tw-throne" href="https://ankergames.net/game/call-of-duty-modern-warfare-4"><div class="in"><div class="crown">Still No.1</div><h3>Call of Duty: Modern Warfare 4</h3></div></a>
-<div id="twBoard">
-${chartRow("moon-sweepers", "Moon Sweepers", "04")}
-${chartRow("god-of-war-iii-remastered", "God of War III Remastered", "02", " tw-fold")}
-${chartRow("cyberpunk-2077", "Cyberpunk 2077", "03")}
-<a class="tw-gc" href="https://ankergames.net/game/off-the-board"><h3>Off the board</h3></a>
-</div></body></html>`;
-
-describe("parseTrendingChart", () => {
-  it("lists the chart by this week's place, the No. 1 card first", () => {
-    assert.deepStrictEqual(
-      parseTrendingChart(TRENDING_PAGE).map(({ slug, rank }) => [slug, rank]),
-      [
-        ["call-of-duty-modern-warfare-4", 1],
-        ["god-of-war-iii-remastered", 2],
-        ["cyberpunk-2077", 3],
-        ["moon-sweepers", 4],
-      ]
-    );
-  });
-
-  it("reads names and leaves games off the board out", () => {
-    const names = parseTrendingChart(TRENDING_PAGE).map(({ name }) => name);
-    assert.deepStrictEqual(names, [
-      "Call of Duty: Modern Warfare 4",
-      "God of War III Remastered",
-      "Cyberpunk 2077",
-      "Moon Sweepers",
-    ]);
-  });
-
-  it("returns nothing for a page without a chart", () => {
-    assert.deepStrictEqual(parseTrendingChart("<html></html>"), []);
+  it("returns empty rows for a page without them", () => {
+    assert.deepStrictEqual(parseHomeFeed("<html></html>"), {
+      trending: [],
+      latest: [],
+    });
   });
 });
 

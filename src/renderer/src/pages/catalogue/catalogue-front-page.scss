@@ -11,8 +11,19 @@
     gap: calc(globals.$spacing-unit * 1.5);
 
     h2 {
+      display: flex;
+      align-items: center;
+      gap: globals.$spacing-unit;
       font-size: 16px;
       font-weight: 600;
+    }
+  }
+
+  &__refreshing {
+    color: globals.$muted-color;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: catalogue-front-page-spin 1s linear infinite;
     }
   }
 
@@ -176,5 +187,11 @@
     &__queue-cover {
       width: 100%;
     }
+  }
+}
+
+@keyframes catalogue-front-page-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

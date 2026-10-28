@@ -34,15 +34,12 @@ AnkerGames** rows, so you can see what the site added or is downloading
 without opening it. They follow **List AnkerGames downloads**: switched off,
 the rows are gone.
 
-- **New** is the "Latest Games" row of `https://ankergames.net/`, newest
-  first, with the release shown on each card (`V 1.0.23.3`).
-- **Trending** is the weekly chart at `https://ankergames.net/trending`
-  ("Trending This Week", ranked by the last seven days of downloads), best
-  first, each card showing `No. 4 this week`. The first 16 places are kept.
-  The home page's own "Trending Games" row is not used: it is mostly the
-  same games as the latest row.
-- **Read once a day.** Hydra reads both pages the first time it starts on a
-  new calendar day (local time), in the background after startup, and keeps
+- Both rows are the home page's own rows at `https://ankergames.net/`, in
+  the site's order: **New** is "Latest Games" (newest first), **Trending** is
+  "Trending Games". Each card shows the release the site lists
+  (`V 1.0.23.3`). The two rows share some games, as they do on the site.
+- **Read once a day.** Hydra reads the home page the first time it starts on
+  a new calendar day (local time), in the background after startup, and keeps
   the result in `<userData>/ankergames/home.json`. Opening the catalogue
   later the same day reads nothing. If the app stays open past midnight,
   the next catalogue visit does the read. A read that failed, or left some
@@ -50,16 +47,23 @@ the rows are gone.
   an open catalogue by itself.
 - **Opening a game.** AnkerGames' cards carry no Steam id, so each game's
   page is read (through the same one-a-day page cache as
-  [game lists](#game-list), in its own request lane so it never delays a
-  download lookup) for its `steam_app_id`. A card opens that Steam game's
-  normal page. Games without a Steam id (console titles such as
-  Bloodborne, Minecraft) can't be opened in Hydra and are left out, so a row
-  can show fewer games than the site does. Images and titles come from Steam
-  through Hydra's API, which is where the hashed `header.jpg` URL of newer
-  games is.
-- Games already in your library are left out, as in every catalogue row.
+  [game lists](#game-list)) for its `steam_app_id`. A card opens that Steam
+  game's normal page. Games without a Steam id (console titles) can't be
+  opened in Hydra and are left out, so a row can show fewer games than the
+  site does. Images and titles come from Steam through Hydra's API, which is
+  where the hashed `header.jpg` URL of newer games is.
+- **One request queue.** Every AnkerGames page read (download lookups,
+  update checks, this feed) goes through one queue, one request a second,
+  feed reads first. Two queues at once produced `HTTP 429` (rate limit)
+  answers for both. After a 429 the gap between requests grows (5 s, doubling
+  to 60 s) until a request succeeds.
+- The rows are the site's, whole: every game with a Steam id is shown, owned
+  ones too, and nothing is cut to the other rows' length of twelve.
+- **A spinner beside each title** says a read is running, with the rows from
+  the last read still on screen. On the very first start, with no copy yet,
+  the rows are placeholders until the read ends.
 
-Files: `parseLatestGames` / `parseTrendingChart` in `src/shared/ankergames.ts`,
+Files: `parseHomeFeed` in `src/shared/ankergames.ts`,
 `src/main/services/ankergames/home-feed.ts`, `getAnkerGamesFeed` (IPC) and
 the two shelves in `catalogue-front-page.tsx`.
 

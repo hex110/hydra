@@ -7,6 +7,7 @@ import {
   ChevronRightIcon,
   PlusIcon,
   QuestionIcon,
+  SyncIcon,
 } from "@primer/octicons-react";
 
 import { Button } from "@renderer/components";
@@ -62,14 +63,16 @@ const toFrontPageGame = (
   reason,
 });
 
-const fromAnkerGames = (
-  game: AnkerGamesFeedGame,
-  rankLabel: (rank: number) => string
-): FrontPageGame =>
-  toFrontPageGame(
-    game,
-    game.rank === null ? (game.version ?? undefined) : rankLabel(game.rank)
-  );
+const EMPTY_ANKERGAMES_FEED: AnkerGamesFeed = {
+  enabled: false,
+  refreshing: false,
+  fetchedAt: null,
+  trending: [],
+  latest: [],
+};
+
+const fromAnkerGames = (game: AnkerGamesFeedGame): FrontPageGame =>
+  toFrontPageGame(game, game.version ?? undefined);
 
 function Capsule({ game }: Readonly<{ game: FrontPageGame }>) {
   const navigate = useNavigate();
@@ -102,12 +105,29 @@ function Shelf({
   title,
   games,
   isLoading,
-}: Readonly<{ title: string; games: FrontPageGame[]; isLoading: boolean }>) {
+  isRefreshing = false,
+}: Readonly<{
+  title: string;
+  games: FrontPageGame[];
+  isLoading: boolean;
+  /** Shows the games already known and says that newer ones are on the way. */
+  isRefreshing?: boolean;
+}>) {
+  const { t } = useTranslation("catalogue");
   if (!isLoading && games.length === 0) return null;
 
   return (
     <section className="catalogue-front-page__shelf">
-      <h2>{title}</h2>
+      <h2>
+        {title}
+        {isRefreshing && (
+          <SyncIcon
+            size={14}
+            className="catalogue-front-page__refreshing"
+            aria-label={t("ankergames_refreshing")}
+          />
+        )}
+      </h2>
       <div className="catalogue-front-page__row">
         {isLoading
           ? Array.from({ length: 6 }).map((_, index) => (
@@ -251,9 +271,10 @@ export function CatalogueFrontPage({
         .then((feed) => {
           if (current) setAnkerGames(feed);
         })
-        .catch((error) =>
-          logger.error("Failed to load the AnkerGames rows", error)
-        );
+        .catch((error) => {
+          logger.error("Failed to load the AnkerGames rows", error);
+          if (current) setAnkerGames(EMPTY_ANKERGAMES_FEED);
+        });
 
     void load();
     const unsubscribe = window.electron.onAnkerGamesFeedUpdated(load);
@@ -351,12 +372,11 @@ export function CatalogueFrontPage({
       .filter((game) => !ownedKeys.has(catalogueKey(game)))
       .slice(0, SHELF_SIZE);
 
+  // The site's rows as they are: games you own stay, and nothing is cut.
   const ankerGamesRow = (games: AnkerGamesFeedGame[] = []) =>
-    notOwned(
-      games.map((game) =>
-        fromAnkerGames(game, (rank) => t("ankergames_rank", { rank }))
-      )
-    );
+    games.map(fromAnkerGames);
+  const ankerGamesLoading = (games: AnkerGamesFeedGame[] = []) =>
+    ankerGames === null || (ankerGames.refreshing && games.length === 0);
 
   const recommended = useMemo(
     () =>
@@ -421,12 +441,14 @@ export function CatalogueFrontPage({
       <Shelf
         title={t("ankergames_new")}
         games={ankerGamesRow(ankerGames?.latest)}
-        isLoading={ankerGames === null}
+        isLoading={ankerGamesLoading(ankerGames?.latest)}
+        isRefreshing={ankerGames?.refreshing}
       />
       <Shelf
         title={t("ankergames_trending")}
         games={ankerGamesRow(ankerGames?.trending)}
-        isLoading={ankerGames === null}
+        isLoading={ankerGamesLoading(ankerGames?.trending)}
+        isRefreshing={ankerGames?.refreshing}
       />
       <Shelf
         title={t("recommended_for_you")}
