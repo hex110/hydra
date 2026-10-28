@@ -58,6 +58,9 @@ Once a row is on screen, Hydra fills in:
 - How Long to Beat's **main story** time;
 - the **download size**: the median size of the downloads your sources have,
   since the smallest upload is often a patch or a fix.
+- the game's top three **Steam tags**, in your language, in place of its
+  genres (Epic and Classics rows keep their genres). They come from Steam in
+  one request per page of rows and are kept for six hours.
 
 Resting the pointer on a cover cycles through up to five screenshots after a
 short pause. Steam's trailers only come as DASH/HLS streams, which a plain

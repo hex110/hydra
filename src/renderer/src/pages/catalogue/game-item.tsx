@@ -22,6 +22,7 @@ import {
 import cn from "classnames";
 import { logger } from "@renderer/logger";
 import { CatalogueLibraryBadge } from "./catalogue-library-badge";
+import { useSteamTagLabels } from "./use-steam-tag-labels";
 import type { CatalogueLibraryState } from "./catalogue-library-state";
 import type { CatalogueView } from "./catalogue-results-cache";
 
@@ -38,6 +39,7 @@ export interface GameItemProps {
 }
 
 const PREVIEW_DELAY_MS = 400;
+const CARD_TAGS = 3;
 const PREVIEW_INTERVAL_MS = 1400;
 
 /** Cycles through screenshots while the pointer rests on the cover. */
@@ -118,6 +120,15 @@ export function GameItem({
       setIsAddingToLibrary(false);
     }
   };
+
+  const tagLabels = useSteamTagLabels();
+  const tags = useMemo(
+    () =>
+      (details?.tagIds ?? [])
+        .flatMap((id) => tagLabels.get(id) ?? [])
+        .slice(0, CARD_TAGS),
+    [details?.tagIds, tagLabels]
+  );
 
   const genres = useMemo(() => {
     return game.genres?.map((genre) => {
@@ -205,8 +216,10 @@ export function GameItem({
             <span className="game-item__title">{game.title}</span>
             <CatalogueLibraryBadge state={libraryState} />
           </span>
-          {genres && genres.length > 0 ? (
-            <span className="game-item__genres">{genres.join(", ")}</span>
+          {tags.length > 0 || (genres && genres.length > 0) ? (
+            <span className="game-item__genres">
+              {(tags.length > 0 ? tags : genres).join(", ")}
+            </span>
           ) : (
             <span className="game-item__genres game-item__genres--empty">
               {t("no_genres", { ns: "catalogue" })}

@@ -12,9 +12,13 @@ export interface CatalogueRowDetails {
   downloadSize: number | null;
   /** Screenshot thumbnails for hover previews. */
   screenshots: string[];
+  /** Steam tag ids, most voted first. */
+  tagIds: number[];
 }
 
 export const CATALOGUE_PREVIEW_SCREENSHOTS = 5;
+/** Tags kept per row; the card shows as many as fit. */
+export const CATALOGUE_ROW_TAGS = 4;
 
 interface RowDetailsInput {
   steamDetails?: {
@@ -23,12 +27,14 @@ interface RowDetailsInput {
   } | null;
   howLongToBeatHours?: number | null;
   downloadSizes?: (number | null)[];
+  tagIds?: (string | number)[];
 }
 
 export const buildCatalogueRowDetails = ({
   steamDetails,
   howLongToBeatHours,
   downloadSizes,
+  tagIds,
 }: RowDetailsInput): CatalogueRowDetails => {
   const sizes = (downloadSizes ?? [])
     .filter((size): size is number => typeof size === "number" && size > 0)
@@ -44,6 +50,7 @@ export const buildCatalogueRowDetails = ({
       .map((shot) => shot.path_thumbnail ?? shot.path_full)
       .filter((url): url is string => Boolean(url))
       .slice(0, CATALOGUE_PREVIEW_SCREENSHOTS),
+    tagIds: (tagIds ?? []).map(Number).slice(0, CATALOGUE_ROW_TAGS),
   };
 };
 

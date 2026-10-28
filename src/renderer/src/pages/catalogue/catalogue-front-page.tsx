@@ -14,7 +14,6 @@ import { Button } from "@renderer/components";
 import { buildGameDetailsPath, ensureArray } from "@renderer/helpers";
 import {
   useAppDispatch,
-  useAppSelector,
   useLibrary,
   usePopularSteamTags,
   VERIFIED_POPULAR_TAGS,
@@ -33,6 +32,7 @@ import type {
 import { usePlayActivity } from "../home/use-play-activity";
 import { useHomeSuggestions } from "../home/use-home-suggestions";
 import { catalogueKey } from "./catalogue-library-state";
+import { useSteamTagLabels } from "./use-steam-tag-labels";
 import "./catalogue-front-page.scss";
 
 const SHELF_SIZE = 12;
@@ -253,10 +253,10 @@ export function CatalogueFrontPage({
   downloadSources,
   ownedKeys,
 }: Readonly<CatalogueFrontPageProps>) {
-  const { t, i18n } = useTranslation("catalogue");
+  const { t } = useTranslation("catalogue");
   const dispatch = useAppDispatch();
   const { library, updateLibrary } = useLibrary();
-  const { steamUserTags } = useAppSelector((state) => state.catalogueSearch);
+  const tagLabels = useSteamTagLabels();
   const popularTags = usePopularSteamTags();
 
   const groupedLibrary = useMemo(
@@ -418,15 +418,7 @@ export function CatalogueFrontPage({
     return games;
   }, [recommended, featured, newReleases, ownedKeys]);
 
-  const language = i18n.language.split("-")[0];
   const tags = useMemo(() => {
-    const labels = new Map(
-      Object.entries(steamUserTags[language] ?? {}).map(([name, id]) => [
-        id,
-        name,
-      ])
-    );
-
     return popularTags.tags
       .slice(0, VERIFIED_POPULAR_TAGS)
       .filter(
@@ -434,8 +426,8 @@ export function CatalogueFrontPage({
           !SHELF_EXCLUDED_TAGS.has(tag.name) && !popularTags.empty.has(tag.id)
       )
       .slice(0, SHELF_TAGS)
-      .map((tag) => ({ id: tag.id, label: labels.get(tag.id) ?? tag.name }));
-  }, [popularTags, steamUserTags, language]);
+      .map((tag) => ({ id: tag.id, label: tagLabels.get(tag.id) ?? tag.name }));
+  }, [popularTags, tagLabels]);
 
   let tagList: ReactNode = null;
   if (tags.length > 0) {

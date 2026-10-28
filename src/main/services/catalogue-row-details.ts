@@ -9,6 +9,7 @@ import {
   type CatalogueRowDetails,
 } from "@shared";
 import { HydraApi } from "./hydra-api";
+import { getSteamStoreTagIds } from "./steam-tags";
 
 const CACHE_MS = 60 * 60 * 1000;
 const MAX_GAMES = 60;
@@ -113,12 +114,12 @@ export const getCatalogueRowDetails = async (
 
   if (missing.length === 0) return result;
 
-  const [steamDetails, sources] = await Promise.all([
-    fetchSteamDetails(
-      missing
-        .filter((game) => game.shop === "steam")
-        .map((game) => game.objectId)
-    ),
+  const steamIds = missing
+    .filter((game) => game.shop === "steam")
+    .map((game) => game.objectId);
+  const [steamDetails, steamTagIds, sources] = await Promise.all([
+    fetchSteamDetails(steamIds),
+    getSteamStoreTagIds(steamIds),
     downloadSourcesSublevel
       .values()
       .all()
@@ -132,6 +133,7 @@ export const getCatalogueRowDetails = async (
       const extras = await fetchGameExtras(game, sourceIds);
       const details = buildCatalogueRowDetails({
         steamDetails: steamDetails.get(game.objectId),
+        tagIds: steamTagIds.get(game.objectId) ?? [],
         ...extras,
       });
       cache.set(game.key, { at: Date.now(), details });

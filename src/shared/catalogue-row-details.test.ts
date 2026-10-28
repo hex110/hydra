@@ -41,11 +41,21 @@ describe("catalogue row details", () => {
       howLongToBeatHours: null,
       downloadSize: null,
       screenshots: [],
+      tagIds: [],
     });
     assert.equal(
       buildCatalogueRowDetails({ steamDetails: { metacritic: { score: 0 } } })
         .criticScore,
       null
+    );
+  });
+
+  it("keeps the first few Steam tag ids as numbers", () => {
+    assert.deepEqual(
+      buildCatalogueRowDetails({
+        tagIds: ["122", 4182, "19", "21", "492"],
+      }).tagIds,
+      [122, 4182, 19, 21]
     );
   });
 
