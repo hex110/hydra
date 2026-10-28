@@ -16,7 +16,7 @@ export const PLAY_STATUSES: readonly PlayStatus[] = [
 export const LIBRARY_METADATA_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Bumped when cached metadata changes meaning, so older entries refetch. */
-export const LIBRARY_METADATA_VERSION = 2;
+export const LIBRARY_METADATA_VERSION = 3;
 
 /** Steam tags kept per game, most voted first. */
 export const STEAM_TAG_LIMIT = 8;

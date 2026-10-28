@@ -2475,6 +2475,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getGameNews", steamAppIds, countPerApp),
   getGameReception: (steamAppId: string) =>
     ipcRenderer.invoke("getGameReception", steamAppId),
+  getGameSteamTags: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameSteamTags", shop, objectId),
   getSteamSimilarGames: (steamAppId: string) =>
     ipcRenderer.invoke("getSteamSimilarGames", steamAppId),
   getCatalogueRowDetails: (

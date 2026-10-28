@@ -186,8 +186,8 @@ Games without the value go last, in title order.
 
 ## Catalogue data
 
-Genres (a game's eight most voted Steam tags, or the store's genres when the
-catalogue has none), release dates, Metacritic scores, ProtonDB tiers and How Long to Beat
+Genres (a game's eight most voted Steam tags, asked from Steam when the
+catalogue has none yet, or the store's genres when nobody has any), release dates, Metacritic scores, ProtonDB tiers and How Long to Beat
 times come from Hydra's API (the same endpoints the game page uses, plus the
 batched Steam store details for Metacritic). Hydra fetches them in the
 background 30 seconds after it starts and whenever games are added, three

@@ -7,4 +7,5 @@ import "./get-cover-poster";
 import "./get-game-news";
 import "./get-game-reception";
 import "./get-steam-similar-games";
+import "./get-game-steam-tags";
 import "./get-catalogue-row-details";

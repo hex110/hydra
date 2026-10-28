@@ -13,7 +13,6 @@ import {
 import {
   getGameCatalogueIdentity,
   getGenreNames,
-  getSteamTagNames,
   isLibraryMetadataStale,
   LIBRARY_METADATA_MAX_AGE_MS,
   LIBRARY_METADATA_VERSION,
@@ -22,7 +21,7 @@ import {
 } from "@shared";
 import { HydraApi } from "./hydra-api";
 import { logger } from "./logger";
-import { getSteamTagNamesById } from "./steam-tags";
+import { getGameSteamTags } from "./steam-tags";
 import { WindowManager } from "./window-manager";
 
 const REFRESH_DEBOUNCE_MS = 30_000;
@@ -91,7 +90,7 @@ const fetchMetadata = async (
   const base = `/games/${shop}/${encodeURIComponent(objectId)}`;
   const isPcGame = shop !== "launchbox";
 
-  const [record, howLongToBeat, protonDb, tagNames] = await Promise.all([
+  const [record, howLongToBeat, protonDb] = await Promise.all([
     settle(
       HydraApi.get<CatalogueGameRecord | null>(base, null, requestOptions)
     ),
@@ -113,14 +112,17 @@ const fetchMetadata = async (
           )
         )
       : Promise.resolve(null),
-    getSteamTagNamesById(),
   ]);
 
   if (record === undefined && howLongToBeat === undefined && !steamDetails) {
     return null;
   }
 
-  const tags = getSteamTagNames(record?.tags, tagNames);
+  const { tags, complete: tagsComplete } = await getGameSteamTags(
+    shop,
+    objectId,
+    record?.tags
+  );
   const genres = getGenreNames(record?.genres);
   const fallbackGenres =
     genres.length > 0 ? genres : getGenreNames(steamDetails?.genres);
@@ -143,7 +145,7 @@ const fetchMetadata = async (
     },
     complete:
       record !== undefined &&
-      (record?.tags === undefined || tagNames.size > 0) &&
+      tagsComplete &&
       howLongToBeat !== undefined &&
       protonDb !== undefined,
   };
