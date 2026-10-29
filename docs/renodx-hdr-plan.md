@@ -379,6 +379,12 @@ compositors; the rest are open.
 7. **Add-ons and engine mods.** ReLimiter and Display Commander, RE Framework,
    and the OptiScaler extras (AMD ini template, OptiPatcher).
 
+**Paused 2026-10-29:** phases 5 to 7 wait for roadmap phase 12
+([See and steer what Hydra does to a game](roadmap.md#see-and-steer-what-hydra-does-to-a-game)),
+which moves RenoDX, OptiScaler and the HDR rules onto one capability model
+first. Each of these phases then becomes a capability, not a new settings
+page.
+
 Phases 5 to 7 each start with the same hand test as phase 0 for that one
 feature; a feature that fails it moves to "Not portable" with the reason.
 

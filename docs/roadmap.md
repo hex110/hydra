@@ -170,18 +170,29 @@ in the sections below.
     that needs no atomic create on rclone, and storage retention and cleanup
     ([Storage](features/save-sync.md#storage)).
 
-12. **More save sources.**
+12. **See and steer what Hydra does to a game.** Added 2026-10-29: the tools
+    on top of games (HDR, RenoDX, OptiScaler, OnlineFix, …) each grew their own
+    settings page, options tab, automatic switch and opt-out, and nothing shows
+    what a launch will do or what a run did. Details in
+    [See and steer what Hydra does to a game](#see-and-steer-what-hydra-does-to-a-game).
+    RenoDX plan phases 5–7 wait until this is done.
+    1. [ ] Run history and diagnostics
+    2. [ ] Capabilities: Auto, On, Off, with a reason
+    3. [ ] Dependencies and a checked first run
+    4. [ ] Compatibility overview and one defaults page
+    5. [ ] In-game overlay
+13. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
     3. [ ] Steam's own prefixes
     4. [ ] Steam Cloud
     5. [ ] Hydra cloud account
-13. **Distribution.**
+14. **Distribution.**
     1. [ ] Export and import settings
     2. [ ] pacman updates
     3. [x] Sign the browser add-on
     4. [ ] Translations
-14. **Mods.** Native mod support, after a design.
+15. **Mods.** Native mod support, after a design.
 
 Why this order:
 
@@ -208,12 +219,69 @@ Why this order:
   Steam history shipped, the upstream Steam integration only duplicates them
   (both write a game's Steam playtime, differently). The cheap items go
   first, so the account is truly optional before the large saves work starts.
+- Seeing and steering what Hydra does to a game comes before more tools:
+  each new tool added another settings page, options tab and opt-out, and the
+  owner fixes games by handing them to Claude Code, which needs a record of
+  each run. Moving the tools onto one model first makes every later RHI
+  feature a small addition instead of a new page.
 - Save sources are independent of everything else; Heroic/Lutris and
   Ludusavi are cheap, Steam Cloud needs a Steam login, Hydra cloud waits on
   the account existing.
 - Settings export makes the postponed laptop install a one-step job.
   Translations go last, once the settings pages stop changing.
 - Mods are the largest item and need a design before any of it is built.
+
+## See and steer what Hydra does to a game
+
+Decided 2026-10-29. The goal is that installing a game and pressing Play is
+enough: HDR, RenoDX, OptiScaler with the newest FSR and frame generation, and
+any fix the game needs are applied without questions. The balance between
+doing it automatically and giving control:
+
+- **Automatic by default, always with a reason.** Every decision Hydra makes
+  for a game says why, where it is shown.
+- **Overrides are rare and one click.** The usual case is a small game whose
+  HDR was not detected: set HDR to On for that game.
+- **Failures are loud.** An automatic change that breaks a game is noticed
+  on the next run and can be undone.
+- **A run can be handed to Claude Code.** Fixing games is mostly done by
+  asking Claude Code, so every run leaves a record it can read.
+
+1. **Run history and diagnostics.** Each launch writes a folder under
+   `<userData>/runs/<game>/<timestamp>/`: start and end, exit code, how the
+   game ended (normal, closed right after starting, crashed), the launch
+   command and environment, the Proton build, the tools installed in the game
+   with their versions, and copies of the logs (umu, Proton, `ReShade.log`,
+   `OptiScaler.log`). The newest runs are kept per game. The game's options
+   list the runs; **Copy diagnostics** puts a summary with the folder path on
+   the clipboard, and `runs/<game>/latest` always points at the newest run.
+2. **Capabilities: Auto, On, Off, with a reason.** OnlineFix, the HDR rule,
+   the monitor switch, RenoDX, OptiScaler, frame generation, MangoHud and the
+   Proton build become capabilities with one shape. A game's value is
+   resolved from layers, the last one winning: built-in default, the global
+   default, our own per-game fixes manifest, detection, the game's override.
+   Each resolved value carries its reason ("Auto: on, stable RenoDX mod
+   matched by Steam ID"; "Auto: off, Vulkan only"; "On: set for this game").
+   This is the RenoDX plan's component model, widened to launch settings.
+   Fixes found by hand go into the manifest as data, so they become part of
+   Auto. PCGamingWiki's HDR field is a candidate source for native HDR.
+3. **Dependencies and a checked first run.** A capability names what it needs
+   (RenoDX needs the HDR rule, the monitor switch and a Proton build with
+   Wayland HDR); the resolver turns those on or reports "blocked" and why,
+   instead of a silent no-HDR. After an automatic change, the next run is
+   checked: an early exit or crash, RenoDX failing to set the colour space,
+   OptiScaler not loading. A failed check marks the capability "Auto:
+   failed", offers to undo it and notifies.
+4. **Compatibility overview and one defaults page.** A page listing installed
+   games against their capabilities and last run, filterable ("last run
+   failed", "skipped automatically", "update available"), with bulk actions.
+   The "Install in all games" buttons move there. Global defaults become one
+   settings page with Auto, Always or Never per capability, replacing the
+   separate "install automatically" switches.
+5. **In-game overlay.** Like Steam's: achievements, and what is running in
+   the game (OptiScaler, ReShade, RenoDX settings). Mostly a view of the
+   data above. Two routes to compare first: a Hyprland layer-shell window
+   above the game, or a ReShade add-on drawing inside it.
 
 ## Hydra without an account
 
