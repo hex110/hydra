@@ -17,7 +17,8 @@ background, the test results and what is still to come.
 RenoDX asks Windows (here, Wine) for an HDR swapchain. Under Proton that only
 works when the monitor is already in HDR when the game starts, which the HDR
 [launch rules](launch-rules.md#hdr) do: the built-in **HDR** rule, and on
-Hyprland **HDR: switch the monitor** with `hypr-hdr`. With **Turn on the HDR
+Hyprland **HDR: switch the monitor** with `hypr-hdr`, which ships with Hydra
+Plus. Only Hyprland is supported for the monitor switch. With **Turn on the HDR
 launch rules for games that get RenoDX** (on by default) installing RenoDX
 turns on the HDR rule for that game, and the monitor switch too when the game is
 on Hyprland and `hypr-hdr` is on `PATH`. The rules' state is shown in the game's

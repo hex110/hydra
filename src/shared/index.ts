@@ -28,6 +28,7 @@ export * from "./archive-org";
 export * from "./constants";
 export * from "./window-layout";
 export * from "./title-matching";
+export * from "./bundled-commands";
 export * from "./ini-overrides";
 export * from "./optiscaler";
 export * from "./renodx";

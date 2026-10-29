@@ -112,14 +112,20 @@ It is off for every game. Turn it on in a game's **General** options (the rules 
 for the games that need it, or on here to use it everywhere. After an update
 it appears under **Restore built-in rules**.
 
-`hypr-hdr` is not part of Hydra: it has to be on `PATH` (for example in
-`~/.local/bin`), and a game fails to start with the rule on and no such
-command. It takes the game command, so any script that does this works:
+`hypr-hdr` ships with Hydra Plus (`resources/hypr-hdr/hypr-hdr`, installed into
+the app's resources) and its folder is added to the end of `PATH` when Hydra
+starts, so the rule works as it is. It needs `hyprctl` and `jq`. A `hypr-hdr`
+of your own earlier on `PATH` is used instead, so a script that picks a
+particular monitor keeps working. The bundled one switches the focused monitor,
+or the one named in `HYPR_HDR_OUTPUT`; it runs the game without HDR when
+Hydra is not running under Hyprland. It does three things:
 
 1. switch the monitor to HDR (`hyprctl eval 'hl.monitor({ …, cm = "hdr" })'`,
    with the monitor's current mode, position and scale);
 2. run the command, passing on its exit status and any signal;
 3. switch the monitor back, but only if the script switched it.
+
+If a game is killed with `KILL`, the restore is skipped: run `hypr-hdr --off`.
 
 It affects one monitor, so the game must open on it and run fullscreen. The
 rule changes nothing in the Hyprland configuration.

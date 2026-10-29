@@ -351,7 +351,8 @@ OptiScaler's "not working" list or with a known anti-cheat.
 ## Phases
 
 Each phase is shippable on its own. Status, 2026-10-29: phases 0 to 3 are done
-(see [RenoDX](features/renodx.md)); the rest are open.
+(see [RenoDX](features/renodx.md)); phase 4 is done too, except other
+compositors; the rest are open.
 
 0. **Manual proof** (no code). The unknowns above, on Cyberpunk 2077, then
    Fallout 4 (DirectX 11) and Hades II, plus the Ace Combat 8 baseline. Write
@@ -397,8 +398,11 @@ feature; a feature that fails it moves to "Not portable" with the reason.
 - `lsteamclient=d` has no opt-out. If someone runs a legitimate Steam game with
   Steam open and wants the bridge, a per-game switch would do it. Wait for a
   real request.
-- `hypr-hdr` is not in the repo. If it ships (phase 4) it moves in with its
-  tests; until then it is documented in the machine's own system-docs.
+- `hypr-hdr` now ships in `resources/hypr-hdr/` (phase 4). It has no automated
+  test, since it needs a running Hyprland; the PATH helper that exposes it is
+  tested. Other compositors are not supported: the HDR rule is for Hyprland
+  and says so. RenoDX reads the display's peak brightness itself, so nothing
+  is seeded from the monitor.
 
 ## Risks
 
