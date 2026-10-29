@@ -14,6 +14,8 @@ import {
   RENODX_MANIFEST_FILE,
   chooseReShadeProxyDll,
   chooseRenoDxMod,
+  findAntiCheat,
+  findOptiScalerCompatibilityEntry,
   compareVersions,
   findRenoDxGame,
   isRenoDxModChoice,
@@ -36,7 +38,11 @@ import type {
   UserPreferences,
 } from "@types";
 import { detectGameGraphics } from "../graphics/graphics-api";
-import { resolveOptiScalerInstallDirectory } from "../optiscaler/game-files";
+import {
+  resolveGameRootForDetection,
+  resolveOptiScalerInstallDirectory,
+} from "../optiscaler/game-files";
+import { OptiScalerAssets } from "../optiscaler/optiscaler-assets";
 import { findExistingProxyDlls } from "../reshade/foreign-dll";
 import { ReShadeAssets } from "../reshade/reshade-assets";
 import {
@@ -87,6 +93,25 @@ const resolveGameBinary = async (
   const names = await fs.promises.readdir(installDirectory).catch(() => []);
   const shipping = names.find((name) => /-shipping\.exe$/i.test(name));
   return shipping ? path.join(installDirectory, shipping) : executablePath;
+};
+
+/** Anti-cheat files or folders at the top of the game folder or one level below it. */
+const detectAntiCheat = async (installDirectory: string) => {
+  const root = resolveGameRootForDetection(installDirectory);
+  const names: string[] = [];
+  for (const directory of new Set([root, installDirectory])) {
+    const entries = await fs.promises
+      .readdir(directory, { withFileTypes: true })
+      .catch(() => [] as fs.Dirent[]);
+    names.push(...entries.map((entry) => entry.name));
+    for (const entry of entries.filter((item) => item.isDirectory())) {
+      const inner = await fs.promises
+        .readdir(path.join(directory, entry.name))
+        .catch(() => [] as string[]);
+      names.push(...inner);
+    }
+  }
+  return findAntiCheat(names);
 };
 
 const isCommandAvailable = (command: string) =>
@@ -247,6 +272,7 @@ export class RenoDx {
         externallyManaged: false,
         missingFiles: [],
         autoInstallDisabled: game.renoDxAutoInstallDisabled === true,
+        antiCheat: null,
         updateAvailable: false,
         latestReShadeVersion: latestReShade,
       };
@@ -279,6 +305,7 @@ export class RenoDx {
         ? await findMissingRenoDxFiles(plan.installDirectory, manifest)
         : [],
       autoInstallDisabled: game.renoDxAutoInstallDisabled === true,
+      antiCheat: await detectAntiCheat(plan.installDirectory),
       updateAvailable:
         !!installation &&
         (await this.hasUpdate(installation, plan.choice, latestReShade)),
@@ -464,6 +491,14 @@ export class RenoDx {
     if (plan.conflict) {
       return plan.conflict.kind === "reshade" ? "external" : "conflict";
     }
+    if (await detectAntiCheat(plan.installDirectory)) return "anti-cheat";
+
+    // The OptiScaler list marks games that break with injected DLLs.
+    const compatibility = findOptiScalerCompatibilityEntry(
+      await OptiScalerAssets.getCompatibilityList().catch(() => []),
+      game.title
+    );
+    if (compatibility?.status === "not-working") return "blocked";
 
     await this.install(game.shop, game.objectId);
     return "installed";

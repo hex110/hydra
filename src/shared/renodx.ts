@@ -268,3 +268,23 @@ export const resolveRenoDxSettings = (
   includePrerelease: preferences?.renoDxIncludePrerelease === true,
   enableHdrRules: preferences?.renoDxEnableHdrRules !== false,
 });
+
+/** Names anti-cheat systems leave in a game folder, with what to call them. */
+const ANTI_CHEAT_FILES: { pattern: RegExp; name: string }[] = [
+  { pattern: /^easyanticheat/i, name: "Easy Anti-Cheat" },
+  { pattern: /^eac_?launcher/i, name: "Easy Anti-Cheat" },
+  { pattern: /^(battleye|be_?service)/i, name: "BattlEye" },
+  { pattern: /^(vgc|vgk)\./i, name: "Vanguard" },
+  { pattern: /^(faceitclient|faceit)/i, name: "FACEIT" },
+  { pattern: /^(npggnt|gameguard|nprotect)/i, name: "GameGuard" },
+  { pattern: /^(eaanticheat|ea_?anticheat)/i, name: "EA Javelin" },
+];
+
+/** The anti-cheat a list of file and folder names points to, or null. */
+export const findAntiCheat = (names: string[]): string | null => {
+  for (const name of names) {
+    const match = ANTI_CHEAT_FILES.find(({ pattern }) => pattern.test(name));
+    if (match) return match.name;
+  }
+  return null;
+};

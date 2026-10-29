@@ -3,6 +3,7 @@ import assert from "node:assert";
 import {
   chooseReShadeProxyDll,
   chooseRenoDxMod,
+  findAntiCheat,
   findRenoDxGame,
   isRenoDxModChoice,
   parseLatestReShadeDownload,
@@ -293,5 +294,22 @@ describe("resolveRenoDxSettings", () => {
       includePrerelease: false,
       enableHdrRules: true,
     });
+  });
+});
+
+describe("findAntiCheat", () => {
+  it("names the anti-cheat a game ships", () => {
+    assert.strictEqual(
+      findAntiCheat(["game.exe", "EasyAntiCheat"]),
+      "Easy Anti-Cheat"
+    );
+    assert.strictEqual(findAntiCheat(["BEService_x64.exe"]), "BattlEye");
+    assert.strictEqual(findAntiCheat(["BattlEye"]), "BattlEye");
+    assert.strictEqual(findAntiCheat(["EasyAntiCheat_EOS"]), "Easy Anti-Cheat");
+  });
+
+  it("is null for ordinary games", () => {
+    assert.strictEqual(findAntiCheat(["game.exe", "dxgi.dll", "bin"]), null);
+    assert.strictEqual(findAntiCheat([]), null);
   });
 });

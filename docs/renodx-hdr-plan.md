@@ -149,14 +149,22 @@ Findings:
    `reShadeIniOverrides` preference. It is also the start of phase 1's
    `reshade.ini` helper: the INI helpers moved to `shared/ini-overrides.ts`.
 
-Still open: the Ace Combat 8 baseline, shader packs (6) and ReShade with
-OptiScaler (7). Synthetic Home presses sent with `hyprctl` did not open the
-overlay.
+10. **ReShade with OptiScaler works, in both orders** (tested through Hydra on
+    Sekiro with GE-Proton 11): OptiScaler installed after RenoDX takes
+    `winmm.dll` and both load; OptiScaler installed first takes `dxgi.dll` and
+    loads ReShade as `ReShade64.dll` through `LoadReshade=true`. Either way
+    RenoDX gets `hdr10_st2084`.
+11. **The Proton build decides whether RenoDX gets HDR.** The same install under
+    UMU-Proton 10 (umu's default) logs `ChangeColorSpace` failing even with the
+    monitor in HDR; GE-Proton 11 works.
+
+Still open: shader packs (6). The Ace Combat 8 baseline is dropped: the owner
+confirmed the built-in HDR rule works there. Synthetic Home presses sent with
+`hyprctl` did not open the overlay.
 
 ## Unknowns to settle first (phase 0)
 
-These were the questions. Answered above: 1, 2, 3, 4 and most of 5. Open: 6, 7,
-and the Ace Combat 8 baseline.
+These were the questions. Answered above: 1, 2, 3, 4, 7 and most of 5. Open: 6.
 
 1. **Does ReShade with add-ons run under Proton on this machine?** Wine
    overrides: the ReShade DLL natively, plus `d3dcompiler_47` (the existing
@@ -342,7 +350,8 @@ OptiScaler's "not working" list or with a known anti-cheat.
 
 ## Phases
 
-Each phase is shippable on its own.
+Each phase is shippable on its own. Status, 2026-10-29: phases 0 to 3 are done
+(see [RenoDX](features/renodx.md)); the rest are open.
 
 0. **Manual proof** (no code). The unknowns above, on Cyberpunk 2077, then
    Fallout 4 (DirectX 11) and Hades II, plus the Ace Combat 8 baseline. Write
@@ -374,7 +383,8 @@ feature; a feature that fails it moves to "Not portable" with the reason.
 
 ## Other follow-ups from the same work
 
-- Verify HDR output on screen with a real launch from Hydra (see Findings).
+- ~~Verify HDR output on screen with a real launch from Hydra.~~ Done for Sekiro
+  with RenoDX (see Phase 0 results); Enshrouded is still untried.
 - Make "closes right after starting" say when a second copy of a game is
   already running, if that is what code 3 means. Another change already shows
   a notification for early exits; check what it says first.
@@ -392,16 +402,17 @@ feature; a feature that fails it moves to "Not portable" with the reason.
 
 ## Risks
 
-- **Online games.** RenoDX and ReShade can trip anti-cheat. Skip games on the
-  OptiScaler "not working" list and anything with a known anti-cheat; say so
-  on the game's page.
+- **Online games.** RenoDX and ReShade can trip anti-cheat. Automatic installs
+  skip games on the OptiScaler "not working" list and games that ship a known
+  anti-cheat; the game's page says why.
 - **Scope.** RHI is the work of one person over a long time and it ships a
   manifest that is updated daily. Matching all of it is a long road, which is
   why each phase is shippable alone and why the component model comes first.
 - **Mod churn.** Add-ons are built nightly and may break after a game update;
   keep the previous add-on so a bad update can be undone.
-- **Wine specifics.** Everything above is unverified under Proton until
-  phase 0 is done.
+- **Wine specifics.** Verified for Sekiro with GE-Proton 11 only; the Proton
+  build matters (see Phase 0 results). Other games may need per-game fixes,
+  which is what RHI's manifest is for.
 - **Data source.** `games-index.json` is RenoDX's own file; if its format
   changes the catalogue must fail closed (install nothing) and say why.
 

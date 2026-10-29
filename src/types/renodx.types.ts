@@ -122,6 +122,8 @@ export interface GameRenoDxStatus {
   /** Files of Hydra's installation that were removed outside Hydra. */
   missingFiles: string[];
   autoInstallDisabled: boolean;
+  /** The anti-cheat found in the game folder, if any. */
+  antiCheat: string | null;
   /** A newer ReShade or a changed add-on is available. */
   updateAvailable: boolean;
   latestReShadeVersion: string | null;
@@ -134,7 +136,11 @@ export type RenoDxAutoInstallOutcome =
   | "opted-out"
   | RenoDxUnavailableReason
   | "external"
-  | "conflict";
+  | "conflict"
+  /** An anti-cheat is in the game folder. */
+  | "anti-cheat"
+  /** OptiScaler's compatibility list says the game does not work with such mods. */
+  | "blocked";
 
 export interface RenoDxOverview {
   catalogueGames: number;

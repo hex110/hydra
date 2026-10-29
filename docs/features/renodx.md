@@ -26,6 +26,13 @@ leaves them as they are.
 
 Inside the game, turn HDR on in its own settings. The mod follows that toggle.
 
+The Proton build matters. Wine's Wayland HDR support is what the HDR rule turns
+on, and not every build has a working one: GE-Proton 11 gives RenoDX an HDR10
+swapchain, while UMU-Proton 10, umu's default when nothing is chosen, does not
+(RenoDX logs that it could not set the colour space). Pick a Proton build for
+the game or as the default in **Settings → Compatibility** if the mod shows no
+HDR.
+
 ## Which mod
 
 Hydra reads RenoDX's own list of games and mods
@@ -69,12 +76,14 @@ refuses when a tool it recognises owns the name:
 - **OptiScaler** holds `dxgi.dll`: ReShade is installed as `ReShade64.dll`
   (`ReShade32.dll`) beside it and `LoadReshade=true` is set in `OptiScaler.ini`,
   which is how OptiScaler is meant to load ReShade. Reinstalling OptiScaler
-  keeps that setting.
+  keeps that setting. Tested with Sekiro: OptiScaler loads ReShade and the mod
+  gets HDR10.
 - **DXVK, Special K, ENB** or an unknown DLL holds the name: nothing is
   installed and the game's page names the file. A ReShade that Hydra did not
   install is treated the same way; remove it to let Hydra manage ReShade.
 - OptiScaler installed after RenoDX picks another proxy name, since the name
-  ReShade has is taken.
+  ReShade has is taken (Sekiro got `winmm.dll`). Both load, and the mod gets
+  HDR10 in that order too.
 
 An existing `ReShade.ini` is the game's own: Hydra changes it in place (see
 below) and leaves it when RenoDX is removed. A `ReShade.ini` Hydra created is
@@ -106,6 +115,11 @@ before OptiScaler. A game is skipped when:
 - it has no mod, or only a beta one while beta mods are off, or none for its
   architecture;
 - it only uses Vulkan;
+- it ships an anti-cheat (Easy Anti-Cheat, BattlEye, Vanguard, FACEIT,
+  GameGuard, EA Javelin), found by name at the top of the game folder or one
+  level down. A game's page still lets you install by hand, with a warning;
+- OptiScaler's compatibility list marks the game as not working with injected
+  DLLs;
 - ReShade, a RenoDX add-on or another tool's DLL is already in its folder;
 - it is opted out, with **Never install RenoDX automatically in this game** or
   by removing RenoDX from it;
@@ -136,6 +150,6 @@ starting in a prefix that has none.
 
 ## Risks
 
-ReShade and add-ons can trip anti-cheat. Do not install them in online games
-with anti-cheat. Mods are rebuilt nightly and can break after a game update;
+ReShade and add-ons can trip anti-cheat, which is why automatic installs skip
+games that ship one. Do not install them in online games with anti-cheat. Mods are rebuilt nightly and can break after a game update;
 **Remove** undoes everything.

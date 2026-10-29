@@ -140,6 +140,11 @@ export function RenoDxSettingsSection({
             )}
           </p>
         )}
+        {status.antiCheat && (
+          <p className="game-options-modal__optiscaler-hint game-options-modal__optiscaler-warning">
+            {t("renodx_anti_cheat", { name: status.antiCheat })}
+          </p>
+        )}
         {unavailable && (
           <p className="game-options-modal__optiscaler-hint">
             {t(`renodx_unavailable_${unavailable.replaceAll("-", "_")}`)}
@@ -212,9 +217,11 @@ export function RenoDxSettingsSection({
               {mod.status
                 ? t(`renodx_status_${mod.status}`)
                 : t("renodx_status_unrated")}
+            </p>
+            <p>
               {status.proxyDll
-                ? ` ${t("renodx_loaded_as", { proxyDll: status.proxyDll })}`
-                : ` ${t("renodx_loaded_by_optiscaler")}`}
+                ? t("renodx_loaded_as", { proxyDll: status.proxyDll })
+                : t("renodx_loaded_by_optiscaler")}
             </p>
             {mod.notes.map((note) => (
               <p key={note}>{note}</p>
