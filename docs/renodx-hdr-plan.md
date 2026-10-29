@@ -99,9 +99,55 @@ ideas; do not copy its code or depend on its manifest.
 next to OptiScaler and OptiScaler loads it. That avoids two mods fighting over
 `dxgi.dll`, and RHI uses it too.
 
+## Phase 0 results (2026-10-29)
+
+Test game: **Sekiro** (DirectX 11, stable RenoDX mod `fromsoft_engine`), not
+Cyberpunk 2077. The Cyberpunk install is the Steam copy with OptiScaler already
+on `dxgi.dll`, and `/mnt/Storage` has too little room for a spare copy, so it
+was not touched. Sekiro was clean. Setup: GE-Proton 11-11 through `umu-run`,
+a throwaway prefix, `WINEDLLOVERRIDES=lsteamclient=d;dxgi=n,b`, ReShade 6.8.0
+as `dxgi.dll`, the add-on beside it, a minimal `ReShade.ini`. Logs: ReShade's
+own `ReShade.log` in the game folder.
+
+| Run | Monitor | Env                               | Result                                                                                              |
+| --- | ------- | --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| t1  | SDR     | adds `d3dcompiler_47=n`           | Exit 53 at once: `d3dcompiler_47.dll … not found`. See finding 1.                                   |
+| t3  | SDR     | `dxgi=n,b` only                   | ReShade and RenoDX load. RenoDX upgrades the swapchain but `ChangeColorSpace` fails (`0x80070057`). |
+| t4  | SDR     | plus the built-in HDR rule        | Same failure; the monitor stays `srgb`.                                                             |
+| t5  | HDR     | built-in HDR rule plus `hypr-hdr` | Colour space `hdr10_st2084`, no errors. The game renders.                                           |
+
+Findings:
+
+1. **The existing ReShade rule is wrong under Proton.** It sets
+   `d3dcompiler_47=n`, which needs a native `d3dcompiler_47.dll` in the prefix.
+   Without one the game fails to start. Wine's built-in `d3dcompiler_47` is
+   enough for ReShade to load. The rule should set only `dxgi=n,b`; fix it in
+   phase 1.
+2. **ReShade 6.8.0 and the RenoDX add-on work under Proton** with no extra
+   setup. ReShade finds the add-on in the game folder by itself
+   ("Searching for add-ons (`*.addon`, `*.addon64`) in the game folder"), so
+   `reshade.ini` needs no add-on path. A seeded `ReShade.ini` only has to
+   skip the first-run tutorial.
+3. **RenoDX needs the monitor in HDR, not just the HDR rule.** With the
+   built-in rule alone the colour space cannot be set. With the monitor
+   switched first (`hypr-hdr`) it becomes `hdr10_st2084`. So installing RenoDX
+   should turn on the HDR switch rule for that game, not only the built-in one.
+4. **Extraction works**: 7-Zip reads `ReShade64.dll` and `ReShade32.dll` straight
+   out of `ReShade_Setup_6.8.0_Addon.exe` (downloaded with a Referer header).
+5. **RenoDX reads the display's peak brightness itself** (`Peak Nits: 1499` in
+   its log), so seeding peak brightness may not be needed.
+6. **`hypr-hdr` restores the monitor** when the game is killed.
+7. The window's Wayland class is the exe name (`sekiro.exe`), not
+   `steam_app_<id>`.
+
+Still open: whether the picture is actually correct HDR (needs a person to look
+at it), the overlay under Home, and unknowns 4 and 7 below. Synthetic Home key
+presses sent with `hyprctl` did not open the overlay.
+
 ## Unknowns to settle first (phase 0)
 
-No code until these are answered by hand on a game that is installed here:
+These were the questions. Answered above: 1, 3 and most of 5. Open: 2 (visual),
+4, 6, 7, and the Ace Combat 8 baseline.
 
 1. **Does ReShade with add-ons run under Proton on this machine?** Wine
    overrides: the ReShade DLL natively, plus `d3dcompiler_47` (the existing
@@ -152,26 +198,24 @@ RenoDX; anything that fails is moved to "Not portable" with the reason.
 | Vulkan ReShade (implicit layer)                          | A layer inside a Wine prefix is unproven; test before promising.                                                 | 6     |
 | Frame limiters: ReLimiter, Display Commander             | Both are ReShade add-ons. Test under Wine; mutually exclusive per game.                                          | 7     |
 | RE Framework                                             | Resident Evil engine mod; a `dinput8.dll` proxy, so Proton can run it.                                           | 7     |
-| OptiScaler extras                                        | Per-GPU ini templates (AMD, NVIDIA), OptiPatcher, `LoadReshade` handling, Streamline and DLSS Enabler.           | 7     |
+| OptiScaler extras                                        | Per-GPU ini templates (AMD only), OptiPatcher and `LoadReshade` handling.                                        | 7     |
 | HDR auto-toggle                                          | Done as `hypr-hdr`; phase 4 bundles it.                                                                          | 4     |
 | DXVK with Lilium HDR (DirectX 9 HDR)                     | Proton's DXVK may already do this with `DXVK_HDR`. Test a DirectX 9 game before building anything.               | 5     |
 | Manifest-driven fixes                                    | Our own manifest (per-game DLL names, API overrides, warnings, blacklist), written from our own findings.        | 2     |
 
-### NVIDIA only (planned, cannot be tested here)
+### Left out for now: NVIDIA only
 
-This machine has an AMD GPU. These are file-level features that do nothing on
-AMD, so they need someone with an RTX card to prove them. Build them last, behind
-a GPU check, and say so on the page.
+Decided 2026-10-29: these stay out of scope until someone with an RTX card
+wants them and can test them. This machine has an AMD GPU, and they do nothing
+there.
 
 - DLSS and Streamline version manager (swap SR, RR, FG DLLs per game, back up
   the originals, global defaults, batch deploy, auto-update).
 - DLSS5 Feeder, ShortFuse DLSS tool, DirectX 11 bridge, NR Cost Scaler.
 - Multi Frame Generation unlocks for RTX 40 and the RTX 50 modes.
-- DLSS presets and render-scale override. RHI writes these into the NVIDIA
-  driver profile with NvAPI. On Linux the nearest route is launch environment
-  variables for DXVK-NVAPI; confirm what exists before designing it.
-
-Phase 8.
+- DLSS presets and render-scale override (RHI uses NvAPI driver profiles; the
+  Linux route would be DXVK-NVAPI environment variables, unchecked).
+- The NVIDIA parts of OptiScaler's templates and Streamline deployment.
 
 ### Not portable (and why)
 
@@ -314,9 +358,7 @@ Each phase is shippable on its own.
    the add-on manager, shader packs with per-game selection and profiles, and
    Vulkan games if a ReShade layer turns out to work in a Wine prefix.
 7. **Add-ons and engine mods.** ReLimiter and Display Commander, RE Framework,
-   and the OptiScaler extras (per-GPU templates, OptiPatcher, Streamline).
-8. **NVIDIA only.** The DLSS and Streamline manager, DLSS5, MFG and the
-   environment-variable route for presets. Needs an RTX tester.
+   and the OptiScaler extras (AMD ini template, OptiPatcher).
 
 Phases 5 to 7 each start with the same hand test as phase 0 for that one
 feature; a feature that fails it moves to "Not portable" with the reason.
@@ -347,8 +389,6 @@ feature; a feature that fails it moves to "Not portable" with the reason.
 - **Scope.** RHI is the work of one person over a long time and it ships a
   manifest that is updated daily. Matching all of it is a long road, which is
   why each phase is shippable alone and why the component model comes first.
-- **Untestable here.** Phase 8 cannot be verified on this AMD machine. Do not
-  ship it unverified; it waits for a tester.
 - **Mod churn.** Add-ons are built nightly and may break after a game update;
   keep the previous add-on so a bad update can be undone.
 - **Wine specifics.** Everything above is unverified under Proton until
@@ -362,7 +402,5 @@ feature; a feature that fails it moves to "Not portable" with the reason.
 2. Beta mods: off by default (recommended) or on?
 3. Should phase 4 bundle `hypr-hdr`, or stay a personal script?
 4. Is Hyprland-only acceptable for the HDR switch?
-5. Who can test the NVIDIA-only features (phase 8)? Without a tester they stay
-   unbuilt.
-6. Phases 5 to 7 are in the order given. Is that the order you want, or is one
+5. Phases 5 to 7 are in the order given. Is that the order you want, or is one
    RHI feature (frame limiters, shader packs, Luma) more important to you?
