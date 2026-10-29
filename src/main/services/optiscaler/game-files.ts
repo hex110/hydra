@@ -7,9 +7,9 @@ import type {
 } from "@types";
 import {
   applyIniOverrides,
-  isUpscalerLibrary,
   type IniOverride,
-} from "../../../shared/optiscaler.js";
+} from "../../../shared/ini-overrides.js";
+import { isUpscalerLibrary } from "../../../shared/optiscaler.js";
 
 export const OPTISCALER_MANIFEST_FILE = ".hydra-optiscaler.json";
 export const OPTISCALER_BACKUP_DIRECTORY = ".hydra-optiscaler-backup";
