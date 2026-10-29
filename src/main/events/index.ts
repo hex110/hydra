@@ -37,6 +37,7 @@ import "./retroarch";
 import "./epic";
 import "./optiscaler";
 import "./renodx";
+import "./game-runs";
 import "./save-import";
 import "./game-updates";
 import "./linux-gaming";

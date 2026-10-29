@@ -63,6 +63,8 @@ import {
   fixOptiScalerProxyDllBeforeLaunch,
 } from "@main/services/game-setup/optiscaler-step";
 
+import { GameRuns } from "@main/services/game-runs/game-runs";
+
 export interface LaunchGameOptions {
   shop: GameShop;
   objectId: string;
@@ -124,11 +126,18 @@ const ensureExecutablePermission = (executablePath: string) => {
   }
 };
 
+interface NativeRunHooks {
+  /** Receives the game's stdout and stderr. */
+  outputFd: number | null;
+  onExit: (code: number | null, signal: NodeJS.Signals | null) => void;
+}
+
 const launchNatively = (
   executablePath: string,
   launchOptions?: string | null,
   useMangohud = false,
-  useGamemode = false
+  useGamemode = false,
+  runHooks?: NativeRunHooks
 ): number | null => {
   const workingDirectory = path.dirname(executablePath);
   const resolvedLaunchCommand = resolveLaunchCommand({
@@ -181,13 +190,14 @@ const launchNatively = (
     return processRef.pid ?? null;
   }
 
+  const outputFd = runHooks?.outputFd ?? null;
   const processRef = spawn(
     resolvedLaunchCommand.command,
     resolvedLaunchCommand.args,
     {
       shell: false,
       detached: true,
-      stdio: "ignore",
+      stdio: outputFd === null ? "ignore" : ["ignore", outputFd, outputFd],
       cwd: workingDirectory,
       env: {
         ...process.env,
@@ -195,10 +205,12 @@ const launchNatively = (
       },
     }
   );
+  if (outputFd !== null) fs.closeSync(outputFd);
 
   processRef.on("error", (error) => {
     logger.error("Failed to launch game", error);
   });
+  if (runHooks) processRef.once("exit", runHooks.onExit);
 
   processRef.unref();
 
@@ -447,6 +459,15 @@ const launchWindowsBinaryOnLinux = async (
       useMangohud,
       onStatus: reportUmuStatus,
       wasGameDetected: () => wasGameLauncherGameDetected(gameKey),
+      onLaunched: (launch) =>
+        GameRuns.recordLaunch(gameKey, {
+          launcher: "umu",
+          ...launch,
+          protonPath,
+          winePrefixPath,
+          awaitsExit: true,
+        }),
+      onExit: (code, signal) => GameRuns.recordExit(gameKey, { code, signal }),
     });
     PowerSaveBlockerManager.markCompatibilityLaunchStarted(gameKey);
     return true;
@@ -455,6 +476,7 @@ const launchWindowsBinaryOnLinux = async (
     if (error instanceof Error && error.message) {
       umuFailureMessage = error.message;
     }
+    GameRuns.note(gameKey, `${umuFailureMessage}. Trying Wine instead.`);
   }
 
   const launchedWithWine = await launchWithWine(
@@ -466,11 +488,18 @@ const launchWindowsBinaryOnLinux = async (
   );
 
   if (launchedWithWine) {
+    GameRuns.recordLaunch(gameKey, {
+      launcher: "wine",
+      commandLine: `wine ${parsedPath}`,
+      protonPath: null,
+      winePrefixPath,
+    });
     reportUmuStatus({ type: "ready" });
     PowerSaveBlockerManager.markCompatibilityLaunchStarted(gameKey);
     return true;
   }
 
+  GameRuns.recordLaunchFailure(gameKey, "Wine could not start the game.");
   reportUmuStatus({ type: "failed", message: umuFailureMessage });
   return false;
 };
@@ -609,12 +638,25 @@ const launchResolvedGame = async (
   useMangohud: boolean,
   useGamemode: boolean
 ) => {
+  await GameRuns.start({ shop, objectId, executablePath: parsedPath });
+  const recordNativeLaunch = () =>
+    GameRuns.recordLaunch(gameKey, {
+      launcher: "native",
+      commandLine: [parsedPath, launchOptions].filter(Boolean).join(" "),
+      awaitsExit: process.platform === "linux",
+    });
+
   if (process.platform !== "linux") {
+    recordNativeLaunch();
     return launchNatively(parsedPath, launchOptions, useMangohud, useGamemode);
   }
 
   if (isWindowsExecutable(parsedPath)) {
     if (!compatibilityContext) {
+      GameRuns.recordLaunchFailure(
+        gameKey,
+        "No Wine prefix or Proton build was ready for this game."
+      );
       clearCloudSaveLaunchGuard(objectId, shop);
       return null;
     }
@@ -632,11 +674,16 @@ const launchResolvedGame = async (
     clearCloudSaveLaunchGuard(objectId, shop);
   }
 
+  recordNativeLaunch();
   const pid = launchNatively(
     parsedPath,
     launchOptions,
     useMangohud,
-    useGamemode
+    useGamemode,
+    {
+      outputFd: GameRuns.openOutputLog(gameKey),
+      onExit: (code, signal) => GameRuns.recordExit(gameKey, { code, signal }),
+    }
   );
   if (pid !== null) launchedGamePids.set(gameKey, pid);
   return pid;

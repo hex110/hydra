@@ -28,6 +28,12 @@ export type { UmuProcessHandle } from "./umu-supervised-process";
 
 export type { UmuStatus } from "./umu-launch-monitor";
 
+export interface UmuLaunchRecord {
+  commandLine: string;
+  environment: Record<string, string>;
+  logs: { name: string; path: string; startOffset?: number }[];
+}
+
 const isValidProtonDirectory = (directoryPath: string) => {
   const protonFilePath = path.join(directoryPath, "proton");
   const toolManifestPath = path.join(directoryPath, "toolmanifest.vdf");
@@ -535,6 +541,9 @@ export class Umu {
       useGamemode?: boolean;
       onStatus?: UmuStatusListener;
       wasGameDetected?: () => boolean;
+      onLaunched?: (launch: UmuLaunchRecord) => void;
+      /** Called when umu-run ends after a successful start. */
+      onExit?: (code: number | null, signal: NodeJS.Signals | null) => void;
     }
   ): Promise<void> {
     const QUICK_EXIT_THRESHOLD_MS = 3000;
@@ -593,6 +602,25 @@ export class Umu {
         }
       );
 
+      let started = false;
+      child.once("exit", (code, signal) => {
+        if (started) options?.onExit?.(code, signal);
+      });
+      options?.onLaunched?.({
+        commandLine: launchCommand,
+        environment: launchEnv,
+        logs: shouldPipeToTerminal
+          ? []
+          : [
+              {
+                name: "umu.log",
+                path: umuLogPath,
+                startOffset: logStartOffset,
+              },
+              { name: "proton.log", path: getProtonLogPath(options?.gameId) },
+            ],
+      });
+
       await observeUmuLaunch({
         child,
         umuLogPath: shouldPipeToTerminal ? null : umuLogPath,
@@ -611,6 +639,7 @@ export class Umu {
             umuLogPath,
           }),
       });
+      started = true;
       child.unref();
     } catch (error) {
       const logLine =

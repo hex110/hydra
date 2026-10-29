@@ -176,7 +176,7 @@ in the sections below.
     what a launch will do or what a run did. Details in
     [See and steer what Hydra does to a game](#see-and-steer-what-hydra-does-to-a-game).
     RenoDX plan phases 5–7 wait until this is done.
-    1. [ ] Run history and diagnostics
+    1. [x] Run history and diagnostics ([Game runs](features/game-runs.md))
     2. [ ] Capabilities: Auto, On, Off, with a reason
     3. [ ] Dependencies and a checked first run
     4. [ ] Compatibility overview and one defaults page

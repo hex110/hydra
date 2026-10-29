@@ -70,6 +70,7 @@ import {
   interruptManagedEpicPlaytime,
 } from "./epic/launch";
 import { runWithHydraSaveGuard } from "./epic/cloud-saves";
+import { GameRuns } from "./game-runs/game-runs";
 
 export { gamesPlaytime };
 export { isGameRunning } from "./game-running-state";
@@ -446,6 +447,7 @@ async function onOpenGame(game: Game, matchedPath: string) {
     levelKeys.game(game.shop, game.objectId)
   );
   if (game.shop === "epic") cancelEpicGameExitSync(game.objectId);
+  GameRuns.markGameDetected(levelKeys.game(game.shop, game.objectId));
 
   const now = performance.now();
   const gameKey = levelKeys.game(game.shop, game.objectId);
@@ -686,6 +688,7 @@ const onCloseGame = (game: Game) => {
   const gameKey = levelKeys.game(game.shop, game.objectId);
   const now = performance.now();
   const gamePlaytime = gamesPlaytime.get(gameKey);
+  GameRuns.recordGameClosed(gameKey);
   if (!gamePlaytime) return;
   deleteGamePlaytime(gameKey);
   launchedGamePids.delete(gameKey);

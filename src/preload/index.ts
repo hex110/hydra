@@ -1236,6 +1236,21 @@ contextBridge.exposeInMainWorld("electron", {
     return () =>
       ipcRenderer.removeListener("on-renodx-bulk-progress", listener);
   },
+  getGameRuns: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameRuns", shop, objectId),
+  getGameRunSummary: (shop: GameShop, objectId: string, runId: string) =>
+    ipcRenderer.invoke("getGameRunSummary", shop, objectId, runId),
+  openGameRunFolder: (shop: GameShop, objectId: string, runId?: string) =>
+    ipcRenderer.invoke("openGameRunFolder", shop, objectId, runId),
+  onGameRunsChanged: (cb: (shop: GameShop, objectId: string) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      shop: GameShop,
+      objectId: string
+    ) => cb(shop, objectId);
+    ipcRenderer.on("on-game-runs-changed", listener);
+    return () => ipcRenderer.removeListener("on-game-runs-changed", listener);
+  },
   getGameRenoDxStatus: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameRenoDxStatus", shop, objectId),
   installGameRenoDx: (shop: GameShop, objectId: string) =>

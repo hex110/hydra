@@ -7,6 +7,7 @@ export type GameSettingsCategoryId =
   | "epic_cloud"
   | "hydra_cloud_legacy"
   | "compatibility"
+  | "runs"
   | "optiscaler"
   | "renodx"
   | "save_import"

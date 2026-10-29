@@ -55,7 +55,7 @@ import {
   HistoryIcon,
   ImageIcon,
 } from "@primer/octicons-react";
-import { FolderSync, Sparkles, Sun, Wrench } from "lucide-react";
+import { FolderSync, ScrollText, Sparkles, Sun, Wrench } from "lucide-react";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { GameAssetsSettings } from "./game-assets-settings";
 import { debounce } from "lodash-es";
@@ -69,6 +69,7 @@ import { DetailsSection } from "./game-options-modal/details-section";
 import { CompatibilitySettingsSection } from "./game-options-modal/compatibility-section";
 import { OptiScalerSettingsSection } from "./game-options-modal/optiscaler-section";
 import { RenoDxSettingsSection } from "./game-options-modal/renodx-section";
+import { RunsSection } from "./game-options-modal/runs-section";
 import { SaveImportSection } from "./game-options-modal/save-import-section";
 import { DownloadsSettingsSection } from "./game-options-modal/downloads-section";
 import { DangerZoneSection } from "./game-options-modal/danger-zone-section";
@@ -929,6 +930,7 @@ export function GameOptionsModal({
   const showSaveImportSettings =
     globalThis.window.electron.platform === "linux" && showOptiScalerSettings;
   const showDownloadSettings = game.shop !== "custom";
+  const showRunsSettings = !isLaunchbox && Boolean(game.executablePath);
   const shouldShowWinePrefixConfiguration =
     globalThis.window.electron.platform === "linux";
   const defaultHydraWinePrefixPath =
@@ -1004,6 +1006,15 @@ export function GameOptionsModal({
             },
           ]
         : []),
+      ...(showRunsSettings
+        ? [
+            {
+              id: "runs" as const,
+              label: t("settings_category_runs"),
+              icon: <ScrollText size={16} />,
+            },
+          ]
+        : []),
       ...(showOptiScalerSettings
         ? [
             {
@@ -1055,6 +1066,7 @@ export function GameOptionsModal({
       showEpicCloudSettings,
       showDownloadSettings,
       showOptiScalerSettings,
+      showRunsSettings,
       showSaveImportSettings,
       shouldShowWinePrefixConfiguration,
       t,
@@ -1436,6 +1448,9 @@ export function GameOptionsModal({
                   onChangeProtonVersion={handleChangeProtonVersion}
                 />
               )}
+            {selectedCategory === "runs" && showRunsSettings && (
+              <RunsSection game={game} />
+            )}
             {selectedCategory === "optiscaler" && showOptiScalerSettings && (
               <OptiScalerSettingsSection game={game} />
             )}

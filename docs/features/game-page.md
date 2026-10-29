@@ -16,6 +16,7 @@ summary that links there. Add a row here when a feature adds a new fact.
 | Other external links (Steam, SteamDB, PCGamingWiki)  | **Links** sidebar section                                                   |
 | RenoDX mod, ReShade version, HDR mod status          | **Options → RenoDX**                                                        |
 | Which HDR launch rules apply to the game             | **Options → General**, in the launch rules list                             |
+| Past launches: outcome, exit code, tools, logs       | **Options → Runs** ([Game runs](game-runs.md))                              |
 
 ## Options
 

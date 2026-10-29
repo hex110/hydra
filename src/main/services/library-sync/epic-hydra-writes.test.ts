@@ -178,6 +178,9 @@ function fixture() {
             queue.libraryWriteQueue.run(() => update(...args)),
         },
         "./play-activity": { recordPlayActivity: async () => {} },
+        "./game-runs/game-runs": {
+          GameRuns: { markGameDetected: () => {}, recordGameClosed: () => {} },
+        },
         "./hydra-api": modules["../hydra-api"],
         "@main/level": {
           ...(modules["@main/level"] as object),
