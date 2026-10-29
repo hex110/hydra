@@ -49,8 +49,11 @@ is.
 
 `OptiScaler.dll` is renamed to a proxy DLL that the game loads. Which name
 works depends on the game: OptiScaler loaded as `dxgi.dll` hooks DirectX
-games, and never sees a game that renders through Vulkan, so there is no
-overlay and no upscaling.
+games, and never sees a game that renders only through Vulkan, so there is no
+overlay and no upscaling. A Vulkan game that also loads `dxgi` is worse: it
+loads OptiScaler after creating its Vulkan device, and the overlay then
+crashes the game at swapchain creation (Enshrouded, see
+`docs/enshrouded-launch-crash.md`).
 
 **Install OptiScaler as** is **Automatic** by default, and Hydra picks the
 name for each game, first match wins:

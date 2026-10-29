@@ -1,7 +1,47 @@
-# Enshrouded crashes at swapchain creation (open investigation)
+# Enshrouded crashes at swapchain creation
 
-Status as of 2026-10-29 13:10 (local, UTC+2): **unsolved**. This file records
-what is known so a fresh pair of eyes doesn't redo it.
+Status as of 2026-10-29 13:30 (local, UTC+2): **cause found**. The rest of the
+file is the investigation as it went, kept so nobody redoes it.
+
+## Cause
+
+OptiScaler, installed as `dxgi.dll`. Enshrouded renders through Vulkan but also
+loads `d3d12`/`dxgi`, so OptiScaler gets loaded, **after** the game has already
+created its `VkInstance` and `VkDevice`. Its Vulkan overlay menu hooks
+`vkGetSwapchainImagesKHR`, and in that hook calls
+`vkGetPhysicalDeviceQueueFamilyProperties` with the physical device it would
+have captured from `vkCreateDevice`, which it never saw. That device is NULL,
+and winevulkan calls through a NULL dispatch entry.
+
+Evidence (`WINEDEBUG=+vulkan,+loaddll`):
+
+```
+thunk64_vkCreateSwapchainKHR 0x72e860, ...           <- succeeds
+thunk64_vkGetSwapchainImagesKHR 0x72e860, ..., 0x6ffff980b4cc, ...
+thunk64_vkGetPhysicalDeviceQueueFamilyProperties (nil), 0x10c860, (nil)
+Exception 0xc0000005 at winevulkan.so + 0x2b980
+```
+
+`0x6ffff980b4cc` lies inside `<game>\dxgi.dll` (loaded at `0x6FFFF7EE0000`,
+26.6 MB), so the swapchain is in fact created; the crash comes just after,
+before the game logs `swap chain created`.
+
+| Test (GE-Proton11-10, Hydra's env otherwise)                 | Result        |
+| ------------------------------------------------------------ | ------------- |
+| `VK_LOADER_LAYERS_DISABLE='~implicit~'` (loader confirmed)   | crash         |
+| `dxgi=b` (Wine's builtin, game-folder `dxgi.dll` not loaded) | **swapchain** |
+| OptiScaler loaded, `[Menu] OverlayMenu=false`                | **swapchain** |
+| OptiScaler renamed to `dbghelp.dll`, `dbghelp=n,b`           | **swapchain** |
+
+**Fix:** reinstall OptiScaler for the game. The install dates from 01:07, before
+the proxy-name picker (`9c7a3eb95`, 01:42) existed. The picker now chooses
+`dbghelp.dll` from the OptiScaler wiki, because the crack owns `winmm.dll`.
+Loaded that early, OptiScaler sees device creation and the overlay works.
+
+Why the 01:07:24 run survived with `dxgi.dll` in place is still unexplained.
+The earlier "`dxgi=n,b` removed" test was not a valid OptiScaler-off test:
+Proton already overrides `dxgi` to native for DXVK, and the game folder comes
+first in the search order, so OptiScaler kept loading.
 
 ## Summary
 
@@ -117,7 +157,7 @@ Hydra's command (without `gamemoderun`/`MANGOHUD` unless noted), and checking wh
 | Hydra's exact env, GE-Proton11-10                                 | crash (18 surface formats)                                        |
 | Same without `PROTON_ENABLE_HDR`/`DXVK_HDR`                       | crash (18 formats)                                                |
 | Same without `PROTON_ENABLE_WAYLAND` (X11 path)                   | crash (2 formats)                                                 |
-| `dxgi=n,b` removed (OptiScaler proxy not loaded)                  | crash, both X11 and Wayland                                       |
+| `dxgi=n,b` removed (OptiScaler still loads, see Cause)            | crash, both X11 and Wayland                                       |
 | Fresh scratch prefix instead of the Hydra prefix                  | crash (X11, 2 formats)                                            |
 | `DISABLE_LSFGVK=1` (LSFG-VK frame-gen layer off), X11 and Wayland | crash                                                             |
 | UMU-Proton-10.0-4                                                 | crash, `winevulkan.so + 0x40120`                                  |
@@ -135,6 +175,8 @@ Other notes:
   happened before the reboot (01:34, 01:54).
 
 ## Not yet tried
+
+(As of 13:10. The first two items were then run and led to the Cause above.)
 
 - `VK_LOADER_LAYERS_DISABLE='~implicit~'` and `VK_LOADER_DEBUG=layer,error`. This is the
   obvious next step: implicit layers present are `VK_LAYER_LSFGVK_frame_generation`
