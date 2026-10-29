@@ -22,7 +22,16 @@ See [Launch rules](features/launch-rules.md#hdr-switch-the-monitor-hyprland),
 
 ## Findings
 
-### HDR needs the monitor in HDR before the game starts
+### Two HDR tiers
+
+**The built-in HDR rule is enough for many games.** `PROTON_ENABLE_WAYLAND=1
+PROTON_ENABLE_HDR=1 DXVK_HDR=1` is the existing rule, and games such as Ace
+Combat 8 get HDR from it alone. The monitor switch below is for the games that
+check for HDR at startup and never get it. So `hypr-hdr` is the second tier,
+not the first; RenoDX is a third layer for games whose own HDR is missing or
+poor (see "RenoDX and the two tiers" under the design).
+
+### Some games need the monitor in HDR before they start
 
 Verified with Enshrouded under GE-Proton 11. With the monitor in `srgb` the
 game logs `HDR supported: false` and never offers HDR. With the monitor
@@ -77,11 +86,10 @@ but everything it writes is plain DLLs and ini files.
 6. Switches Windows HDR on at launch and off at exit, which is what `hypr-hdr`
    does.
 
-What is worth taking: Steam-ID matching (better than its name matching), the
-ReShade extraction trick, import-table API detection, the foreign-DLL warning
-and the backup discipline. What is not: generic Unreal and Unity coverage
-(needs per-game `Engine.ini` edits), NVIDIA driver profiles and DLSS
-management (this machine is AMD), frame limiters, RE Framework.
+The goal is to cover RHI's other features too, wherever they can work on Linux.
+[Scope against RHI](#scope-against-rhi) sorts each one. Steam-ID matching
+(better than its name matching), the ReShade extraction trick, import-table API
+detection, the foreign-DLL warning and the backup discipline come first.
 **Licence:** Hydra Plus is MIT and RHI is GPL-3.0, so reimplement from the
 ideas; do not copy its code or depend on its manifest.
 
@@ -100,8 +108,11 @@ No code until these are answered by hand on a game that is installed here:
    ReShade rule sets both). Check the overlay opens with Home.
 2. **Does a RenoDX mod produce HDR on screen?** The one thing nothing has shown
    yet. Use Cyberpunk 2077 (installed, DirectX, stable mod).
-3. **Is `hypr-hdr` still needed?** RenoDX upgrades the swapchain itself, but
-   Wine may still report no HDR to the game. Try with and without the rule.
+3. **Which HDR tier does RenoDX need?** Try each of: no HDR rule, the built-in
+   HDR rule, and the built-in rule plus `hypr-hdr`. RenoDX upgrades the
+   swapchain itself, but Wine may still report no HDR to the game. Also do the
+   baseline: Ace Combat 8 with the built-in rule alone, so there is a known
+   good run to compare against.
 4. **Does the game's own HDR toggle matter?** Some mods say to turn the game's
    HDR off.
 5. **Which `reshade.ini` keys are needed?** Start from RHI's template (the
@@ -115,12 +126,100 @@ No code until these are answered by hand on a game that is installed here:
 
 If 1 or 2 fail, stop and write down why before building anything.
 
+## Scope against RHI
+
+Every RHI feature, sorted by whether it can work here. "Portable" means it is
+file copies, ini edits and downloads, so Proton does not stop it. Each portable
+feature still needs a hand test under Proton first, the way phase 0 does for
+RenoDX; anything that fails is moved to "Not portable" with the reason.
+
+### Portable (planned)
+
+| RHI feature                                              | Plan                                                                                                             | Phase |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----- |
+| RenoDX named mods                                        | The core of this plan.                                                                                           | 2-3   |
+| ReShade install, API-based DLL naming, foreign-DLL check | Core. Needs the PE import-table detector.                                                                        | 1-2   |
+| `reshade.ini` seed and merge                             | Core. Hotkeys, screenshot path, peak brightness, add-on paths.                                                   | 1-2   |
+| Backup, restore, manifest                                | Core, same shape as OptiScaler's.                                                                                | 2     |
+| Update All, per-game update exclusions                   | One action for ReShade, RenoDX and the rest. Check at startup and daily, not every four hours.                   | 3     |
+| UE-Extended (generic Unreal HDR)                         | `reshade.ini` plus `Engine.ini`. The `Engine.ini` lives in the game's Wine prefix, so the prefix path is needed. | 5     |
+| Generic Unity HDR add-on                                 | Same pattern, no `Engine.ini`.                                                                                   | 5     |
+| Luma Framework                                           | Named and generic Luma mods for DirectX 11 Unreal games, with the `Engine.ini` keys and launch arguments.        | 5     |
+| RenoFX HDR Toolkit                                       | SDR-to-HDR for games with no mod.                                                                                | 5     |
+| Per-game ReShade channels                                | Stable, nightly, custom, legacy, no add-ons.                                                                     | 6     |
+| Add-on manager, custom add-ons folder                    | Enable or disable per game or globally.                                                                          | 6     |
+| Shader packs (46), per-game selection, profiles          | Lilium HDR first; the rest as a browsable list.                                                                  | 6     |
+| Vulkan ReShade (implicit layer)                          | A layer inside a Wine prefix is unproven; test before promising.                                                 | 6     |
+| Frame limiters: ReLimiter, Display Commander             | Both are ReShade add-ons. Test under Wine; mutually exclusive per game.                                          | 7     |
+| RE Framework                                             | Resident Evil engine mod; a `dinput8.dll` proxy, so Proton can run it.                                           | 7     |
+| OptiScaler extras                                        | Per-GPU ini templates (AMD, NVIDIA), OptiPatcher, `LoadReshade` handling, Streamline and DLSS Enabler.           | 7     |
+| HDR auto-toggle                                          | Done as `hypr-hdr`; phase 4 bundles it.                                                                          | 4     |
+| DXVK with Lilium HDR (DirectX 9 HDR)                     | Proton's DXVK may already do this with `DXVK_HDR`. Test a DirectX 9 game before building anything.               | 5     |
+| Manifest-driven fixes                                    | Our own manifest (per-game DLL names, API overrides, warnings, blacklist), written from our own findings.        | 2     |
+
+### NVIDIA only (planned, cannot be tested here)
+
+This machine has an AMD GPU. These are file-level features that do nothing on
+AMD, so they need someone with an RTX card to prove them. Build them last, behind
+a GPU check, and say so on the page.
+
+- DLSS and Streamline version manager (swap SR, RR, FG DLLs per game, back up
+  the originals, global defaults, batch deploy, auto-update).
+- DLSS5 Feeder, ShortFuse DLSS tool, DirectX 11 bridge, NR Cost Scaler.
+- Multi Frame Generation unlocks for RTX 40 and the RTX 50 modes.
+- DLSS presets and render-scale override. RHI writes these into the NVIDIA
+  driver profile with NvAPI. On Linux the nearest route is launch environment
+  variables for DXVK-NVAPI; confirm what exists before designing it.
+
+Phase 8.
+
+### Not portable (and why)
+
+- **NVIDIA driver profiles through NvAPI** (VSync, low latency, Smooth Motion,
+  ReBAR, G-Sync, shader cache, frame limit, digital vibrance, profile export):
+  NvAPI is a Windows driver interface. Where a Linux equivalent exists (for
+  example `__GL_*` variables or the existing MangoHud and gamescope actions) it
+  belongs in launch rules, not here.
+- **RTX HDR**: a Windows driver feature.
+- **Store detection** for Epic, GOG, Xbox, EA, Ubisoft, Battle.net, Rockstar
+  and itch.io: Hydra has its own library and import paths, and dragging an exe
+  in is already covered by adding a game by hand.
+- **Admin-only toggles** (ReBAR, Smooth Motion): follow from the driver items
+  above.
+
 ## Recommended design
 
 Follow the roadmap's rule: anything that copies files into game folders
 belongs to Hydra. Copy the OptiScaler feature's shape, because it already
 solved the same problems: manifest, backups, opt-out, setup step, per-game
 page, update.
+
+### RenoDX and the two tiers
+
+RenoDX is not a replacement for the built-in HDR rule. The rule makes Proton
+pass HDR through to the monitor; RenoDX changes what the game renders into it.
+Phase 0 settles which games need both. The install code never touches the HDR
+rules; it only reports, on the game's page, which HDR rules are currently on
+for that game.
+
+### Component model
+
+RHI's features are all the same operation with different inputs: fetch an
+archive or DLL from somewhere, copy named files into the game folder (or the
+prefix), seed an ini, remember what was written, offer an update. Build that
+once as a **component** so each feature is data and a small provider, not a new
+copy of the OptiScaler code:
+
+- A component has an id, a source (GitHub release asset, a URL, or a scraped
+  page), the files to install and where, the ini edits, the conflicts it checks
+  for, and how it finds its own version.
+- One manifest per game (`.hydra-renodx.json`, widened to list components)
+  records everything written and every backup. Remove and update work on one
+  component without touching the others.
+- Components declare the proxy DLL names they need, so the chooser can stop two
+  of them taking the same name. This is the OptiScaler chooser generalised.
+- OptiScaler stays as it is for now. Move it onto the component model only when
+  a second feature has proven the shape.
 
 ### Catalogue
 
@@ -193,23 +292,34 @@ OptiScaler's "not working" list or with a known anti-cheat.
 Each phase is shippable on its own.
 
 0. **Manual proof** (no code). The unknowns above, on Cyberpunk 2077, then
-   Fallout 4 (DirectX 11) and Hades II. Write the result into this file.
+   Fallout 4 (DirectX 11) and Hades II, plus the Ace Combat 8 baseline. Write
+   the result into this file.
 1. **Groundwork.** Import-table detector, foreign-DLL check, reshade.ini merge
    helper, all with tests. The OptiScaler chooser gets the better detector.
-2. **Manual install.** Catalogue, ReShade provider, install and remove from a
-   game's options, manifest, setup log entry. No automation yet.
+2. **Manual install.** Component model, catalogue, ReShade provider, install and
+   remove from a game's options, manifest, setup log entry, our own fixes
+   manifest. No automation yet.
 3. **Automatic install.** The setup step, "Install in all supported games",
-   updates, per-game opt-out, and a notification naming the games. Decide
-   whether installing RenoDX should also switch the `hypr-hdr` rule on for
-   that game, based on phase 0.
+   Update All with per-game exclusions, per-game opt-out, and a notification
+   naming the games. Decide whether installing RenoDX should also switch an HDR
+   rule on for that game, based on phase 0.
 4. **HDR polish.** Ship `hypr-hdr` with Hydra Plus instead of relying on
    `~/.local/bin` (resources folder, like `umu-run`), cover other compositors
    or say plainly that only Hyprland is supported, and take the peak
    brightness from the monitor when known.
-5. **Later.** Generic Unreal and Unity add-ons with their `Engine.ini` edits,
-   a nightly ReShade channel, Vulkan games (a ReShade layer inside a Wine
-   prefix is unproven), Luma, DXVK with Lilium HDR for DirectX 9 games,
-   shader packs.
+5. **More HDR mods.** Generic Unreal (UE-Extended) and Unity add-ons with their
+   `Engine.ini` edits, Luma, RenoFX, and a DirectX 9 test to see whether
+   Proton's DXVK already covers Lilium's HDR.
+6. **ReShade management.** Per-game channels (stable, nightly, custom, legacy),
+   the add-on manager, shader packs with per-game selection and profiles, and
+   Vulkan games if a ReShade layer turns out to work in a Wine prefix.
+7. **Add-ons and engine mods.** ReLimiter and Display Commander, RE Framework,
+   and the OptiScaler extras (per-GPU templates, OptiPatcher, Streamline).
+8. **NVIDIA only.** The DLSS and Streamline manager, DLSS5, MFG and the
+   environment-variable route for presets. Needs an RTX tester.
+
+Phases 5 to 7 each start with the same hand test as phase 0 for that one
+feature; a feature that fails it moves to "Not portable" with the reason.
 
 ## Other follow-ups from the same work
 
@@ -234,6 +344,11 @@ Each phase is shippable on its own.
 - **Online games.** RenoDX and ReShade can trip anti-cheat. Skip games on the
   OptiScaler "not working" list and anything with a known anti-cheat; say so
   on the game's page.
+- **Scope.** RHI is the work of one person over a long time and it ships a
+  manifest that is updated daily. Matching all of it is a long road, which is
+  why each phase is shippable alone and why the component model comes first.
+- **Untestable here.** Phase 8 cannot be verified on this AMD machine. Do not
+  ship it unverified; it waits for a tester.
 - **Mod churn.** Add-ons are built nightly and may break after a game update;
   keep the previous add-on so a bad update can be undone.
 - **Wine specifics.** Everything above is unverified under Proton until
@@ -247,3 +362,7 @@ Each phase is shippable on its own.
 2. Beta mods: off by default (recommended) or on?
 3. Should phase 4 bundle `hypr-hdr`, or stay a personal script?
 4. Is Hyprland-only acceptable for the HDR switch?
+5. Who can test the NVIDIA-only features (phase 8)? Without a tester they stay
+   unbuilt.
+6. Phases 5 to 7 are in the order given. Is that the order you want, or is one
+   RHI feature (frame limiters, shader packs, Luma) more important to you?
