@@ -16,6 +16,7 @@ import type {
   OptiScalerChannel,
   OptiScalerProxyDll,
 } from "./optiscaler.types";
+import type { GameRenoDxInstallation } from "./renodx.types";
 import type {
   EpicDownloadMetadata,
   EpicInstallation,
@@ -149,6 +150,9 @@ export interface Game extends LibraryCatalogueMetadata {
   /** Release titles the user chose not to update to. */
   dismissedUpdateTitles?: string[];
   optiScaler?: GameOptiScalerInstallation | null;
+  renoDx?: GameRenoDxInstallation | null;
+  /** Set when the user removed RenoDX or opted the game out of automatic installs. */
+  renoDxAutoInstallDisabled?: boolean;
   /** OnlineFix found in the game folder; null when checked and absent. */
   onlineFix?: GameOnlineFix | null;
   /** Skip OnlineFix preparation and its DLL overrides for this game. */
@@ -441,6 +445,11 @@ export interface UserPreferences {
   optiScalerIniOverrides?: string;
   /** INI fragment applied to every game's ReShade.ini; unset means the default overlay key. */
   reShadeIniOverrides?: string;
+  renoDxAutoInstall?: boolean;
+  /** Offer beta and experimental RenoDX mods as well as stable and unrated ones. */
+  renoDxIncludePrerelease?: boolean;
+  /** Turn on the HDR launch rules for games that get a RenoDX mod. */
+  renoDxEnableHdrRules?: boolean;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
   /** MangoHud layout for every game; unset leaves MangoHud's own config alone. */

@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { db, gamesSublevel, levelKeys } from "@main/level";
-import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
-import { getLaunchExecutable } from "@main/helpers/launcher-redirects";
+import {
+  getWindowsExecutable,
+  isManagedElsewhere,
+} from "@main/helpers/windows-game";
 import { logger } from "@main/services/logger";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { WindowManager } from "@main/services/window-manager";
@@ -74,24 +76,6 @@ const loadSettings = async (): Promise<OptiScalerSettings> =>
       })
       .catch(() => null)
   );
-
-const getWindowsExecutable = (game: Game) => {
-  if (!game.executablePath) return null;
-  // OptiScaler belongs next to the game, not a launcher that starts it.
-  const executablePath = getLaunchExecutable(
-    game,
-    parseExecutablePath(game.executablePath)
-  );
-  return path.extname(executablePath).toLowerCase() === ".exe"
-    ? executablePath
-    : null;
-};
-
-/** Games whose files another launcher owns are never touched automatically. */
-const isManagedElsewhere = (game: Game, executablePath: string) =>
-  game.hasActiveSteamImport === true ||
-  !!game.epicInstallation ||
-  /[\\/]steamapps[\\/]common[\\/]/i.test(executablePath);
 
 /**
  * Installs OptiScaler into games, keeps track of what it installed and tells
@@ -350,7 +334,13 @@ export class OptiScaler {
         version: release.version,
         channel: releaseChannel,
         proxyDll,
-        iniOverrides: settings.iniOverrides,
+        iniOverrides: [
+          ...settings.iniOverrides,
+          // RenoDX's ReShade loads through OptiScaler when it holds dxgi.dll.
+          ...(game.renoDx && game.renoDx.proxyDll === null
+            ? [{ section: "Plugins", key: "LoadReshade", value: "true" }]
+            : []),
+        ],
         optiPatcher,
       });
 

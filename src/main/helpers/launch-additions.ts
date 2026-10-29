@@ -2,6 +2,7 @@ import path from "node:path";
 import { logger } from "@main/services/logger";
 import { Wine } from "@main/services/wine";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
+import { RenoDx } from "@main/services/renodx/renodx";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
 import {
@@ -39,7 +40,8 @@ const STEAM_BRIDGE_DLL = "lsteamclient";
 
 /**
  * Environment Hydra adds when a Windows game runs under Proton: the DLL
- * overrides OptiScaler and OnlineFix need to load their proxy DLLs, and the
+ * overrides OptiScaler, RenoDX's ReShade and OnlineFix need to load their proxy
+ * DLLs, and the
  * one that keeps Proton's Steam bridge out of the way.
  */
 const getLinuxLaunchEnvironment = async (
@@ -75,10 +77,12 @@ const getLinuxLaunchEnvironment = async (
   }
 
   const optiScalerDll = OptiScaler.getLaunchNativeDll(game);
+  const renoDxDll = RenoDx.getLaunchNativeDll(game);
 
   return buildLaunchEnvironment({
     nativeDlls: [
       ...(optiScalerDll ? [optiScalerDll] : []),
+      ...(renoDxDll ? [renoDxDll] : []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
     ],
     disabledDlls: [STEAM_BRIDGE_DLL],

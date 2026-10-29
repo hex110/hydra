@@ -4,10 +4,10 @@ import { done, skipped, type GameSetupStep } from "./game-setup";
 
 export const RESHADE_STEP_ID = "reshade";
 
-/** Runs before OptiScaler, so anything that installs ReShade later sees the same overrides. */
+/** Runs before RenoDX and OptiScaler, which both leave a ReShade.ini alone once it has these. */
 export const reShadeStep: GameSetupStep = {
   id: RESHADE_STEP_ID,
-  order: 450,
+  order: 440,
   run: async (context) => {
     const overrides = resolveReShadeIniOverrides(context.userPreferences);
     const result = await applyReShadeIniOverrides(

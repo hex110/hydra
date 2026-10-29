@@ -2,6 +2,7 @@ import type { LaunchRule } from "@types";
 
 /** Built-in rules a new install starts with; each can be turned off or removed. */
 export const HDR_LAUNCH_RULE_ID = "preset-hdr";
+export const HYPRLAND_HDR_LAUNCH_RULE_ID = "preset-hyprland-hdr";
 export const RESHADE_LAUNCH_RULE_ID = "preset-reshade";
 
 /** What the ReShade rule used to add; it made games fail to start without a native d3dcompiler_47. */
@@ -22,7 +23,7 @@ export const LAUNCH_RULE_PRESETS: LaunchRule[] = [
       "PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%",
   },
   {
-    id: "preset-hyprland-hdr",
+    id: HYPRLAND_HDR_LAUNCH_RULE_ID,
     presetId: "hyprland-hdr",
     name: "HDR: switch the monitor to HDR (Hyprland)",
     enabled: false,

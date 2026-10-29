@@ -50,6 +50,12 @@ import type {
   AnkerGamesStatus,
   OptiScalerOverview,
   OptiScalerProxyDll,
+  GameRenoDxInstallation,
+  GameRenoDxStatus,
+  RenoDxBulkMode,
+  RenoDxBulkProgress,
+  RenoDxOverview,
+  RenoDxUnavailableReason,
   SaveImportBulkProgress,
   SaveImportError,
   SaveImportOptions,
@@ -612,6 +618,40 @@ declare global {
       shop: GameShop,
       objectId: string
     ) => Promise<GameOptiScalerStatus>;
+    getRenoDxOverview: () => Promise<RenoDxOverview>;
+    checkRenoDxUpdates: () => Promise<void>;
+    clearRenoDxCache: () => Promise<void>;
+    runRenoDxBulk: (mode: RenoDxBulkMode) => Promise<boolean>;
+    onRenoDxBulkProgress: (
+      cb: (progress: RenoDxBulkProgress) => void
+    ) => () => Electron.IpcRenderer;
+    getGameRenoDxStatus: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameRenoDxStatus>;
+    installGameRenoDx: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<
+      | { ok: true; installation: GameRenoDxInstallation }
+      | {
+          ok: false;
+          error:
+            | "not-found"
+            | "not-windows-game"
+            | "external-install"
+            | "conflict"
+            | "failed"
+            | RenoDxUnavailableReason;
+          message: string;
+        }
+    >;
+    uninstallGameRenoDx: (shop: GameShop, objectId: string) => Promise<void>;
+    setGameRenoDxAutoInstallDisabled: (
+      shop: GameShop,
+      objectId: string,
+      disabled: boolean
+    ) => Promise<void>;
     getProtonOverview: (force?: boolean) => Promise<ProtonFlavorOverview[]>;
     installProton: (
       flavor: ProtonFlavor,

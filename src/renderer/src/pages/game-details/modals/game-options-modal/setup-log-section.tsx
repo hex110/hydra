@@ -14,6 +14,7 @@ const SETUP_STEPS = [
   "online-fix",
   "save-import",
   "reshade",
+  "renodx",
   "optiscaler",
   "post-install-command",
 ];

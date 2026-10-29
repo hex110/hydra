@@ -21,6 +21,8 @@ import type {
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
+  RenoDxBulkMode,
+  RenoDxBulkProgress,
   SaveImportBulkProgress,
   SaveImportOptions,
   SystemPowerAction,
@@ -1220,6 +1222,37 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getGameOptiScalerStatus", shop, objectId),
   installGameOptiScaler: (shop: GameShop, objectId: string, version?: string) =>
     ipcRenderer.invoke("installGameOptiScaler", shop, objectId, version),
+  getRenoDxOverview: () => ipcRenderer.invoke("getRenoDxOverview"),
+  checkRenoDxUpdates: () => ipcRenderer.invoke("checkRenoDxUpdates"),
+  clearRenoDxCache: () => ipcRenderer.invoke("clearRenoDxCache"),
+  runRenoDxBulk: (mode: RenoDxBulkMode) =>
+    ipcRenderer.invoke("runRenoDxBulk", mode),
+  onRenoDxBulkProgress: (cb: (progress: RenoDxBulkProgress) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: RenoDxBulkProgress
+    ) => cb(payload);
+    ipcRenderer.on("on-renodx-bulk-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-renodx-bulk-progress", listener);
+  },
+  getGameRenoDxStatus: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameRenoDxStatus", shop, objectId),
+  installGameRenoDx: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("installGameRenoDx", shop, objectId),
+  uninstallGameRenoDx: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("uninstallGameRenoDx", shop, objectId),
+  setGameRenoDxAutoInstallDisabled: (
+    shop: GameShop,
+    objectId: string,
+    disabled: boolean
+  ) =>
+    ipcRenderer.invoke(
+      "setGameRenoDxAutoInstallDisabled",
+      shop,
+      objectId,
+      disabled
+    ),
   getProtonOverview: (force?: boolean) =>
     ipcRenderer.invoke("getProtonOverview", force),
   installProton: (flavor: ProtonFlavor, tag?: string) =>

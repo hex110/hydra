@@ -13,6 +13,12 @@ import {
   parseOptiScalerWikiProxyDlls,
 } from "@shared";
 import { SevenZip } from "@main/services/7zip";
+import {
+  getDirectorySize,
+  listDirectories,
+  readJson,
+  writeJson,
+} from "@main/services/cache-files";
 import { downloadToFile } from "@main/services/download-to-file";
 import { logger } from "@main/services/logger";
 import { SystemPath } from "@main/services/system-path";
@@ -77,21 +83,6 @@ const getReleasesDirectory = (channel: OptiScalerChannel) =>
 const getOptiPatcherDirectory = () =>
   path.join(getRootDirectory(), "optipatcher");
 
-const readJson = async <T>(filePath: string): Promise<T | null> => {
-  try {
-    return JSON.parse(await fs.promises.readFile(filePath, "utf8")) as T;
-  } catch {
-    return null;
-  }
-};
-
-const writeJson = async (filePath: string, value: unknown) => {
-  await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-  const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
-  await fs.promises.writeFile(temporaryPath, JSON.stringify(value));
-  await fs.promises.rename(temporaryPath, filePath);
-};
-
 const fetchLatestRelease = async (
   repository: string,
   assetPattern: RegExp
@@ -117,29 +108,6 @@ const fetchLatestRelease = async (
   }
 
   return null;
-};
-
-const listDirectories = async (directory: string) =>
-  (
-    await fs.promises
-      .readdir(directory, { withFileTypes: true })
-      .catch(() => [] as fs.Dirent[])
-  )
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-    .map((entry) => entry.name);
-
-const getDirectorySize = async (directory: string): Promise<number> => {
-  const entries = await fs.promises
-    .readdir(directory, { withFileTypes: true })
-    .catch(() => [] as fs.Dirent[]);
-  let size = 0;
-  for (const entry of entries) {
-    const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) size += await getDirectorySize(entryPath);
-    else
-      size += (await fs.promises.stat(entryPath).catch(() => null))?.size ?? 0;
-  }
-  return size;
 };
 
 /**
