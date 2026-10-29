@@ -13,6 +13,7 @@ const SETUP_STEPS = [
   "wine-prefix",
   "online-fix",
   "save-import",
+  "reshade",
   "optiscaler",
   "post-install-command",
 ];

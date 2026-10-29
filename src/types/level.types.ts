@@ -439,6 +439,8 @@ export interface UserPreferences {
   optiScalerInstallOptiPatcher?: boolean;
   /** INI fragment applied to OptiScaler.ini on every install. */
   optiScalerIniOverrides?: string;
+  /** INI fragment applied to every game's ReShade.ini; unset means the default overlay key. */
+  reShadeIniOverrides?: string;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
   /** MangoHud layout for every game; unset leaves MangoHud's own config alone. */

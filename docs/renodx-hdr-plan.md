@@ -140,14 +140,23 @@ Findings:
 7. The window's Wayland class is the exe name (`sekiro.exe`), not
    `steam_app_<id>`.
 
-Still open: whether the picture is actually correct HDR (needs a person to look
-at it), the overlay under Home, and unknowns 4 and 7 below. Synthetic Home key
-presses sent with `hyprctl` did not open the overlay.
+8. **Confirmed by eye (owner):** the game is in HDR, and the game's own HDR
+   setting switches the picture on and off. So the RenoDX mod follows the
+   in-game toggle (unknown 4).
+9. **The overlay opens with Home, which the owner's keyboard lacks.** ReShade
+   shows "press Home" at the top. Shipped: a ReShade setup step (order 450)
+   sets `KeyOverlay=121,0,0,0` (F10) in any `ReShade.ini`, from the
+   `reShadeIniOverrides` preference. It is also the start of phase 1's
+   `reshade.ini` helper: the INI helpers moved to `shared/ini-overrides.ts`.
+
+Still open: the Ace Combat 8 baseline, shader packs (6) and ReShade with
+OptiScaler (7). Synthetic Home presses sent with `hyprctl` did not open the
+overlay.
 
 ## Unknowns to settle first (phase 0)
 
-These were the questions. Answered above: 1, 3 and most of 5. Open: 2 (visual),
-4, 6, 7, and the Ace Combat 8 baseline.
+These were the questions. Answered above: 1, 2, 3, 4 and most of 5. Open: 6, 7,
+and the Ace Combat 8 baseline.
 
 1. **Does ReShade with add-ons run under Proton on this machine?** Wine
    overrides: the ReShade DLL natively, plus `d3dcompiler_47` (the existing
