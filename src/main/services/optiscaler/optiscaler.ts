@@ -40,7 +40,7 @@ import {
   resolveOptiScalerInstallDirectory,
   uninstallOptiScaler,
 } from "./game-files";
-import { detectGraphicsApis } from "./graphics-api";
+import { detectGraphicsApis } from "../graphics/graphics-api";
 import { OptiScalerAssets } from "./optiscaler-assets";
 
 export type OptiScalerInstallError =

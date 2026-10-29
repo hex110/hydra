@@ -4,9 +4,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
+  detectGameGraphics,
   detectGraphicsApis,
   detectGraphicsApisInFile,
 } from "./graphics-api.ts";
+import { buildTestPe } from "./test-pe.ts";
 
 let directory: string;
 
@@ -79,5 +81,63 @@ describe("detectGraphicsApis", () => {
       await detectGraphicsApis(path.join(directory, "missing.exe")),
       null
     );
+  });
+});
+
+describe("detectGameGraphics", () => {
+  it("reads the architecture and the API from the import table", async () => {
+    const exe = write(
+      "dx11.exe",
+      buildTestPe({ machine: "x86", imports: ["KERNEL32.dll", "d3d11.dll"] })
+    );
+    assert.deepStrictEqual(await detectGameGraphics(exe), {
+      architecture: "x86",
+      apis: { vulkan: false, direct3d9: false, dxgi: true, opengl: false },
+    });
+  });
+
+  it("treats delay-loaded libraries like imported ones", async () => {
+    const exe = write(
+      "delay.exe",
+      buildTestPe({ imports: ["kernel32.dll"], delayImports: ["d3d9.dll"] })
+    );
+    assert.strictEqual((await detectGameGraphics(exe))?.apis.direct3d9, true);
+  });
+
+  it("trusts the imports over a name that merely appears in the file", async () => {
+    const exe = write(
+      "vulkan.exe",
+      buildTestPe({ imports: ["vulkan-1.dll"] }),
+      "d3d11.dll\0"
+    );
+    assert.deepStrictEqual((await detectGameGraphics(exe))?.apis, {
+      vulkan: true,
+      direct3d9: false,
+      dxgi: false,
+      opengl: false,
+    });
+  });
+
+  it("falls back to names in the file when the imports name no API", async () => {
+    const exe = write(
+      "dynamic.exe",
+      buildTestPe({ imports: ["kernel32.dll"] }),
+      "\0d3d12.dll\0opengl32.dll\0"
+    );
+    const apis = (await detectGameGraphics(exe))?.apis;
+    assert.strictEqual(apis?.dxgi, true);
+    assert.strictEqual(apis?.opengl, true);
+  });
+
+  it("reads UnityPlayer.dll, where Unity games load their API", async () => {
+    const exe = write("unity.exe", buildTestPe({ imports: ["kernel32.dll"] }));
+    write("UnityPlayer.dll", buildTestPe({ imports: ["d3d11.dll"] }));
+    assert.strictEqual((await detectGameGraphics(exe))?.apis.dxgi, true);
+  });
+
+  it("takes the architecture from the game's own executable", async () => {
+    const exe = write("main.exe", buildTestPe({ machine: "x64" }));
+    write("other.exe", buildTestPe({ machine: "x86" }));
+    assert.strictEqual((await detectGameGraphics(exe))?.architecture, "x64");
   });
 });
