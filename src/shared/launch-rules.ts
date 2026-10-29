@@ -2,6 +2,11 @@ import type { LaunchRule } from "@types";
 
 /** Built-in rules a new install starts with; each can be turned off or removed. */
 export const HDR_LAUNCH_RULE_ID = "preset-hdr";
+export const RESHADE_LAUNCH_RULE_ID = "preset-reshade";
+
+/** What the ReShade rule used to add; it made games fail to start without a native d3dcompiler_47. */
+export const LEGACY_RESHADE_LAUNCH_OPTIONS =
+  "WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%";
 
 export const LAUNCH_RULE_PRESETS: LaunchRule[] = [
   {
@@ -30,13 +35,15 @@ export const LAUNCH_RULE_PRESETS: LaunchRule[] = [
     launchOptions: "hypr-hdr %command%",
   },
   {
-    id: "preset-reshade",
+    id: RESHADE_LAUNCH_RULE_ID,
     presetId: "reshade",
     name: "ReShade",
     enabled: true,
     files: ["ReShade.ini"],
-    // ReShade installs as dxgi.dll and compiles shaders with d3dcompiler_47.
-    launchOptions: "WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%",
+    // ReShade installs as dxgi.dll, d3d9.dll or opengl32.dll depending on the
+    // game's API. d3dcompiler_47 is left alone: "native" there needs a
+    // Microsoft copy in the prefix, and without one the game fails to start.
+    launchOptions: "WINEDLLOVERRIDES=dxgi=n,b;d3d9=n,b;opengl32=n,b %command%",
   },
   {
     id: "preset-unity-vulkan",

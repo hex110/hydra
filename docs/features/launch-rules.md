@@ -82,7 +82,7 @@ A new install starts with these. They can be edited, disabled or removed;
 | ---------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
 | HDR                                | Every game                                                                    | `PROTON_ENABLE_WAYLAND=1 PROTON_ENABLE_HDR=1 DXVK_HDR=1 %command%` | Off     |
 | HDR: switch the monitor (Hyprland) | Every game                                                                    | `hypr-hdr %command%`                                               | Off     |
-| ReShade                            | `ReShade.ini`                                                                 | `WINEDLLOVERRIDES=d3dcompiler_47=n;dxgi=n,b %command%`             | On      |
+| ReShade                            | `ReShade.ini`                                                                 | `WINEDLLOVERRIDES=dxgi=n,b;d3d9=n,b;opengl32=n,b %command%`        | On      |
 | Unity games: Vulkan renderer       | `UnityPlayer.dll`                                                             | `%command% -force-vulkan`                                          | Off     |
 | Denuvo bypass (linuwux)            | `artifact.dll`, `artifact.json`, `DenuvOwO.dll`, `DenuvOwO.ini`, `Reflex.ini` | `linuwux %command%`                                                | On      |
 
@@ -123,6 +123,16 @@ command. It takes the game command, so any script that does this works:
 
 It affects one monitor, so the game must open on it and run fullscreen. The
 rule changes nothing in the Hyprland configuration.
+
+### ReShade
+
+For games that already have a `ReShade.ini`. ReShade loads as `dxgi.dll`,
+`d3d9.dll` or `opengl32.dll` next to the game, and Wine only uses such a file
+when the name is overridden, so the rule overrides all three; a name the game
+folder does not have costs nothing. It does not override `d3dcompiler_47`:
+that asks Wine for a native copy, and a prefix without one cannot start the
+game. ReShade works with Wine's own. Saved rules that still had the old
+override are updated automatically.
 
 ### Denuvo bypass (linuwux)
 

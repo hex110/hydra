@@ -2,6 +2,8 @@ import type { Game, LaunchRule, UserPreferences } from "@types";
 import {
   HDR_LAUNCH_RULE_ID,
   LAUNCH_RULE_PRESETS,
+  LEGACY_RESHADE_LAUNCH_OPTIONS,
+  RESHADE_LAUNCH_RULE_ID,
   resolveLaunchRules,
 } from "./launch-rules.js";
 
@@ -67,4 +69,28 @@ export const migrateLegacyLaunchSettings = (
       : [...rules, { ...hdrPreset, enabled: enabled ?? false }],
     gameOverrides,
   };
+};
+
+const reShadePreset = LAUNCH_RULE_PRESETS.find(
+  (rule) => rule.id === RESHADE_LAUNCH_RULE_ID
+)!;
+
+/**
+ * Gives a saved ReShade rule the current launch options when it still has the
+ * old ones. A rule the user edited is left alone. Null when nothing changes.
+ */
+export const migrateReShadeLaunchRule = (
+  launchRules: LaunchRule[] | null | undefined
+): LaunchRule[] | null => {
+  if (!launchRules) return null;
+  const outdated = (rule: LaunchRule) =>
+    rule.id === RESHADE_LAUNCH_RULE_ID &&
+    rule.launchOptions.trim() === LEGACY_RESHADE_LAUNCH_OPTIONS;
+  if (!launchRules.some(outdated)) return null;
+
+  return launchRules.map((rule) =>
+    outdated(rule)
+      ? { ...rule, launchOptions: reShadePreset.launchOptions }
+      : rule
+  );
 };

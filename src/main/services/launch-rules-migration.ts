@@ -1,6 +1,6 @@
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { logger } from "@main/services/logger";
-import { migrateLegacyLaunchSettings } from "@shared";
+import { migrateLegacyLaunchSettings, migrateReShadeLaunchRule } from "@shared";
 import type { UserPreferences } from "@types";
 
 /** Moves the old HDR switch and ignored-rule lists onto launch rules. */
@@ -40,6 +40,8 @@ export const migrateLegacyLaunchRuleSettings = async () => {
       );
     }
 
+    await migrateReShadeRule();
+
     if (launchRules || gameOverrides.size > 0) {
       logger.info("[LaunchRules] Migrated legacy launch settings", {
         games: gameOverrides.size,
@@ -51,4 +53,22 @@ export const migrateLegacyLaunchRuleSettings = async () => {
       error
     );
   }
+};
+
+/** Moves a saved ReShade rule off the override that stopped games from starting. */
+const migrateReShadeRule = async () => {
+  const preferences = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
+  const launchRules = migrateReShadeLaunchRule(preferences?.launchRules);
+  if (!launchRules || !preferences) return;
+
+  await db.put<string, UserPreferences>(
+    levelKeys.userPreferences,
+    { ...preferences, launchRules },
+    { valueEncoding: "json" }
+  );
+  logger.info("[LaunchRules] Updated the saved ReShade rule");
 };
