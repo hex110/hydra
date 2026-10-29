@@ -1,6 +1,6 @@
 {
   "name": "hydra-plus",
-  "version": "4.1.6-plus.17",
+  "version": "4.1.6-plus.18",
   "description": "Hydra Plus, a Hydra Launcher fork with library folders, automatic game setup and OptiScaler",
   "main": "./out/main/index.js",
   "author": "Los Broxas",
