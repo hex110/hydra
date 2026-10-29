@@ -22,8 +22,8 @@ Plus. Only Hyprland is supported for the monitor switch. With **Turn on the HDR
 launch rules for games that get RenoDX** (on by default) installing RenoDX
 turns on the HDR rule for that game, and the monitor switch too when the game is
 on Hyprland and `hypr-hdr` is on `PATH`. The rules' state is shown in the game's
-**General** options, not repeated on the RenoDX page, and removing RenoDX
-leaves them as they are.
+[Tools](game-tools.md) options, not repeated on the RenoDX page, and removing
+RenoDX leaves them as they are.
 
 Inside the game, turn HDR on in its own settings. The mod follows that toggle.
 
@@ -122,12 +122,13 @@ before OptiScaler. A game is skipped when:
 - OptiScaler's compatibility list marks the game as not working with injected
   DLLs;
 - ReShade, a RenoDX add-on or another tool's DLL is already in its folder;
-- it is opted out, with **Never install RenoDX automatically in this game** or
-  by removing RenoDX from it;
+- it is set to **Off** in the game's [Tools](game-tools.md) options, or
+  RenoDX was removed from it;
 - another launcher owns its files (Steam installs, Epic imports).
 
 You can install into any Windows game that has a mod from its options, also
-when automatic installation is off. **Install in all games that have a mod** on
+when automatic installation is off; **On** in Tools does the same and keeps it
+installed. **Install in all games that have a mod** on
 the settings page runs the same checks over the library and ignores the
 automatic installation toggle but not opt-outs.
 

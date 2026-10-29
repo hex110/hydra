@@ -6,6 +6,7 @@ export type GameSettingsCategoryId =
   | "hydra_cloud"
   | "epic_cloud"
   | "hydra_cloud_legacy"
+  | "tools"
   | "compatibility"
   | "runs"
   | "optiscaler"

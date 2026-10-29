@@ -61,8 +61,9 @@ gamescope.
 
 ## MangoHud layouts
 
-MangoHud can be turned on globally, per game, or by a rule. What it shows
-comes from a layout:
+MangoHud can be turned on globally, by a rule, or per game in
+[Tools](game-tools.md), where it can also be turned off for one game while it
+is on everywhere else. What it shows comes from a layout:
 
 - **Settings → Compatibility → MangoHud layout** sets a layout for every game:
   position, which items to show (FPS, frame time graph, GPU and CPU load and

@@ -3,13 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FileDirectoryIcon } from "@primer/octicons-react";
 import { OPTISCALER_PROXY_DLLS, compareOptiScalerVersions } from "@shared";
 
-import {
-  Button,
-  CheckboxField,
-  Link,
-  SelectField,
-  TextField,
-} from "@renderer/components";
+import { Button, Link, SelectField, TextField } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
 import { useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
@@ -24,7 +18,8 @@ const WIKI_URL = "https://github.com/optiscaler/OptiScaler/wiki";
 
 export function OptiScalerSettingsSection({
   game,
-}: Readonly<{ game: LibraryGame }>) {
+  onOpenTools,
+}: Readonly<{ game: LibraryGame; onOpenTools: () => void }>) {
   const { t } = useTranslation("game_details");
   const { updateGame } = useContext(gameDetailsContext);
   const { showSuccessToast, showErrorToast } = useToast();
@@ -102,16 +97,6 @@ export function OptiScalerSettingsSection({
       game.objectId,
       value ? (value as OptiScalerProxyDll) : null
     );
-    await updateGame();
-  };
-
-  const toggleAutoInstall = async () => {
-    await window.electron.setGameOptiScalerAutoInstallDisabled(
-      game.shop,
-      game.objectId,
-      !status?.autoInstallDisabled
-    );
-    refresh();
     await updateGame();
   };
 
@@ -346,11 +331,20 @@ export function OptiScalerSettingsSection({
           </p>
         )}
 
-        <CheckboxField
-          label={t("optiscaler_disable_auto_install")}
-          checked={status.autoInstallDisabled}
-          onChange={toggleAutoInstall}
-        />
+        <p className="game-options-modal__header-description">
+          {t(
+            status.autoInstallDisabled
+              ? "automatic_install_off_for_game"
+              : "automatic_install_follows_tools"
+          )}{" "}
+          <button
+            type="button"
+            className="game-options-modal__link-button"
+            onClick={onOpenTools}
+          >
+            {t("compatibility_open_tools")}
+          </button>
+        </p>
       </div>
     </>
   );

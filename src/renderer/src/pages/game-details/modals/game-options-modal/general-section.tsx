@@ -1,5 +1,6 @@
 import { Trans, useTranslation } from "react-i18next";
 import {
+  CAPABILITY_LAUNCH_RULES,
   getRetroArchRomExtensions,
   platformToRetroArchPlatform,
 } from "@shared";
@@ -84,7 +85,12 @@ function DefaultLaunchOptionsToggle({ game }: Readonly<{ game: LibraryGame }>) {
   );
 }
 
-function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
+const CAPABILITY_RULE_IDS = new Set(Object.values(CAPABILITY_LAUNCH_RULES));
+
+function LaunchAdditionsSummary({
+  game,
+  onOpenTools,
+}: Readonly<{ game: LibraryGame; onOpenTools?: () => void }>) {
   const { t } = useTranslation("game_details");
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
@@ -125,9 +131,36 @@ function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
     refresh();
   };
 
+  // Rules that are capabilities are set in Tools, not here.
+  const capabilityRules = onOpenTools
+    ? additions.rules.filter((rule) => CAPABILITY_RULE_IDS.has(rule.ruleId))
+    : [];
+  const appliedCapabilityRules = capabilityRules
+    .filter((rule) => rule.applied)
+    .map((rule) => rule.name);
+  const listedRules = additions.rules.filter(
+    (rule) => !capabilityRules.includes(rule)
+  );
+
   return (
     <div className="game-options-modal__default-launch-options">
-      {additions.rules.map((rule) => (
+      {capabilityRules.length > 0 && (
+        <p className="game-options-modal__header-description">
+          {appliedCapabilityRules.length > 0
+            ? t("launch_rules_in_tools_active", {
+                names: appliedCapabilityRules.join(", "),
+              })
+            : t("launch_rules_in_tools")}{" "}
+          <button
+            type="button"
+            className="game-options-modal__link-button"
+            onClick={onOpenTools}
+          >
+            {t("compatibility_open_tools")}
+          </button>
+        </p>
+      )}
+      {listedRules.map((rule) => (
         <div key={rule.ruleId} className="game-options-modal__launch-rule">
           <CheckboxField
             label={
@@ -417,6 +450,8 @@ interface DriveInfo {
 
 interface GeneralSettingsSectionProps {
   game: LibraryGame;
+  /** Opens the Tools tab, where HDR and other capabilities are set. */
+  onOpenTools?: () => void;
   gameTitle: string;
   launchOptions: string;
   updatingGameTitle: boolean;
@@ -542,6 +577,7 @@ function SteamPlaytimeSection({
 
 export function GeneralSettingsSection({
   game,
+  onOpenTools,
   gameTitle,
   launchOptions,
   updatingGameTitle,
@@ -1109,7 +1145,7 @@ export function GeneralSettingsSection({
             }
           />
           <DefaultLaunchOptionsToggle game={game} />
-          <LaunchAdditionsSummary game={game} />
+          <LaunchAdditionsSummary game={game} onOpenTools={onOpenTools} />
           <LaunchPreview game={game} />
         </div>
       )}

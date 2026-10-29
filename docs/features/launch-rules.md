@@ -34,6 +34,10 @@ So a rule can be on everywhere except a few games, or off everywhere and
 turned on only where it is wanted. Below the rules, the options show
 everything Hydra adds in front of the game's own launch options.
 
+The two HDR rules are not in that list: they are set per game in
+[Tools](game-tools.md) (Auto follows the rule's **Enabled** setting), and the
+list links there.
+
 ## How rules combine
 
 At launch, Hydra builds the launch options in layers. Each later layer wins
@@ -108,8 +112,8 @@ a game asks for HDR, so a game that checks at startup never asks. The rule
 wraps the game in `hypr-hdr`, which puts the monitor in HDR before the game
 starts and back afterwards.
 
-It is off for every game. Turn it on in a game's **General** options (the rules that match it are listed there)
-for the games that need it, or on here to use it everywhere. After an update
+It is off for every game. Set it to **On** in a game's [Tools](game-tools.md)
+options for the games that need it, or turn it on here to use it everywhere. After an update
 it appears under **Restore built-in rules**.
 
 `hypr-hdr` ships with Hydra Plus (`resources/hypr-hdr/hypr-hdr`, installed into

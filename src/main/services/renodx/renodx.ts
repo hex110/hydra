@@ -125,7 +125,7 @@ const isCommandAvailable = (command: string) =>
   });
 
 /** RenoDX needs HDR from the compositor on Hyprland, and `hypr-hdr` to ask for it. */
-const canSwitchMonitorToHdr = () =>
+export const canSwitchMonitorToHdr = () =>
   process.platform === "linux" &&
   !!process.env.HYPRLAND_INSTANCE_SIGNATURE &&
   isCommandAvailable("hypr-hdr");
@@ -473,7 +473,12 @@ export class RenoDx {
   ): Promise<RenoDxAutoInstallOutcome> {
     const preferences = await loadPreferences();
     const settings = resolveRenoDxSettings(preferences);
-    if (!settings.autoInstall && !options.ignoreAutoInstallSetting) {
+    const forcedOn = game.capabilityOverrides?.renodx === true;
+    if (
+      !settings.autoInstall &&
+      !options.ignoreAutoInstallSetting &&
+      !forcedOn
+    ) {
       return "auto-install-off";
     }
     if (game.renoDx) return "already-installed";

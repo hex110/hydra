@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileDirectoryIcon } from "@primer/octicons-react";
 
-import { Button, CheckboxField, TextField } from "@renderer/components";
+import { Button, TextField } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
 import { useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
@@ -10,7 +10,8 @@ import type { GameRenoDxStatus, LibraryGame } from "@types";
 
 export function RenoDxSettingsSection({
   game,
-}: Readonly<{ game: LibraryGame }>) {
+  onOpenTools,
+}: Readonly<{ game: LibraryGame; onOpenTools: () => void }>) {
   const { t } = useTranslation("game_details");
   const { updateGame } = useContext(gameDetailsContext);
   const { showSuccessToast, showErrorToast } = useToast();
@@ -69,16 +70,6 @@ export function RenoDxSettingsSection({
       refresh();
       await updateGame();
     }
-  };
-
-  const toggleAutoInstall = async () => {
-    await window.electron.setGameRenoDxAutoInstallDisabled(
-      game.shop,
-      game.objectId,
-      !status?.autoInstallDisabled
-    );
-    refresh();
-    await updateGame();
   };
 
   if (!status) return null;
@@ -237,11 +228,20 @@ export function RenoDxSettingsSection({
           <h2>{t("renodx_options")}</h2>
         </div>
 
-        <CheckboxField
-          label={t("renodx_disable_auto_install")}
-          checked={status.autoInstallDisabled}
-          onChange={toggleAutoInstall}
-        />
+        <p className="game-options-modal__header-description">
+          {t(
+            status.autoInstallDisabled
+              ? "automatic_install_off_for_game"
+              : "automatic_install_follows_tools"
+          )}{" "}
+          <button
+            type="button"
+            className="game-options-modal__link-button"
+            onClick={onOpenTools}
+          >
+            {t("compatibility_open_tools")}
+          </button>
+        </p>
       </div>
     </>
   );

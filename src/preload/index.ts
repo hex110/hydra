@@ -22,6 +22,8 @@ import type {
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
   RenoDxBulkMode,
+  GameCapabilityId,
+  GameCapabilityMode,
   RenoDxBulkProgress,
   SaveImportBulkProgress,
   SaveImportOptions,
@@ -1236,6 +1238,14 @@ contextBridge.exposeInMainWorld("electron", {
     return () =>
       ipcRenderer.removeListener("on-renodx-bulk-progress", listener);
   },
+  getGameCapabilities: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameCapabilities", shop, objectId),
+  setGameCapabilityMode: (
+    shop: GameShop,
+    objectId: string,
+    id: GameCapabilityId,
+    mode: GameCapabilityMode
+  ) => ipcRenderer.invoke("setGameCapabilityMode", shop, objectId, id, mode),
   getGameRuns: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameRuns", shop, objectId),
   getGameRunSummary: (shop: GameShop, objectId: string, runId: string) =>

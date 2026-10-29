@@ -965,6 +965,7 @@ export * from "./souvenir.types";
 export * from "./optiscaler.types";
 export * from "./renodx.types";
 export * from "./game-runs.types";
+export * from "./game-capabilities.types";
 export * from "./local-source.types";
 export * from "./launch-rule.types";
 export * from "./save-import.types";

@@ -10,13 +10,11 @@ import { useTranslation } from "react-i18next";
 import { Modal } from "@renderer/components";
 import {
   formatBytes,
-  GAMEMODE_SITE_URL,
   getGameExecutableFilters,
   getGameCatalogueIdentity,
   applyLibraryGroupAction,
   isLibraryGameDownloading,
   getOfficialStoreMembers,
-  MANGOHUD_SITE_URL,
 } from "@shared";
 
 import type {
@@ -55,7 +53,14 @@ import {
   HistoryIcon,
   ImageIcon,
 } from "@primer/octicons-react";
-import { FolderSync, ScrollText, Sparkles, Sun, Wrench } from "lucide-react";
+import {
+  FolderSync,
+  ScrollText,
+  SlidersHorizontal,
+  Sparkles,
+  Sun,
+  Wrench,
+} from "lucide-react";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { GameAssetsSettings } from "./game-assets-settings";
 import { debounce } from "lodash-es";
@@ -70,6 +75,7 @@ import { CompatibilitySettingsSection } from "./game-options-modal/compatibility
 import { OptiScalerSettingsSection } from "./game-options-modal/optiscaler-section";
 import { RenoDxSettingsSection } from "./game-options-modal/renodx-section";
 import { RunsSection } from "./game-options-modal/runs-section";
+import { ToolsSection } from "./game-options-modal/tools-section";
 import { SaveImportSection } from "./game-options-modal/save-import-section";
 import { DownloadsSettingsSection } from "./game-options-modal/downloads-section";
 import { DangerZoneSection } from "./game-options-modal/danger-zone-section";
@@ -162,14 +168,6 @@ export function GameOptionsModal({
   const [selectedProtonPath, setSelectedProtonPath] = useState(
     game.protonPath ?? ""
   );
-  const [autoRunMangohud, setAutoRunMangohud] = useState<boolean>(
-    game.autoRunMangohud === true
-  );
-  const [autoRunGamemode, setAutoRunGamemode] = useState<boolean>(
-    game.autoRunGamemode === true
-  );
-  const [gamemodeAvailable, setGamemodeAvailable] = useState(false);
-  const [mangohudAvailable, setMangohudAvailable] = useState(false);
   const [winetricksAvailable, setWinetricksAvailable] = useState(false);
   const [selectedCategory, setSelectedCategory] =
     useState<GameSettingsCategoryId>("general");
@@ -281,12 +279,6 @@ export function GameOptionsModal({
       hasActiveSubscription,
       artifacts.length
     );
-  const userPreferences = useAppSelector(
-    (state) => state.userPreferences.value
-  );
-
-  const globalAutoRunGamemode = userPreferences?.autoRunGamemode === true;
-  const globalAutoRunMangohud = userPreferences?.autoRunMangohud === true;
   const hasAchievements =
     (achievements?.filter((a) => a.unlocked).length ?? 0) > 0;
   const deleting = isGameDeleting(game.id);
@@ -327,12 +319,6 @@ export function GameOptionsModal({
   useEffect(() => {
     setSelectedProtonPath(game.protonPath ?? "");
   }, [game.protonPath]);
-  useEffect(() => {
-    setAutoRunMangohud(game.autoRunMangohud === true);
-  }, [game.autoRunMangohud]);
-  useEffect(() => {
-    setAutoRunGamemode(game.autoRunGamemode === true);
-  }, [game.autoRunGamemode]);
 
   useEffect(() => {
     if (!visible || globalThis.window.electron.platform !== "linux") return;
@@ -351,28 +337,6 @@ export function GameOptionsModal({
       .getDefaultWinePrefixSelectionPath()
       .then(setDefaultWinePrefixPath)
       .catch(() => setDefaultWinePrefixPath(null));
-  }, [visible]);
-
-  useEffect(() => {
-    if (!visible || globalThis.window.electron.platform !== "linux") {
-      setGamemodeAvailable(false);
-      return;
-    }
-    globalThis.window.electron
-      .isGamemodeAvailable()
-      .then(setGamemodeAvailable)
-      .catch(() => setGamemodeAvailable(false));
-  }, [visible]);
-
-  useEffect(() => {
-    if (!visible || globalThis.window.electron.platform !== "linux") {
-      setMangohudAvailable(false);
-      return;
-    }
-    globalThis.window.electron
-      .isMangohudAvailable()
-      .then(setMangohudAvailable)
-      .catch(() => setMangohudAvailable(false));
   }, [visible]);
 
   useEffect(() => {
@@ -752,25 +716,6 @@ export function GameOptionsModal({
       : showErrorToast(t("winetricks_open_error"));
   };
 
-  const handleChangeMangohudState = async (value: boolean) => {
-    setAutoRunMangohud(value);
-    await globalThis.window.electron.toggleGameMangohud(
-      game.shop,
-      game.objectId,
-      value
-    );
-    updateGame();
-  };
-  const handleChangeGamemodeState = async (value: boolean) => {
-    setAutoRunGamemode(value);
-    await globalThis.window.electron.toggleGameGamemode(
-      game.shop,
-      game.objectId,
-      value
-    );
-    updateGame();
-  };
-
   const applyProtonPathChange = async (protonPath: string) => {
     try {
       await globalThis.window.electron.selectGameProtonPath(
@@ -931,6 +876,9 @@ export function GameOptionsModal({
     globalThis.window.electron.platform === "linux" && showOptiScalerSettings;
   const showDownloadSettings = game.shop !== "custom";
   const showRunsSettings = !isLaunchbox && Boolean(game.executablePath);
+  const showToolsSettings =
+    showRunsSettings &&
+    (globalThis.window.electron.platform === "linux" || showOptiScalerSettings);
   const shouldShowWinePrefixConfiguration =
     globalThis.window.electron.platform === "linux";
   const defaultHydraWinePrefixPath =
@@ -997,6 +945,15 @@ export function GameOptionsModal({
             <CloudIcon size={16} />
           ),
       })),
+      ...(showToolsSettings
+        ? [
+            {
+              id: "tools" as const,
+              label: t("settings_category_tools"),
+              icon: <SlidersHorizontal size={16} />,
+            },
+          ]
+        : []),
       ...(shouldShowWinePrefixConfiguration
         ? [
             {
@@ -1067,6 +1024,7 @@ export function GameOptionsModal({
       showDownloadSettings,
       showOptiScalerSettings,
       showRunsSettings,
+      showToolsSettings,
       showSaveImportSettings,
       shouldShowWinePrefixConfiguration,
       t,
@@ -1359,6 +1317,11 @@ export function GameOptionsModal({
             {selectedCategory === "general" && (
               <GeneralSettingsSection
                 {...baseGeneralSettingsProps}
+                onOpenTools={
+                  showToolsSettings
+                    ? () => setSelectedCategory("tools")
+                    : undefined
+                }
                 showExecutableSection={isLaunchbox}
                 showTransferSection={false}
                 showLaunchOptionsSection={!isLaunchbox}
@@ -1431,31 +1394,31 @@ export function GameOptionsModal({
                   effectiveProtonName={linuxCompatibility?.protonName}
                   protonVersions={protonVersions}
                   selectedProtonPath={selectedProtonPath}
-                  autoRunGamemode={autoRunGamemode}
-                  autoRunMangohud={autoRunMangohud}
-                  globalAutoRunGamemode={globalAutoRunGamemode}
-                  globalAutoRunMangohud={globalAutoRunMangohud}
-                  gamemodeAvailable={gamemodeAvailable}
-                  mangohudAvailable={mangohudAvailable}
                   winetricksAvailable={winetricksAvailable}
-                  gamemodeSiteUrl={GAMEMODE_SITE_URL}
-                  mangohudSiteUrl={MANGOHUD_SITE_URL}
                   onChangeWinePrefixPath={handleChangeWinePrefixPath}
                   onClearWinePrefixPath={handleClearWinePrefixPath}
                   onOpenWinetricks={handleOpenWinetricks}
-                  onChangeGamemodeState={handleChangeGamemodeState}
-                  onChangeMangohudState={handleChangeMangohudState}
                   onChangeProtonVersion={handleChangeProtonVersion}
+                  onOpenTools={() => setSelectedCategory("tools")}
                 />
               )}
+            {selectedCategory === "tools" && showToolsSettings && (
+              <ToolsSection game={game} onOpenCategory={handleSelectCategory} />
+            )}
             {selectedCategory === "runs" && showRunsSettings && (
               <RunsSection game={game} />
             )}
             {selectedCategory === "optiscaler" && showOptiScalerSettings && (
-              <OptiScalerSettingsSection game={game} />
+              <OptiScalerSettingsSection
+                game={game}
+                onOpenTools={() => setSelectedCategory("tools")}
+              />
             )}
             {selectedCategory === "renodx" && showOptiScalerSettings && (
-              <RenoDxSettingsSection game={game} />
+              <RenoDxSettingsSection
+                game={game}
+                onOpenTools={() => setSelectedCategory("tools")}
+              />
             )}
             {selectedCategory === "save_import" && showSaveImportSettings && (
               <SaveImportSection game={game} />

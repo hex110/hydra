@@ -8,6 +8,7 @@ import { resolveGameRootForDetection } from "@main/services/optiscaler/game-file
 import {
   buildGamescopeLaunchOptions,
   isLaunchRuleApplied,
+  isLaunchWrapperWanted,
   resolveLaunchRules,
 } from "@shared";
 import type {
@@ -195,22 +196,26 @@ export const combineLaunchOptions = (
     )
   );
 
-/** Whether MangoHud and GameMode wrap the game: per game, globally or by a rule. */
+/** Whether MangoHud and GameMode wrap the game: the game's choice, else globally or by a rule. */
 export const getLaunchTools = (
   userPreferences: UserPreferences | null,
   game: Game | undefined,
   additions?: Pick<GameLaunchAdditions, "mangohud" | "gamemode">
 ) => ({
   useMangohud:
-    (userPreferences?.autoRunMangohud === true ||
-      game?.autoRunMangohud === true ||
-      additions?.mangohud === true) &&
-    isMangohudAvailable(),
+    isLaunchWrapperWanted(
+      "mangohud",
+      game,
+      userPreferences,
+      additions?.mangohud === true
+    ) && isMangohudAvailable(),
   useGamemode:
-    (userPreferences?.autoRunGamemode === true ||
-      game?.autoRunGamemode === true ||
-      additions?.gamemode === true) &&
-    isGamemodeAvailable(),
+    isLaunchWrapperWanted(
+      "gamemode",
+      game,
+      userPreferences,
+      additions?.gamemode === true
+    ) && isGamemodeAvailable(),
 });
 
 /** Adds `MANGOHUD_CONFIGFILE` under everything else, so launch options can override it. */

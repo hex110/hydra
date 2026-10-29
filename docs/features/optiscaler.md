@@ -28,13 +28,14 @@ A game is never installed automatically when:
 - OptiScaler is already present but was not installed by Hydra (an
   `OptiScaler.ini` without Hydra's manifest, for example from OptiScaler
   Client or a manual install);
-- the game is opted out, either with **Never install OptiScaler automatically
-  in this game** or by removing OptiScaler from it in Hydra;
+- the game is set to **Off** in its [Tools](game-tools.md) options, or
+  OptiScaler was removed from it in Hydra.
 - the game is owned by another launcher (Steam installs, Epic imports).
 
 Games that build their upscaler into the executable (common in Unreal Engine
 games) are only detected through the compatibility list. You can install
-OptiScaler into any Windows game by hand from its options.
+OptiScaler into any Windows game by hand from its options, or set it to **On**
+in Tools, which also keeps it installed when automatic installs are off.
 
 **Install in all supported games** on the settings page runs the same checks
 over the whole library, including games added before the setting was turned

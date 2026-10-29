@@ -12,6 +12,7 @@ export * from "./sidebar/sidebar";
 export * from "./text-field/text-field";
 export * from "./checkbox-field/checkbox-field";
 export * from "./radio-field/radio-field";
+export * from "./segmented-control/segmented-control";
 export * from "./link/link";
 export * from "./guide-link/guide-link";
 export * from "./select-field/select-field";

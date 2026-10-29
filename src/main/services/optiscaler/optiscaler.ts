@@ -457,7 +457,12 @@ export class OptiScaler {
     options: { ignoreAutoInstallSetting?: boolean } = {}
   ): Promise<OptiScalerAutoInstallOutcome> {
     const settings = await loadSettings();
-    if (!settings.autoInstall && !options.ignoreAutoInstallSetting) {
+    const forcedOn = game.capabilityOverrides?.optiscaler === true;
+    if (
+      !settings.autoInstall &&
+      !options.ignoreAutoInstallSetting &&
+      !forcedOn
+    ) {
       return "auto-install-off";
     }
     if (game.optiScaler) return "already-installed";

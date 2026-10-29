@@ -52,6 +52,10 @@ import type {
   OptiScalerProxyDll,
   GameRenoDxInstallation,
   GameRun,
+  GameCapability,
+  GameCapabilityId,
+  GameCapabilityMode,
+  SetGameCapabilityModeResult,
   GameRenoDxStatus,
   RenoDxBulkMode,
   RenoDxBulkProgress,
@@ -626,6 +630,16 @@ declare global {
     onRenoDxBulkProgress: (
       cb: (progress: RenoDxBulkProgress) => void
     ) => () => Electron.IpcRenderer;
+    getGameCapabilities: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameCapability[]>;
+    setGameCapabilityMode: (
+      shop: GameShop,
+      objectId: string,
+      id: GameCapabilityId,
+      mode: GameCapabilityMode
+    ) => Promise<SetGameCapabilityModeResult>;
     getGameRuns: (shop: GameShop, objectId: string) => Promise<GameRun[]>;
     getGameRunSummary: (
       shop: GameShop,

@@ -17,6 +17,7 @@ import type {
   OptiScalerProxyDll,
 } from "./optiscaler.types";
 import type { GameRenoDxInstallation } from "./renodx.types";
+import type { GameCapabilityId } from "./game-capabilities.types";
 import type {
   EpicDownloadMetadata,
   EpicInstallation,
@@ -170,8 +171,15 @@ export interface Game extends LibraryCatalogueMetadata {
   optiScalerAutoInstallDisabled?: boolean;
   /** Per-game proxy DLL; the global preference applies when unset. */
   optiScalerProxyDll?: OptiScalerProxyDll | null;
+  /** @deprecated True migrates to `capabilityOverrides`; written as null. */
   autoRunMangohud?: boolean | null;
+  /** @deprecated True migrates to `capabilityOverrides`; written as null. */
   autoRunGamemode?: boolean | null;
+  /**
+   * On (true) or Off (false) for capabilities whose old fields cannot hold
+   * both: RenoDX and OptiScaler (On only), MangoHud and GameMode.
+   */
+  capabilityOverrides?: Partial<Record<GameCapabilityId, boolean>>;
   /** This game's MangoHud layout; the default from settings applies when unset. */
   mangoHud?: MangoHudSettings | null;
   favorite?: boolean;

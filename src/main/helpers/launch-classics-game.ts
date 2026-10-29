@@ -11,6 +11,7 @@ import type {
   GameShop,
   UserPreferences,
 } from "@types";
+import { isLaunchWrapperWanted } from "@shared";
 import { isGamemodeAvailable } from "./is-gamemode-available";
 import { isMangohudAvailable } from "./is-mangohud-available";
 import { resolveLaunchCommand } from "./resolve-launch-command";
@@ -165,11 +166,11 @@ export const resolveEmulatorWrappers = (
   game: Game | undefined
 ): string[] => {
   const useMangohud =
-    (preferences?.autoRunMangohud === true || game?.autoRunMangohud === true) &&
+    isLaunchWrapperWanted("mangohud", game, preferences) &&
     isMangohudAvailable();
 
   const useGamemode =
-    (preferences?.autoRunGamemode === true || game?.autoRunGamemode === true) &&
+    isLaunchWrapperWanted("gamemode", game, preferences) &&
     isGamemodeAvailable();
 
   return [
