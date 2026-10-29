@@ -11,6 +11,7 @@ import {
   compareOptiScalerVersions,
   evaluateOptiScalerEligibility,
   findOptiScalerCompatibilityEntry,
+  isOptiScalerVulkanProxyDll,
   resolveOptiScalerSettings,
   type OptiScalerSettings,
 } from "@shared";
@@ -173,9 +174,64 @@ export class OptiScaler {
 
     return chooseOptiScalerProxyDll({
       wikiDlls,
-      vulkanOnly: !!graphicsApis?.vulkan && !graphicsApis.direct3d,
+      usesVulkan: !!graphicsApis?.vulkan,
       occupied,
     });
+  }
+
+  /**
+   * Reinstalls, under the name Automatic now picks, an automatic installation
+   * whose DLL name a Vulkan game loads too late (dxgi.dll from before Vulkan
+   * games were detected). Same release, so only the name changes. Returns the
+   * updated game, or null when nothing changed. Runs before the launch
+   * command is built, so the new name gets its DLL override.
+   */
+  public static async fixProxyDllBeforeLaunch(
+    game: Game
+  ): Promise<{ game: Game; from: string; to: string } | null> {
+    const installation = game.optiScaler;
+    if (!installation || game.optiScalerProxyDll) return null;
+    if (isOptiScalerVulkanProxyDll(installation.proxyDll)) return null;
+
+    const manifest = await readOptiScalerManifest(installation.directory);
+    const executablePath = getWindowsExecutable(game);
+    if (!manifest || !executablePath) return null;
+
+    const graphicsApis = await detectGraphicsApis(executablePath).catch(
+      () => null
+    );
+    if (!graphicsApis?.vulkan) return null;
+
+    const settings = await loadSettings();
+    if (settings.proxyDll) return null;
+    const { proxyDll } = await this.resolveDefaultProxyDll(
+      game,
+      settings,
+      executablePath,
+      installation.directory
+    );
+    if (proxyDll === installation.proxyDll) return null;
+
+    const cached = await OptiScalerAssets.getCachedVersions(manifest.channel);
+    if (!cached.includes(manifest.version)) return null;
+
+    const updated = await this.install(
+      game.shop,
+      game.objectId,
+      manifest.version,
+      manifest.channel
+    );
+    logger.info("[OptiScaler] Moved a Vulkan game off a late-loading DLL", {
+      gameKey: levelKeys.game(game.shop, game.objectId),
+      from: installation.proxyDll,
+      to: updated.proxyDll,
+    });
+
+    return {
+      game: { ...game, optiScaler: updated },
+      from: installation.proxyDll,
+      to: updated.proxyDll,
+    };
   }
 
   public static async getGameStatus(

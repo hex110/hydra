@@ -29,6 +29,35 @@ export const optiScalerStep: GameSetupStep = {
 };
 
 /**
+ * Moves an automatic OptiScaler installation in a Vulkan game off a DLL name
+ * that loads too late, before the launch command is built. Returns the game
+ * to launch with; never blocks the launch.
+ */
+export const fixOptiScalerProxyDllBeforeLaunch = async (
+  game: Game
+): Promise<Game> => {
+  try {
+    const fixed = await OptiScaler.fixProxyDllBeforeLaunch(game);
+    if (!fixed) return game;
+
+    await GameSetup.recordStepResult(
+      game.shop,
+      game.objectId,
+      OPTISCALER_STEP_ID,
+      "launch",
+      done("proxy-renamed", { from: fixed.from, to: fixed.to })
+    );
+    return fixed.game;
+  } catch (error) {
+    logger.error("[OptiScaler] Could not change the proxy DLL", {
+      title: game.title,
+      error,
+    });
+    return game;
+  }
+};
+
+/**
  * Restores OptiScaler files removed outside Hydra before a launch, or warns
  * when they can't be restored. Never blocks the launch.
  */

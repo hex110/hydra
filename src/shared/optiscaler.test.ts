@@ -215,7 +215,7 @@ describe("chooseOptiScalerProxyDll", () => {
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: ["winmm.dll", "dbghelp.dll"],
-        vulkanOnly: false,
+        usesVulkan: false,
         occupied: free,
       }),
       { proxyDll: "winmm.dll", source: "wiki" }
@@ -226,18 +226,80 @@ describe("chooseOptiScalerProxyDll", () => {
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: ["winmm.dll", "dbghelp.dll"],
-        vulkanOnly: true,
+        usesVulkan: true,
         occupied: new Set(["winmm.dll"]),
       }),
       { proxyDll: "dbghelp.dll", source: "wiki" }
     );
   });
 
-  it("uses the Vulkan names for a Vulkan-only game the wiki does not list", () => {
+  it("never falls back to dxgi.dll or d3d12.dll for a game that uses Vulkan", () => {
+    // Enshrouded without its wiki page: the crack's winmm.dll is taken.
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: [],
-        vulkanOnly: true,
+        usesVulkan: true,
+        occupied: new Set(["winmm.dll"]),
+      }),
+      { proxyDll: "dbghelp.dll", source: "vulkan" }
+    );
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: [],
+        usesVulkan: true,
+        occupied: new Set([
+          "winmm.dll",
+          "dbghelp.dll",
+          "version.dll",
+          "wininet.dll",
+        ]),
+      }),
+      { proxyDll: "winhttp.dll", source: "vulkan" }
+    );
+  });
+
+  it("installs over a Vulkan name when every one is taken", () => {
+    const allVulkanNames = new Set([
+      "winmm.dll",
+      "dbghelp.dll",
+      "version.dll",
+      "wininet.dll",
+      "winhttp.dll",
+    ]);
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: [],
+        usesVulkan: true,
+        occupied: allVulkanNames,
+      }),
+      { proxyDll: "winmm.dll", source: "vulkan" }
+    );
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: ["dbghelp.dll"],
+        usesVulkan: true,
+        occupied: allVulkanNames,
+      }),
+      { proxyDll: "dbghelp.dll", source: "wiki" }
+    );
+  });
+
+  it("still follows the wiki for a game that uses Vulkan", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: ["dxgi.dll"],
+        usesVulkan: true,
+        occupied: free,
+      }),
+      { proxyDll: "dxgi.dll", source: "wiki" }
+    );
+  });
+
+  it("uses the Vulkan names for a Vulkan game the wiki does not list", () => {
+    assert.deepStrictEqual(
+      chooseOptiScalerProxyDll({
+        wikiDlls: [],
+        usesVulkan: true,
         occupied: free,
       }),
       { proxyDll: "winmm.dll", source: "vulkan" }
@@ -245,7 +307,7 @@ describe("chooseOptiScalerProxyDll", () => {
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: [],
-        vulkanOnly: true,
+        usesVulkan: true,
         occupied: new Set(["winmm.dll"]),
       }),
       { proxyDll: "dbghelp.dll", source: "vulkan" }
@@ -256,7 +318,7 @@ describe("chooseOptiScalerProxyDll", () => {
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: [],
-        vulkanOnly: false,
+        usesVulkan: false,
         occupied: free,
       }),
       { proxyDll: "dxgi.dll", source: "default" }
@@ -267,7 +329,7 @@ describe("chooseOptiScalerProxyDll", () => {
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: ["dxgi.dll"],
-        vulkanOnly: false,
+        usesVulkan: false,
         occupied: new Set(["dxgi.dll"]),
       }),
       { proxyDll: "winmm.dll", source: "default" }
@@ -278,7 +340,7 @@ describe("chooseOptiScalerProxyDll", () => {
     assert.deepStrictEqual(
       chooseOptiScalerProxyDll({
         wikiDlls: ["dbghelp.dll"],
-        vulkanOnly: false,
+        usesVulkan: false,
         occupied: new Set([
           "dxgi.dll",
           "winmm.dll",

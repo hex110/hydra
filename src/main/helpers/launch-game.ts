@@ -58,7 +58,10 @@ import { resolveGameLaunchOptions } from "./launch-additions";
 import { getLaunchExecutable } from "./launcher-redirects";
 import { refreshExecutableStatus } from "@main/services/executable-status";
 import { getEpicCloudSaveService } from "@main/services/epic/cloud-saves";
-import { checkOptiScalerBeforeLaunch } from "@main/services/game-setup/optiscaler-step";
+import {
+  checkOptiScalerBeforeLaunch,
+  fixOptiScalerProxyDllBeforeLaunch,
+} from "@main/services/game-setup/optiscaler-step";
 
 export interface LaunchGameOptions {
   shop: GameShop;
@@ -680,7 +683,10 @@ const launchGameWithCloudSaveChecks = async (
   const recordedPath = parseExecutablePath(executablePath);
 
   const gameKey = levelKeys.game(shop, objectId);
-  const game = await gamesSublevel.get(gameKey);
+  const storedGame = await gamesSublevel.get(gameKey);
+  const game = storedGame
+    ? await fixOptiScalerProxyDllBeforeLaunch(storedGame)
+    : storedGame;
   // A known publisher launcher stays the game's executable; its game runs.
   const parsedPath = getLaunchExecutable(game, recordedPath);
   if (parsedPath !== recordedPath) {

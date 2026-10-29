@@ -23,15 +23,22 @@ export const OPTISCALER_PROXY_DLLS: OptiScalerProxyDll[] = [
 export const DEFAULT_OPTISCALER_PROXY_DLL: OptiScalerProxyDll = "dxgi.dll";
 
 /**
- * Names tried for a game that only renders through Vulkan, best first.
- * OptiScaler loaded as dxgi.dll works as a DirectX hook and never sees such a
- * game's swapchain, so there is no overlay and no upscaling.
+ * Names tried for a game that renders through Vulkan, best first. They load
+ * before the game creates its Vulkan device. dxgi.dll and d3d12.dll load late
+ * or never: OptiScaler then misses the device and its overlay crashes the game
+ * at swapchain creation (Enshrouded), or never sees the swapchain at all.
  */
 export const OPTISCALER_VULKAN_PROXY_DLLS: OptiScalerProxyDll[] = [
   "winmm.dll",
   "dbghelp.dll",
   "version.dll",
+  "wininet.dll",
+  "winhttp.dll",
 ];
+
+/** Whether OptiScaler loaded under this name sees a Vulkan game's device. */
+export const isOptiScalerVulkanProxyDll = (dll: OptiScalerProxyDll) =>
+  OPTISCALER_VULKAN_PROXY_DLLS.includes(dll);
 
 export const isOptiScalerProxyDll = (
   value: unknown
@@ -63,21 +70,23 @@ export const parseOptiScalerWikiProxyDlls = (
 export interface ProxyDllChoiceInput {
   /** Names from the game's wiki page, best first. */
   wikiDlls: OptiScalerProxyDll[];
-  /** The game renders through Vulkan and no DirectX version. */
-  vulkanOnly: boolean;
+  /** The game renders through Vulkan, whether or not it also uses DirectX. */
+  usesVulkan: boolean;
   /** Lower-case names of files already in the game folder that are not OptiScaler's. */
   occupied: ReadonlySet<string>;
 }
 
 /**
  * Picks the proxy DLL when neither the game nor the settings name one: the
- * wiki's choice, then the Vulkan names for a Vulkan-only game, then dxgi.dll.
- * A name the game folder already has (a crack's winmm.dll, ReShade's dxgi.dll)
- * is skipped, since installing over it would replace that file.
+ * wiki's choice, then the Vulkan names for a game that uses Vulkan, then
+ * dxgi.dll. A name the game folder already has (a crack's winmm.dll,
+ * ReShade's dxgi.dll) is skipped, since installing over it would replace that
+ * file. A game that uses Vulkan never gets dxgi.dll or d3d12.dll unless its
+ * wiki page names it.
  */
 export const chooseOptiScalerProxyDll = ({
   wikiDlls,
-  vulkanOnly,
+  usesVulkan,
   occupied,
 }: ProxyDllChoiceInput): OptiScalerProxyDllChoice => {
   const isFree = (dll: OptiScalerProxyDll) => !occupied.has(dll);
@@ -85,9 +94,13 @@ export const chooseOptiScalerProxyDll = ({
   const wiki = wikiDlls.find(isFree);
   if (wiki) return { proxyDll: wiki, source: "wiki" };
 
-  if (vulkanOnly) {
+  if (usesVulkan) {
     const vulkan = OPTISCALER_VULKAN_PROXY_DLLS.find(isFree);
-    if (vulkan) return { proxyDll: vulkan, source: "vulkan" };
+    // Every name is taken: install over the best candidate, as below.
+    return {
+      proxyDll: vulkan ?? wikiDlls[0] ?? OPTISCALER_VULKAN_PROXY_DLLS[0],
+      source: vulkan || wikiDlls.length === 0 ? "vulkan" : "wiki",
+    };
   }
 
   const fallback = [

@@ -33,7 +33,10 @@ before the game logs `swap chain created`.
 | OptiScaler loaded, `[Menu] OverlayMenu=false`                | **swapchain** |
 | OptiScaler renamed to `dbghelp.dll`, `dbghelp=n,b`           | **swapchain** |
 
-**Fix:** reinstall OptiScaler for the game. The install dates from 01:07, before
+**Fix:** Hydra now never falls back to `dxgi.dll` for a game that names
+`vulkan-1.dll`, and on launch moves such a game's automatic installation to
+the name Automatic picks (see `docs/features/optiscaler.md`), so Enshrouded is
+fixed on its next launch. By hand: reinstall OptiScaler for the game. The install dates from 01:07, before
 the proxy-name picker (`9c7a3eb95`, 01:42) existed. The picker now chooses
 `dbghelp.dll` from the OptiScaler wiki, because the crack owns `winmm.dll`.
 Loaded that early, OptiScaler sees device creation and the overlay works.
