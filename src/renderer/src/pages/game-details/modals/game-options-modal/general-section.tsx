@@ -105,6 +105,7 @@ function LaunchAdditionsSummary({ game }: Readonly<{ game: LibraryGame }>) {
     game.executablePath,
     game.launchRuleOverrides,
     game.optiScaler,
+    game.renoDx,
     game.onlineFix,
     userPreferences?.launchRules,
     userPreferences?.prepareOnlineFixGames,

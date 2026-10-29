@@ -24,7 +24,8 @@ run.
 | 100   | Wine prefix          | Linux, Windows executables only. Creates the game's prefix with `umu-run createprefix`, using the game's Proton version or the default one. Skipped if the prefix is already valid, or when **Create the game's Wine prefix right away** is off. |
 | 200   | OnlineFix            | Linux, Windows executables only. Detects OnlineFix in the game folder and copies Steam's client files into the prefix. See [OnlineFix games](online-fix.md).                                                                                     |
 | 300   | Save import          | Linux, Windows executables only. Looks for the game's saves and achievements on Windows installs and imports them or asks first. See [Save and achievement import](save-import.md).                                                              |
-| 450   | ReShade              | Applies your ReShade settings to the game's `ReShade.ini`, if it has one. See [ReShade overlay key](#reshade-overlay-key).                                                                                                                       |
+| 440   | ReShade              | Applies your ReShade settings to the game's `ReShade.ini`, if it has one. See [ReShade overlay key](#reshade-overlay-key).                                                                                                                       |
+| 450   | RenoDX               | Installs ReShade and the game's RenoDX HDR mod when the game has one. See [RenoDX](renodx.md).                                                                                                                                                   |
 | 500   | OptiScaler           | See [OptiScaler](optiscaler.md).                                                                                                                                                                                                                 |
 | 900   | Post-install command | Runs your command once per game. See below.                                                                                                                                                                                                      |
 
@@ -59,6 +60,8 @@ restored (see [OptiScaler](optiscaler.md#files-removed-outside-hydra)).
   files.
 - **ReShade** applies the settings to `ReShade.ini` again, for example after
   you edited them.
+- **RenoDX** checks the game even when automatic installation is off, and
+  installs the mod if there is one. Opt-outs still apply.
 - **OptiScaler** checks the game even when automatic installation is off,
   and installs it if the game qualifies. Opt-outs still apply.
 - **Post-install command** runs the command again even if it already ran.
@@ -78,14 +81,14 @@ game setup**. This also re-runs the post-install command.
 
 ReShade opens its overlay with Home, which many keyboards lack. The ReShade
 step sets the overlay key to **F10** in the `ReShade.ini` next to the game's
-executable. It only touches games that already have that file: Hydra does not
-install ReShade yet (see [the HDR and RenoDX plan](../renodx-hdr-plan.md)).
+executable. It only touches games that already have that file, such as one with
+ReShade installed by hand; [RenoDX](renodx.md) writes the same settings when it
+installs ReShade itself.
 
-The settings are an INI fragment, like OptiScaler's overrides. They are the
-`reShadeIniOverrides` preference; unset means `[INPUT]` / `KeyOverlay=121,0,0,0`
-(`virtual key, ctrl, shift, alt`; 121 is F10), and an empty value applies
-nothing. There is no settings page for it yet. A key set in the overlay is
-replaced the next time the step runs.
+The settings are an INI fragment edited in **Settings → RenoDX → ReShade
+settings**, like OptiScaler's overrides. See
+[ReShade settings](renodx.md#reshade-settings) for the default and the format.
+A key set in the overlay is replaced the next time the step runs.
 
 ## Post-install command
 

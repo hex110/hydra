@@ -55,7 +55,7 @@ import {
   HistoryIcon,
   ImageIcon,
 } from "@primer/octicons-react";
-import { FolderSync, Sparkles, Wrench } from "lucide-react";
+import { FolderSync, Sparkles, Sun, Wrench } from "lucide-react";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { GameAssetsSettings } from "./game-assets-settings";
 import { debounce } from "lodash-es";
@@ -68,6 +68,7 @@ import { GeneralSettingsSection } from "./game-options-modal/general-section";
 import { DetailsSection } from "./game-options-modal/details-section";
 import { CompatibilitySettingsSection } from "./game-options-modal/compatibility-section";
 import { OptiScalerSettingsSection } from "./game-options-modal/optiscaler-section";
+import { RenoDxSettingsSection } from "./game-options-modal/renodx-section";
 import { SaveImportSection } from "./game-options-modal/save-import-section";
 import { DownloadsSettingsSection } from "./game-options-modal/downloads-section";
 import { DangerZoneSection } from "./game-options-modal/danger-zone-section";
@@ -1012,6 +1013,15 @@ export function GameOptionsModal({
             },
           ]
         : []),
+      ...(showOptiScalerSettings
+        ? [
+            {
+              id: "renodx" as const,
+              label: "RenoDX",
+              icon: <Sun size={16} />,
+            },
+          ]
+        : []),
       ...(showSaveImportSettings
         ? [
             {
@@ -1428,6 +1438,9 @@ export function GameOptionsModal({
               )}
             {selectedCategory === "optiscaler" && showOptiScalerSettings && (
               <OptiScalerSettingsSection game={game} />
+            )}
+            {selectedCategory === "renodx" && showOptiScalerSettings && (
+              <RenoDxSettingsSection game={game} />
             )}
             {selectedCategory === "save_import" && showSaveImportSettings && (
               <SaveImportSection game={game} />

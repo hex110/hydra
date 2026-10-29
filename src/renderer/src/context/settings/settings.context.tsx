@@ -20,6 +20,7 @@ export type SettingsCategoryId =
   | "save_import"
   | "cloud"
   | "optiscaler"
+  | "renodx"
   | "launch_rules"
   | "account_privacy"
   | "big_picture"
@@ -47,6 +48,7 @@ const isSettingsCategoryId = (value: string): value is SettingsCategoryId => {
     "save_import",
     "cloud",
     "optiscaler",
+    "renodx",
     "launch_rules",
     "account_privacy",
     "big_picture",

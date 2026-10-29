@@ -24,6 +24,7 @@ import {
   Gamepad2,
   ListChecks,
   Sparkles,
+  Sun,
   Wrench,
 } from "lucide-react";
 import { SettingsContextGeneral } from "./settings-context-general";
@@ -34,6 +35,7 @@ import { SettingsContextContentGameplay } from "./settings-context-content-gamep
 import { SettingsContextIntegrations } from "./settings-context-integrations";
 import { SettingsContextCompatibility } from "./settings-context-compatibility";
 import { SettingsContextOptiScaler } from "./settings-context-optiscaler";
+import { SettingsContextRenoDx } from "./settings-context-renodx";
 import { SettingsContextLaunchRules } from "./settings-context-launch-rules";
 import { SettingsContextLibraryFolders } from "./settings-context-library-folders";
 import { SettingsContextSaveImport } from "./settings-context-save-import";
@@ -107,6 +109,11 @@ export default function Settings() {
         id: "optiscaler" as const,
         label: t("optiscaler"),
         icon: <Sparkles size={16} />,
+      },
+      {
+        id: "renodx" as const,
+        label: t("renodx"),
+        icon: <Sun size={16} />,
       },
       ...(userDetails
         ? [
@@ -188,6 +195,10 @@ export default function Settings() {
 
             if (selectedCategoryId === "optiscaler") {
               return <SettingsContextOptiScaler />;
+            }
+
+            if (selectedCategoryId === "renodx") {
+              return <SettingsContextRenoDx />;
             }
 
             if (selectedCategoryId === "big_picture") {

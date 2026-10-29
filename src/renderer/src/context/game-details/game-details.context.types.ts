@@ -18,6 +18,7 @@ export type GameOptionsCategoryId =
   | "hydra_cloud_legacy"
   | "compatibility"
   | "optiscaler"
+  | "renodx"
   | "save_import"
   | "downloads"
   | "danger_zone";

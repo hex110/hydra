@@ -126,6 +126,9 @@ rule changes nothing in the Hyprland configuration.
 
 ### ReShade
 
+Hydra's own [RenoDX](renodx.md) install writes ReShade's DLL and sets the same
+override itself; this rule is for ReShade you installed by hand.
+
 For games that already have a `ReShade.ini`. ReShade loads as `dxgi.dll`,
 `d3d9.dll` or `opengl32.dll` next to the game, and Wine only uses such a file
 when the name is overridden, so the rule overrides all three; a name the game

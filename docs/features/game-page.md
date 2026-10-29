@@ -14,6 +14,8 @@ summary that links there. Add a row here when a feature adds a new fact.
 | Outside ratings and player counts                    | **Reception** sidebar section (Steam games)                                 |
 | ProtonDB, How Long to Beat                           | Their own sidebar sections, each with its site link in the header           |
 | Other external links (Steam, SteamDB, PCGamingWiki)  | **Links** sidebar section                                                   |
+| RenoDX mod, ReShade version, HDR mod status          | **Options → RenoDX**                                                        |
+| Which HDR launch rules apply to the game             | **Options → General**, in the launch rules list                             |
 
 ## Options
 
