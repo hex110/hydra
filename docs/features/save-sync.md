@@ -36,7 +36,11 @@ The same as Hydra Cloud's saves, signed in or not:
 
 - the save widget on a game's page and the **Save sync** manager it opens;
 - **Save sync** in a game's options (automatic sync on or off, custom paths);
-- saves checked when a game starts and backed up when it closes;
+- saves checked when a game starts and backed up when it closes. If that
+  check fails (the store can't be reached, a file is missing), the game still
+  starts with the saves it has, and nothing is uploaded when it closes, so
+  those saves can't replace newer ones in the store. Only a conflict stops a
+  launch;
 - restore on a new device: a game whose saves exist only in the store is
   "remote ahead" and its saves are written back;
 - conflicts: when two devices changed the same save, the second one sees a
@@ -150,6 +154,13 @@ conflict instead of overwriting. The set is one of:
 - every game in the library (includes games never launched here, so saves
   another device backed up are restored if newer).
 
+A backup also **repairs the store**: files the latest version lists but the
+store lacks are uploaded from this device's copies, if they still hash the
+same (`repairMissingBlobs`). Builds up to 4.1.6-plus.18 skipped every upload to
+object stores (R2, S3) and still wrote the versions, so restoring there failed
+with "Failed to hash restore file"; running **Back up saves** with every
+game on the device that made those versions fills the files in.
+
 A game is skipped, not failed, when its save sync is off, it has no executable
 or the save locations are unknown (`canRunAutomaticCloudSaveSync`). Two games
 run at a time, a running backup can be stopped, and the result lists how many
@@ -173,6 +184,12 @@ would free. A cleanup (automatic once a day, or **Clean up now**):
 rclone backend.
 
 ## Known limits
+
+- rclone on an object store (R2, S3) answers a stat of a missing file with
+  exit 0 and a directory entry, and `copyto` of one with exit 0 and nothing
+  copied. `RcloneBackend` checks for a file entry and for the copied file;
+  the "rclone, object store" test suite runs against a stand-in rclone that
+  behaves this way.
 
 - A device that has never synced a game and finds identical saves in the
   store records no history; if its saves then change before a sync, it

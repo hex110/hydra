@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import fs from "node:fs";
 
 import type {
   CommitSnapshotResponse,
@@ -56,6 +57,15 @@ interface PendingSnapshot {
   uploads: Pick<SnapshotFile, "hash" | "sizeBytes">[];
   createdAt: number;
 }
+
+const hashLocalFile = (localPath: string) =>
+  new Promise<string | null>((resolve) => {
+    const hash = createHash("sha256");
+    fs.createReadStream(localPath)
+      .on("data", (chunk) => hash.update(chunk))
+      .on("end", () => resolve(hash.digest("hex")))
+      .on("error", () => resolve(null));
+  });
 
 const blobKey = (file: Pick<SnapshotFile, "hash" | "sizeBytes">) =>
   `${file.hash}:${file.sizeBytes}`;
@@ -202,6 +212,39 @@ export class SelfHostedSaveStore {
     const target = blobPath(hash, sizeBytes);
     if (await this.backend.exists(target)) return;
     await this.backend.putFile(localPath, target);
+  }
+
+  /**
+   * Uploads the files a stored version lists but the store lacks, from local
+   * files with the same content. Builds before the object-store fix in
+   * `RcloneBackend.exists` skipped every upload to R2 and S3 and still wrote
+   * the versions. A local file is uploaded only if it still hashes the same.
+   */
+  async repairMissingBlobs(
+    files: Pick<SnapshotFile, "hash" | "sizeBytes">[],
+    sources: { absolutePath: string; hash: string; sizeBytes: number }[]
+  ) {
+    const sourceByKey = new Map(
+      sources.map((source) => [blobKey(source), source])
+    );
+    const checked = new Set<string>();
+    let repaired = 0;
+    let missing = 0;
+    for (const file of files) {
+      const key = blobKey(file);
+      if (checked.has(key)) continue;
+      checked.add(key);
+      const target = blobPath(file.hash, file.sizeBytes);
+      if (await this.backend.exists(target)) continue;
+      const source = sourceByKey.get(key);
+      if (!source || (await hashLocalFile(source.absolutePath)) !== file.hash) {
+        missing += 1;
+        continue;
+      }
+      await this.backend.putFile(source.absolutePath, target);
+      repaired += 1;
+    }
+    return { repaired, missing };
   }
 
   async commit(pendingSnapshotId: string): Promise<CommitSnapshotResponse> {

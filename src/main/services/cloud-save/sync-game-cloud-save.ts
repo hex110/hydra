@@ -38,6 +38,8 @@ import {
   shouldRetryCloudSaveStateChange,
 } from "./snapshot-retry-policy";
 import { cloudSaveOperationGate } from "./operation-gate";
+import { getActiveSaveStore } from "./save-store";
+import { logger } from "@main/services/logger";
 import { runWithHydraSaveGuard } from "../epic/cloud-saves";
 import { assertCloudSaveDeletionNotPending } from "./pending-deletion";
 import {
@@ -72,6 +74,32 @@ const activeSyncs = new Map<string, ActiveSync>();
 const gameKey = (objectId: string, shop: GameShop) =>
   JSON.stringify([shop, objectId]);
 type CloudSaveAnalysis = Awaited<ReturnType<typeof analyzeCloudSaveState>>;
+
+/**
+ * A manual sync re-uploads files the latest version lists but the user's own
+ * store lacks (see `SelfHostedSaveStore.repairMissingBlobs`), so a device
+ * whose uploads were skipped can fill them in from its own copies.
+ */
+const repairSaveStoreFiles = async (
+  objectId: string,
+  shop: GameShop,
+  analysis: CloudSaveAnalysis
+) => {
+  const store = getActiveSaveStore();
+  const files = analysis.remoteManifest?.files ?? [];
+  if (!store || files.length === 0) return;
+  const result = await store.repairMissingBlobs(
+    files,
+    analysis.localSnapshotContext.sourceFiles
+  );
+  if (result.repaired > 0 || result.missing > 0) {
+    logger.warn("[Cloud Save] Files missing from the save store", {
+      shop,
+      objectId,
+      ...result,
+    });
+  }
+};
 
 type RemoteSnapshotDeletionOutcome =
   | { kind: "retry" }
@@ -693,6 +721,9 @@ const executeGameCloudSaveSync = async ({
   );
   await assertEnvironmentCurrent();
   const initialState = analysis.state.state;
+  if (trigger === "manual") {
+    await repairSaveStoreFiles(objectId, shop, analysis);
+  }
   const finish = createSyncFinisher(
     objectId,
     shop,

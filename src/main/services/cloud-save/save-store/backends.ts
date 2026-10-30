@@ -302,8 +302,15 @@ export class RcloneBackend implements SaveStoreBackend {
 
   async exists(relative: string) {
     try {
-      await this.run(["lsjson", "--stat", this.target(relative)]);
-      return true;
+      // Object stores (S3, R2) have no directories: a stat of a missing key
+      // exits 0 with a directory entry, so only a file entry counts.
+      const output = await this.run([
+        "lsjson",
+        "--stat",
+        this.target(relative),
+      ]);
+      const entry = JSON.parse(output || "null") as { IsDir?: boolean } | null;
+      return entry !== null && entry.IsDir === false;
     } catch (error) {
       if (
         error instanceof RcloneError &&
@@ -321,6 +328,13 @@ export class RcloneBackend implements SaveStoreBackend {
   async getFile(relative: string, localPath: string) {
     await fs.promises.mkdir(path.dirname(localPath), { recursive: true });
     await this.run(["copyto", this.target(relative), localPath]);
+    // On an object store, copyto of a missing key exits 0 having copied
+    // nothing; fail here instead of as a hash error later.
+    try {
+      await fs.promises.access(localPath);
+    } catch {
+      throw new RcloneError(`Not found in the save store: ${relative}`, 3);
+    }
   }
 
   async removeDir(relative: string) {

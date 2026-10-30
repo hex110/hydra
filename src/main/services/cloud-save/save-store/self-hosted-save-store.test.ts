@@ -281,6 +281,36 @@ const suite = (name: string, makeBackend: (root: string) => SaveStoreBackend) =>
       await store.test();
     });
 
+    it("re-uploads files a version lists but the store lacks", async () => {
+      const { root, work, store } = setup();
+      const save = makeFile(work, "slot1.sav", "progress");
+      const changed = makeFile(work, "slot2.sav", "before");
+      await store.commit(
+        (await upload(store, [save, changed], 0)).pendingSnapshotId
+      );
+      const manifest = await store.getRestoreManifest(
+        (await store.listSnapshots("620", "steam"))[0].id,
+        1
+      );
+      // What a build that skipped uploads to an object store left behind.
+      fs.rmSync(path.join(root, "hydra-plus-saves", "v1", "blobs"), {
+        recursive: true,
+      });
+      fs.writeFileSync(changed.absolutePath, "after");
+
+      const restored = path.join(work, "restored.sav");
+      await assert.rejects(store.downloadBlob(save.file, restored));
+
+      const result = await store.repairMissingBlobs(manifest.files, [
+        { ...save.file, absolutePath: save.absolutePath },
+        { ...changed.file, absolutePath: changed.absolutePath },
+      ]);
+      // slot2.sav changed since it was hashed, so it can't stand in.
+      assert.deepEqual(result, { repaired: 1, missing: 1 });
+      await store.downloadBlob(save.file, restored);
+      assert.equal(fs.readFileSync(restored, "utf8"), "progress");
+    });
+
     it("uses a snapshot id restore can use as a folder name", async () => {
       const { work, store } = setup();
       const save = makeFile(work, "slot1.sav", "x");
@@ -303,6 +333,38 @@ const suite = (name: string, makeBackend: (root: string) => SaveStoreBackend) =>
 
 suite("folder", (root) => new FolderBackend(root));
 
+/**
+ * rclone as it behaves on an object store (S3, R2), which has no directories:
+ * a stat of a missing key exits 0 with a directory entry, and copyto of a
+ * missing key exits 0 having copied nothing.
+ */
+const writeObjectStoreRclone = () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hydra-fake-rclone-"));
+  const script = path.join(dir, "rclone");
+  fs.writeFileSync(
+    script,
+    [
+      "#!/usr/bin/env bash",
+      'if [ "$1" = lsjson ] && [ "$2" = --stat ] && [ ! -e "${3#:local:}" ]; then',
+      '  echo \'{"Path":"","Name":"","Size":-1,"IsDir":true}\'',
+      "  exit 0",
+      "fi",
+      'if [ "$1" = copyto ] && [[ "$2" == :local:* ]] && [ ! -e "${2#:local:}" ]; then',
+      "  exit 0",
+      "fi",
+      'exec rclone "$@"',
+      "",
+    ].join("\n"),
+    { mode: 0o755 }
+  );
+  return script;
+};
+
 if (await isRcloneAvailable()) {
   suite("rclone", (root) => new RcloneBackend(`:local:${root}`));
+  const objectStoreRclone = writeObjectStoreRclone();
+  suite(
+    "rclone, object store",
+    (root) => new RcloneBackend(`:local:${root}`, objectStoreRclone)
+  );
 }
