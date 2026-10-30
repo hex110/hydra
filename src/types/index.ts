@@ -778,7 +778,8 @@ export type LocalNotificationType =
   | "WISHLIST_DOWNLOAD_AVAILABLE"
   | "STEAM_WISHLIST_RELEASE"
   | "GAME_UPDATED"
-  | "OPTISCALER_FILES_MISSING";
+  | "OPTISCALER_FILES_MISSING"
+  | "CAPABILITY_CHECK_FAILED";
 
 export interface Notification {
   id: string;

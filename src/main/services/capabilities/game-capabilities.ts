@@ -6,6 +6,7 @@ import { isGamemodeAvailable } from "@main/helpers/is-gamemode-available";
 import { isMangohudAvailable } from "@main/helpers/is-mangohud-available";
 import { resolveGameProton } from "@main/helpers/resolve-proton-path";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
+import { clearCapabilityCheck } from "./capability-checks";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { logger } from "@main/services/logger";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
@@ -226,6 +227,9 @@ export const setGameCapabilityMode = async (
   const gameKey = levelKeys.game(shop, objectId);
   try {
     const game = await loadGame(shop, objectId);
+    // A chosen mode settles any pending or failed first-run check.
+    if (id === "renodx" || id === "optiscaler")
+      await clearCapabilityCheck(gameKey, id);
     switch (id) {
       case "online_fix":
         if (mode === "on") throw new Error("OnlineFix cannot be forced on");

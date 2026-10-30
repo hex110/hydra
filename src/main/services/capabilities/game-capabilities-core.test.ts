@@ -231,3 +231,36 @@ describe("dependencies", () => {
     assert.strictEqual(result.needs.length, 1);
   });
 });
+
+describe("first-run checks", () => {
+  const checks = {
+    renodx: { runId: "r1", at: "now", reason: { code: "check_early_exit" } },
+  };
+  const installation = {
+    modTitle: "FromSoft",
+    addonVersion: "2026-10-01T00:00:00Z",
+  } as NonNullable<GameRenoDxStatus["installation"]>;
+
+  it("marks an automatic install failed, with the check as the reason", () => {
+    const result = resolveRenoDx(
+      game({ capabilityChecks: checks }),
+      renoDxStatus({ installation }),
+      true
+    );
+    assert.strictEqual(result.failed, true);
+    assert.strictEqual(result.active, true);
+    assert.strictEqual(result.reason.code, "check_early_exit");
+  });
+
+  it("ignores a failure once the game has its own choice", () => {
+    const result = resolveRenoDx(
+      game({
+        capabilityChecks: checks,
+        capabilityOverrides: { renodx: true },
+      }),
+      renoDxStatus({ installation }),
+      true
+    );
+    assert.strictEqual(result.failed, false);
+  });
+});

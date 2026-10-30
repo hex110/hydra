@@ -17,7 +17,10 @@ import type {
   OptiScalerProxyDll,
 } from "./optiscaler.types";
 import type { GameRenoDxInstallation } from "./renodx.types";
-import type { GameCapabilityId } from "./game-capabilities.types";
+import type {
+  GameCapabilityCheck,
+  GameCapabilityId,
+} from "./game-capabilities.types";
 import type {
   EpicDownloadMetadata,
   EpicInstallation,
@@ -180,6 +183,10 @@ export interface Game extends LibraryCatalogueMetadata {
    * both: RenoDX and OptiScaler (On only), MangoHud and GameMode.
    */
   capabilityOverrides?: Partial<Record<GameCapabilityId, boolean>>;
+  /** Tools Hydra installed by itself whose first run has not been checked yet. */
+  pendingCapabilityChecks?: GameCapabilityId[];
+  /** The first run of an automatic install went wrong; cleared when the mode changes. */
+  capabilityChecks?: Partial<Record<GameCapabilityId, GameCapabilityCheck>>;
   /** This game's MangoHud layout; the default from settings applies when unset. */
   mangoHud?: MangoHudSettings | null;
   favorite?: boolean;

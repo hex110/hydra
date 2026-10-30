@@ -6,6 +6,7 @@ import {
   isManagedElsewhere,
 } from "@main/helpers/windows-game";
 import { logger } from "@main/services/logger";
+import { markCapabilityCheckPending } from "@main/services/capabilities/capability-checks";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { WindowManager } from "@main/services/window-manager";
 import {
@@ -487,6 +488,12 @@ export class OptiScaler {
     });
 
     await this.install(game.shop, game.objectId);
+    // Set to On is the user's own call; only Hydra's own installs get checked.
+    if (!forcedOn)
+      await markCapabilityCheckPending(
+        levelKeys.game(game.shop, game.objectId),
+        "optiscaler"
+      );
     return "installed";
   }
 

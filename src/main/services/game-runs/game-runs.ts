@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { gamesSublevel, levelKeys } from "@main/level";
+import { applyFirstRunChecks } from "@main/services/capabilities/capability-checks";
 import { logger } from "@main/services/logger";
 import { SystemPath } from "@main/services/system-path";
 import { WindowManager } from "@main/services/window-manager";
@@ -14,6 +15,7 @@ import type {
   GameShop,
 } from "@types";
 
+import { evaluateRunChecks } from "./run-checks-core";
 import {
   LATEST_LINK,
   MAX_LOG_BYTES,
@@ -196,6 +198,22 @@ const outputLogEntry = (outputLogPath: string): GameRunLogFile | null => {
   };
 };
 
+/** The copied logs' text, by file name, for the checks. */
+const readLogTexts = (run: GameRun) => {
+  const texts: Record<string, string> = {};
+  for (const log of run.logs) {
+    try {
+      texts[log.name] = fs.readFileSync(
+        path.join(run.directory, log.name),
+        "utf8"
+      );
+    } catch {
+      // A log that cannot be read is treated as missing.
+    }
+  }
+  return texts;
+};
+
 const pointLatestAt = (gameFolder: string, runId: string) => {
   const link = path.join(gameFolder, LATEST_LINK);
   try {
@@ -249,8 +267,10 @@ const finishRun = (gameKey: string) => {
       const output =
         active.outputLogPath && outputLogEntry(active.outputLogPath);
       if (output) run.logs.push(output);
+      run.checks = evaluateRunChecks(run, readLogTexts(run));
       writeRun(run);
       announceChange(run);
+      void applyFirstRunChecks(run);
     } catch (error) {
       logger.error("Could not finish the game run record", {
         directory: run.directory,

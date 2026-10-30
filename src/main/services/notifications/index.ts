@@ -12,6 +12,8 @@ import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import type {
   Game,
+  GameCapabilityId,
+  GameCapabilityReason,
   GameUpdateFailure,
   SteamWishlistEntry,
   SteamWishlistEvent,
@@ -679,6 +681,34 @@ export const publishOptiScalerFilesMissingNotification = async (
     {
       pictureUrl: game.iconUrl,
       url: `/game/${game.shop}/${game.objectId}?options=optiscaler`,
+    }
+  );
+};
+
+export const publishCapabilityCheckFailedNotification = async (
+  game: Game,
+  capability: GameCapabilityId,
+  reason: GameCapabilityReason
+) => {
+  const title = t("capability_check_failed", {
+    ns: "notifications",
+    title: game.title,
+    tool: t(`capability_${capability}`, { ns: "game_details" }),
+  });
+  const body = t(`capability_reason_${reason.code}`, {
+    ...reason.params,
+    ns: "game_details",
+  });
+
+  new Notification({ title, body, icon: trayIcon }).show();
+
+  await LocalNotificationManager.createNotification(
+    "CAPABILITY_CHECK_FAILED",
+    title,
+    body,
+    {
+      pictureUrl: game.iconUrl,
+      url: `/game/${game.shop}/${game.objectId}?options=tools`,
     }
   );
 };

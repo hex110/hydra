@@ -24,6 +24,16 @@ export interface GameCapabilityNeed {
   reason: GameCapabilityReason;
 }
 
+/**
+ * What the check of a capability's first run found. Only failures are kept;
+ * a pass just clears the pending check.
+ */
+export interface GameCapabilityCheck {
+  runId: string;
+  at: string;
+  reason: GameCapabilityReason;
+}
+
 export interface GameCapability {
   id: GameCapabilityId;
   mode: GameCapabilityMode;
@@ -36,6 +46,8 @@ export interface GameCapability {
   reason: GameCapabilityReason;
   /** What it depends on; empty for capabilities that stand alone. */
   needs: GameCapabilityNeed[];
+  /** Hydra turned it on by itself and the first run after that went wrong. */
+  failed: boolean;
 }
 
 export type SetGameCapabilityModeResult =

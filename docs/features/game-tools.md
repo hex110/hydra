@@ -78,8 +78,30 @@ RenoDX needs:
 Games that got RenoDX before this existed kept the HDR overrides it wrote; they
 show as On for this game.
 
+## The first run is checked
+
+When Hydra installs RenoDX or OptiScaler by itself (during setup, or because
+the mode was set to Auto and the game qualifies), the game's next run is
+checked. Set to On is your own call and is not checked.
+
+The check reads the finished run's [record](game-runs.md#checks):
+
+- RenoDX fails when `ReShade.log` has `ChangeColorSpace` failing, which means
+  the swapchain could not go HDR.
+- Either tool fails when the game ended within a minute of starting without
+  ever being seen running, or exited with an error within a minute. A crash
+  after a long session is not blamed on the tools.
+- A missing log is "unclear", not a failure: OptiScaler only writes
+  `OptiScaler.log` when its `LogToFile` is on. An unclear check stays pending
+  and the next run is checked instead.
+
+A failed check marks the row **Failed** ("Auto: failed"), says why, and sends a
+notification that opens the Tools tab. The tool stays installed. **Off**
+removes what Hydra installed and keeps it from coming back; **On** keeps it
+and stops the check. Any choice clears the failure, and a passed check clears
+silently.
+
 ## Not yet
 
 Planned in [roadmap phase 12](../roadmap.md#see-and-steer-what-hydra-does-to-a-game):
-frame generation as a capability, a check of the first run after an automatic
-change, and one page of global defaults.
+frame generation as a capability, and one page of global defaults.

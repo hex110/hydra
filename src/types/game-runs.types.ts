@@ -1,3 +1,7 @@
+import type {
+  GameCapabilityId,
+  GameCapabilityReason,
+} from "./game-capabilities.types";
 import type { GameShop } from "./game.types";
 
 export type GameRunOutcome =
@@ -36,6 +40,17 @@ export interface GameRunLogFile {
   truncated: boolean;
 }
 
+/** What a run's logs and ending say about one tool installed in the game. */
+export interface GameRunCheck {
+  capability: Extract<GameCapabilityId, "renodx" | "optiscaler">;
+  /** Failed has evidence; unclear could not be told either way. */
+  status: "ok" | "failed" | "unclear";
+  /** For the interface: `capability_reason_<code>`. */
+  reason: GameCapabilityReason;
+  /** The same finding in plain English, for the run's summary. */
+  message: string;
+}
+
 export interface GameRun {
   id: string;
   shop: GameShop;
@@ -59,6 +74,8 @@ export interface GameRun {
   tools: GameRunTool[];
   events: GameRunEvent[];
   logs: GameRunLogFile[];
+  /** Checks of the tools Hydra installed; runs from before they existed have none. */
+  checks?: GameRunCheck[];
   /** Absolute path of the run's folder. */
   directory: string;
 }

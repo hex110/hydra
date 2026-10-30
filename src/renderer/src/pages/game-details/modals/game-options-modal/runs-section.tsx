@@ -149,6 +149,18 @@ export function RunsSection({ game }: Readonly<{ game: LibraryGame }>) {
                         .filter(Boolean)
                         .join(" · ")}
                     </small>
+                    {run.checks
+                      ?.filter((check) => check.status !== "ok")
+                      .map((check) => (
+                        <small key={check.capability}>
+                          {t(`capability_${check.capability}`)}
+                          {": "}
+                          {t(
+                            `capability_reason_${check.reason.code}`,
+                            check.reason.params
+                          )}
+                        </small>
+                      ))}
                   </div>
                   <Button
                     type="button"

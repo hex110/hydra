@@ -114,6 +114,12 @@ export const formatRunSummary = (run: GameRun) => {
       );
   }
 
+  if (run.checks && run.checks.length > 0) {
+    lines.push("", "## Checks", "");
+    for (const check of run.checks)
+      lines.push(`- ${check.capability}: ${check.status}. ${check.message}`);
+  }
+
   if (run.commandLine)
     lines.push("", "## Command", "", "```", run.commandLine, "```");
 

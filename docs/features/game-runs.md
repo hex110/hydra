@@ -43,6 +43,17 @@ A log only counts when it changed during the run; a leftover from an earlier
 launch is not copied. Logs over 5 MB keep only their end, and the summary says
 so.
 
+## Checks
+
+When a run ends, Hydra reads the copied logs and the ending for each tool it
+installed (RenoDX, OptiScaler) and records a **check** in `run.json` and the
+summary: ok, failed, or unclear. Non-ok checks show under the run in
+**Options → Runs**. What counts as failed, and what the first run after an
+automatic install does with it, is in
+[Tools and fixes](game-tools.md#the-first-run-is-checked). Runs recorded
+before checks existed have none, and a run whose end Hydra did not see has
+none.
+
 ## Where runs are kept
 
 `<userData>/runs/<game>--<shop>-<id>/<run id>/`, for example
@@ -77,5 +88,3 @@ process handle, so their runs have no exit code or output.
 
 - Runs are not shown outside the game's options; the planned compatibility
   overview (roadmap phase 12) will list the last run of every game.
-- Tool-specific checks of the logs (RenoDX failing to set the colour space,
-  OptiScaler not loading) come with the checked first run in the same phase.

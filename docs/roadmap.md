@@ -180,7 +180,10 @@ in the sections below.
     2. [x] Capabilities: Auto, On, Off, with a reason
            ([Tools and fixes](features/game-tools.md); the Proton build and
            frame generation move to item 3)
-    3. [ ] Dependencies and a checked first run
+    3. [x] Dependencies and a checked first run
+           ([Dependencies](features/game-tools.md#dependencies),
+           [first run](features/game-tools.md#the-first-run-is-checked);
+           frame generation as a capability was not done)
     4. [ ] Compatibility overview and one defaults page
     5. [ ] In-game overlay
 13. **More save sources.**

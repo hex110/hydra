@@ -27,6 +27,7 @@ const capability = (
     reason: GameCapabilityReason;
     modes?: GameCapabilityMode[];
     needs?: GameCapabilityNeed[];
+    failed?: boolean;
   }
 ): GameCapability => ({
   id,
@@ -36,12 +37,19 @@ const capability = (
   blocked: state.blocked ?? false,
   reason: state.reason,
   needs: state.needs ?? [],
+  failed: state.failed ?? false,
 });
 
 const reason = (
   code: string,
   params?: GameCapabilityReason["params"]
 ): GameCapabilityReason => (params ? { code, params } : { code });
+
+/** Hydra's own install went wrong on its first run; a chosen mode clears it. */
+const failedFirstRun = (game: Game, id: "renodx" | "optiscaler") =>
+  getCapabilityOverride(game, id) === null
+    ? (game.capabilityChecks?.[id] ?? null)
+    : null;
 
 export const resolveOnlineFix = (
   game: Game,
@@ -139,12 +147,15 @@ export const resolveRenoDx = (
 
   if (status.installation) {
     const unmet = needs.find((need) => !need.met);
+    const failedCheck = failedFirstRun(game, "renodx");
     return capability("renodx", game, {
       active: true,
+      failed: !!failedCheck,
       // Installed, but it cannot give HDR: say what is missing.
       blocked: !!unmet,
       needs,
       reason:
+        failedCheck?.reason ??
         unmet?.reason ??
         reason("renodx_installed", {
           mod: status.installation.modTitle,
@@ -208,14 +219,19 @@ export const resolveOptiScaler = (
 ): GameCapability => {
   const override = getCapabilityOverride(game, "optiscaler");
 
-  if (status.installation)
+  if (status.installation) {
+    const failedCheck = failedFirstRun(game, "optiscaler");
     return capability("optiscaler", game, {
       active: true,
-      reason: reason("optiscaler_installed", {
-        version: status.installation.version,
-        dll: status.installation.proxyDll,
-      }),
+      failed: !!failedCheck,
+      reason:
+        failedCheck?.reason ??
+        reason("optiscaler_installed", {
+          version: status.installation.version,
+          dll: status.installation.proxyDll,
+        }),
     });
+  }
   if (override === false)
     return capability("optiscaler", game, {
       active: false,

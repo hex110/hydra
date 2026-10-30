@@ -73,6 +73,7 @@ export function LocalNotificationItem({
         return <StarIcon size={24} />;
         return <SyncIcon size={24} />;
       case "OPTISCALER_FILES_MISSING":
+      case "CAPABILITY_CHECK_FAILED":
         return <AlertIcon size={24} />;
       default:
         return <DownloadIcon size={24} />;

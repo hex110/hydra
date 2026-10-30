@@ -24,7 +24,11 @@ const DETAILS_CATEGORY: Partial<
 };
 
 const statusOf = (capability: GameCapability) =>
-  capability.blocked ? "failed" : capability.active ? "done" : "never";
+  capability.blocked || capability.failed
+    ? "failed"
+    : capability.active
+      ? "done"
+      : "never";
 
 export function ToolsSection({
   game,
@@ -113,7 +117,9 @@ export function ToolsSection({
                 >
                   {isBusy
                     ? t("capability_state_working")
-                    : t(`capability_state_${statusOf(capability)}`)}
+                    : capability.failed
+                      ? t("capability_state_check_failed")
+                      : t(`capability_state_${statusOf(capability)}`)}
                 </span>
                 <div className="game-options-modal__setup-log-details">
                   <strong>{t(`capability_${capability.id}`)}</strong>
