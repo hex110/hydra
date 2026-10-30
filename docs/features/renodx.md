@@ -19,11 +19,13 @@ works when the monitor is already in HDR when the game starts, which the HDR
 [launch rules](launch-rules.md#hdr) do: the built-in **HDR** rule, and on
 Hyprland **HDR: switch the monitor** with `hypr-hdr`, which ships with Hydra
 Plus. Only Hyprland is supported for the monitor switch. With **Turn on the HDR
-launch rules for games that get RenoDX** (on by default) installing RenoDX
-turns on the HDR rule for that game, and the monitor switch too when the game is
-on Hyprland and `hypr-hdr` is on `PATH`. The rules' state is shown in the game's
-[Tools](game-tools.md) options, not repeated on the RenoDX page, and removing
-RenoDX leaves them as they are.
+launch rules for games that get RenoDX** (on by default) a game with RenoDX
+installed launches with the HDR rule on, and the monitor switch too when the
+game is on Hyprland and `hypr-hdr` is on `PATH`. This is a [dependency](game-tools.md#dependencies),
+not a stored choice: it follows RenoDX, so removing RenoDX turns the rules back
+to their settings, and a game's own Off for either rule wins. The rules' state
+is shown in the game's [Tools](game-tools.md) options, not repeated on the
+RenoDX page.
 
 Inside the game, turn HDR on in its own settings. The mod follows that toggle.
 
@@ -32,7 +34,8 @@ on, and not every build has a working one: GE-Proton 11 gives RenoDX an HDR10
 swapchain, while UMU-Proton 10, umu's default when nothing is chosen, does not
 (RenoDX logs that it could not set the colour space). Pick a Proton build for
 the game or as the default in **Settings → Compatibility** if the mod shows no
-HDR.
+HDR. The Tools options say so when the game launches with a build that is
+known not to work (see [Dependencies](game-tools.md#dependencies)).
 
 ## Which mod
 

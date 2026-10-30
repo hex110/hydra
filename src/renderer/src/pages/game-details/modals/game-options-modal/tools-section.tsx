@@ -123,6 +123,21 @@ export function ToolsSection({
                       capability.reason.params
                     )}
                   </span>
+                  {capability.needs.map((need) => (
+                    <small key={need.id}>
+                      {t(
+                        need.met
+                          ? "capability_need_met"
+                          : "capability_need_unmet",
+                        { name: t(`capability_need_${need.id}`) }
+                      )}
+                      {": "}
+                      {t(
+                        `capability_reason_${need.reason.code}`,
+                        need.reason.params
+                      )}
+                    </small>
+                  ))}
                   {detailsCategory && (
                     <small>
                       <button

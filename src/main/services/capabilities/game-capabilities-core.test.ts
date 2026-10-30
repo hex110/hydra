@@ -194,3 +194,40 @@ describe("resolveLaunchWrapper", () => {
     assert.equal(result.reason.code, "not_installed_on_system");
   });
 });
+
+describe("dependencies", () => {
+  const rule = {
+    id: "hdr",
+    enabled: false,
+  } as Parameters<typeof resolveLaunchRuleCapability>[2];
+
+  it("shows the HDR rule as needed by RenoDX when only RenoDX turns it on", () => {
+    const result = resolveLaunchRuleCapability(
+      "hdr",
+      game({ renoDx: {} as Game["renoDx"] }),
+      rule,
+      { canSwitchMonitor: true, effectiveOverrides: { hdr: true } }
+    );
+    assert.strictEqual(result.active, true);
+    assert.strictEqual(result.mode, "auto");
+    assert.strictEqual(result.reason.code, "needed_by_renodx");
+  });
+
+  it("marks installed RenoDX blocked, with the missing need as the reason", () => {
+    const installation = {
+      modTitle: "FromSoft",
+      addonVersion: "2026-10-01T00:00:00Z",
+    } as NonNullable<GameRenoDxStatus["installation"]>;
+    const result = resolveRenoDx(game(), renoDxStatus({ installation }), true, [
+      {
+        id: "proton_hdr",
+        met: false,
+        reason: { code: "need_proton_default" },
+      },
+    ]);
+    assert.strictEqual(result.active, true);
+    assert.strictEqual(result.blocked, true);
+    assert.strictEqual(result.reason.code, "need_proton_default");
+    assert.strictEqual(result.needs.length, 1);
+  });
+});

@@ -1,7 +1,10 @@
+import path from "node:path";
+
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { getLaunchAdditions } from "@main/helpers/launch-additions";
 import { isGamemodeAvailable } from "@main/helpers/is-gamemode-available";
 import { isMangohudAvailable } from "@main/helpers/is-mangohud-available";
+import { resolveGameProton } from "@main/helpers/resolve-proton-path";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { logger } from "@main/services/logger";
@@ -12,13 +15,16 @@ import {
   capabilityOverrideFromMode,
   resolveLaunchRules,
   resolveOptiScalerSettings,
+  resolveRenoDxNeeds,
   resolveRenoDxSettings,
+  withDependencyRuleOverrides,
 } from "@shared";
 import type {
   Game,
   GameCapability,
   GameCapabilityId,
   GameCapabilityMode,
+  GameCapabilityNeed,
   GameShop,
   SetGameCapabilityModeResult,
   UserPreferences,
@@ -100,26 +106,40 @@ export const getGameCapabilities = async (
     const findRule = (id: "hdr" | "hdr_monitor") =>
       rules.find((rule) => rule.id === CAPABILITY_LAUNCH_RULES[id]);
     const canSwitchMonitor = canSwitchMonitorToHdr();
+    const renoDxSettings = resolveRenoDxSettings(userPreferences);
+    const effectiveOverrides = withDependencyRuleOverrides(game, {
+      enableHdrRules: renoDxSettings.enableHdrRules,
+      canSwitchMonitor,
+    });
 
     // OnlineFix and the HDR rules only exist for Proton launches.
-    if (isLinux)
-      capabilities.push(
-        resolveOnlineFix(game, userPreferences),
-        resolveLaunchRuleCapability("hdr", game, findRule("hdr"), {
-          canSwitchMonitor,
-        }),
-        resolveLaunchRuleCapability(
-          "hdr_monitor",
-          game,
-          findRule("hdr_monitor"),
-          { canSwitchMonitor }
-        )
+    let renoDxNeeds: GameCapabilityNeed[] = [];
+    if (isLinux) {
+      const hdr = resolveLaunchRuleCapability("hdr", game, findRule("hdr"), {
+        canSwitchMonitor,
+        effectiveOverrides,
+      });
+      const monitor = resolveLaunchRuleCapability(
+        "hdr_monitor",
+        game,
+        findRule("hdr_monitor"),
+        { canSwitchMonitor, effectiveOverrides }
       );
+      const proton = await resolveGameProton(game, additions?.protonPath);
+      renoDxNeeds = resolveRenoDxNeeds({
+        hdrActive: hdr.active,
+        monitorActive: monitor.active,
+        canSwitchMonitor,
+        protonName: proton.path ? path.basename(proton.path) : null,
+      });
+      capabilities.push(resolveOnlineFix(game, userPreferences), hdr, monitor);
+    }
     capabilities.push(
       resolveRenoDx(
         game,
         renoDxStatus,
-        resolveRenoDxSettings(userPreferences).autoInstall
+        renoDxSettings.autoInstall,
+        renoDxNeeds
       ),
       resolveOptiScaler(
         game,

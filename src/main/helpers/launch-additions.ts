@@ -2,7 +2,7 @@ import path from "node:path";
 import { logger } from "@main/services/logger";
 import { Wine } from "@main/services/wine";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
-import { RenoDx } from "@main/services/renodx/renodx";
+import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
 import {
@@ -10,6 +10,8 @@ import {
   isLaunchRuleApplied,
   isLaunchWrapperWanted,
   resolveLaunchRules,
+  resolveRenoDxSettings,
+  withDependencyRuleOverrides,
 } from "@shared";
 import type {
   Game,
@@ -112,7 +114,11 @@ export const getLaunchAdditions = async ({
   prepareMissing?: boolean;
 }): Promise<GameLaunchAdditions> => {
   const rules = resolveLaunchRules(userPreferences?.launchRules);
-  const overrides = game?.launchRuleOverrides ?? {};
+  // Tools in the game can depend on rules, such as RenoDX on the HDR rules.
+  const overrides = withDependencyRuleOverrides(game, {
+    enableHdrRules: resolveRenoDxSettings(userPreferences).enableHdrRules,
+    canSwitchMonitor: canSwitchMonitorToHdr(),
+  });
 
   const matches = await findLaunchRuleMatches(
     resolveGameRootForDetection(path.dirname(executablePath)),
@@ -126,7 +132,7 @@ export const getLaunchAdditions = async ({
       name: rule.name,
       matchedPath: matches.get(rule.id) ?? null,
       enabledByDefault: rule.enabled,
-      override: overrides[rule.id] ?? null,
+      override: game?.launchRuleOverrides?.[rule.id] ?? null,
       applied: isLaunchRuleApplied(rule, overrides),
     }));
 

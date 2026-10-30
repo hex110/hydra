@@ -9,8 +9,6 @@ import { logger } from "@main/services/logger";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { WindowManager } from "@main/services/window-manager";
 import {
-  HDR_LAUNCH_RULE_ID,
-  HYPRLAND_HDR_LAUNCH_RULE_ID,
   RENODX_MANIFEST_FILE,
   chooseReShadeProxyDll,
   chooseRenoDxMod,
@@ -402,7 +400,6 @@ export class RenoDx {
       };
 
       await this.updateGame(shop, objectId, { renoDx: installation });
-      if (settings.enableHdrRules) await this.enableHdrRules(game);
 
       logger.info("[RenoDX] Installed", {
         gameKey: levelKeys.game(shop, objectId),
@@ -420,22 +417,6 @@ export class RenoDx {
         error instanceof Error ? error.message : String(error)
       );
     }
-  }
-
-  /**
-   * RenoDX only gets HDR from a monitor already in HDR (see the HDR rules in
-   * the launch rules docs). Turns on the built-in HDR rule for the game, and
-   * the monitor switch where `hypr-hdr` is there to do it.
-   */
-  private static async enableHdrRules(game: Game) {
-    const overrides = { ...game.launchRuleOverrides };
-    overrides[HDR_LAUNCH_RULE_ID] ??= true;
-    if (canSwitchMonitorToHdr()) {
-      overrides[HYPRLAND_HDR_LAUNCH_RULE_ID] ??= true;
-    }
-    await this.updateGame(game.shop, game.objectId, {
-      launchRuleOverrides: overrides,
-    });
   }
 
   /** Removes the files and stops them from being installed again automatically. */

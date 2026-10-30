@@ -56,10 +56,30 @@ A MangoHud or GameMode switch that was ticked before (`autoRunMangohud`,
 `autoRunGamemode`) reads as On. Before Tools, a game could not turn MangoHud or
 GameMode off while it was on for every game; now Off wins.
 
+## Dependencies
+
+A capability can need other things to have any effect. They are listed under
+its row, each as **Has** or **Missing**, and a capability that is wanted but
+cannot work shows as **Blocked** with the first missing need as its reason,
+instead of a silent no-HDR.
+
+RenoDX needs:
+
+- **The HDR launch rule.** With RenoDX installed and **Settings → RenoDX → Turn
+  on the HDR launch rules** on, the game launches with the HDR rule on. The
+  HDR row reads "Turned on because RenoDX needs it". Nothing is written to the
+  game: setting the HDR row to Off keeps it off and shows RenoDX as blocked.
+- **The monitor switch**, on Hyprland with `hypr-hdr` only. Elsewhere the
+  compositor is yours to set and the need is not listed.
+- **A Proton build with Wayland HDR.** GE-Proton 11 and later work; umu's
+  default (UMU-Proton 10) does not and is reported as missing. Other builds are
+  not tested, so they show as "not tested" and do not block.
+
+Games that got RenoDX before this existed kept the HDR overrides it wrote; they
+show as On for this game.
+
 ## Not yet
 
 Planned in [roadmap phase 12](../roadmap.md#see-and-steer-what-hydra-does-to-a-game):
-the Proton build and frame generation as capabilities, dependencies (RenoDX
-turning on the HDR rules and asking for a Proton build with Wayland HDR,
-instead of writing the HDR rules' overrides as it does now), a check of the
-first run after an automatic change, and one page of global defaults.
+frame generation as a capability, a check of the first run after an automatic
+change, and one page of global defaults.

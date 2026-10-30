@@ -8,6 +8,7 @@ import type {
   GameCapability,
   GameCapabilityId,
   GameCapabilityMode,
+  GameCapabilityNeed,
   GameCapabilityReason,
   GameOptiScalerStatus,
   GameRenoDxStatus,
@@ -25,6 +26,7 @@ const capability = (
     blocked?: boolean;
     reason: GameCapabilityReason;
     modes?: GameCapabilityMode[];
+    needs?: GameCapabilityNeed[];
   }
 ): GameCapability => ({
   id,
@@ -33,6 +35,7 @@ const capability = (
   active: state.active,
   blocked: state.blocked ?? false,
   reason: state.reason,
+  needs: state.needs ?? [],
 });
 
 const reason = (
@@ -82,7 +85,11 @@ export const resolveLaunchRuleCapability = (
   id: "hdr" | "hdr_monitor",
   game: Game,
   rule: LaunchRule | undefined,
-  options: { canSwitchMonitor: boolean }
+  options: {
+    canSwitchMonitor: boolean;
+    /** The game's overrides plus the rules its tools depend on. */
+    effectiveOverrides?: Record<string, boolean>;
+  }
 ): GameCapability => {
   if (!rule)
     return capability(id, game, {
@@ -92,15 +99,24 @@ export const resolveLaunchRuleCapability = (
     });
 
   const override = getCapabilityOverride(game, id);
-  const wanted = isLaunchRuleApplied(rule, game.launchRuleOverrides);
+  const wanted = isLaunchRuleApplied(
+    rule,
+    options.effectiveOverrides ?? game.launchRuleOverrides
+  );
+  const neededByTool =
+    override === null && wanted && !!game.renoDx && !rule.enabled;
   const why =
     override === true
       ? reason(game.renoDx ? "set_on_for_game_renodx" : "set_on_for_game")
       : override === false
         ? reason("set_off_for_game")
-        : reason(
-            rule.enabled ? "rule_on_for_every_game" : "rule_off_for_every_game"
-          );
+        : neededByTool
+          ? reason("needed_by_renodx")
+          : reason(
+              rule.enabled
+                ? "rule_on_for_every_game"
+                : "rule_off_for_every_game"
+            );
 
   if (id === "hdr_monitor" && wanted && !options.canSwitchMonitor)
     return capability(id, game, {
@@ -115,23 +131,31 @@ export const resolveLaunchRuleCapability = (
 export const resolveRenoDx = (
   game: Game,
   status: GameRenoDxStatus,
-  autoInstall: boolean
+  autoInstall: boolean,
+  needs: GameCapabilityNeed[] = []
 ): GameCapability => {
   const override = getCapabilityOverride(game, "renodx");
   const modTitle = status.mod?.title ?? "";
 
-  if (status.installation)
+  if (status.installation) {
+    const unmet = needs.find((need) => !need.met);
     return capability("renodx", game, {
       active: true,
-      reason: reason("renodx_installed", {
-        mod: status.installation.modTitle,
-        // Add-ons are nightly builds versioned by their build time.
-        version: status.installation.addonVersion.replace(
-          /^(\d{4}-\d{2}-\d{2})T.*$/,
-          "$1"
-        ),
-      }),
+      // Installed, but it cannot give HDR: say what is missing.
+      blocked: !!unmet,
+      needs,
+      reason:
+        unmet?.reason ??
+        reason("renodx_installed", {
+          mod: status.installation.modTitle,
+          // Add-ons are nightly builds versioned by their build time.
+          version: status.installation.addonVersion.replace(
+            /^(\d{4}-\d{2}-\d{2})T.*$/,
+            "$1"
+          ),
+        }),
     });
+  }
   if (override === false)
     return capability("renodx", game, {
       active: false,

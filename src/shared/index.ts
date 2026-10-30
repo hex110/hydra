@@ -39,6 +39,7 @@ export * from "./release-version";
 export * from "./linux-launch";
 export * from "./launch-rules";
 export * from "./game-capabilities";
+export * from "./game-dependencies";
 export * from "./launch-rules-migration";
 export * from "./repack-ranking";
 export {

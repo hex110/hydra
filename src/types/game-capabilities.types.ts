@@ -16,6 +16,14 @@ export interface GameCapabilityReason {
   params?: Record<string, string | number>;
 }
 
+/** Something a capability depends on for its effect, and whether it is there. */
+export interface GameCapabilityNeed {
+  id: "hdr" | "hdr_monitor" | "proton_hdr";
+  met: boolean;
+  /** Translation key suffix: `capability_reason_<code>`. */
+  reason: GameCapabilityReason;
+}
+
 export interface GameCapability {
   id: GameCapabilityId;
   mode: GameCapabilityMode;
@@ -26,6 +34,8 @@ export interface GameCapability {
   /** Should apply but cannot; the reason says why. */
   blocked: boolean;
   reason: GameCapabilityReason;
+  /** What it depends on; empty for capabilities that stand alone. */
+  needs: GameCapabilityNeed[];
 }
 
 export type SetGameCapabilityModeResult =
