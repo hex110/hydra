@@ -896,9 +896,6 @@ const launchGameWithCloudSaveChecks = async (
           )
         : { status: "skipped" as const, result: null };
     const preLaunchResult = preLaunchOutcome.result;
-    const hasPreLaunchConflict =
-      preLaunchResult?.trigger === "pre-launch" &&
-      preLaunchResult.action === "conflict";
 
     if (shouldRunV2AutomaticSync && !prefixReadyForRestore) {
       logger.warn(
@@ -907,29 +904,26 @@ const launchGameWithCloudSaveChecks = async (
       );
     }
 
-    if (
-      shouldBlockGameLaunchForCloudSave(
-        preLaunchResult,
-        preLaunchOutcome.status === "failed"
-      )
-    ) {
+    if (shouldBlockGameLaunchForCloudSave(preLaunchResult)) {
       logger.warn("[Cloud Save] Game launch blocked by pre-launch sync", {
         shop,
         objectId,
-        reason: hasPreLaunchConflict ? "conflict" : "restore_failed",
+        reason: "conflict",
       });
-      if (hasPreLaunchConflict) {
-        redirectBlockedCloudSaveLaunch(
-          shop,
-          objectId,
-          launchGameRecord?.title ?? objectId,
-          "openCloudSaveConflict"
-        );
-      } else {
-        clearCloudSaveLaunchGuard(objectId, shop);
-        WindowManager.closeGameLauncherWindow();
-      }
+      redirectBlockedCloudSaveLaunch(
+        shop,
+        objectId,
+        launchGameRecord?.title ?? objectId,
+        "openCloudSaveConflict"
+      );
       return false;
+    }
+
+    if (preLaunchOutcome.status === "failed") {
+      logger.warn(
+        "[Cloud Save] Pre-launch sync failed; launching with local saves and no upload after exit",
+        { shop, objectId }
+      );
     }
 
     if (cloudSaveContext) {

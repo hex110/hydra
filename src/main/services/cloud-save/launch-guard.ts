@@ -52,10 +52,13 @@ export const canCreateCloudSaveUploadGuard = (
   preLaunchResult.action !== "conflict" &&
   preLaunchResult.finalState !== "partial";
 
+/**
+ * Only a conflict stops a launch. A failed pre-launch sync lets the game start
+ * with the saves it has; `canCreateCloudSaveUploadGuard` then refuses the
+ * upload after exit, so those saves can't replace the newer remote ones.
+ */
 export const shouldBlockGameLaunchForCloudSave = (
-  preLaunchResult: SyncGameCloudSaveResult | null,
-  restoreFailed = false
+  preLaunchResult: SyncGameCloudSaveResult | null
 ) =>
-  restoreFailed ||
-  (preLaunchResult?.trigger === "pre-launch" &&
-    preLaunchResult.action === "conflict");
+  preLaunchResult?.trigger === "pre-launch" &&
+  preLaunchResult.action === "conflict";
