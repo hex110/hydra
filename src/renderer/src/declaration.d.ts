@@ -52,6 +52,7 @@ import type {
   OptiScalerProxyDll,
   GameRenoDxInstallation,
   GameRun,
+  CompatibilityOverviewRow,
   GameCapability,
   GameCapabilityId,
   GameCapabilityMode,
@@ -640,6 +641,7 @@ declare global {
       id: GameCapabilityId,
       mode: GameCapabilityMode
     ) => Promise<SetGameCapabilityModeResult>;
+    getCompatibilityOverview: () => Promise<CompatibilityOverviewRow[]>;
     getGameRuns: (shop: GameShop, objectId: string) => Promise<GameRun[]>;
     getGameRunSummary: (
       shop: GameShop,

@@ -21,7 +21,6 @@ import { settingsContext } from "@renderer/context";
 import { useAppSelector, useDate, useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
 import type {
-  OptiScalerBulkProgress,
   OptiScalerChannel,
   OptiScalerOverview,
   OptiScalerProxyDll,
@@ -54,8 +53,6 @@ export function SettingsContextOptiScaler() {
   const [busyAction, setBusyAction] = useState<
     "check" | "download" | "clear" | null
   >(null);
-  const [bulkProgress, setBulkProgress] =
-    useState<OptiScalerBulkProgress | null>(null);
 
   const invalidIniLines = useMemo(
     () => parseIniOverrides(iniOverrides).invalidLines,
@@ -72,15 +69,6 @@ export function SettingsContextOptiScaler() {
   useEffect(() => {
     refreshOverview();
   }, [refreshOverview, settings.channel]);
-
-  useEffect(
-    () =>
-      window.electron.onOptiScalerBulkProgress((progress) => {
-        setBulkProgress(progress);
-        if (progress.status === "completed") refreshOverview();
-      }),
-    [refreshOverview]
-  );
 
   const saveIniOverrides = useMemo(
     () =>
@@ -110,12 +98,6 @@ export function SettingsContextOptiScaler() {
     }
   };
 
-  const startBulk = async (mode: "install-eligible" | "update-installed") => {
-    const started = await window.electron.runOptiScalerBulk(mode);
-    if (!started) showErrorToast(t("optiscaler_bulk_already_running"));
-  };
-
-  const isBulkRunning = bulkProgress?.status === "running";
   const downloadedLatest =
     !!overview?.latestVersion &&
     overview.cachedVersions.includes(overview.latestVersion);
@@ -145,18 +127,7 @@ export function SettingsContextOptiScaler() {
 
       <div className="settings-context-panel__group">
         <h3>{t("optiscaler_automatic_installation")}</h3>
-        <CheckboxField
-          label={t("optiscaler_auto_install")}
-          checked={settings.autoInstall}
-          onChange={() =>
-            updateUserPreferences({
-              optiScalerAutoInstall: !settings.autoInstall,
-            })
-          }
-        />
-        <p className="settings-optiscaler__muted">
-          {t("optiscaler_auto_install_description")}
-        </p>
+        <p className="settings-optiscaler__muted">{t("tool_defaults_moved")}</p>
 
         <div className="settings-optiscaler__nested">
           <CheckboxField
@@ -356,51 +327,6 @@ export function SettingsContextOptiScaler() {
 
       <div className="settings-context-panel__group">
         <h3>{t("optiscaler_library")}</h3>
-        <p className="settings-optiscaler__muted">
-          {t("optiscaler_installed_games", {
-            count: overview?.installedGames ?? 0,
-          })}
-          {overview?.outdatedGames
-            ? ` ${t("optiscaler_outdated_games", {
-                count: overview.outdatedGames,
-              })}`
-            : ""}
-        </p>
-        {bulkProgress && (
-          <p className="settings-optiscaler__muted">
-            {isBulkRunning
-              ? t("optiscaler_bulk_running", {
-                  processed: bulkProgress.processed,
-                  total: bulkProgress.total,
-                })
-              : t("optiscaler_bulk_completed", {
-                  installed: bulkProgress.installed,
-                  failed: bulkProgress.failed,
-                })}
-          </p>
-        )}
-        <div className="settings-optiscaler__actions">
-          <Button
-            type="button"
-            theme="outline"
-            disabled={isBulkRunning}
-            onClick={() => startBulk("install-eligible")}
-          >
-            {t("optiscaler_install_in_eligible_games")}
-          </Button>
-          {!!overview?.outdatedGames && (
-            <Button
-              type="button"
-              theme="outline"
-              disabled={isBulkRunning}
-              onClick={() => startBulk("update-installed")}
-            >
-              {t("optiscaler_update_installed_games", {
-                count: overview.outdatedGames,
-              })}
-            </Button>
-          )}
-        </div>
         <p className="settings-optiscaler__muted">
           {t("optiscaler_per_game_hint")}
         </p>

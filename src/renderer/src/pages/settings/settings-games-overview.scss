@@ -1,0 +1,51 @@
+@use "../../scss/globals.scss";
+
+.settings-games-overview {
+  &__muted {
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+    margin: 0;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: globals.$hint-font-size;
+
+    th,
+    td {
+      padding: globals.$spacing-unit;
+      text-align: left;
+      border-bottom: 1px solid globals.$border-color;
+    }
+
+    th {
+      color: globals.$muted-color;
+      font-weight: 600;
+    }
+
+    small {
+      display: block;
+      color: globals.$warning-color;
+    }
+  }
+
+  &__game {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: globals.$body-color;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      color: globals.$muted-color;
+      text-decoration: underline;
+    }
+  }
+
+  &__failed {
+    color: globals.$error-color;
+  }
+}

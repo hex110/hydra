@@ -22,7 +22,9 @@ import {
   FolderSearch,
   FolderSync,
   Gamepad2,
+  LayoutList,
   ListChecks,
+  SlidersHorizontal,
   Sparkles,
   Sun,
   Wrench,
@@ -34,6 +36,8 @@ import { SettingsContextNotifications } from "./settings-context-notifications";
 import { SettingsContextContentGameplay } from "./settings-context-content-gameplay";
 import { SettingsContextIntegrations } from "./settings-context-integrations";
 import { SettingsContextCompatibility } from "./settings-context-compatibility";
+import { SettingsContextGamesOverview } from "./settings-context-games-overview";
+import { SettingsContextToolDefaults } from "./settings-context-tool-defaults";
 import { SettingsContextOptiScaler } from "./settings-context-optiscaler";
 import { SettingsContextRenoDx } from "./settings-context-renodx";
 import { SettingsContextLaunchRules } from "./settings-context-launch-rules";
@@ -84,6 +88,16 @@ export default function Settings() {
         id: "compatibility" as const,
         label: t("compatibility"),
         icon: <Wrench size={16} />,
+      },
+      {
+        id: "tool_defaults" as const,
+        label: t("tool_defaults"),
+        icon: <SlidersHorizontal size={16} />,
+      },
+      {
+        id: "games_overview" as const,
+        label: t("games_overview"),
+        icon: <LayoutList size={16} />,
       },
       {
         id: "launch_rules" as const,
@@ -175,6 +189,14 @@ export default function Settings() {
 
             if (selectedCategoryId === "compatibility") {
               return <SettingsContextCompatibility />;
+            }
+
+            if (selectedCategoryId === "tool_defaults") {
+              return <SettingsContextToolDefaults />;
+            }
+
+            if (selectedCategoryId === "games_overview") {
+              return <SettingsContextGamesOverview />;
             }
 
             if (selectedCategoryId === "library_folders") {

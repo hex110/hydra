@@ -1,3 +1,6 @@
+import type { GameRunOutcome } from "./game-runs.types";
+import type { GameShop } from "./game.types";
+
 /** Things Hydra applies to a game, each set to Auto, On or Off per game. */
 export type GameCapabilityId =
   | "online_fix"
@@ -53,3 +56,43 @@ export interface GameCapability {
 export type SetGameCapabilityModeResult =
   | { ok: true }
   | { ok: false; message: string };
+
+/** One installed tool in a game, as the overview shows it. */
+export interface CompatibilityToolState {
+  mode: GameCapabilityMode;
+  installed: boolean;
+  /** Hydra installed it by itself and the first run went wrong. */
+  failed: boolean;
+}
+
+export interface CompatibilityLastRun {
+  id: string;
+  startedAt: string;
+  outcome: GameRunOutcome;
+  /** Tools whose check failed on that run. */
+  failedChecks: number;
+}
+
+/** A library game against the tools Hydra applies to it. */
+export interface CompatibilityOverviewRow {
+  shop: GameShop;
+  objectId: string;
+  title: string;
+  iconUrl: string | null;
+  isWindows: boolean;
+  /** OnlineFix files are loaded; null when not a Proton launch. */
+  onlineFix: { mode: GameCapabilityMode; active: boolean } | null;
+  renodx: CompatibilityToolState | null;
+  optiscaler: CompatibilityToolState | null;
+  lastRun: CompatibilityLastRun | null;
+  updateAvailable: boolean;
+}
+
+export type CompatibilityOverviewFilter =
+  | "all"
+  | "run_failed"
+  | "tool_failed"
+  | "renodx"
+  | "optiscaler"
+  | "opted_out"
+  | "update";

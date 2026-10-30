@@ -112,7 +112,7 @@ time the settings are applied.
 
 ## Automatic installation
 
-Off by default. With **Install RenoDX in games that have a mod** on, the
+Off by default. With RenoDX set to **Auto** in **Settings → Tool defaults**, the
 **RenoDX** [game setup](game-setup.md) step runs for each newly set up game,
 before OptiScaler. A game is skipped when:
 
@@ -131,9 +131,9 @@ before OptiScaler. A game is skipped when:
 
 You can install into any Windows game that has a mod from its options, also
 when automatic installation is off; **On** in Tools does the same and keeps it
-installed. **Install in all games that have a mod** on
-the settings page runs the same checks over the library and ignores the
-automatic installation toggle but not opt-outs.
+installed. **Install in all games that have a mod**, in
+**Settings → Games and tools**, runs the same checks over the library and
+ignores the Tool defaults choice but not opt-outs.
 
 ## Versions and updates
 

@@ -10,7 +10,8 @@ page in its options.
 
 ## Automatic installation
 
-With **Install OptiScaler automatically in games that support it** on, Hydra
+With OptiScaler set to **Auto** in **Settings → Tool defaults** (the default is
+Never), Hydra
 installs OptiScaler as part of [game setup](game-setup.md), after the Wine
 prefix is created. Setup runs when a download finishes, when a library scan
 adds or links a game and when a game gets a new executable.
@@ -37,9 +38,9 @@ games) are only detected through the compatibility list. You can install
 OptiScaler into any Windows game by hand from its options, or set it to **On**
 in Tools, which also keeps it installed when automatic installs are off.
 
-**Install in all supported games** on the settings page runs the same checks
-over the whole library, including games added before the setting was turned
-on. It ignores the automatic installation toggle but respects opt-outs.
+**Install in all supported games**, in **Settings → Games and tools**, runs the
+same checks over the whole library, including games added before the setting
+was turned on. It ignores the Tool defaults choice but respects opt-outs.
 
 ## Where it is installed
 

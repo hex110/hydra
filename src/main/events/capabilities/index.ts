@@ -1,5 +1,6 @@
 import type { GameCapabilityId, GameCapabilityMode, GameShop } from "@types";
 import {
+  getCompatibilityOverview,
   getGameCapabilities,
   setGameCapabilityMode,
 } from "@main/services/capabilities/game-capabilities";
@@ -21,3 +22,5 @@ registerEvent(
     mode: GameCapabilityMode
   ) => setGameCapabilityMode(shop, objectId, id, mode)
 );
+
+registerEvent("getCompatibilityOverview", () => getCompatibilityOverview());

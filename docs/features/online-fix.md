@@ -10,8 +10,8 @@ a fresh prefix does not have:
    `steamclient64.dll` from `C:\Program Files (x86)\Steam`; without it the
    game fails with error 126.
 
-With **Prepare OnlineFix games** on (the default, in **Settings →
-Compatibility**), Hydra handles both on Linux.
+With OnlineFix set to **Auto** (the default, in **Settings → Tool
+defaults**), Hydra handles both on Linux.
 
 ## What Hydra does
 

@@ -510,6 +510,23 @@ export const GameRuns = {
       .sort((a, b) => b.id.localeCompare(a.id));
   },
 
+  /** The newest run, read through the folder's `latest` link without listing them all. */
+  getLatest(shop: GameShop, objectId: string): GameRun | null {
+    const gameFolder = findGameFolder(shop, objectId);
+    if (!gameFolder) return null;
+    try {
+      const runId = fs.readlinkSync(path.join(gameFolder, LATEST_LINK));
+      const run = readRun(path.join(gameFolder, runId));
+      if (!run) return null;
+      const activeId = activeRuns.get(levelKeys.game(shop, objectId))?.run.id;
+      return run.outcome === "running" && run.id !== activeId
+        ? { ...run, outcome: "unknown" }
+        : run;
+    } catch {
+      return null;
+    }
+  },
+
   getSummary(shop: GameShop, objectId: string, runId: string) {
     const run = GameRuns.list(shop, objectId).find(
       (entry) => entry.id === runId

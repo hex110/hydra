@@ -40,6 +40,8 @@ export * from "./linux-launch";
 export * from "./launch-rules";
 export * from "./game-capabilities";
 export * from "./game-dependencies";
+export * from "./capability-defaults";
+export * from "./compatibility-overview";
 export * from "./launch-rules-migration";
 export * from "./repack-ranking";
 export {

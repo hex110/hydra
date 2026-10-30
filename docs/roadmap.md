@@ -184,7 +184,10 @@ in the sections below.
            ([Dependencies](features/game-tools.md#dependencies),
            [first run](features/game-tools.md#the-first-run-is-checked);
            frame generation as a capability was not done)
-    4. [ ] Compatibility overview and one defaults page
+    4. [x] Compatibility overview and one defaults page
+           ([Defaults](features/game-tools.md#defaults-for-every-game),
+           [overview](features/game-tools.md#games-and-tools); no "skipped
+           automatically" filter)
     5. [ ] In-game overlay
 13. **More save sources.**
     1. [ ] Heroic and Lutris

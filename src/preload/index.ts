@@ -1246,6 +1246,8 @@ contextBridge.exposeInMainWorld("electron", {
     id: GameCapabilityId,
     mode: GameCapabilityMode
   ) => ipcRenderer.invoke("setGameCapabilityMode", shop, objectId, id, mode),
+  getCompatibilityOverview: () =>
+    ipcRenderer.invoke("getCompatibilityOverview"),
   getGameRuns: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameRuns", shop, objectId),
   getGameRunSummary: (shop: GameShop, objectId: string, runId: string) =>

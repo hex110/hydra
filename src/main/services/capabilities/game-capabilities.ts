@@ -7,6 +7,8 @@ import { isMangohudAvailable } from "@main/helpers/is-mangohud-available";
 import { resolveGameProton } from "@main/helpers/resolve-proton-path";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
 import { clearCapabilityCheck } from "./capability-checks";
+import { buildOverviewRow } from "./compatibility-overview-core";
+import { GameRuns } from "@main/services/game-runs/game-runs";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { logger } from "@main/services/logger";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
@@ -21,6 +23,7 @@ import {
   withDependencyRuleOverrides,
 } from "@shared";
 import type {
+  CompatibilityOverviewRow,
   Game,
   GameCapability,
   GameCapabilityId,
@@ -275,4 +278,22 @@ export const setGameCapabilityMode = async (
       message: error instanceof Error ? error.message : String(error),
     };
   }
+};
+
+/** Every library game with an executable against its tools and last run. */
+export const getCompatibilityOverview = async (): Promise<
+  CompatibilityOverviewRow[]
+> => {
+  const isLinux = process.platform === "linux";
+  const games = (await gamesSublevel.values().all()).filter(
+    (game) => !game.isDeleted && game.executablePath
+  );
+  return games
+    .map((game) =>
+      buildOverviewRow(game, GameRuns.getLatest(game.shop, game.objectId), {
+        isWindows: isWindowsGame(game),
+        isLinux,
+      })
+    )
+    .sort((a, b) => a.title.localeCompare(b.title));
 };

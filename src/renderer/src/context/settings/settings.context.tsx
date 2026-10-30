@@ -16,6 +16,8 @@ export type SettingsCategoryId =
   | "content_gameplay"
   | "integrations"
   | "compatibility"
+  | "tool_defaults"
+  | "games_overview"
   | "library_folders"
   | "save_import"
   | "cloud"
@@ -44,6 +46,8 @@ const isSettingsCategoryId = (value: string): value is SettingsCategoryId => {
     "content_gameplay",
     "integrations",
     "compatibility",
+    "tool_defaults",
+    "games_overview",
     "library_folders",
     "save_import",
     "cloud",

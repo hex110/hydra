@@ -5,14 +5,14 @@ to **Auto**, **On** or **Off**, and says why it is on or off. It is the one
 place a game's tools are switched; the other tabs hold their details
 (versions, DLL names, layouts) and link here.
 
-| Capability              | Platforms | Auto means                                                                                          |
-| ----------------------- | --------- | --------------------------------------------------------------------------------------------------- |
-| OnlineFix               | Linux     | Loaded when OnlineFix files are found; there is no On, as there would be nothing to load            |
-| HDR                     | Linux     | The built-in HDR launch rule's setting for every game                                               |
-| HDR: switch the monitor | Linux     | The `hypr-hdr` launch rule's setting for every game                                                 |
-| RenoDX HDR mod          | All       | Installed during setup when a mod exists and **Settings → RenoDX** installs automatically           |
-| OptiScaler              | All       | Installed during setup when the game qualifies and **Settings → OptiScaler** installs automatically |
-| MangoHud, GameMode      | Linux     | The global setting, or a launch rule that turns it on                                               |
+| Capability              | Platforms | Auto means                                                                               |
+| ----------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| OnlineFix               | Linux     | Loaded when OnlineFix files are found; there is no On, as there would be nothing to load |
+| HDR                     | Linux     | The built-in HDR launch rule's setting for every game                                    |
+| HDR: switch the monitor | Linux     | The `hypr-hdr` launch rule's setting for every game                                      |
+| RenoDX HDR mod          | All       | Installed during setup when a mod exists and **Tool defaults** is Auto                   |
+| OptiScaler              | All       | Installed during setup when the game qualifies and **Tool defaults** is Auto             |
+| MangoHud, GameMode      | Linux     | The global setting, or a launch rule that turns it on                                    |
 
 Tools apply to Windows games only, except MangoHud and GameMode, which wrap
 any game.
@@ -101,7 +101,49 @@ removes what Hydra installed and keeps it from coming back; **On** keeps it
 and stops the check. Any choice clears the failure, and a passed check clears
 silently.
 
+## Defaults for every game
+
+**Settings → Tool defaults** is the one page of global settings for these
+tools. Each row is a setting for every game that does not say otherwise:
+
+| Tool                     | Choices       | What it replaces                                                |
+| ------------------------ | ------------- | --------------------------------------------------------------- |
+| RenoDX, OptiScaler       | Auto, Never   | The "install automatically" switches on their settings pages    |
+| OnlineFix                | Auto, Never   | "Prepare OnlineFix games" in Compatibility                      |
+| HDR, HDR: switch monitor | Never, Always | The built-in launch rules' on/off in Launch rules (still there) |
+| MangoHud, GameMode       | Never, Always | The two switches in Compatibility                               |
+
+Auto lets Hydra decide for each game and say why in the game's Tools options.
+RenoDX and OptiScaler have no Always: forcing a tool into a game that does not
+fit it would break it, so the furthest a default goes is Auto. MangoHud,
+GameMode and the HDR rules are plain on/off, so they have no Auto. A game's
+own Auto, On or Off, and a launch rule that turns a tool on, still win. The
+choices are stored in the same preferences as before, so nothing needed to
+migrate. The other settings on the RenoDX and OptiScaler pages (versions, beta
+mods, the INI fragments) stay where they were.
+
+## Games and tools
+
+**Settings → Games and tools** lists every library game with an executable
+against OnlineFix, RenoDX and OptiScaler, how its last run ended, and whether an
+update is waiting. A game's name opens its Tools options. The filter shows
+games whose last run failed, games where a tool failed its first run, games
+with RenoDX or OptiScaler installed, games with a tool set to Off, and games
+with an update.
+
+The row for a tool says **Active** (installed, or OnlineFix files loaded),
+**Active (On)** when it was set to On, **Off**, or **Failed**; a dash means not
+installed or not applicable (a native game has no tools). The last run is read
+from the game's newest [run](game-runs.md), without opening the others.
+
+Below the list, **All games at once** holds the bulk buttons that used to be on
+the RenoDX and OptiScaler pages: install in every game that qualifies, and
+update every installed copy. They ignore the Tool defaults choice but respect a
+game's own Off.
+
 ## Not yet
 
 Planned in [roadmap phase 12](../roadmap.md#see-and-steer-what-hydra-does-to-a-game):
-frame generation as a capability, and one page of global defaults.
+frame generation as a capability. The overview has no "skipped automatically"
+filter (that needs each game's eligibility worked out, which is slow for a
+whole library), and no bulk action beyond the two install buttons.

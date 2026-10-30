@@ -20,11 +20,7 @@ import { Button, CheckboxField, Link } from "@renderer/components";
 import { settingsContext } from "@renderer/context";
 import { useAppSelector, useDate, useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
-import type {
-  RenoDxBulkMode,
-  RenoDxBulkProgress,
-  RenoDxOverview,
-} from "@types";
+import type { RenoDxOverview } from "@types";
 
 // The INI field and notes look the same as OptiScaler's, so they share its styles.
 import "./settings-optiscaler.scss";
@@ -50,9 +46,6 @@ export function SettingsContextRenoDx() {
   );
   const [overview, setOverview] = useState<RenoDxOverview | null>(null);
   const [busyAction, setBusyAction] = useState<"check" | "clear" | null>(null);
-  const [bulkProgress, setBulkProgress] = useState<RenoDxBulkProgress | null>(
-    null
-  );
 
   const invalidIniLines = useMemo(
     () => parseIniOverrides(iniOverrides).invalidLines,
@@ -69,15 +62,6 @@ export function SettingsContextRenoDx() {
   useEffect(() => {
     refreshOverview();
   }, [refreshOverview]);
-
-  useEffect(
-    () =>
-      window.electron.onRenoDxBulkProgress((progress) => {
-        setBulkProgress(progress);
-        if (progress.status === "completed") refreshOverview();
-      }),
-    [refreshOverview]
-  );
 
   const saveIniOverrides = useMemo(
     () =>
@@ -112,13 +96,6 @@ export function SettingsContextRenoDx() {
     }
   };
 
-  const startBulk = async (mode: RenoDxBulkMode) => {
-    const started = await window.electron.runRenoDxBulk(mode);
-    if (!started) showErrorToast(t("renodx_bulk_already_running"));
-  };
-
-  const isBulkRunning = bulkProgress?.status === "running";
-
   return (
     <div className="settings-context-panel settings-optiscaler">
       <div className="settings-context-panel__group">
@@ -136,16 +113,7 @@ export function SettingsContextRenoDx() {
 
       <div className="settings-context-panel__group">
         <h3>{t("renodx_automatic_installation")}</h3>
-        <CheckboxField
-          label={t("renodx_auto_install")}
-          checked={settings.autoInstall}
-          onChange={() =>
-            updateUserPreferences({ renoDxAutoInstall: !settings.autoInstall })
-          }
-        />
-        <p className="settings-optiscaler__muted">
-          {t("renodx_auto_install_description")}
-        </p>
+        <p className="settings-optiscaler__muted">{t("tool_defaults_moved")}</p>
 
         <div className="settings-optiscaler__nested">
           <CheckboxField
@@ -268,51 +236,6 @@ export function SettingsContextRenoDx() {
 
       <div className="settings-context-panel__group">
         <h3>{t("renodx_library")}</h3>
-        <p className="settings-optiscaler__muted">
-          {t("renodx_installed_games", {
-            count: overview?.installedGames ?? 0,
-          })}
-          {overview?.outdatedGames
-            ? ` ${t("renodx_outdated_games", {
-                count: overview.outdatedGames,
-              })}`
-            : ""}
-        </p>
-        {bulkProgress && (
-          <p className="settings-optiscaler__muted">
-            {isBulkRunning
-              ? t("renodx_bulk_running", {
-                  processed: bulkProgress.processed,
-                  total: bulkProgress.total,
-                })
-              : t("renodx_bulk_completed", {
-                  installed: bulkProgress.installed,
-                  failed: bulkProgress.failed,
-                })}
-          </p>
-        )}
-        <div className="settings-optiscaler__actions">
-          <Button
-            type="button"
-            theme="outline"
-            disabled={isBulkRunning}
-            onClick={() => startBulk("install-supported")}
-          >
-            {t("renodx_install_in_supported_games")}
-          </Button>
-          {!!overview?.installedGames && (
-            <Button
-              type="button"
-              theme="outline"
-              disabled={isBulkRunning}
-              onClick={() => startBulk("update-installed")}
-            >
-              {t("renodx_update_installed_games", {
-                count: overview.installedGames,
-              })}
-            </Button>
-          )}
-        </div>
         <p className="settings-optiscaler__muted">
           {t("renodx_per_game_hint")}
         </p>
