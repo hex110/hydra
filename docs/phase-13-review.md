@@ -77,30 +77,6 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
        with "Recursive option not enabled, cannot copy a directory". Fixed:
        existing folders get the contents copied in.
 
-8. [x] **A shell in a Docker container became a game, with phantom
-       playtime.** Walking the Floppy and Steam imports on the desktop,
-       Floppy added SUPERHOT (`steam:322500`), whose known executables
-       include `sh`. The process watcher matched the busybox `sh` running in
-       the Floppy container, set the game's executable to `/floppy/sh` and
-       counted it as played (171 s and rising, last played "now"). Nothing
-       reached Floppy (checked against a backup of its database). Fixed:
-       shells, interpreters, Wine and Steam binaries, and system folders
-       never match by name (`isPlausibleGameProcessPath`).
-
-9. [x] **Imported games show broken covers.** About a quarter of the
-       Steam and Floppy imports showed an empty box with the title as alt
-       text: their guessed `library_600x900_2x.jpg` 404s (newer apps keep
-       artwork under a hashed folder), and the card's fallback stopped
-       there because the cover and library image were the same URL, and an
-       unchanged `src` fires no second error. Fixed: repeated URLs are
-       dropped from the fallback chain, the 32 px icon is no longer
-       stretched into a cover, and the placeholder shows the title. Still
-       open: fetch the real artwork for these games (Steam's store API gives
-       the hashed path; SteamGridDB with the user's key).
-10. [ ] **Hydra Plus's own Integrations page uses native controls**: the
-        Steam history and Floppy cards have native checkboxes and a native
-        `<select>` ("30 minutes played"). Settle in the regroup with item 23.
-
 ## Performance on a modest machine
 
 8. [ ] **The laptop ran out of memory during a game.** At 13:27:41
@@ -220,9 +196,10 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## Polish
 
-23. [ ] Native `<select>` and checkboxes on Settings → General (language,
-        startup behaviour) and Settings → Cloud ("Where to keep saves"); the
-        UI rules forbid them. Settle in the regroup.
+23. [x] Native `<select>` and checkboxes on Settings → General and Cloud.
+        Checked: not so. Every select and checkbox in the pages is the shared
+        `SelectField` or `CheckboxField`; only a select's open option list is
+        drawn by the system.
 24. [x] The setup log offers "Run again" for steps that never ran (now "Run").
 25. [ ] Game options → General: the "Launch Options" heading is larger than
         the "Title" label above it, and "Clear" next to the title doesn't say
@@ -231,3 +208,28 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         only, filters); phase 9 item 3 labelled them on the library page only.
         Checked: both have tooltips, like Steam's sidebar icons; the
         installed-only toggle also got an accessible name.
+
+## Found while fixing
+
+28. [x] **A shell in a Docker container became a game, with phantom
+        playtime.** Walking the Floppy and Steam imports on the desktop,
+        Floppy added SUPERHOT (`steam:322500`), whose known executables
+        include `sh`. The process watcher matched the busybox `sh` running in
+        the Floppy container, set the game's executable to `/floppy/sh` and
+        counted it as played (171 s and rising, last played "now"). Nothing
+        reached Floppy (checked against a backup of its database). Fixed:
+        shells, interpreters, Wine and Steam binaries, and system folders
+        never match by name (`isPlausibleGameProcessPath`).
+
+29. [x] **Imported games show broken covers.** About a quarter of the
+        Steam and Floppy imports showed an empty box with the title as alt
+        text: their guessed `library_600x900_2x.jpg` 404s (newer apps keep
+        artwork under a hashed folder), and the card's fallback stopped
+        there because the cover and library image were the same URL, and an
+        unchanged `src` fires no second error. Fixed: repeated URLs are
+        dropped from the fallback chain, the 32 px icon is no longer
+        stretched into a cover, and the placeholder shows the title. Still
+        open: fetch the real artwork for these games (Steam's store API gives
+        the hashed path; SteamGridDB with the user's key).
+30. [x] **Hydra Plus's own Integrations page uses native controls.**
+        Checked: not so, as for 23; they are the shared components.

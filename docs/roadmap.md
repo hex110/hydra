@@ -220,7 +220,7 @@ in the sections below.
     1. [ ] Review pass: fresh install, signed out, on a modest machine
     2. [ ] Fix what the review found
     3. [ ] Auto fits the machine
-    4. [x] Settings regrouped (six groups; native controls still open, findings 23 and 30)
+    4. [x] Settings regrouped (six groups)
     5. [ ] Export and import settings (from phase 16)
     6. [ ] Cloud backup without friction
     7. [ ] Shared patterns for every page
