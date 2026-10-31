@@ -489,6 +489,13 @@ it's wanted.
       layout (`ENABLE_VKBASALT=1` plus a config path; lsfg-vk's profile or
       environment). Not used as of 2026-10-19. vkBasalt is only installed
       inside `proton-cachyos-slr`; lsfg-vk is installed as a user layer.
+- [ ] **Search the catalogue from the sidebar.** When the sidebar's library
+      search (`components/sidebar/sidebar.tsx`) matches no game, show a
+      "Search the catalogue for “<text>”" row under the empty list that
+      opens the catalogue with that text as its search, the way the header
+      search does (`header.tsx`, `navigate("/catalogue")`). Decide between
+      the button and doing it automatically; a button is less surprising
+      while typing. Optionally also offer it below a short list of matches.
 
 ## Launch tool conflicts
 
