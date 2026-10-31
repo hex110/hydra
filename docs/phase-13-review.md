@@ -192,17 +192,23 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         Compatibility's setup log repeats the ReShade, RenoDX and OptiScaler
         steps that Tools shows, and four tabs (General, Compatibility,
         OptiScaler, RenoDX) carry a "set in Tools" pointer to a fifth.
-18. [ ] **Defaults live in three places.** The Tools tab's reasons point to
+18. [x] **Defaults live in three places.** The Tools tab's reasons point to
         Settings → Launch rules (HDR), Settings → Tool defaults (MangoHud,
-        GameMode) and Settings → RenoDX (beta mods).
+        GameMode) and Settings → RenoDX (beta mods). Fixed: the HDR rows
+        point to Tool defaults too. Beta mods stay on the RenoDX page, the
+        one place that setting exists.
 19. [ ] **Eighteen settings categories at one level** (17 signed out; roadmap item 4).
-20. [ ] **The Cloud page assumes history.** "While this is on it replaces
+20. [x] **The Cloud page assumes history.** "While this is on it replaces
         Hydra Cloud, also for subscribers" and "Your list of games is
         uploaded, never added back on its own" need knowledge a new user does
-        not have (roadmap item 6).
-21. [ ] **Work Wonders widgets load while signed out.** Upstream's changelog
+        not have (roadmap item 6). Fixed: both say what they mean in plain
+        terms; the rest of the Cloud page is roadmap item 6.
+21. [x] **Work Wonders widgets load while signed out.** Upstream's changelog
         and knowledge widgets open three iframes on
-        `hydra.workwonders.app` with an empty token.
+        `hydra.workwonders.app` with an empty token. They also showed
+        upstream Hydra's changelog behind Hydra Plus's version button. Fixed:
+        the widgets are not started (the code stays), and the version button
+        opens Hydra Plus's release on GitHub.
 22. [ ] **Every game is in the laptop's app launcher twice.** A script-era
         `hydra-desktop-sync` timer (every 2 minutes) writes
         `hydra-game-*.desktop` next to Hydra Plus's own `hydraplus-game-*`.
@@ -214,9 +220,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 23. [ ] Native `<select>` and checkboxes on Settings → General (language,
         startup behaviour) and Settings → Cloud ("Where to keep saves"); the
         UI rules forbid them. Settle in the regroup.
-24. [ ] The setup log offers "Run again" for steps that never ran.
+24. [x] The setup log offers "Run again" for steps that never ran (now "Run").
 25. [ ] Game options → General: the "Launch Options" heading is larger than
         the "Title" label above it, and "Clear" next to the title doesn't say
         what it clears.
-26. [ ] The sidebar's library filter still has two unlabeled icons (installed
+26. [x] The sidebar's library filter still has two unlabeled icons (installed
         only, filters); phase 9 item 3 labelled them on the library page only.
+        Checked: both have tooltips, like Steam's sidebar icons; the
+        installed-only toggle also got an accessible name.

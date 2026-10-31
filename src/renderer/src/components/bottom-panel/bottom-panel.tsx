@@ -204,8 +204,14 @@ export function BottomPanel() {
 
       <div className="bottom-panel__right">
         <button
-          data-open-workwonders-changelog-mini
+          type="button"
           className="bottom-panel__version-button"
+          title={t("release_notes")}
+          onClick={() =>
+            window.electron.openExternal(
+              `https://github.com/hex110/hydra/releases/tag/v${version}`
+            )
+          }
         >
           <small>
             {sessionHash ? `${sessionHash} -` : ""} v{version}

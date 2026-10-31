@@ -280,6 +280,7 @@
     "scan_games_skipped_hint": "These folders contain no .exe, so they can't be a Windows game: archives, unfinished downloads, empty folders or native Linux games."
   },
   "bottom_panel": {
+    "release_notes": "What's new in this version",
     "reconnecting": "Reconnecting {{title}}…",
     "recovering": "Re-downloading the saved portion of {{title}}… ({{percentage}})",
     "no_downloads_in_progress": "No downloads in progress",
@@ -1396,8 +1397,8 @@
     "capability_reason_online_fix_found": "OnlineFix files found; Wine loads {{dlls}}.",
     "capability_reason_online_fix_not_found": "No OnlineFix files in the game folder.",
     "capability_reason_online_fix_not_checked": "Not checked yet; the next launch checks the game folder.",
-    "capability_reason_rule_on_for_every_game": "On for every game in Settings → Launch rules.",
-    "capability_reason_rule_off_for_every_game": "Off for every game in Settings → Launch rules.",
+    "capability_reason_rule_on_for_every_game": "On for every game in Settings → Tool defaults.",
+    "capability_reason_rule_off_for_every_game": "Off for every game in Settings → Tool defaults.",
     "capability_reason_rule_removed": "Its launch rule was deleted. Add the preset again in Settings → Launch rules to use it.",
     "capability_reason_needs_hyprland": "Needs Hyprland with hypr-hdr on PATH; the game starts without switching the monitor.",
     "capability_reason_discrete_gpu_auto": "Auto: off. This computer also has an {{vendor}} GPU that games don't use by default. Set On to run this game on it.",
@@ -1470,6 +1471,7 @@
     "setup_log_never_ran": "Has not run yet.",
     "setup_log_failed": "Failed: {{error}}",
     "setup_log_run_again": "Run again",
+    "setup_log_run": "Run",
     "setup_log_duration": "{{seconds}} s",
     "setup_log_status_done": "Done",
     "setup_log_status_skipped": "Skipped",
@@ -2991,7 +2993,7 @@
     "hydra_account_description": "An account adds a public profile, friends, chat, reviews, achievement points and Hydra Cloud, and lets you connect Epic Games and RetroAchievements. Your library, downloads, achievements and play tracking work without one.",
     "hydra_account_signed_in_description": "Profile, friends, chat, reviews and Hydra Cloud are on.",
     "save_sync_title": "Save sync",
-    "save_sync_description": "Choose where your saves are kept. While this is on it replaces Hydra Cloud, also for subscribers.",
+    "save_sync_description": "Choose where your saves are kept: a folder (a Syncthing folder or a NAS) or cloud storage through rclone. If you also have a Hydra account with Hydra Cloud, this takes its place.",
     "save_sync_target": "Where to keep saves",
     "save_sync_target_folder": "A folder",
     "save_sync_target_rclone": "An rclone remote",
@@ -3105,7 +3107,7 @@
     "cloud_backup_conflicts_one": "{{count}} game has saves that changed here and in the cloud. Open it and choose which to keep:",
     "cloud_backup_conflicts_other": "{{count}} games have saves that changed here and in the cloud. Open one and choose which to keep:",
     "cloud_how_library": "Playtime, achievements, play status, wishlist, notes, ratings and favourites sync too while library sync is on.",
-    "cloud_how_library_list": "Your list of games is uploaded, never added back on its own. Import it from another device above."
+    "cloud_how_library_list": "Each device keeps its own list of games in the cloud. A new device doesn't fill its library by itself: use Import your library above to add another device's games."
   },
   "notifications": {
     "download_complete": "Download complete",

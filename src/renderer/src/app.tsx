@@ -68,6 +68,12 @@ export interface AppProps {
   children: React.ReactNode;
 }
 
+/**
+ * Upstream's changelog, help and feedback widgets describe upstream Hydra, not
+ * Hydra Plus; the version button opens Hydra Plus's releases instead.
+ */
+const SHOW_UPSTREAM_WIDGETS = false;
+
 type WorkWondersWithKnowledge = WorkWonders & {
   knowledge?: {
     initKnowledgeWidget?: () => void;
@@ -337,7 +343,8 @@ export function App() {
       updateUserDetails(userDetails);
     }
 
-    setupWorkWonders(userDetails?.workwondersJwt, userPreferences?.language);
+    if (SHOW_UPSTREAM_WIDGETS)
+      setupWorkWonders(userDetails?.workwondersJwt, userPreferences?.language);
 
     if (!document.getElementById("external-resources")) {
       const $script = document.createElement("script");

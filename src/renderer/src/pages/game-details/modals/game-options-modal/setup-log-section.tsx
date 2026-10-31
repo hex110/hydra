@@ -118,7 +118,7 @@ export function SetupLogSection({ game }: Readonly<{ game: LibraryGame }>) {
                   }}
                 >
                   <SyncIcon size={14} />
-                  {t("setup_log_run_again")}
+                  {entry ? t("setup_log_run_again") : t("setup_log_run")}
                 </Button>
               </li>
             );

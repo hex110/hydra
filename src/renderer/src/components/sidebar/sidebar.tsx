@@ -492,6 +492,7 @@ export function Sidebar() {
                   updateView({ installedOnly: !view.installedOnly })
                 }
                 aria-pressed={view.installedOnly}
+                aria-label={t("show_installed_only", { ns: "library" })}
                 data-tooltip-id="sidebar-show-playable-only-tooltip"
                 data-tooltip-content={t("show_installed_only", {
                   ns: "library",
