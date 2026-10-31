@@ -222,7 +222,7 @@ in the sections below.
     3. [ ] Auto fits the machine
     4. [x] Settings regrouped (six groups)
     5. [x] Export and import settings ([Moving settings](features/settings-transfer.md))
-    6. [ ] Cloud backup without friction
+    6. [ ] Cloud backup without friction (setup done: rclone download, R2 Connect form; backup state on cards and pages goes with item 7)
     7. [ ] Shared patterns for every page
     8. [ ] Catalogue
     9. [ ] Library, and tracking without Floppy

@@ -16,13 +16,21 @@ folder or an rclone remote.
   `r2:hydra-saves` or `gdrive:Games/Saves`, which covers Cloudflare R2, S3,
   Google Drive, SFTP, WebDAV and the rest of rclone's backends. Hydra runs the
   `rclone` command with your own config and stores no cloud credentials.
-  rclone must be installed (`pacman -S rclone`).
+  Without rclone installed, **Download rclone** fetches the official build
+  for this CPU from downloads.rclone.org, checks it against the published
+  SHA-256 and puts it in `<userData>/bin`, which Hydra adds to the end of
+  `PATH` (an installed rclone still wins).
 
 The tab also shows whether rclone is installed, a **Test connection** button
-for a remote that is already on, and a **Cloudflare R2 setup guide** (a popup
-with the bucket, API token, `rclone.conf` block and check command; the block
-sets `no_check_bucket = true`, which a bucket-limited token needs because
-Hydra's rclone calls would otherwise try to create the bucket).
+for a remote that is already on, and a **Cloudflare R2 setup** popup: enable
+R2, create a bucket and an API token in Cloudflare's dashboard, then paste the
+account ID, the key pair and the bucket into **Connect Hydra**. Hydra runs
+`rclone config create hydra-r2 s3 provider=Cloudflare …` (or `update` when it
+exists, downloading rclone first if needed), so the keys live in rclone's
+config as with a remote made by hand, then turns save sync on with
+`hydra-r2:<bucket>`. The remote sets `no_check_bucket = true`, which a
+bucket-limited token needs because Hydra's rclone calls would otherwise try to
+create the bucket. Setting rclone up by hand still works.
 
 **Turn on** writes, reads back and removes a probe file first, so a wrong
 path or remote is refused. While save sync is on it replaces Hydra Cloud,
