@@ -31,6 +31,7 @@ import {
   WindowManager,
   logger,
   migrateCloudSaveAutomaticSyncDefaults,
+  retryPendingCloudSaveUploads,
   groupedSouvenirWorker,
 } from "@main/services";
 import { migrateDownloadSources } from "./helpers/migrate-download-sources";
@@ -283,6 +284,7 @@ export const loadState = async () => {
   }
 
   void GameRuns.closeLeftoverRuns();
+  setTimeout(() => void retryPendingCloudSaveUploads(), 30_000);
   startMainLoop();
 
   if (process.platform === "win32") {

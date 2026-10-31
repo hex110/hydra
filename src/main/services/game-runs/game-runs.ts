@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { gamesSublevel, levelKeys } from "@main/level";
 import { applyFirstRunChecks } from "@main/services/capabilities/capability-checks";
+import { setGameLaunching } from "@main/services/game-running-state";
 import { logger } from "@main/services/logger";
 import { SystemPath } from "@main/services/system-path";
 import { WindowManager } from "@main/services/window-manager";
@@ -238,6 +239,7 @@ const finishRun = (gameKey: string) => {
   const active = activeRuns.get(gameKey);
   if (!active) return;
   activeRuns.delete(gameKey);
+  setGameLaunching(gameKey, false);
   if (active.finishTimer) clearTimeout(active.finishTimer);
 
   const { run } = active;
@@ -376,6 +378,7 @@ export const GameRuns = {
         directory,
       };
 
+      setGameLaunching(gameKey, true);
       activeRuns.set(gameKey, {
         run,
         startedAtMs: startedAt.getTime(),

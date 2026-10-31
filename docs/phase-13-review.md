@@ -49,20 +49,28 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
        `PROTON_LOG_DIR`. Still open: one log can grow past 4 GB
        (`docs/enshrouded-launch-crash.md`); deleting it after the copy would
        break the quick-exit dialog's **Show log**, which opens it.
-4. [ ] **Cloud save upload raced the game's start.** At 13:28:23 the game
+4. [x] **Cloud save upload raced the game's start.** At 13:28:23 the game
        launched; at 13:28:32 a `game-page-open` sync failed with "md5 hashes
        differ" uploading the save folder the starting game was writing. A
-       sync should not run while the game is starting or running.
-5. [ ] **Cloud save errors on the laptop**, all on 2026-10-30 with plus.18:
+       sync should not run while the game is starting or running. Fixed:
+       page-open and prefix-change syncs wait until the run ends.
+5. [x] **Cloud save errors on the laptop**, all on 2026-10-30 with plus.18:
        "Failed to hash restore file" and "Not found in the save store" are
        what 186344a25 fixed (versions written without their files on object
        stores); confirm after installing the fix. Also seen:
        `cloud_save_restore_prefix_invalid` on the `environment-changed`
        trigger. Check what the user sees when an automatic sync fails (an
-       event is sent; the laptop log shows 12 failures).
-6. [ ] **The upload after exit can be cut off.** The after-exit sync started
+       event is sent; the laptop log shows 12 failures). Checked 2026-10-31
+       against R2 with a test path: upload, restore (byte-identical), a second
+       device's conflict and **keep remote** all work with the fixes. The
+       prefix error was a prefix not created yet; it is now a skip. A failed
+       automatic sync is shown only on the game's page while it is open;
+       making backup state visible elsewhere is roadmap item 6.
+6. [x] **The upload after exit can be cut off.** The after-exit sync started
        at 14:02:57 and Hydra quit at 14:02:58 for a reboot. Check that an
-       interrupted upload is retried on the next start.
+       interrupted upload is retried on the next start. It was not (only when
+       the game's page was opened or it was launched again). Fixed: a pending
+       marker, and a full sync 30 s after the next start; tested with R2.
 7. [x] **Dev worktrees can't run save backups.** `scripts/worktree-setup.sh`
        copies the main checkout's `ludusavi/` into the worktree's tracked
        `ludusavi/`, nesting it as `ludusavi/ludusavi/`; startup then fails

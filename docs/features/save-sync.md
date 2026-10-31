@@ -41,6 +41,15 @@ The same as Hydra Cloud's saves, signed in or not:
   starts with the saves it has, and nothing is uploaded when it closes, so
   those saves can't replace newer ones in the store. Only a conflict stops a
   launch;
+- no sync while a game is starting or running: from the launch until the run
+  ends, opening the game's page or changing its prefix doesn't sync, since
+  the game may be writing its saves (under Proton the process watcher can
+  take half a minute to see it);
+- an upload after exit that didn't finish (Hydra quit, the machine rebooted)
+  is retried 30 seconds after the next start, as a full sync, so a store that
+  moved on in between becomes a conflict rather than being overwritten;
+- a prefix that was just chosen and doesn't exist yet is not an error: the
+  sync is skipped and the restore happens before the first launch;
 - restore on a new device: a game whose saves exist only in the store is
   "remote ahead" and its saves are written back;
 - conflicts: when two devices changed the same save, the second one sees a

@@ -10,10 +10,14 @@ import {
   hasRpcs3CloudSaveDisc,
   isCloudSaveV2Eligible,
 } from "@shared";
-import { gamesSublevel, levelKeys } from "@main/level";
+import {
+  cloudSavePendingUploadsSublevel,
+  gamesSublevel,
+  levelKeys,
+} from "@main/level";
 
 import { HydraApi } from "../hydra-api";
-import { isGameRunning } from "../game-running-state";
+import { isGameLaunching, isGameRunning } from "../game-running-state";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import { getCloudSaveAutomaticSyncEnabled } from "./automatic-sync-settings";
@@ -41,6 +45,12 @@ import {
 
 const automaticSyncCoordinator =
   new CloudSaveOperationCoordinator<AutomaticCloudSaveSyncOutcome>();
+
+const PREFIX_NOT_READY_ERRORS = new Set([
+  "cloud_save_restore_prefix_unresolved",
+  "cloud_save_restore_prefix_invalid",
+  "cloud_save_restore_profile_unresolved",
+]);
 
 const gameKey = (objectId: string, shop: GameShop) =>
   JSON.stringify([shop, objectId]);
@@ -169,6 +179,13 @@ export const runAutomaticCloudSaveSyncDetailed = async (
   if (isGameRunning(objectId, shop)) {
     return { status: "skipped", result: null };
   }
+  // A starting game is writing its saves before the process watcher sees it.
+  if (
+    (trigger === "game-page-open" || trigger === "environment-changed") &&
+    isGameLaunching(objectId, shop)
+  ) {
+    return { status: "skipped", result: null };
+  }
   if (
     getCloudSaveEmulatorProvider(shop, game.platform) === "rpcs3" &&
     !hasRpcs3CloudSaveDisc(game)
@@ -278,12 +295,25 @@ export const runAutomaticCloudSaveSyncDetailed = async (
         const executableMissing = isCloudSaveExecutableMissingError(error);
         const gameRunning =
           error instanceof Error && error.message === "cloud_save_game_running";
-        if (environmentChanged || executableMissing || gameRunning) {
+        // A prefix that was just chosen exists only after the first launch;
+        // the pre-launch sync restores into it then.
+        const prefixNotReady =
+          trigger !== "pre-launch" &&
+          error instanceof Error &&
+          PREFIX_NOT_READY_ERRORS.has(error.message);
+        if (
+          environmentChanged ||
+          executableMissing ||
+          gameRunning ||
+          prefixNotReady
+        ) {
           let cancellationReason = "environment_changed";
           if (executableMissing) {
             cancellationReason = "executable_missing";
           } else if (gameRunning) {
             cancellationReason = "game_running";
+          } else if (prefixNotReady) {
+            cancellationReason = "prefix_not_ready";
           }
 
           finishAutomaticSyncObservation(
@@ -404,11 +434,56 @@ export const runAutomaticCloudSavePostExit = async (
     return null;
   }
 
-  return runAutomaticCloudSaveSync(
+  // Kept until the upload finishes, so one cut off by a quit or reboot is
+  // retried on the next start.
+  const pendingKey = levelKeys.game(shop, objectId);
+  await cloudSavePendingUploadsSublevel
+    .put(pendingKey, { shop, objectId, since: new Date().toISOString() })
+    .catch(() => undefined);
+  const result = await runAutomaticCloudSaveSync(
     objectId,
     shop,
     "post-exit",
     context,
     guard.baseRemoteHash
   );
+  if (result)
+    await cloudSavePendingUploadsSublevel
+      .del(pendingKey)
+      .catch(() => undefined);
+  return result;
+};
+
+/**
+ * Syncs games whose upload after exit did not finish last time. A full sync,
+ * not an upload: the store may have moved on since, and that is a conflict.
+ */
+export const retryPendingCloudSaveUploads = async () => {
+  if (
+    !canAccessCloudSaves(
+      HydraApi.isLoggedIn(),
+      HydraApi.hasActiveSubscription()
+    )
+  )
+    return;
+
+  const pending = await cloudSavePendingUploadsSublevel
+    .iterator()
+    .all()
+    .catch(() => []);
+  for (const [key, entry] of pending) {
+    const shop = entry.shop as GameShop;
+    if (isGameRunning(entry.objectId, shop)) continue;
+    logger.info("[Cloud Save] Retrying an unfinished upload after exit", {
+      shop,
+      objectId: entry.objectId,
+      since: entry.since,
+    });
+    const result = await runAutomaticCloudSaveSync(
+      entry.objectId,
+      shop,
+      "game-page-open"
+    ).catch(() => null);
+    if (result) await cloudSavePendingUploadsSublevel.del(key).catch(() => {});
+  }
 };

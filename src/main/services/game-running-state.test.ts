@@ -11,7 +11,9 @@ import {
   gamesPlaytime,
   getGamePlaytimeDeltas,
   getTrackedGamesRunning,
+  isGameLaunching,
   isGameRunning,
+  setGameLaunching,
   setGamePlaytime,
   setEmulatorGameRunning,
   resetHydraPlaytimeTicks,
@@ -217,4 +219,14 @@ it("resetting Hydra ticks preserves the frozen policy and session duration for a
     syncDelta: 0,
   });
   deleteGamePlaytime(key);
+});
+
+it("reports a game as launching until its run ends", () => {
+  const key = levelKeys.game("steam", "1931770");
+  assert.equal(isGameLaunching("1931770", "steam"), false);
+  setGameLaunching(key, true);
+  assert.equal(isGameLaunching("1931770", "steam"), true);
+  assert.equal(isGameRunning("1931770", "steam"), false);
+  setGameLaunching(key, false);
+  assert.equal(isGameLaunching("1931770", "steam"), false);
 });

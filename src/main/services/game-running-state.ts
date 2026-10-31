@@ -91,6 +91,20 @@ export const getTrackedGamesRunning = (now = performance.now()) =>
     })
   );
 
+/**
+ * Games between Hydra starting them and the run ending. The process watcher
+ * can take half a minute to see a game under Proton; this covers that gap.
+ */
+const launchingGames = new Set<string>();
+
+export const setGameLaunching = (gameKey: string, launching: boolean) => {
+  if (launching) launchingGames.add(gameKey);
+  else launchingGames.delete(gameKey);
+};
+
+export const isGameLaunching = (objectId: string, shop: Game["shop"]) =>
+  launchingGames.has(levelKeys.game(shop, objectId));
+
 export const isGameRunning = (objectId: string, shop: Game["shop"]) =>
   gamesPlaytime.has(levelKeys.game(shop, objectId)) ||
   emulatorGamesRunning.has(levelKeys.game(shop, objectId));
