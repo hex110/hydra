@@ -33,7 +33,7 @@ The Proton build matters. Wine's Wayland HDR support is what the HDR rule turns
 on, and not every build has a working one: GE-Proton 11 gives RenoDX an HDR10
 swapchain, while UMU-Proton 10, umu's default when nothing is chosen, does not
 (RenoDX logs that it could not set the colour space). Pick a Proton build for
-the game or as the default in **Settings → Compatibility** if the mod shows no
+the game or as the default in **Settings → Proton and Wine** if the mod shows no
 HDR. The Tools options say so when the game launches with a build that is
 known not to work (see [Dependencies](game-tools.md#dependencies)).
 
@@ -132,7 +132,7 @@ before OptiScaler. A game is skipped when:
 You can install into any Windows game that has a mod from its options, also
 when automatic installation is off; **On** in Tools does the same and keeps it
 installed. **Install in all games that have a mod**, in
-**Settings → Games and tools**, runs the same checks over the library and
+**Settings → Games overview**, runs the same checks over the library and
 ignores the Tool defaults choice but not opt-outs.
 
 ## Versions and updates

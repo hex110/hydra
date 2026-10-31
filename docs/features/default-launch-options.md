@@ -1,6 +1,6 @@
 # Default launch options
 
-**Settings → Compatibility → Default launch options** sets launch options that
+**Settings → Proton and Wine → Default launch options** sets launch options that
 Hydra applies to every game it launches, on top of each game's own launch
 options (**Game options → General → Launch options**).
 

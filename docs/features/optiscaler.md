@@ -38,7 +38,7 @@ games) are only detected through the compatibility list. You can install
 OptiScaler into any Windows game by hand from its options, or set it to **On**
 in Tools, which also keeps it installed when automatic installs are off.
 
-**Install in all supported games**, in **Settings → Games and tools**, runs the
+**Install in all supported games**, in **Settings → Games overview**, runs the
 same checks over the whole library, including games added before the setting
 was turned on. It ignores the Tool defaults choice but respects opt-outs.
 

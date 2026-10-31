@@ -152,7 +152,7 @@ mods, the INI fragments) stay where they were.
 
 ## Games and tools
 
-**Settings → Games and tools** lists every library game with an executable
+**Settings → Games overview** lists every library game with an executable
 against OnlineFix, RenoDX and OptiScaler, how its last run ended, and whether an
 update is waiting. A game's name opens its Tools options. The filter shows
 games whose last run failed, games where a tool failed its first run, games

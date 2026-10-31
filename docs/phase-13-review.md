@@ -158,11 +158,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         where it is installed). RenoDX and OptiScaler stay Never by default
         for now: RenoDX now checks the display, but OptiScaler still needs
         the GPU check (FSR4 or not) before its Auto can be the default.
-13. [x] **The default Proton build is unclear.** Settings → Compatibility
+13. [x] **The default Proton build is unclear.** Settings → Proton and Wine
         offers "Auto (global default or umu default)" without saying which
         build that is. umu's default (UMU-Proton 10) has no Wayland HDR, so
         RenoDX is blocked by default; GE-Proton auto-install is off.
-        Fixed: Settings → Compatibility calls it "Let umu choose" and says
+        Fixed: Settings → Proton and Wine calls it "Let umu choose" and says
         what that is (the newest UMU-Proton, no HDR for RenoDX); a game's
         Auto reads "the default from Settings" and names the build it will
         use. umu's pick stays the default: it is the most compatible build,
@@ -197,7 +197,10 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         GameMode) and Settings → RenoDX (beta mods). Fixed: the HDR rows
         point to Tool defaults too. Beta mods stay on the RenoDX page, the
         one place that setting exists.
-19. [ ] **Eighteen settings categories at one level** (17 signed out; roadmap item 4).
+19. [x] **Eighteen settings categories at one level** (17 signed out; roadmap item 4). Done: six groups (App;
+        Library and downloads; Tools and fixes; Saves; Accounts and tracking;
+        Classics), Compatibility renamed Proton and Wine and Games and tools
+        renamed Games overview, ids unchanged so `?tab=` links still work.
 20. [x] **The Cloud page assumes history.** "While this is on it replaces
         Hydra Cloud, also for subscribers" and "Your list of games is
         uploaded, never added back on its own" need knowledge a new user does

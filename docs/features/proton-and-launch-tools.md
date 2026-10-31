@@ -1,6 +1,6 @@
 # Proton builds and launch tools
 
-Linux only. Settings live in **Settings → Compatibility**; per-game options in
+Linux only. Settings live in **Settings → Proton and Wine**; per-game options in
 the game's **Compatibility** options; rule actions in **Settings → Launch
 rules**.
 
@@ -65,7 +65,7 @@ MangoHud can be turned on globally, by a rule, or per game in
 [Tools](game-tools.md), where it can also be turned off for one game while it
 is on everywhere else. What it shows comes from a layout:
 
-- **Settings → Compatibility → MangoHud layout** sets a layout for every game:
+- **Settings → Proton and Wine → MangoHud layout** sets a layout for every game:
   position, which items to show (FPS, frame time graph, GPU and CPU load and
   temperature, VRAM, RAM, resolution, graphics API, Wine version, present
   mode, gamescope FSR and HDR), an FPS limit, a horizontal bar, and extra

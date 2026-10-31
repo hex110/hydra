@@ -58,76 +58,97 @@ export default function Settings() {
         id: "general" as const,
         label: t("general"),
         icon: <GearIcon size={16} />,
-      },
-      {
-        id: "downloads" as const,
-        label: t("downloads"),
-        icon: <DownloadIcon size={16} />,
-      },
-      {
-        id: "download_sources" as const,
-        label: t("download_sources"),
-        icon: <LinkIcon size={16} />,
+        group: "app" as const,
       },
       {
         id: "notifications" as const,
         label: t("notifications"),
         icon: <BellIcon size={16} />,
+        group: "app" as const,
       },
       {
         id: "content_gameplay" as const,
         label: t("content_gameplay"),
         icon: <PlayIcon size={16} />,
+        group: "app" as const,
       },
       {
-        id: "integrations" as const,
-        label: t("integrations"),
-        icon: <CloudIcon size={16} />,
-      },
-      {
-        id: "compatibility" as const,
-        label: t("compatibility"),
-        icon: <Wrench size={16} />,
-      },
-      {
-        id: "tool_defaults" as const,
-        label: t("tool_defaults"),
-        icon: <SlidersHorizontal size={16} />,
-      },
-      {
-        id: "games_overview" as const,
-        label: t("games_overview"),
-        icon: <LayoutList size={16} />,
-      },
-      {
-        id: "launch_rules" as const,
-        label: t("launch_rules"),
-        icon: <ListChecks size={16} />,
+        id: "big_picture" as const,
+        label: t("big_picture"),
+        icon: <VideoIcon size={16} />,
+        group: "app" as const,
       },
       {
         id: "library_folders" as const,
         label: t("library_folders"),
         icon: <FolderSearch size={16} />,
+        group: "library" as const,
       },
       {
-        id: "save_import" as const,
-        label: t("save_import"),
-        icon: <FolderSync size={16} />,
+        id: "downloads" as const,
+        label: t("downloads"),
+        icon: <DownloadIcon size={16} />,
+        group: "library" as const,
       },
       {
-        id: "cloud" as const,
-        label: t("cloud"),
-        icon: <CloudUpload size={16} />,
+        id: "download_sources" as const,
+        label: t("download_sources"),
+        icon: <LinkIcon size={16} />,
+        group: "library" as const,
+      },
+      {
+        id: "tool_defaults" as const,
+        label: t("tool_defaults"),
+        icon: <SlidersHorizontal size={16} />,
+        group: "tools" as const,
+      },
+      {
+        id: "games_overview" as const,
+        label: t("games_overview"),
+        icon: <LayoutList size={16} />,
+        group: "tools" as const,
+      },
+      {
+        id: "compatibility" as const,
+        label: t("proton_and_wine"),
+        icon: <Wrench size={16} />,
+        group: "tools" as const,
+      },
+      {
+        id: "launch_rules" as const,
+        label: t("launch_rules"),
+        icon: <ListChecks size={16} />,
+        group: "tools" as const,
       },
       {
         id: "optiscaler" as const,
         label: t("optiscaler"),
         icon: <Sparkles size={16} />,
+        group: "tools" as const,
       },
       {
         id: "renodx" as const,
         label: t("renodx"),
         icon: <Sun size={16} />,
+        group: "tools" as const,
+      },
+      {
+        id: "cloud" as const,
+        label: t("cloud"),
+        icon: <CloudUpload size={16} />,
+        group: "saves" as const,
+      },
+      {
+        id: "save_import" as const,
+        label: t("save_import"),
+        icon: <FolderSync size={16} />,
+        group: "saves" as const,
+      },
+      {
+        id: "integrations" as const,
+        label: t("integrations"),
+        icon: <CloudIcon size={16} />,
+        group: "accounts" as const,
       },
       ...(userDetails
         ? [
@@ -135,14 +156,10 @@ export default function Settings() {
               id: "account_privacy" as const,
               label: `${t("account")} & ${t("privacy")}`,
               icon: <ShieldCheckIcon size={16} />,
+              group: "accounts" as const,
             },
           ]
         : []),
-      {
-        id: "big_picture" as const,
-        label: t("big_picture"),
-        icon: <VideoIcon size={16} />,
-      },
       {
         id: "emulation" as const,
         label: t("emulation"),
@@ -253,9 +270,7 @@ export default function Settings() {
                           <div className="settings__sidebar-group">
                             <div className="settings__sidebar-divider" />
                             <span className="settings__sidebar-group-label">
-                              {currentGroup === "classics"
-                                ? t("classics_group")
-                                : currentGroup}
+                              {t(`settings_group_${currentGroup}`)}
                             </span>
                           </div>
                         )}

@@ -11,7 +11,7 @@ its first launch. Setup runs automatically when:
 Games are set up one at a time in the background. Setup never runs for games
 installed by Steam or Epic, since those launchers own their files.
 
-Settings live in **Settings → Compatibility → Game setup**.
+Settings live in **Settings → Proton and Wine → Game setup**.
 
 ## Steps
 
