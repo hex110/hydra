@@ -306,16 +306,14 @@ app that works for someone who isn't the developer.
    added since the fork, check that it explains itself, fails visibly when its
    requirement is missing (`hypr-hdr` needs Hyprland and an HDR monitor,
    RenoDX needs a Proton build with Wayland HDR), doesn't overlap another
-   feature, and doesn't assume the developer's paths or hardware. Write the
-   findings into this section as a list before fixing any of them, each
-   marked bug, coherence or polish, and note where upstream 4.3.0 already
-   covers it. Known items to include:
-   - The first-run checks match RenoDX and OptiScaler log lines taken from
-     the plan, not from real runs; confirm them on a real game.
-   - The umu/Proton path of run history has not been tested with a real
-     Windows game.
-   - Save sync has not been tried end to end with a real game by the owner.
-   - The "Known problems" below.
+   feature, and doesn't assume the developer's paths or hardware. Findings
+   go into [Phase 13 review](phase-13-review.md) before any are fixed, marked
+   bug, coherence or polish, with where upstream 4.3.0 already covers them.
+   First pass done 2026-10-31 (26 findings, the first real umu runs among
+   them). Still to walk, needing real games and accounts: the first-run
+   checks' RenoDX and OptiScaler log lines (taken from the plan, not real
+   runs), Floppy sync, the Steam history import, the AnkerGames handoff, and
+   save sync after the 2026-10-30 fixes.
 2. **Fix the findings.** Bugs first, then coherence, then polish.
 3. **Auto fits the machine.** Auto resolves from the hardware it runs on, not
    only the game: no HDR output means the HDR rule, the monitor switch and
