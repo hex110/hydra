@@ -39,7 +39,13 @@ for item in \
   binaries/epic-prerequisite-runner; do
   [ -e "$main/$item" ] || continue
   mkdir -p "$path/$(dirname "$item")"
-  cp -a --reflink=auto "$main/$item" "$path/$item"
+  # A folder git already created (ludusavi/ holds a tracked config) gets the
+  # contents, not a nested copy.
+  if [ -d "$main/$item" ] && [ -d "$path/$item" ]; then
+    cp -a --reflink=auto "$main/$item/." "$path/$item/"
+  else
+    cp -a --reflink=auto "$main/$item" "$path/$item"
+  fi
 done
 
 echo "==> Worktree ready: $path (branch $name)"
