@@ -145,6 +145,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         Hydra could do PRIME render offload per game (`__NV_PRIME_RENDER_OFFLOAD=1`,
         `__VK_LAYER_NV_optimus=NVIDIA_only`, `DRI_PRIME=1`), as Steam does,
         with Auto picking the discrete GPU. Needs a hand test on the laptop.
+        Done so far: Hydra detects the offload GPU, and **Second GPU → On**
+        in a game's Tools runs it with PRIME offload and the DXVK/VKD3D
+        filters pointed at it (checked with `vulkaninfo` on the laptop: the
+        MX550 becomes the first device). Auto stays off until a game is
+        confirmed to show a picture that way; then make it the default.
 12. [ ] **A new user gets no tools.** OptiScaler, RenoDX, MangoHud, GameMode
         and the HDR rules all default to Never on a fresh install; they stay
         off until the user finds Tool defaults. Auto can become the default

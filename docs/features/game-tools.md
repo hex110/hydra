@@ -14,6 +14,7 @@ place a game's tools are switched; the other tabs hold their details
 | OptiScaler              | All       | Installed during setup when the game qualifies and **Tool defaults** is Auto                  |
 | MangoHud                | Linux     | The global setting, or a launch rule that turns it on                                         |
 | GameMode                | Linux     | On where `gamemoderun` is installed, unless **Tool defaults** says Never                      |
+| Second GPU              | Linux     | Off: games stay on the GPU that drives the screen (shown on hybrid laptops only)              |
 
 Tools apply to Windows games only, except MangoHud and GameMode, which wrap
 any game.
@@ -106,6 +107,23 @@ notification that opens the Tools tab. The tool stays installed. **Off**
 removes what Hydra installed and keeps it from coming back; **On** keeps it
 and stops the check. Any choice clears the failure, and a passed check clears
 silently.
+
+## Second GPU
+
+On a hybrid laptop (an NVIDIA or AMD GPU next to the integrated one that
+drives the screen, found in `/sys/class/drm`), games run on the integrated
+GPU unless told otherwise. **Second GPU → On** runs the game on the other one
+through PRIME render offload: `__NV_PRIME_RENDER_OFFLOAD=1`,
+`__VK_LAYER_NV_optimus=NVIDIA_only` and `__GLX_VENDOR_LIBRARY_NAME=nvidia` for
+NVIDIA, `DRI_PRIME=1` for AMD, plus `DXVK_FILTER_DEVICE_NAME` and
+`VKD3D_FILTER_DEVICE_NAME` so DXVK picks that GPU even when the session pins
+it to the integrated one. The frames still reach the screen through the
+integrated GPU. The game's own launch options win over these.
+
+Auto is off for now, and the row is per game only (not in Tool defaults):
+offload has not yet been confirmed with a game on real hardware. On the
+owner's laptop (MX550 next to Intel UHD), DXVK picking the MX550 without the
+offload variables gave a black screen, which is why its session forces Intel.
 
 ## Defaults for every game
 
