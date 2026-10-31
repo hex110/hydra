@@ -13,6 +13,14 @@ good extraction; an install that already has downloads or installed games
 keeps the Downloads folder it used, written down so nothing moves. The
 AnkerGames handoff still watches the browser's own Downloads folder.
 
+## Choosing a download
+
+**Open download options** marks the option your preferences rank first
+(preferred sources, newest or smallest, excluded words, and only options a
+downloader you can use accepts) as **Recommended**. When only one option
+exists, it skips the list and opens that option's download settings
+straight away; closing them shows the list.
+
 ## Free space
 
 The download dialog refuses a download that does not fit on the drive, as

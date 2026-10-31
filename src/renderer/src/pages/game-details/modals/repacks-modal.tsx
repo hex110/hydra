@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -255,6 +255,50 @@ export function RepacksModal({
     setFilteredRepacks(bySource);
   }, [sortedRepacks, filterTerm, selectedFingerprints, downloadSources]);
 
+  /** The repack the user's preferences rank first among usable ones. */
+  const findBestRepack = (): GameRepack | undefined => {
+    const accounts = {
+      [Downloader.RealDebrid]: !!userPreferences?.realDebridApiToken,
+      [Downloader.TorBox]: !!userPreferences?.torBoxApiToken,
+      [Downloader.Premiumize]: !!userPreferences?.premiumizeApiToken,
+      [Downloader.AllDebrid]: !!userPreferences?.allDebridApiToken,
+    } as Partial<Record<Downloader, boolean>>;
+    const isUsable = (candidate: GameRepack) =>
+      candidate.uris.some(
+        (uri) =>
+          !candidate.unavailableUris?.includes(uri) &&
+          getDownloadersForUri(uri).some(
+            (downloader) =>
+              downloader !== Downloader.Hydra && (accounts[downloader] ?? true)
+          )
+      );
+
+    const [best] = rankRepacks(
+      repacks,
+      resolveRepackPreferences(userPreferences),
+      isUsable
+    );
+    return best;
+  };
+
+  // Opened by hand: mark the best option, and when only one option can be
+  // used, go straight to its download settings (once per opening).
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (!visible) {
+      autoOpenedRef.current = false;
+      return;
+    }
+    if (!repacksLoaded || autoDownloadRequest || autoOpenedRef.current) return;
+    autoOpenedRef.current = true;
+    const best = findBestRepack();
+    if (!best) return;
+    setRecommendedRepackId(best.id);
+    if (repacks.length === 1) handleRepackClick(best);
+    // findBestRepack and handleRepackClick only read state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, repacksLoaded, repacks, autoDownloadRequest]);
+
   const handleRepackClick = (repack: GameRepack) => {
     setRepack(repack);
     setShowSelectFolderModal(true);
@@ -282,27 +326,7 @@ export function RepacksModal({
       return;
     }
 
-    const accounts = {
-      [Downloader.RealDebrid]: !!userPreferences?.realDebridApiToken,
-      [Downloader.TorBox]: !!userPreferences?.torBoxApiToken,
-      [Downloader.Premiumize]: !!userPreferences?.premiumizeApiToken,
-      [Downloader.AllDebrid]: !!userPreferences?.allDebridApiToken,
-    } as Partial<Record<Downloader, boolean>>;
-    const isUsable = (candidate: GameRepack) =>
-      candidate.uris.some(
-        (uri) =>
-          !candidate.unavailableUris?.includes(uri) &&
-          getDownloadersForUri(uri).some(
-            (downloader) =>
-              downloader !== Downloader.Hydra && (accounts[downloader] ?? true)
-          )
-      );
-
-    const [best] = rankRepacks(
-      repacks,
-      resolveRepackPreferences(userPreferences),
-      isUsable
-    );
+    const best = findBestRepack();
 
     if (!best) {
       showWarningToast(t("no_repack_matches_preferences"));
