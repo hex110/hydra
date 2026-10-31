@@ -46,6 +46,7 @@ import {
 } from "@shared";
 import { GearIcon } from "@primer/octicons-react";
 import { HomeShelf } from "./home-shelf";
+import { HomeGetStarted } from "./home-get-started";
 import { LastPlayedHero } from "./last-played-hero";
 import { PlayActivityPanel } from "./play-activity-panel";
 import { GameNewsCard } from "./game-news-card";
@@ -98,6 +99,12 @@ export default function Home() {
   const navigate = useNavigate();
 
   const { library } = useLibrary();
+  const getStartedDismissed = useAppSelector(
+    (state) => state.userPreferences.value?.homeGetStartedDismissed === true
+  );
+  // Until something is installed; the steps are about getting there.
+  const showGetStarted =
+    !getStartedDismissed && !library.some((game) => !!game.executablePath);
   const runningGameId = useAppSelector(
     (state) => state.gameRunning.gameRunning?.id
   );
@@ -654,6 +661,8 @@ export default function Home() {
     <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
       <section className="home__content">
         {lastPlayed ? <LastPlayedHero game={lastPlayed} /> : <Hero />}
+
+        {showGetStarted && <HomeGetStarted />}
 
         {shelfLayout.order
           .filter((id) => !shelfLayout.hidden.includes(id))

@@ -7,6 +7,8 @@ interface HomeShelfProps {
   action?: ReactNode;
   /** Wider cards, for news. */
   wide?: boolean;
+  /** Wrap onto more rows instead of cutting off what doesn't fit. */
+  wrap?: boolean;
   children: ReactNode;
 }
 
@@ -16,6 +18,7 @@ export function HomeShelf({
   description,
   action,
   wide = false,
+  wrap = false,
   children,
 }: Readonly<HomeShelfProps>) {
   return (
@@ -27,7 +30,11 @@ export function HomeShelf({
         )}
         {action && <div className="home__shelf-action">{action}</div>}
       </div>
-      <div className={`home__shelf-row${wide ? " home__shelf-row--wide" : ""}`}>
+      <div
+        className={`home__shelf-row${wide ? " home__shelf-row--wide" : ""}${
+          wrap ? " home__shelf-row--wrap" : ""
+        }`}
+      >
         {children}
       </div>
     </section>

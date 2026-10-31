@@ -29,6 +29,15 @@ needs no key. Hydra asks for official announcements only (other feeds repost
 press articles), for up to eight games, and keeps them for half an hour.
 Clicking a post opens it in the browser.
 
+## Get started
+
+Until something in the library is installed, a **Get started** shelf sits
+under the hero: where downloaded games go (with the folder), the catalogue,
+adding a folder of games already on the computer, and the two optional
+extras, play tracking (Steam, Floppy) and cloud saves. Each step opens the
+page it names (`/settings?tab=…` for settings). **Hide** dismisses it for good
+(`homeGetStartedDismissed`).
+
 ## Last played
 
 The hero shows the game you played last, with when you played it, your total

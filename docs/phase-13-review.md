@@ -170,17 +170,20 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## First run (principle 1)
 
-14. [ ] **No first-run guidance.** A fresh install opens upstream's store
+14. [x] **No first-run guidance.** A fresh install opens upstream's store
         home. Nothing introduces where games go, the library folders, the
-        tools or cloud saves.
-15. [ ] **Games are installed into the Downloads folder.** The default
+        tools or cloud saves. Fixed: a Get started shelf on the home page
+        until something is installed ([Home page](features/home.md#get-started)).
+15. [x] **Games are installed into the Downloads folder.** The default
         download path is `~/Downloads` (or `$HOME` when there is no XDG
         Downloads folder); the laptop's game lives in
         `~/Downloads/Chants-of-Sennaar-AnkerGames/`. Steam and Heroic use a
-        games folder.
-16. [ ] **Archives are kept after extraction by default**, so a download
+        games folder. Fixed: a fresh install uses `~/Games`; existing
+        installs keep their folder, written down.
+16. [x] **Archives are kept after extraction by default**, so a download
         needs twice its size for good. Upstream's in-place extraction (#3009)
-        changes this; decide together in phase 14.
+        changes this; decide together in phase 14. Fixed for fresh installs
+        (deleted after a good extraction); existing settings stay.
 
 ## Coherence
 

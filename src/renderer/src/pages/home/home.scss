@@ -146,6 +146,29 @@
   overflow: hidden;
 }
 
+.home__shelf-row--wrap {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: auto;
+  row-gap: calc(globals.$spacing-unit * 3);
+}
+
+.home__get-started-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: globals.$spacing-unit;
+}
+
+.home__get-started-icon {
+  color: globals.$brand-teal;
+}
+
+.home__get-started-text {
+  color: globals.$body-color;
+  font-size: globals.$body-font-size;
+  flex: 1;
+}
+
 .home__shelf-skeleton {
   width: 100%;
   aspect-ratio: 2 / 3;

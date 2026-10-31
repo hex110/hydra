@@ -391,6 +391,8 @@ export interface UserPreferences {
   showDownloadSpeedInMegabytes?: boolean;
   extractFilesByDefault?: boolean;
   deleteArchiveFilesAfterExtractionByDefault?: boolean;
+  /** The home page's "Get started" steps were dismissed. */
+  homeGetStartedDismissed?: boolean;
   enableSteamAchievements?: boolean;
   enableAchievementSouvenirs?: boolean;
   achievementScreenshotsPath?: string;
