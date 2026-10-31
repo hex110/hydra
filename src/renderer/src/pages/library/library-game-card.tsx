@@ -82,8 +82,16 @@ export const LibraryGameCard = memo(function LibraryGameCard({
     { url: game.customCoverImageUrl, isChosenCover: true }, // Level 0
     { url: game.coverImageUrl, isChosenCover: hasPickedCover }, // Level 1
     { url: game.libraryImageUrl, isChosenCover: false }, // Level 2
-    { url: game.iconUrl, isChosenCover: false }, // Level 3
-  ].filter(({ url }) => url && url.trim() !== "");
+    // Not the icon: a 32 px icon stretched to a poster looks broken; the
+    // placeholder shows the title instead.
+  ]
+    .filter(({ url }) => url && url.trim() !== "")
+    // An unchanged src fires no second error, so a repeated URL would stop
+    // the fallback at a broken image (imported games use one URL twice).
+    .filter(
+      ({ url }, index, all) =>
+        all.findIndex((candidate) => candidate.url === url) === index
+    );
 
   const sources = candidates.map(({ url }) => url);
 
@@ -197,7 +205,10 @@ export const LibraryGameCard = memo(function LibraryGameCard({
     if (imageError || !activeImageSource) {
       return (
         <div className="library-game-card__cover-placeholder">
-          <ImageIcon size={48} />
+          <ImageIcon size={32} />
+          <span className="library-game-card__cover-placeholder-title">
+            {game.title}
+          </span>
         </div>
       );
     }

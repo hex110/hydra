@@ -87,6 +87,20 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
        shells, interpreters, Wine and Steam binaries, and system folders
        never match by name (`isPlausibleGameProcessPath`).
 
+9. [x] **Imported games show broken covers.** About a quarter of the
+       Steam and Floppy imports showed an empty box with the title as alt
+       text: their guessed `library_600x900_2x.jpg` 404s (newer apps keep
+       artwork under a hashed folder), and the card's fallback stopped
+       there because the cover and library image were the same URL, and an
+       unchanged `src` fires no second error. Fixed: repeated URLs are
+       dropped from the fallback chain, the 32 px icon is no longer
+       stretched into a cover, and the placeholder shows the title. Still
+       open: fetch the real artwork for these games (Steam's store API gives
+       the hashed path; SteamGridDB with the user's key).
+10. [ ] **Hydra Plus's own Integrations page uses native controls**: the
+        Steam history and Floppy cards have native checkboxes and a native
+        `<select>` ("30 minutes played"). Settle in the regroup with item 23.
+
 ## Performance on a modest machine
 
 8. [ ] **The laptop ran out of memory during a game.** At 13:27:41
