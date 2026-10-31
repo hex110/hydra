@@ -35,6 +35,7 @@ import {
 } from "@main/services";
 import { migrateDownloadSources } from "./helpers/migrate-download-sources";
 import { addBundledCommandsToPath } from "./services/bundled-commands";
+import { GameRuns } from "./services/game-runs/game-runs";
 import { getDirSize } from "./services/download/helpers";
 import { isDebridPendingError } from "./services/download/debrid-files";
 import { GofileApi } from "./services/hosters";
@@ -281,6 +282,7 @@ export const loadState = async () => {
     }
   }
 
+  void GameRuns.closeLeftoverRuns();
   startMainLoop();
 
   if (process.platform === "win32") {

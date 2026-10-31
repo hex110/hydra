@@ -17,7 +17,9 @@ they are shown.
   - **Closed early:** it ended within a minute and the game was never seen
     running.
   - **Didn't start:** nothing could be launched.
-  - **Unknown:** Hydra was closed while the game ran.
+  - **Unknown:** Hydra was closed, crashed or was killed while the game ran.
+    Runs left like this are marked when Hydra next starts, with an event
+    saying so.
 - The launcher (Proton through umu, Wine, or native), the Proton build (or
   "umu's default" when none was chosen) and the Wine prefix.
 - The full launch command and the environment Hydra added: launch rules, DLL
@@ -29,7 +31,10 @@ they are shown.
 
 ## Logs
 
-Copied into the run's folder when the run ends:
+The ending is saved as soon as the run ends. The logs are copied into the
+run's folder three seconds later, once umu and Proton have finished writing; if
+Hydra quits in between (a reboot right after the game closes), the run keeps
+its ending but has no logs:
 
 | File              | From                                                             |
 | ----------------- | ---------------------------------------------------------------- |
@@ -38,6 +43,10 @@ Copied into the run's folder when the run ends:
 | `ReShade.log`     | The game folder, also used by RenoDX                             |
 | `OptiScaler.log`  | The game folder                                                  |
 | `game-output.log` | A native game's stdout and stderr, written straight into the run |
+
+Proton writes its log to `<userData>/logs/proton/steam-<id>.log`, one file
+per game that every launch overwrites, not to your home folder. With
+`PROTON_LOG_DIR` set in Hydra's environment, Proton writes there instead.
 
 A log only counts when it changed during the run; a leftover from an earlier
 launch is not copied. Logs over 5 MB keep only their end, and the summary says

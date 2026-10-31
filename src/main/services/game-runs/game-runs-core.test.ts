@@ -5,6 +5,7 @@ import type { GameRun } from "@types";
 
 import {
   classifyRunOutcome,
+  closeLeftoverRun,
   formatRunSummary,
   gameFolderName,
   gameFolderSuffix,
@@ -140,5 +141,22 @@ describe("formatRunSummary", () => {
       formatRunSummary(run({ protonPath: null })),
       /Proton: umu's default/
     );
+  });
+});
+
+describe("closeLeftoverRun", () => {
+  it("marks a run a stopped Hydra left running as unknown, with an event", () => {
+    const closed = closeLeftoverRun(
+      run({ outcome: "running", endedAt: null }),
+      "2026-10-31T10:00:00.000Z"
+    );
+    assert.equal(closed.outcome, "unknown");
+    assert.deepEqual(closed.events, [
+      {
+        at: "2026-10-31T10:00:00.000Z",
+        message: "Hydra stopped before this run ended.",
+      },
+    ]);
+    assert.match(formatRunSummary(closed), /Outcome: end not seen/);
   });
 });

@@ -55,6 +55,16 @@ export const classifyRunOutcome = ({
   return "ended";
 };
 
+/** Ends a run that the Hydra which started it never saw finish. */
+export const closeLeftoverRun = (run: GameRun, at: string) => {
+  run.outcome = "unknown";
+  run.events.push({
+    at,
+    message: "Hydra stopped before this run ended.",
+  });
+  return run;
+};
+
 /** Runs to delete: everything past the newest `keep`, never a running one. */
 export const selectRunsToPrune = (runIds: string[], keep: number) =>
   [...runIds].sort().reverse().slice(keep);

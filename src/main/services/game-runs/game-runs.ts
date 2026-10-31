@@ -23,6 +23,7 @@ import {
   RUNS_KEPT_PER_GAME,
   SUMMARY_FILE,
   classifyRunOutcome,
+  closeLeftoverRun,
   formatRunSummary,
   gameFolderName,
   gameFolderSuffix,
@@ -250,6 +251,17 @@ const finishRun = (gameKey: string) => {
       gameDetected: run.gameDetected,
       durationInMilliseconds: run.durationInMilliseconds,
     });
+
+  // Save the ending now: Hydra may be gone before the logs settle (a reboot
+  // right after the game closes).
+  try {
+    writeRun(run);
+  } catch (error) {
+    logger.warn("Could not write the game run record", {
+      directory: run.directory,
+      error,
+    });
+  }
 
   // Wait for the launcher and Proton to flush before copying their logs.
   setTimeout(() => {
@@ -532,6 +544,47 @@ export const GameRuns = {
       (entry) => entry.id === runId
     );
     return run ? formatRunSummary(run) : null;
+  },
+
+  /**
+   * Runs a previous Hydra left running (it crashed or was killed) are marked
+   * unknown on disk, so `summary.md` stops saying "still running".
+   */
+  async closeLeftoverRuns() {
+    let gameFolders: fs.Dirent[];
+    try {
+      gameFolders = await fs.promises.readdir(getRunsPath(), {
+        withFileTypes: true,
+      });
+    } catch {
+      return;
+    }
+
+    const activeIds = new Set(
+      [...activeRuns.values()].map((active) => active.run.id)
+    );
+    for (const gameFolder of gameFolders) {
+      if (!gameFolder.isDirectory()) continue;
+      const folderPath = path.join(getRunsPath(), gameFolder.name);
+      const runFolders = await fs.promises
+        .readdir(folderPath, { withFileTypes: true })
+        .catch(() => []);
+      for (const runFolder of runFolders) {
+        if (!runFolder.isDirectory()) continue;
+        const run = readRun(path.join(folderPath, runFolder.name));
+        if (!run || run.outcome !== "running" || activeIds.has(run.id))
+          continue;
+        closeLeftoverRun(run, nowIso());
+        try {
+          writeRun(run);
+        } catch (error) {
+          logger.warn("Could not close a leftover game run", {
+            directory: run.directory,
+            error,
+          });
+        }
+      }
+    }
   },
 
   getDirectory(shop: GameShop, objectId: string, runId?: string) {
