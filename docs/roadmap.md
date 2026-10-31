@@ -341,17 +341,35 @@ app that works for someone who isn't the developer.
    links between pages (catalogue ↔ library ↔ game page ↔ home). The game
    page is the reference; record the patterns in `docs/features/game-page.md`
    next to the ownership table.
-8. **Catalogue.** Start with a gap list against Steam's store and Playnite.
-   Aim: finding a game and getting it downloading in as few steps as
-   possible, with the library state on every result.
-9. **Library, and tracking without Floppy.** A gap list against Steam's and
-   Playnite's libraries. Hydra tracks playtime, play dates, ratings and status
-   by itself; Floppy and Steam are sources and sync targets, not
-   requirements. Look again at a Backloggd import (it has no API or export;
-   see [Home page](features/home.md#other-sources)) and at a Playnite import.
-10. **Home page.** A gap list against Steam's library home, then make it the
-    place that connects the rest: what to play next, what changed (updates,
-    downloads, backups, news), and links into the library and catalogue.
+8. **Catalogue.** Gap list against Steam's store and Playnite (2026-10-31).
+   Phase 9 already added the front page, grid view, hover previews, tags,
+   library state on results, load more and kept scroll.
+   - [x] Download from a result: a **Download** button on rows and cards
+         that can be downloaded, and one option opening its settings directly.
+   - [x] The best option marked **Recommended** in every download list.
+   - [ ] Sort by release date, rating and ProtonDB tier (Steam's sort menu).
+   - [ ] Wishlist from a result, next to **+**.
+   - [ ] A header search that suggests games as you type, like Steam's.
+9. **Library, and tracking without Floppy.** Gap list against Steam's and
+   Playnite's libraries (2026-10-31). Hydra already tracks playtime (edited
+   by hand in a game's options), play days, status, rating, notes,
+   favourites and collections by itself; Floppy and Steam are optional
+   sources and sync targets.
+   - [ ] A list view with sortable columns (Playnite's details view):
+         playtime, last played, added, status, rating, size.
+   - [ ] Started and finished dates on play status, shown in the game's
+         **Your game** section and the statistics.
+   - [ ] Import installed games from Heroic and Lutris (Playnite's library
+         importers), next to the save sources of phase 15.
+   - [ ] A Playnite library import (its database export), and Backloggd only
+         if it gains an export (none as of 2026-10-26).
+10. **Home page.** Gap list against Steam's library home (2026-10-31): it
+    already has what to play next, updates and downloads, news, play
+    activity, friends, customisable shelves and Get started.
+    - [ ] A backups line: when the last save sync ran and anything that
+          failed, linking to the game.
+    - [ ] Games played recently on another device (from library sync), so
+          the laptop's session shows on the desktop.
 
 ## Upstream 4.3.0
 
