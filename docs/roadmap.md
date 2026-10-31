@@ -3,6 +3,30 @@
 What we plan to add or fix. Shipped features are documented in
 `docs/features/`; move an item there (and out of this file) when it ships.
 
+## Principles
+
+Decided 2026-10-31. Hydra Plus is for anyone playing on Linux, not only the
+developer's machine: the same app has to be easy on a high-end desktop with
+an HDR monitor and on an older laptop with neither (both run Hyprland).
+Weigh every change against these, in this order:
+
+1. **It just works.** Finding a game in the catalogue, adding it, downloading
+   it and playing it takes no setup and no knowledge of Wine, Proton or
+   prefixes. Prefixes, saves and achievements are managed automatically.
+   When something can't work on this machine, the app says so and why,
+   instead of failing silently.
+2. **Tools are one switch away.** HDR, OptiScaler, GameMode, MangoHud, the
+   OnlineFix, Denuvo and generic crack setups and the other tools turn on
+   from the game or the defaults page and install whatever they need
+   themselves. Auto picks what fits the game and the machine, with a reason.
+   Cloud backup is optional, but easy to set up and free.
+3. **One app for the whole workflow.** Hydra is also the record of
+   everything you have played: playtime, play dates, ratings and status,
+   tracked by Hydra itself, with imports (Steam, Floppy, Backloggd, …) and
+   two-way sync where the other side allows it (Floppy). The design is one
+   consistent, good-looking app with connected pages, comparable to Steam
+   and Playnite.
+
 ## Order
 
 Work top to bottom. Each phase is roughly one release; the items are described
@@ -188,19 +212,38 @@ in the sections below.
            ([Defaults](features/game-tools.md#defaults-for-every-game),
            [overview](features/game-tools.md#games-and-tools); no "skipped
            automatically" filter)
-    5. [ ] In-game overlay
-13. **More save sources.**
+    5. The in-game overlay moved to phase 18 (2026-10-31).
+13. **One app, easy for everyone.** Added 2026-10-31, measured against the
+    [Principles](#principles), with upstream 4.3.0 in view so nothing is
+    built that the merge in phase 14 brings anyway. Details in
+    [One app, easy for everyone](#one-app-easy-for-everyone).
+    1. [ ] Review pass: fresh install, signed out, on a modest machine
+    2. [ ] Fix what the review found
+    3. [ ] Auto fits the machine
+    4. [ ] Settings regrouped
+    5. [ ] Export and import settings (from phase 16)
+    6. [ ] Cloud backup without friction
+    7. [ ] Shared patterns for every page
+    8. [ ] Catalogue
+    9. [ ] Library, and tracking without Floppy
+    10. [ ] Home page
+14. **Merge upstream 4.3.0.** Fit upstream's new features into the
+    principles and the reworked interface. Details in
+    [Upstream 4.3.0](#upstream-430).
+15. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
     3. [ ] Steam's own prefixes
     4. [ ] Steam Cloud
     5. [ ] Hydra cloud account
-14. **Distribution.**
-    1. [ ] Export and import settings
-    2. [ ] pacman updates
-    3. [x] Sign the browser add-on
-    4. [ ] Translations
-15. **Mods.** Native mod support, after a design.
+16. **Distribution.**
+    1. [ ] pacman updates
+    2. [x] Sign the browser add-on
+    3. [ ] Translations
+17. **Mods.** Native mod support, after a design.
+18. **In-game overlay** (was phase 12 item 5). Achievements and what is
+    running in the game; compare a Hyprland layer-shell window with a
+    ReShade add-on first.
 
 Why this order:
 
@@ -232,12 +275,109 @@ Why this order:
   owner fixes games by handing them to Claude Code, which needs a record of
   each run. Moving the tools onto one model first makes every later RHI
   feature a small addition instead of a new page.
+- One app, easy for everyone, comes before more features: most features were
+  built and tested on the developer's machine, signed in, with an HDR monitor
+  and an RDNA4 card, and Hydra Plus now also runs on an older laptop. The
+  review goes first so the fixes and the redesign work from one findings
+  list. Settings come before cloud backup because its setup is a settings
+  flow, and export follows the regroup because it is cheap once the settings
+  stop changing shape. Shared patterns come before the page work so the
+  catalogue, library and home are reworked once, in that order (the home page
+  reads from the other two).
+- The upstream merge follows phase 13: our interface is the one upstream's
+  features have to fit into, so it should be settled first. Phase 13 checks
+  each item against upstream 4.3.0 so no work is done twice.
 - Save sources are independent of everything else; Heroic/Lutris and
   Ludusavi are cheap, Steam Cloud needs a Steam login, Hydra cloud waits on
   the account existing.
-- Settings export makes the postponed laptop install a one-step job.
-  Translations go last, once the settings pages stop changing.
-- Mods are the largest item and need a design before any of it is built.
+- Translations go last, once the settings pages stop changing.
+- Mods and the in-game overlay come last at the owner's request
+  (2026-10-31); mods are the largest item and need a design first.
+
+## One app, easy for everyone
+
+Decided 2026-10-31. Phases 1–12 added a lot quickly; this phase makes it one
+app that works for someone who isn't the developer.
+
+1. **Review pass.** Walk the whole path as a new user, on a fresh signed-out
+   sandbox with no Floppy, no cloud store, no HDR monitor and no RDNA4 card,
+   and again on the laptop (`hp-laptop-ari`): find a game, add it, download,
+   set up, play, turn tools on, back up saves, track it. For every feature
+   added since the fork, check that it explains itself, fails visibly when its
+   requirement is missing (`hypr-hdr` needs Hyprland and an HDR monitor,
+   RenoDX needs a Proton build with Wayland HDR), doesn't overlap another
+   feature, and doesn't assume the developer's paths or hardware. Write the
+   findings into this section as a list before fixing any of them, each
+   marked bug, coherence or polish, and note where upstream 4.3.0 already
+   covers it. Known items to include:
+   - The first-run checks match RenoDX and OptiScaler log lines taken from
+     the plan, not from real runs; confirm them on a real game.
+   - The umu/Proton path of run history has not been tested with a real
+     Windows game.
+   - Save sync has not been tried end to end with a real game by the owner.
+   - The "Known problems" below.
+2. **Fix the findings.** Bugs first, then coherence, then polish.
+3. **Auto fits the machine.** Auto resolves from the hardware it runs on, not
+   only the game: no HDR output means the HDR rule, the monitor switch and
+   RenoDX are off with that reason; a GPU without FSR4 gets the OptiScaler
+   setup that suits it; a low-end machine gets defaults that suit it. The
+   reasons show on the Tools tab and the Games and tools page.
+4. **Settings regrouped.** About 18 categories sit at one level today
+   (Compatibility, Tool defaults, Games and tools, Launch rules, OptiScaler,
+   RenoDX, Cloud, Save import, …). Group them by task (for example Library,
+   Games and tools, Saves and sync, Accounts and integrations, App), give each
+   setting one home the way the game page's ownership table does, and decide
+   whether Games and tools is a page rather than a setting. Tool-specific
+   pages keep only what isn't in Tool defaults.
+5. **Export and import settings.** Launch rules, library folders, tool
+   defaults and the rest in one file, for setting up another machine. After
+   the regroup, since the file follows the settings' shape.
+6. **Cloud backup without friction.** A short guided setup instead of a form,
+   with the free options up front (a Syncthing or NAS folder; Cloudflare R2's
+   free tier through rclone). The backup state shows where games are: the game
+   page and the library card. A new machine offers the restore by itself, and
+   conflicts are a clear choice between two dated versions.
+7. **Shared patterns for every page.** Decide once, before the page work: one
+   game card, one way to show a game's state (installed, update available,
+   downloading, playing, backed up), one filter and sort system, and the
+   links between pages (catalogue ↔ library ↔ game page ↔ home). The game
+   page is the reference; record the patterns in `docs/features/game-page.md`
+   next to the ownership table.
+8. **Catalogue.** Start with a gap list against Steam's store and Playnite.
+   Aim: finding a game and getting it downloading in as few steps as
+   possible, with the library state on every result.
+9. **Library, and tracking without Floppy.** A gap list against Steam's and
+   Playnite's libraries. Hydra tracks playtime, play dates, ratings and status
+   by itself; Floppy and Steam are sources and sync targets, not
+   requirements. Look again at a Backloggd import (it has no API or export;
+   see [Home page](features/home.md#other-sources)) and at a Playnite import.
+10. **Home page.** A gap list against Steam's library home, then make it the
+    place that connects the rest: what to play next, what changed (updates,
+    downloads, backups, news), and links into the library and catalogue.
+
+## Upstream 4.3.0
+
+Released 2026-10-31. 1257 upstream commits since our fork point
+(a22ec0220, 2026-10-16); 116 files are changed on both sides. v4.2.0 is
+already merged. The parts that matter to us:
+
+| Upstream change                                        | Needs an account    | For us                                                                            |
+| ------------------------------------------------------ | ------------------- | --------------------------------------------------------------------------------- |
+| Finished download → playable game guide (#2935)        | No                  | Overlaps game setup and "Installer detection"; merge into one flow                |
+| Screenshot hotkey and capture (#2951–#2954)            | Upload only (check) | Defaults to **F10**, which is our ReShade overlay key; pick one                   |
+| In-place archive extraction (#3009)                    | Server feature flag | Saves disk space; decide whether to enable it without the flag                    |
+| Library covers from Hydra's CDN with ThumbHash (#3013) | Check               | Faster covers; check it works signed out                                          |
+| 10k+ games performance (#3010)                         | No                  | Touches the library and sidebar we reworked; conflicts expected                   |
+| Achievements redesign and sets (#3006)                 | No                  | Fit into the game page; don't redesign achievements in phase 13 before this lands |
+| Leaderboards (#2959–#3025)                             | Yes, behind a flag  | Hide while signed out, like the other account features                            |
+| Steam uninstall from the context menu (#2963)          | No                  | Built on the Steam integration we removed; port to Steam history if wanted        |
+| Epic updates through Legendary, components and DLC     | Epic login          | Keep; Epic cards stay hidden while signed out                                     |
+| Multi-part hoster mirrors (#3012)                      | No                  | Keep                                                                              |
+| `LD_LIBRARY_PATH` no longer leaks into games (#3003)   | No                  | Bug fix we want                                                                   |
+| Realtime RetroAchievements unlocks (#2942)             | RetroAchievements   | Keep, hidden while signed out                                                     |
+
+Upstream also changed the Steam integration we deleted (Steam store session,
+sync orchestrator); take our deletion there.
 
 ## See and steer what Hydra does to a game
 
@@ -286,7 +426,7 @@ doing it automatically and giving control:
    The "Install in all games" buttons move there. Global defaults become one
    settings page with Auto, Always or Never per capability, replacing the
    separate "install automatically" switches.
-5. **In-game overlay.** Like Steam's: achievements, and what is running in
+5. **In-game overlay** (now phase 18). Like Steam's: achievements, and what is running in
    the game (OptiScaler, ReShade, RenoDX settings). Mostly a view of the
    data above. Two routes to compare first: a Hyprland layer-shell window
    above the game, or a ReShade add-on drawing inside it.
@@ -475,7 +615,8 @@ it's wanted.
       game folder, on top of the compatibility list.
 - [ ] **Installer detection.** Offer to run a `setup`/`install` exe found in
       a finished download. Compare with the exe guess after extraction
-      first.
+      first. Upstream 4.3.0's finished-download guide (#2935) covers much of
+      this; decide in phase 14.
 - [ ] **`--no-tray`.** Quit when the window closes.
 - [ ] **Backloggd or IGDB suggestions.** Backloggd has no API or export and
       sits behind a proof-of-work bot check; IGDB needs the user's own Twitch
@@ -551,8 +692,6 @@ All of these plug into the `SaveImportSource` interface.
 
 ## Distribution and upkeep
 
-- [ ] **Export and import settings.** Launch rules, library folders and
-      defaults in one file, for setting up another machine.
 - [ ] **pacman updates.** The in-app updater only updates the AppImage. Add a
       `hydra-plus-bin` AUR package or a small pacman repo.
 - [ ] **Translations.** The Hydra Plus settings are English-only; other
@@ -564,8 +703,6 @@ All of these plug into the `SaveImportSource` interface.
 
 - Built-in download sources, and why the laptop gets different server source
   ids for the same URL.
-- Installing on the laptop (offline in Tailscale). Leave the HDR rule off
-  there.
 
 ## Known problems
 

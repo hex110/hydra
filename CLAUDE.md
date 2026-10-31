@@ -7,6 +7,12 @@ upstream. It is a **separate app** from upstream Hydra — app id
 
 Feature docs live in `docs/features/` — keep them in step with the code.
 
+Product principles are in `docs/roadmap.md` under "Principles": it just works,
+tools are one switch away, one app for the whole workflow. It is for anyone on
+Linux, not only the developer's rig: check new work on a signed-out, modest
+machine (no HDR monitor, older GPU), where it must explain itself or switch
+itself off with a reason.
+
 Upstream's coding rules (logger not console, i18n for every user-facing string,
 named exports, …):
 
