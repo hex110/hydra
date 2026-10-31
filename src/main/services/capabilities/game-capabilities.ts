@@ -37,6 +37,7 @@ import type {
 
 import {
   resolveLaunchRuleCapability,
+  resolveDiscreteGpu,
   resolveLaunchWrapper,
   resolveOnlineFix,
   resolveOptiScaler,
@@ -161,6 +162,8 @@ export const getGameCapabilities = async (
   }
 
   if (!isLinux) return capabilities;
+  const offloadGpu = getMachineProfile().offloadGpu;
+  if (offloadGpu) capabilities.push(resolveDiscreteGpu(game, offloadGpu));
   capabilities.push(
     resolveLaunchWrapper("mangohud", game, {
       globallyOn: userPreferences?.autoRunMangohud === true,
@@ -260,6 +263,15 @@ export const setGameCapabilityMode = async (
       case "renodx":
       case "optiscaler":
         await setInstallCapability(game, id, mode);
+        break;
+      case "discrete_gpu":
+        await updateGameRecord(gameKey, (current) => ({
+          capabilityOverrides: withCapabilityOverride(
+            current,
+            id,
+            capabilityOverrideFromMode(mode)
+          ),
+        }));
         break;
       case "mangohud":
       case "gamemode":

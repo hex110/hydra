@@ -5,6 +5,7 @@ import {
   capabilityModeFromOverride,
   getCapabilityOverride,
   isLaunchWrapperWanted,
+  offloadLaunchOptions,
 } from "./game-capabilities.js";
 import {
   HDR_LAUNCH_RULE_ID,
@@ -111,5 +112,16 @@ describe("isLaunchWrapperWanted", () => {
       isLaunchWrapperWanted("gamemode", game({}), { autoRunGamemode: false }),
       false
     );
+  });
+});
+
+describe("offloadLaunchOptions", () => {
+  it("uses PRIME render offload and points DXVK at the second GPU", () => {
+    const nvidia = offloadLaunchOptions("nvidia");
+    assert.match(nvidia, /__NV_PRIME_RENDER_OFFLOAD=1/);
+    assert.match(nvidia, /__VK_LAYER_NV_optimus=NVIDIA_only/);
+    assert.match(nvidia, /DXVK_FILTER_DEVICE_NAME=NVIDIA/);
+    assert.match(nvidia, /%command%$/);
+    assert.match(offloadLaunchOptions("amd"), /^DRI_PRIME=1 /);
   });
 });

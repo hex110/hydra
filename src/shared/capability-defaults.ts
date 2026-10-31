@@ -35,6 +35,8 @@ export const CAPABILITY_DEFAULT_MODES: Record<
   hdr_monitor: ["never", "always"],
   mangohud: ["never", "always"],
   gamemode: ["auto", "never", "always"],
+  // Per game only until offload is confirmed on real hardware.
+  discrete_gpu: ["never"],
 };
 
 const findRule = (
@@ -65,6 +67,8 @@ export const getCapabilityDefault = (
     case "hdr":
     case "hdr_monitor":
       return findRule(preferences, id)?.enabled ? "always" : "never";
+    case "discrete_gpu":
+      return "never";
   }
 };
 
@@ -87,6 +91,8 @@ export const capabilityDefaultPatch = (
       return {
         autoRunGamemode: mode === "auto" ? undefined : mode === "always",
       };
+    case "discrete_gpu":
+      return {};
     case "hdr":
     case "hdr_monitor": {
       const ruleId = CAPABILITY_LAUNCH_RULES[id];

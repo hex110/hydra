@@ -2,14 +2,19 @@ import path from "node:path";
 import { logger } from "@main/services/logger";
 import { Wine } from "@main/services/wine";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
-import { mayHaveHdrDisplay } from "@main/services/machine/machine-profile";
+import {
+  getMachineProfile,
+  mayHaveHdrDisplay,
+} from "@main/services/machine/machine-profile";
 import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
 import {
   buildGamescopeLaunchOptions,
   isLaunchRuleApplied,
+  getCapabilityOverride,
   isLaunchWrapperWanted,
+  offloadLaunchOptions,
   resolveLaunchRules,
   resolveRenoDxSettings,
   withDependencyRuleOverrides,
@@ -168,6 +173,17 @@ export const getLaunchAdditions = async ({
     gamemode ||= actions.gamemode === true;
     if (actions.gamescope) gamescope = actions.gamescope;
   }
+
+  const offloadGpu = getMachineProfile().offloadGpu;
+  if (
+    offloadGpu &&
+    (offloadGpu.vendor === "nvidia" || offloadGpu.vendor === "amd") &&
+    getCapabilityOverride(game, "discrete_gpu") === true
+  )
+    launchOptions = applyDefaultLaunchOptions(
+      launchOptions,
+      offloadLaunchOptions(offloadGpu.vendor)
+    );
 
   if (gamescope && !isGamescopeSession()) {
     launchOptions = applyDefaultLaunchOptions(

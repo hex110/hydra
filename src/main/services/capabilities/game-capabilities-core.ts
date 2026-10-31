@@ -13,6 +13,7 @@ import type {
   GameOptiScalerStatus,
   GameRenoDxStatus,
   LaunchRule,
+  MachineGpu,
   UserPreferences,
 } from "@types";
 
@@ -329,4 +330,29 @@ export const resolveLaunchWrapper = (
       reason: reason("not_installed_on_system"),
     });
   return capability(id, game, { active: wanted, reason: why });
+};
+
+/**
+ * A hybrid laptop's second GPU. Auto leaves games on the GPU that drives the
+ * screen until offload has been confirmed on real hardware; On runs the game
+ * on the second GPU through PRIME render offload.
+ */
+export const resolveDiscreteGpu = (
+  game: Game,
+  offloadGpu: MachineGpu
+): GameCapability => {
+  const override = getCapabilityOverride(game, "discrete_gpu");
+  const vendor = offloadGpu.vendor === "nvidia" ? "NVIDIA" : "AMD";
+  if (override === true)
+    return capability("discrete_gpu", game, {
+      active: true,
+      reason: reason("discrete_gpu_on", { vendor }),
+    });
+  return capability("discrete_gpu", game, {
+    active: false,
+    reason: reason(
+      override === false ? "set_off_for_game" : "discrete_gpu_auto",
+      { vendor }
+    ),
+  });
 };

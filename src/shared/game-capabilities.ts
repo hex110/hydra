@@ -56,6 +56,8 @@ export const getCapabilityOverride = (
         game.capabilityOverrides?.mangohud ??
         (game.autoRunMangohud === true ? true : null)
       );
+    case "discrete_gpu":
+      return game.capabilityOverrides?.discrete_gpu ?? null;
     case "gamemode":
       return (
         game.capabilityOverrides?.gamemode ??
@@ -93,3 +95,14 @@ export const isLaunchWrapperWanted = (
   // check that.
   return userPreferences?.autoRunGamemode !== false || turnedOnByRule;
 };
+
+/**
+ * Launch options that render a game on a hybrid laptop's second GPU through
+ * PRIME render offload; the frames still reach the screen through the boot
+ * GPU. The device filters override a session that pins DXVK to the
+ * integrated GPU.
+ */
+export const offloadLaunchOptions = (vendor: "nvidia" | "amd") =>
+  vendor === "nvidia"
+    ? "__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia DXVK_FILTER_DEVICE_NAME=NVIDIA VKD3D_FILTER_DEVICE_NAME=NVIDIA %command%"
+    : "DRI_PRIME=1 DXVK_FILTER_DEVICE_NAME=AMD VKD3D_FILTER_DEVICE_NAME=AMD %command%";

@@ -3,6 +3,7 @@ import assert from "node:assert";
 import type { Game, GameOptiScalerStatus, GameRenoDxStatus } from "@types";
 import {
   resolveLaunchRuleCapability,
+  resolveDiscreteGpu,
   resolveLaunchWrapper,
   resolveOnlineFix,
   resolveOptiScaler,
@@ -269,5 +270,32 @@ describe("first-run checks", () => {
       true
     );
     assert.strictEqual(result.failed, false);
+  });
+});
+
+describe("resolveDiscreteGpu", () => {
+  const nvidia = {
+    card: "card0",
+    vendor: "nvidia" as const,
+    driver: "nvidia",
+    bootDisplay: false,
+  };
+
+  it("leaves the game on the screen's GPU in Auto and names the other one", () => {
+    const result = resolveDiscreteGpu(game(), nvidia);
+    assert.equal(result.active, false);
+    assert.deepEqual(result.reason, {
+      code: "discrete_gpu_auto",
+      params: { vendor: "NVIDIA" },
+    });
+  });
+
+  it("runs the game on it when set On", () => {
+    const result = resolveDiscreteGpu(
+      game({ capabilityOverrides: { discrete_gpu: true } }),
+      nvidia
+    );
+    assert.equal(result.mode, "on");
+    assert.equal(result.active, true);
   });
 });

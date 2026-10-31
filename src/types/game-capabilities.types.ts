@@ -9,7 +9,8 @@ export type GameCapabilityId =
   | "renodx"
   | "optiscaler"
   | "mangohud"
-  | "gamemode";
+  | "gamemode"
+  | "discrete_gpu";
 
 export type GameCapabilityMode = "auto" | "on" | "off";
 
