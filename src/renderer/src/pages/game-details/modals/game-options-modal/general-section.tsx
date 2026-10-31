@@ -749,7 +749,7 @@ export function GeneralSettingsSection({
               theme="outline"
               disabled={updatingGameTitle}
             >
-              {t("clear")}
+              {t("reset_game_title")}
             </Button>
           </div>
         </div>

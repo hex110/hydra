@@ -167,7 +167,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         OptiScaler, RenoDX and Saves all describe what Hydra does to the game;
         Compatibility's setup log repeats the ReShade, RenoDX and OptiScaler
         steps that Tools shows, and four tabs (General, Compatibility,
-        OptiScaler, RenoDX) carry a "set in Tools" pointer to a fifth.
+        OptiScaler, RenoDX) carry a "set in Tools" pointer to a fifth. Partly done: the
+        OptiScaler and RenoDX tabs appear only once the tool is installed in
+        the game (most games then show ten tabs), and their Tools rows link to
+        them only then. Merging Compatibility, Runs and Saves is part of the
+        shared patterns (roadmap item 7).
 18. [x] **Defaults live in three places.** The Tools tab's reasons point to
         Settings → Launch rules (HDR), Settings → Tool defaults (MangoHud,
         GameMode) and Settings → RenoDX (beta mods). Fixed: the HDR rows
@@ -201,9 +205,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         `SelectField` or `CheckboxField`; only a select's open option list is
         drawn by the system.
 24. [x] The setup log offers "Run again" for steps that never ran (now "Run").
-25. [ ] Game options → General: the "Launch Options" heading is larger than
+25. [x] Game options → General: the "Launch Options" heading is larger than
         the "Title" label above it, and "Clear" next to the title doesn't say
-        what it clears.
+        what it clears. Fixed: the
+        button reads "Use the original title"; the heading matches the tab's
+        other sections.
 26. [x] The sidebar's library filter still has two unlabeled icons (installed
         only, filters); phase 9 item 3 labelled them on the library page only.
         Checked: both have tooltips, like Steam's sidebar icons; the

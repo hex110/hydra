@@ -872,6 +872,9 @@ export function GameOptionsModal({
   const isLaunchbox = game.shop === "launchbox";
   const showOptiScalerSettings =
     !isLaunchbox && /\.exe"?$/i.test(game.executablePath ?? "");
+  // Their tabs hold an installed tool's details; Tools turns them on.
+  const showOptiScalerTab = showOptiScalerSettings && Boolean(game.optiScaler);
+  const showRenoDxTab = showOptiScalerSettings && Boolean(game.renoDx);
   const showSaveImportSettings =
     globalThis.window.electron.platform === "linux" && showOptiScalerSettings;
   const showDownloadSettings = game.shop !== "custom";
@@ -972,7 +975,7 @@ export function GameOptionsModal({
             },
           ]
         : []),
-      ...(showOptiScalerSettings
+      ...(showOptiScalerTab
         ? [
             {
               id: "optiscaler" as const,
@@ -981,7 +984,7 @@ export function GameOptionsModal({
             },
           ]
         : []),
-      ...(showOptiScalerSettings
+      ...(showRenoDxTab
         ? [
             {
               id: "renodx" as const,
@@ -1081,6 +1084,15 @@ export function GameOptionsModal({
     showDownloadSettings,
     visible,
   ]);
+
+  // Removing RenoDX or OptiScaler from its own tab removes the tab.
+  useEffect(() => {
+    if (
+      (selectedCategory === "optiscaler" && !showOptiScalerTab) ||
+      (selectedCategory === "renodx" && !showRenoDxTab)
+    )
+      setSelectedCategory("tools");
+  }, [selectedCategory, showOptiScalerTab, showRenoDxTab]);
 
   const handleSelectCategory = (category: typeof selectedCategory) => {
     if (
@@ -1408,13 +1420,13 @@ export function GameOptionsModal({
             {selectedCategory === "runs" && showRunsSettings && (
               <RunsSection game={game} />
             )}
-            {selectedCategory === "optiscaler" && showOptiScalerSettings && (
+            {selectedCategory === "optiscaler" && showOptiScalerTab && (
               <OptiScalerSettingsSection
                 game={game}
                 onOpenTools={() => setSelectedCategory("tools")}
               />
             )}
-            {selectedCategory === "renodx" && showOptiScalerSettings && (
+            {selectedCategory === "renodx" && showRenoDxTab && (
               <RenoDxSettingsSection
                 game={game}
                 onOpenTools={() => setSelectedCategory("tools")}

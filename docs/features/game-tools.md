@@ -3,7 +3,8 @@
 Each game's **Options → Tools** lists what Hydra applies to it, sets each item
 to **Auto**, **On** or **Off**, and says why it is on or off. It is the one
 place a game's tools are switched; the other tabs hold their details
-(versions, DLL names, layouts) and link here.
+(versions, DLL names, layouts) and link here. The OptiScaler and RenoDX tabs
+appear once the tool is installed in the game.
 
 | Capability              | Platforms | Auto means                                                                                    |
 | ----------------------- | --------- | --------------------------------------------------------------------------------------------- |

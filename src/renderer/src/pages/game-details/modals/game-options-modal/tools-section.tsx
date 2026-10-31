@@ -105,7 +105,12 @@ export function ToolsSection({
       {capabilities && capabilities.length > 0 && (
         <ul className="game-options-modal__setup-log">
           {capabilities.map((capability) => {
-            const detailsCategory = DETAILS_CATEGORY[capability.id];
+            // RenoDX and OptiScaler have a details tab once they are installed.
+            const detailsCategory =
+              (capability.id === "renodx" && !game.renoDx) ||
+              (capability.id === "optiscaler" && !game.optiScaler)
+                ? undefined
+                : DETAILS_CATEGORY[capability.id];
             const isBusy = busyId === capability.id;
             return (
               <li
