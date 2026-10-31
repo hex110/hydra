@@ -144,7 +144,6 @@
     "custom_game_modal_executable": "Executable",
     "edit_game_modal": "Customize Assets",
     "edit_game_modal_description": "Customize game assets and details",
-    "reset_game_title": "Use the original title",
     "edit_game_modal_title": "Title",
     "edit_game_modal_enter_title": "Enter title",
     "edit_game_modal_image": "Image",
@@ -363,6 +362,7 @@
     "discovery_queue_next": "Next"
   },
   "game_details": {
+    "reset_game_title": "Use the original title",
     "bios_not_configured_toast": "BIOS not found. Please add BIOS folder in Emulation settings.",
     "open_download_options": "Open download options",
     "download_options_zero": "No download option",
