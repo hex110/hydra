@@ -102,6 +102,14 @@ describe("isLaunchWrapperWanted", () => {
       true
     );
     assert.equal(isLaunchWrapperWanted("gamemode", game({}), null, true), true);
-    assert.equal(isLaunchWrapperWanted("gamemode", game({}), null), false);
+    assert.equal(isLaunchWrapperWanted("mangohud", game({}), null), false);
+  });
+
+  it("wants GameMode by default, unless it is set to Never", () => {
+    assert.equal(isLaunchWrapperWanted("gamemode", game({}), null), true);
+    assert.equal(
+      isLaunchWrapperWanted("gamemode", game({}), { autoRunGamemode: false }),
+      false
+    );
   });
 });

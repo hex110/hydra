@@ -130,9 +130,13 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## The machine (roadmap item 3, Auto fits the machine)
 
-10. [ ] **No hardware detection.** Hydra knows nothing about the GPU or the
+10. [x] **No hardware detection.** Hydra knows nothing about the GPU or the
         displays. The monitor switch is offered whenever Hyprland and
-        `hypr-hdr` exist, also on an SDR laptop panel.
+        `hypr-hdr` exist, also on an SDR laptop panel. Fixed:
+        `machine-profile.ts` reads the GPUs (vendor, driver, boot display)
+        and each connected output's EDID for HDR (ST 2084). Without an HDR
+        display RenoDX's Auto stays off with that reason, its dependency
+        leaves the HDR rules alone, and the monitor switch is not offered.
 11. [ ] **Hybrid laptops run games on the integrated GPU.** On the laptop the
         MX550 is offload only, and DXVK picked it by default, which gave a
         black screen with sound. The workaround forces Intel for the whole
@@ -145,7 +149,10 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         and the HDR rules all default to Never on a fresh install; they stay
         off until the user finds Tool defaults. Auto can become the default
         once it checks the machine (findings 10–11), e.g. GameMode on when
-        `gamemoderun` exists.
+        `gamemoderun` exists. Done for GameMode (Auto, the new default, is on
+        where it is installed). RenoDX and OptiScaler stay Never by default
+        for now: RenoDX now checks the display, but OptiScaler still needs
+        the GPU check (FSR4 or not) before its Auto can be the default.
 13. [ ] **The default Proton build is unclear.** Settings → Compatibility
         offers "Auto (global default or umu default)" without saying which
         build that is. umu's default (UMU-Proton 10) has no Wayland HDR, so

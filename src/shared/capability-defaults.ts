@@ -34,7 +34,7 @@ export const CAPABILITY_DEFAULT_MODES: Record<
   hdr: ["never", "always"],
   hdr_monitor: ["never", "always"],
   mangohud: ["never", "always"],
-  gamemode: ["never", "always"],
+  gamemode: ["auto", "never", "always"],
 };
 
 const findRule = (
@@ -59,7 +59,9 @@ export const getCapabilityDefault = (
     case "mangohud":
       return preferences?.autoRunMangohud === true ? "always" : "never";
     case "gamemode":
-      return preferences?.autoRunGamemode === true ? "always" : "never";
+      // Unset is Auto: on wherever GameMode is installed.
+      if (preferences?.autoRunGamemode === true) return "always";
+      return preferences?.autoRunGamemode === false ? "never" : "auto";
     case "hdr":
     case "hdr_monitor":
       return findRule(preferences, id)?.enabled ? "always" : "never";
@@ -82,7 +84,9 @@ export const capabilityDefaultPatch = (
     case "mangohud":
       return { autoRunMangohud: mode === "always" };
     case "gamemode":
-      return { autoRunGamemode: mode === "always" };
+      return {
+        autoRunGamemode: mode === "auto" ? undefined : mode === "always",
+      };
     case "hdr":
     case "hdr_monitor": {
       const ruleId = CAPABILITY_LAUNCH_RULES[id];

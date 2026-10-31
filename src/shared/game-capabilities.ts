@@ -73,7 +73,8 @@ export const capabilityOverrideFromMode = (mode: GameCapabilityMode) =>
 
 /**
  * Whether MangoHud or GameMode wraps the game: the game's choice first, then
- * the global setting or a launch rule that turns it on.
+ * the global setting or a launch rule that turns it on. Callers also check
+ * that the program is installed.
  */
 export const isLaunchWrapperWanted = (
   id: "mangohud" | "gamemode",
@@ -86,9 +87,9 @@ export const isLaunchWrapperWanted = (
 ) => {
   const override = getCapabilityOverride(game, id);
   if (override !== null) return override;
-  const global =
-    id === "mangohud"
-      ? userPreferences?.autoRunMangohud
-      : userPreferences?.autoRunGamemode;
-  return global === true || turnedOnByRule;
+  if (id === "mangohud")
+    return userPreferences?.autoRunMangohud === true || turnedOnByRule;
+  // GameMode's default is Auto (unset): on, where it is installed; callers
+  // check that.
+  return userPreferences?.autoRunGamemode !== false || turnedOnByRule;
 };

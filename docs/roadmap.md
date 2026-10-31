@@ -708,6 +708,9 @@ All of these plug into the `SaveImportSource` interface.
   a Cloudflare challenge.
 - `tsc` reports TS7056 on `src/locales/index.ts` (the inferred translation
   type is too large). It predates the fork's changes.
+- The test suite sometimes loses one file to a `V8_Fatal` crash inside Node 26
+  (seen on `open-game-save-folder-core.test.ts`); the file passes on its own.
+  Rerun before chasing it.
 
 ## Declined
 

@@ -31,6 +31,8 @@ describe("capability defaults", () => {
       ["optiscaler", "auto"],
       ["mangohud", "always"],
       ["gamemode", "always"],
+      ["gamemode", "never"],
+      ["gamemode", "auto"],
     ] as const) {
       const patch = capabilityDefaultPatch(id, mode, {});
       assert.strictEqual(getCapabilityDefault(id, patch), mode, id);
