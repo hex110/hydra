@@ -7,6 +7,12 @@ downloaded there and extracted next to themselves, into a folder named after
 the archive, so the game ends up in the same place. The download dialog can
 pick a different folder for a single game.
 
+On Linux the folder is settled once, at the first start without one: a fresh
+install uses `~/Games` (as Steam and Heroic do) and deletes archives after a
+good extraction; an install that already has downloads or installed games
+keeps the Downloads folder it used, written down so nothing moves. The
+AnkerGames handoff still watches the browser's own Downloads folder.
+
 ## Free space
 
 The download dialog refuses a download that does not fit on the drive, as

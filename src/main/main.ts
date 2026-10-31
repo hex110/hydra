@@ -55,6 +55,7 @@ import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automati
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
 import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migration";
+import { applyFirstRunDownloadDefaults } from "./services/first-run-defaults";
 import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
 import { AnkerGamesHomeFeed } from "@main/services/ankergames";
@@ -95,6 +96,7 @@ export const loadState = async () => {
   await migrateEmulatorCloudSaveDefaults();
   await migrateGameVisibilityFields();
   await migrateLegacyLaunchRuleSettings();
+  await applyFirstRunDownloadDefaults();
 
   const userPreferences = await db.get<string, UserPreferences | null>(
     levelKeys.userPreferences,
