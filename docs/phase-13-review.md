@@ -79,22 +79,30 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## Performance on a modest machine
 
-8. [ ] **Hydra ran the laptop out of memory.** At 13:27:41 `systemd-oomd`
-       killed the whole Hyprland session (635 processes, the game included).
-       Hydra Plus's scope peaked at 3.5 GB plus 866 MB of swap on a 7.4 GB
-       machine; the game used 940 MB. With the same 775-game library a dev
-       build here uses about 1 GB (main ~380 MB, renderer 310 MB growing to
-       510 MB over a few page changes and a full library scroll). The peak's
-       cause is not found yet: measure on the laptop during a game session.
-9. [ ] **Hydra uses CPU while a game runs.** The laptop's scope used 1 h 6 min
-       of CPU in a 34-minute session, about two cores. Idle here, the main
-       process uses ~11 % of a core. A CPU profile puts the achievement
-       watcher first: every 2 s it lists and stats files in every game's
-       prefix and folder (`watchAchievementsWithWine`). The process watcher
-       also reads all 775 game records from LevelDB every 2 s, most of them
-       uninstalled Steam imports. Upstream 4.3.0 has achievement-sync fixes
-       (#2934, #2939, #2995) and a 10k-game performance pass (#3010); check
-       what they cover before changing these loops.
+8. [ ] **The laptop ran out of memory during a game.** At 13:27:41
+       `systemd-oomd` killed the whole Hyprland session (635 processes, the
+       game included). The 3.5 GB peak (plus 866 MB swap) first read as
+       Hydra's was its systemd scope, which also holds everything Hydra
+       starts, the game under Wine included, and the page cache those
+       processes fill; it is not Hydra's own use. Hydra's own use with the same
+       775-game library, measured in a dev build: about 1 GB (main ~400 MB,
+       renderer ~500–650 MB after garbage collection). Paging through home,
+       library and catalogue grows the renderer by ~15 MB a round after GC
+       with steady DOM node and listener counts, so no DOM leak; the rest is
+       uncollected garbage and image caches. On a 7.4 GB machine 1 GB for a
+       launcher in the background is still a lot: measure a production build
+       on the laptop and consider freeing the renderer while a game runs.
+9. [x] **Hydra uses CPU while idle.** The laptop scope's 1 h 6 min of CPU in
+       a 34-minute session includes the game (see 8). Hydra itself, idle with
+       775 games, used ~11 % of a core here. A CPU profile put the achievement
+       watcher first: every 2 s it read every game's prefix, and the default
+       prefix path is returned for every game whether or not it exists, so
+       775 mostly missing prefixes were scanned. Fixed: missing prefixes are
+       skipped, and games not running are scanned every 30 s instead of
+       every 2 s (a running game, and one closed in the last minute, every
+       tick). JS time fell from 812 to 307 ms per 15 s and the main process
+       from ~11 % to ~7.6 % of a core; most of the rest is process
+       enumeration, which upstream's #3010 also touches.
 
 ## The machine (roadmap item 3, Auto fits the machine)
 

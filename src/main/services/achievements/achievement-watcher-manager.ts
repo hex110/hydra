@@ -4,6 +4,7 @@ import { mergeAchievements } from "./merge-achievements";
 import fs, { readdirSync } from "node:fs";
 import { findAllAchievementFiles } from "./find-achievement-files";
 import { collectGameAchievementFiles } from "./collect-game-achievement-files";
+import { selectAchievementScanGames } from "./achievement-scan-schedule";
 import { findNestedAchievementFiles } from "./find-nested-achievement-files";
 import type {
   AchievementFile,
@@ -24,6 +25,7 @@ import { publishCombinedNewAchievementNotification } from "../notifications";
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { setTimeout } from "node:timers/promises";
 import { Wine } from "../wine";
+import { isGameRunning } from "../game-running-state";
 import { AchievementMemoryStore } from "./achievement-memory-store";
 import { achievementNotificationPresenter } from "../achievement-notification-presenter-electron";
 
@@ -68,13 +70,34 @@ const getWatchedGames = async (onlyWithWinePrefix = false) => {
 
   if (!onlyWithWinePrefix) return games;
 
-  return games.filter(
-    (game) => !!Wine.getEffectivePrefixPath(game.winePrefixPath, game.objectId)
-  );
+  // The default prefix path is returned for every game, created or not.
+  return games.filter((game) => {
+    const prefixPath = Wine.getEffectivePrefixPath(
+      game.winePrefixPath,
+      game.objectId
+    );
+    return !!prefixPath && fs.existsSync(prefixPath);
+  });
+};
+
+let lastFullScanAt = 0;
+const lastSeenRunning = new Map<string, number>();
+
+const selectGamesForThisTick = (games: Game[]) => {
+  const now = Date.now();
+  const selection = selectAchievementScanGames(games, {
+    now,
+    lastFullScanAt,
+    keyOf: (game) => levelKeys.game(game.shop, game.objectId),
+    isRunning: (game) => isGameRunning(game.objectId, game.shop),
+    lastSeenRunning,
+  });
+  if (selection.fullScan) lastFullScanAt = now;
+  return selection.games;
 };
 
 const watchAchievementsWindows = async () => {
-  const games = await getWatchedGames();
+  const games = selectGamesForThisTick(await getWatchedGames());
 
   if (games.length === 0) return;
 
@@ -94,7 +117,7 @@ const watchAchievementsWindows = async () => {
 };
 
 const watchAchievementsWithWine = async () => {
-  const games = await getWatchedGames(true);
+  const games = selectGamesForThisTick(await getWatchedGames(true));
 
   if (games.length === 0) return;
 
