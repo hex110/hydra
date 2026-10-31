@@ -158,10 +158,15 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         where it is installed). RenoDX and OptiScaler stay Never by default
         for now: RenoDX now checks the display, but OptiScaler still needs
         the GPU check (FSR4 or not) before its Auto can be the default.
-13. [ ] **The default Proton build is unclear.** Settings → Compatibility
+13. [x] **The default Proton build is unclear.** Settings → Compatibility
         offers "Auto (global default or umu default)" without saying which
         build that is. umu's default (UMU-Proton 10) has no Wayland HDR, so
         RenoDX is blocked by default; GE-Proton auto-install is off.
+        Fixed: Settings → Compatibility calls it "Let umu choose" and says
+        what that is (the newest UMU-Proton, no HDR for RenoDX); a game's
+        Auto reads "the default from Settings" and names the build it will
+        use. umu's pick stays the default: it is the most compatible build,
+        and RenoDX already says when it needs GE-Proton.
 
 ## First run (principle 1)
 

@@ -240,11 +240,11 @@ export function SettingsContextCompatibility() {
     }
   }, [protonVersions, protonVersionsLoaded, selectedDefaultProtonPath]);
 
-  const protonVersionAutoLabel = t("proton_version_auto", {
+  const protonVersionAutoLabel = t("proton_version_umu_choice", {
     ns: ["settings", "game_details"],
   });
 
-  const protonSourceUmuDefault = t("proton_source_umu_default", {
+  const protonSourceUmuDefault = t("proton_source_umu_choice", {
     ns: ["settings", "game_details"],
   });
 
