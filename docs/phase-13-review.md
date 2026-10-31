@@ -25,7 +25,7 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## Bugs
 
-1. [ ] **A run loses its outcome when Hydra stops right after the game.**
+1. [x] **A run loses its outcome when Hydra stops right after the game.**
        `finishRun` classifies the outcome but writes it only after the
        3-second log wait. On the laptop the owner rebooted one second after
        the game closed, so the record stayed "still running (exit code 134)"
@@ -33,17 +33,22 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
        "still running" in `summary.md` forever; only the interface masks it as
        "unknown", but agents read the file. Write the outcome at once, add the
        logs after, and mark leftover running runs on startup.
-       (`src/main/services/game-runs/game-runs.ts`)
-2. [ ] **umu runs collect no logs.** Both laptop runs say "No logs were found"
-       though both logs exist: Proton writes `~/steam-1931770.log` (named by
-       the Steam app id, not `GAMEID=umu-1931770`) and umu writes
-       `<userData>/logs/umu-1931770.log`. The umu log held the crash cause,
-       `free(): corrupted unsorted chunks`.
-3. [ ] **Proton logs pile up in the home folder.** Every umu launch sets
+       (`src/main/services/game-runs/game-runs.ts`) Fixed: the ending is
+       written when the run ends, and startup marks leftover runs unknown.
+       This was also why both laptop runs had no logs: the copy runs after
+       the wait, which neither run reached. The log paths were right.
+2. [x] **umu runs collect no logs.** Both laptop runs say "No logs were found"
+       though both logs exist (`~/steam-1931770.log`,
+       `<userData>/logs/umu-1931770.log`; the umu log held the crash cause,
+       `free(): corrupted unsorted chunks`). Same cause as finding 1.
+3. [x] **Proton logs pile up in the home folder.** Every umu launch sets
        `PROTON_LOG=1` (`src/main/services/umu.ts`), so `~/steam-<id>.log`
        files of up to 18 MB stay in the user's home and are never cleaned.
        Write them to a folder Hydra owns (`PROTON_LOG_DIR`) and copy into the
-       run.
+       run. Fixed: `<userData>/logs/proton/`, unless the user set
+       `PROTON_LOG_DIR`. Still open: one log can grow past 4 GB
+       (`docs/enshrouded-launch-crash.md`); deleting it after the copy would
+       break the quick-exit dialog's **Show log**, which opens it.
 4. [ ] **Cloud save upload raced the game's start.** At 13:28:23 the game
        launched; at 13:28:32 a `game-page-open` sync failed with "md5 hashes
        differ" uploading the save folder the starting game was writing. A
@@ -58,10 +63,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 6. [ ] **The upload after exit can be cut off.** The after-exit sync started
        at 14:02:57 and Hydra quit at 14:02:58 for a reboot. Check that an
        interrupted upload is retried on the next start.
-7. [ ] **Dev worktrees can't run save backups.** `scripts/worktree-setup.sh`
+7. [x] **Dev worktrees can't run save backups.** `scripts/worktree-setup.sh`
        copies the main checkout's `ludusavi/` into the worktree's tracked
        `ludusavi/`, nesting it as `ludusavi/ludusavi/`; startup then fails
-       with "Recursive option not enabled, cannot copy a directory".
+       with "Recursive option not enabled, cannot copy a directory". Fixed:
+       existing folders get the contents copied in.
 
 ## Performance on a modest machine
 
