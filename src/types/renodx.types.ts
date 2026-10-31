@@ -140,7 +140,9 @@ export type RenoDxAutoInstallOutcome =
   /** An anti-cheat is in the game folder. */
   | "anti-cheat"
   /** OptiScaler's compatibility list says the game does not work with such mods. */
-  | "blocked";
+  | "blocked"
+  /** No connected display accepts HDR, so RenoDX would change nothing. */
+  | "no-hdr-display";
 
 export interface RenoDxOverview {
   catalogueGames: number;

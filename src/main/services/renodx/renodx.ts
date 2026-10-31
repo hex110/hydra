@@ -5,6 +5,7 @@ import {
   getWindowsExecutable,
   isManagedElsewhere,
 } from "@main/helpers/windows-game";
+import { mayHaveHdrDisplay } from "../machine/machine-profile";
 import { logger } from "@main/services/logger";
 import { markCapabilityCheckPending } from "@main/services/capabilities/capability-checks";
 import { updateGameRecord } from "@main/services/game-record-updater";
@@ -124,10 +125,12 @@ const isCommandAvailable = (command: string) =>
   });
 
 /** RenoDX needs HDR from the compositor on Hyprland, and `hypr-hdr` to ask for it. */
+/** Hyprland with `hypr-hdr`, and a display that accepts HDR to switch to. */
 export const canSwitchMonitorToHdr = () =>
   process.platform === "linux" &&
   !!process.env.HYPRLAND_INSTANCE_SIGNATURE &&
-  isCommandAvailable("hypr-hdr");
+  isCommandAvailable("hypr-hdr") &&
+  mayHaveHdrDisplay();
 
 interface Plan {
   game: Game;
@@ -465,6 +468,7 @@ export class RenoDx {
     }
     if (game.renoDx) return "already-installed";
     if (game.renoDxAutoInstallDisabled) return "opted-out";
+    if (!forcedOn && !mayHaveHdrDisplay()) return "no-hdr-display";
 
     const executablePath = getWindowsExecutable(game);
     if (!executablePath) return "not-windows";

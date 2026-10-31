@@ -21,7 +21,7 @@ export interface GameCapabilityReason {
 
 /** Something a capability depends on for its effect, and whether it is there. */
 export interface GameCapabilityNeed {
-  id: "hdr" | "hdr_monitor" | "proton_hdr";
+  id: "hdr_display" | "hdr" | "hdr_monitor" | "proton_hdr";
   met: boolean;
   /** Translation key suffix: `capability_reason_<code>`. */
   reason: GameCapabilityReason;

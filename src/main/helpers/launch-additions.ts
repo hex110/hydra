@@ -2,6 +2,7 @@ import path from "node:path";
 import { logger } from "@main/services/logger";
 import { Wine } from "@main/services/wine";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
+import { mayHaveHdrDisplay } from "@main/services/machine/machine-profile";
 import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
@@ -116,7 +117,9 @@ export const getLaunchAdditions = async ({
   const rules = resolveLaunchRules(userPreferences?.launchRules);
   // Tools in the game can depend on rules, such as RenoDX on the HDR rules.
   const overrides = withDependencyRuleOverrides(game, {
-    enableHdrRules: resolveRenoDxSettings(userPreferences).enableHdrRules,
+    enableHdrRules:
+      resolveRenoDxSettings(userPreferences).enableHdrRules &&
+      mayHaveHdrDisplay(),
     canSwitchMonitor: canSwitchMonitorToHdr(),
   });
 

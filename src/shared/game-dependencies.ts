@@ -59,21 +59,31 @@ export const resolveRenoDxNeeds = ({
   monitorActive,
   canSwitchMonitor,
   protonName,
+  hdrDisplay,
 }: {
   hdrActive: boolean;
   monitorActive: boolean;
+  /** Whether a connected display accepts HDR; undefined when unknown. */
+  hdrDisplay?: boolean;
   /** Only Hyprland with `hypr-hdr` can; elsewhere the user's compositor decides. */
   canSwitchMonitor: boolean;
   /** The Proton build the game launches with; null for umu's default. */
   protonName: string | null;
 }): GameCapabilityNeed[] => {
-  const needs: GameCapabilityNeed[] = [
-    {
-      id: "hdr",
-      met: hdrActive,
-      reason: reason(hdrActive ? "need_hdr_met" : "need_hdr_off"),
-    },
-  ];
+  const needs: GameCapabilityNeed[] = [];
+  if (hdrDisplay !== undefined)
+    needs.push({
+      id: "hdr_display",
+      met: hdrDisplay,
+      reason: reason(
+        hdrDisplay ? "need_hdr_display_met" : "need_hdr_display_no"
+      ),
+    });
+  needs.push({
+    id: "hdr",
+    met: hdrActive,
+    reason: reason(hdrActive ? "need_hdr_met" : "need_hdr_off"),
+  });
   if (canSwitchMonitor)
     needs.push({
       id: "hdr_monitor",

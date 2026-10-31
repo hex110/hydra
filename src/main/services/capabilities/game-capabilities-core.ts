@@ -97,6 +97,8 @@ export const resolveLaunchRuleCapability = (
     canSwitchMonitor: boolean;
     /** The game's overrides plus the rules its tools depend on. */
     effectiveOverrides?: Record<string, boolean>;
+    /** False when no connected display accepts HDR. */
+    hdrDisplay?: boolean;
   }
 ): GameCapability => {
   if (!rule)
@@ -130,7 +132,9 @@ export const resolveLaunchRuleCapability = (
     return capability(id, game, {
       active: false,
       blocked: true,
-      reason: reason("needs_hyprland"),
+      reason: reason(
+        options.hdrDisplay === false ? "no_hdr_display" : "needs_hyprland"
+      ),
     });
 
   return capability(id, game, { active: wanted, reason: why });
@@ -140,7 +144,9 @@ export const resolveRenoDx = (
   game: Game,
   status: GameRenoDxStatus,
   autoInstall: boolean,
-  needs: GameCapabilityNeed[] = []
+  needs: GameCapabilityNeed[] = [],
+  /** False when no connected display accepts HDR. */
+  hdrDisplay?: boolean
 ): GameCapability => {
   const override = getCapabilityOverride(game, "renodx");
   const modTitle = status.mod?.title ?? "";
@@ -202,6 +208,11 @@ export const resolveRenoDx = (
     return capability("renodx", game, {
       active: false,
       reason: reason("renodx_anti_cheat", { name: status.antiCheat }),
+    });
+  if (hdrDisplay === false)
+    return capability("renodx", game, {
+      active: false,
+      reason: reason("renodx_no_hdr_display", { mod: modTitle }),
     });
   return capability("renodx", game, {
     active: false,
@@ -287,9 +298,18 @@ export const resolveLaunchWrapper = (
     /** The first applied launch rule that turns the wrapper on. */
     ruleName: string | null;
     available: boolean;
+    /** The global default is Auto: on where the program is installed. */
+    auto?: boolean;
   }
 ): GameCapability => {
   const override = getCapabilityOverride(game, id);
+  if (override === null && options.auto)
+    return capability(id, game, {
+      active: options.available,
+      reason: reason(
+        options.available ? "auto_on_installed" : "auto_off_not_installed"
+      ),
+    });
   const wanted = override ?? (options.globallyOn || options.ruleName !== null);
   const why =
     override === true

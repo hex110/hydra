@@ -139,6 +139,13 @@ describe("resolveRenoDx", () => {
     assert.equal(result.reason.code, "renodx_no_mod");
   });
 
+  it("stays off in Auto when no display accepts HDR", () => {
+    const result = resolveRenoDx(game(), renoDxStatus(), true, [], false);
+    assert.equal(result.active, false);
+    assert.equal(result.blocked, false);
+    assert.equal(result.reason.code, "renodx_no_hdr_display");
+  });
+
   it("explains an anti-cheat skip in Auto", () => {
     assert.equal(
       resolveRenoDx(game(), renoDxStatus({ antiCheat: "EasyAntiCheat" }), true)

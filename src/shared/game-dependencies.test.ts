@@ -109,6 +109,13 @@ describe("resolveRenoDxNeeds", () => {
     );
   });
 
+  it("lists the HDR display first when the displays are known", () => {
+    const needs = resolveRenoDxNeeds({ ...base, hdrDisplay: false });
+    assert.strictEqual(needs[0].id, "hdr_display");
+    assert.strictEqual(needs[0].met, false);
+    assert.strictEqual(needs[0].reason.code, "need_hdr_display_no");
+  });
+
   it("blocks on umu's default but not on an unknown build", () => {
     const byDefault = resolveRenoDxNeeds({ ...base, protonName: null });
     assert.strictEqual(byDefault[2].met, false);

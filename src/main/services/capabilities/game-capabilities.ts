@@ -12,6 +12,7 @@ import { GameRuns } from "@main/services/game-runs/game-runs";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { logger } from "@main/services/logger";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
+import { getMachineProfile } from "@main/services/machine/machine-profile";
 import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
 import {
   CAPABILITY_LAUNCH_RULES,
@@ -110,9 +111,13 @@ export const getGameCapabilities = async (
     const findRule = (id: "hdr" | "hdr_monitor") =>
       rules.find((rule) => rule.id === CAPABILITY_LAUNCH_RULES[id]);
     const canSwitchMonitor = canSwitchMonitorToHdr();
+    const machine = getMachineProfile();
+    const hdrDisplay = machine.displaysKnown
+      ? machine.hdrDisplays.length > 0
+      : undefined;
     const renoDxSettings = resolveRenoDxSettings(userPreferences);
     const effectiveOverrides = withDependencyRuleOverrides(game, {
-      enableHdrRules: renoDxSettings.enableHdrRules,
+      enableHdrRules: renoDxSettings.enableHdrRules && hdrDisplay !== false,
       canSwitchMonitor,
     });
 
@@ -127,7 +132,7 @@ export const getGameCapabilities = async (
         "hdr_monitor",
         game,
         findRule("hdr_monitor"),
-        { canSwitchMonitor, effectiveOverrides }
+        { canSwitchMonitor, effectiveOverrides, hdrDisplay }
       );
       const proton = await resolveGameProton(game, additions?.protonPath);
       renoDxNeeds = resolveRenoDxNeeds({
@@ -135,6 +140,7 @@ export const getGameCapabilities = async (
         monitorActive: monitor.active,
         canSwitchMonitor,
         protonName: proton.path ? path.basename(proton.path) : null,
+        hdrDisplay,
       });
       capabilities.push(resolveOnlineFix(game, userPreferences), hdr, monitor);
     }
@@ -143,7 +149,8 @@ export const getGameCapabilities = async (
         game,
         renoDxStatus,
         renoDxSettings.autoInstall,
-        renoDxNeeds
+        renoDxNeeds,
+        hdrDisplay
       ),
       resolveOptiScaler(
         game,
@@ -164,6 +171,7 @@ export const getGameCapabilities = async (
       globallyOn: userPreferences?.autoRunGamemode === true,
       ruleName: ruleTurningOn("gamemode"),
       available: isGamemodeAvailable(),
+      auto: userPreferences?.autoRunGamemode === undefined,
     })
   );
 
