@@ -11,7 +11,7 @@ import { useAppSelector, useLibrary } from "@renderer/hooks";
 
 import type { CatalogueSearchResult } from "@types";
 
-import { CatalogueLibraryBadge } from "./catalogue-library-badge";
+import { GameLibraryBadge } from "@renderer/components";
 import type { CatalogueLibraryState } from "./catalogue-library-state";
 import "./game-item-classics.scss";
 
@@ -177,7 +177,7 @@ export function GameItemClassics({
           )}
           {libraryState && (
             <span className="game-item-classics__library-state">
-              <CatalogueLibraryBadge state={libraryState} />
+              <GameLibraryBadge state={libraryState} />
             </span>
           )}
         </div>

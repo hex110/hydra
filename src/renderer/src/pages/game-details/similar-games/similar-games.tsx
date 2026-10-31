@@ -15,7 +15,7 @@ import type { GameShop } from "@types";
 import { VerticalCoverCard } from "@renderer/components";
 import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
 import { useLibrary, useSimilarGames } from "@renderer/hooks";
-import { CatalogueLibraryBadge } from "@renderer/pages/catalogue/catalogue-library-badge";
+import { GameLibraryBadge } from "@renderer/components";
 import {
   catalogueKey,
   getCatalogueLibraryStates,
@@ -135,7 +135,8 @@ export function SimilarGames({ objectId, shop }: Readonly<SimilarGamesProps>) {
                 <SimilarGamesSlide
                   key={`${similarGame.shop}:${similarGame.objectId}`}
                 >
-                  <CatalogueLibraryBadge
+                  <GameLibraryBadge
+                    overlay
                     state={libraryStates.get(catalogueKey(similarGame))}
                   />
                   <VerticalCoverCard

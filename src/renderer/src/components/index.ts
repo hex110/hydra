@@ -41,3 +41,4 @@ export * from "./error-boundary/error-fallback";
 export * from "./error-boundary/error-boundary";
 export * from "./mangohud-editor/mangohud-editor";
 export * from "./dropdown-menu/dropdown-menu";
+export * from "./game-library-badge/game-library-badge";

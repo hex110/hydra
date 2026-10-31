@@ -21,7 +21,7 @@ import {
 } from "@shared";
 import cn from "classnames";
 import { logger } from "@renderer/logger";
-import { CatalogueLibraryBadge } from "./catalogue-library-badge";
+import { GameLibraryBadge } from "@renderer/components";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
 import type { CatalogueLibraryState } from "./catalogue-library-state";
 import type { CatalogueView } from "./catalogue-results-cache";
@@ -214,7 +214,7 @@ export function GameItem({
         <div className="game-item__details">
           <span className="game-item__title-row">
             <span className="game-item__title">{game.title}</span>
-            <CatalogueLibraryBadge state={libraryState} />
+            <GameLibraryBadge state={libraryState} />
           </span>
           {tags.length > 0 || (genres && genres.length > 0) ? (
             <span className="game-item__genres">

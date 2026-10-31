@@ -12,6 +12,7 @@ import {
   GameCard,
   GameContextMenu,
   Hero,
+  GameLibraryBadge,
   VerticalCoverCard,
 } from "@renderer/components";
 import type {
@@ -24,6 +25,7 @@ import {
   useActiveGameSetups,
   useAppSelector,
   useLibrary,
+  useLibraryStates,
 } from "@renderer/hooks";
 import { useCollectionContextMenu } from "@renderer/context";
 import { LibraryGameCard } from "@renderer/pages/library/library-game-card";
@@ -99,6 +101,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   const { library } = useLibrary();
+  const { stateOf } = useLibraryStates();
   const getStartedDismissed = useAppSelector(
     (state) => state.userPreferences.value?.homeGetStartedDismissed === true
   );
@@ -480,6 +483,7 @@ export default function Home() {
           <HomeShelf title={t("shelf_friends")}>
             {friendsPlaying.map((friend) => (
               <div key={friend.id} className="home__suggestion">
+                <GameLibraryBadge overlay state={stateOf(friend.currentGame)} />
                 <VerticalCoverCard
                   gameTitle={friend.currentGame.title}
                   coverImageUrls={[
@@ -549,6 +553,7 @@ export default function Home() {
                     key={`${game.shop}:${game.objectId}`}
                     className="home__suggestion"
                   >
+                    <GameLibraryBadge overlay state={stateOf(game)} />
                     <VerticalCoverCard
                       gameTitle={game.title}
                       coverImageUrls={[

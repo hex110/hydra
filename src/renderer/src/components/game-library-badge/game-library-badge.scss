@@ -1,6 +1,6 @@
 @use "../../scss/globals.scss";
 
-.catalogue-library-badge {
+.game-library-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -18,5 +18,14 @@
   &--installed {
     background: rgba(22, 177, 149, 0.18);
     color: globals.$brand-teal;
+  }
+
+  &--overlay {
+    position: absolute;
+    top: globals.$spacing-unit;
+    left: globals.$spacing-unit;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.75);
+    pointer-events: none;
   }
 }

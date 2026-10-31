@@ -223,7 +223,7 @@ in the sections below.
     4. [x] Settings regrouped (six groups)
     5. [x] Export and import settings ([Moving settings](features/settings-transfer.md))
     6. [ ] Cloud backup without friction (setup done: rclone download, R2 Connect form; backup state on cards and pages goes with item 7)
-    7. [ ] Shared patterns for every page
+    7. [x] Shared patterns for every page ([Patterns across pages](features/game-page.md#patterns-across-pages))
     8. [ ] Catalogue
     9. [ ] Library, and tracking without Floppy
     10. [ ] Home page

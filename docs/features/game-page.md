@@ -18,6 +18,41 @@ summary that links there. Add a row here when a feature adds a new fact.
 | Which tools apply (OnlineFix, HDR, RenoDX, …), why   | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there   |
 | Past launches: outcome, exit code, tools, logs       | **Options → Runs** ([Game runs](game-runs.md))                              |
 
+## Patterns across pages
+
+Decided 2026-10-31 (roadmap phase 13 item 7), so the catalogue, library and
+home are reworked once and stay one app.
+
+**Two cards.** A game in your library is a `LibraryGameCard` wherever it is
+shown (library, home shelves of your games): your cover, playtime when there
+is some, the update dot, a dimmed cover when it isn't installed, Play on
+hover. A game from the store is a `VerticalCoverCard` (home suggestions,
+friends playing, similar games, the catalogue grid) or a catalogue row
+(`GameItem`). Upstream's wide `GameCard` stays only in its Hot now shelf.
+
+**One library badge.** A store card or row that is in your library carries
+`GameLibraryBadge` (`components/`): **Installed** or **In library**, from
+`useLibraryStates()`. On a cover it is the `overlay` variant in the top-left
+corner. No page invents its own wording for this.
+
+**One order of states**, for any place that can show only one: playing now,
+downloading, update available, installed, in library, wishlisted.
+
+**One filter system for your games.** The library page and the sidebar share
+`useLibraryView` (tabs, filters, sort). The catalogue has its own filters
+because it searches the store, not your games.
+
+**Every card opens the game page**, through `buildGameDetailsPath`; the game
+page links back to where a fact lives (this table) instead of repeating it.
+
+| Fact                     | Shown as                                              |
+| ------------------------ | ----------------------------------------------------- |
+| In your library          | `GameLibraryBadge` on store cards and rows            |
+| Installed                | The same badge; on your own cards, a cover not dimmed |
+| Update available         | The dot on `LibraryGameCard`; the hero bar's chip     |
+| Playtime                 | `LibraryGameCard` badge when there is some; hero bar  |
+| Saves backed up / failed | The game page's save widget (one home; see above)     |
+
 ## Options
 
 The game page's **Options** button and the **Options** entry in the
