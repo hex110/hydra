@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   doesSteamCompatDataPathMatchWinePrefix,
   isLinuxGameWindowProcess,
+  isPlausibleGameProcessPath,
 } from "./linux-process-match.js";
 
 describe("Steam compatibility prefix matching", () => {
@@ -102,6 +103,27 @@ describe("Linux game window process matching", () => {
         ["/games/game"]
       ),
       false
+    );
+  });
+});
+
+describe("isPlausibleGameProcessPath", () => {
+  it("refuses shells, interpreters and system folders", () => {
+    assert.equal(isPlausibleGameProcessPath("/floppy/sh"), false);
+    assert.equal(isPlausibleGameProcessPath("/usr/bin/python3"), false);
+    assert.equal(isPlausibleGameProcessPath("/usr/lib/game/thing"), false);
+  });
+
+  it("accepts game executables", () => {
+    assert.equal(
+      isPlausibleGameProcessPath(
+        "/mnt/Storage/SteamLibrary/steamapps/common/Factorio/bin/x64/factorio"
+      ),
+      true
+    );
+    assert.equal(
+      isPlausibleGameProcessPath("/home/me/Games/Hades/x64/Hades.exe"),
+      true
     );
   });
 });

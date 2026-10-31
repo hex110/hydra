@@ -127,3 +127,45 @@ export const isLinuxGameWindowProcess = (
 
   return false;
 };
+
+/** Programs that run many things; their name alone says nothing about a game. */
+const GENERIC_PROGRAM_NAMES = new Set([
+  "sh",
+  "bash",
+  "dash",
+  "zsh",
+  "fish",
+  "busybox",
+  "env",
+  "python",
+  "python3",
+  "java",
+  "mono",
+  "node",
+  "wine",
+  "wine64",
+  "wineserver",
+  "wine-preloader",
+  "wine64-preloader",
+  "steam",
+]);
+
+const SYSTEM_FOLDERS = [
+  "/bin/",
+  "/sbin/",
+  "/usr/",
+  "/lib/",
+  "/lib64/",
+  "/proc/",
+];
+
+/**
+ * Whether a running process found by file name can be taken as a game's
+ * executable. A shell in a Docker container once became a game's path because
+ * the game's executables list includes `sh`.
+ */
+export const isPlausibleGameProcessPath = (processPath: string) => {
+  const name = path.basename(processPath).toLowerCase();
+  if (GENERIC_PROGRAM_NAMES.has(name.replace(/\.exe$/, ""))) return false;
+  return !SYSTEM_FOLDERS.some((folder) => processPath.startsWith(folder));
+};

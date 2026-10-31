@@ -36,6 +36,7 @@ import {
   doesSteamCompatDataPathMatchWinePrefix,
   hasLaunchedPidMatch,
   hasLinuxNativeOrAppImageMatch,
+  isPlausibleGameProcessPath,
   type LinuxProcessInfo,
 } from "./linux-process-match";
 import { isWindowsBatchFile } from "@main/helpers/windows-batch-command";
@@ -197,8 +198,9 @@ const findGamePathByProcess = async (
     if (pathSet) {
       for (const path of pathSet) {
         if (
-          path.toLowerCase().endsWith(executable.name) ||
-          path.toLowerCase().endsWith(executablewithoutExtension)
+          (path.toLowerCase().endsWith(executable.name) ||
+            path.toLowerCase().endsWith(executablewithoutExtension)) &&
+          isPlausibleGameProcessPath(path)
         ) {
           const gameKey = levelKeys.game("steam", gameId);
           const game = await gamesSublevel.get(gameKey);

@@ -77,6 +77,16 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
        with "Recursive option not enabled, cannot copy a directory". Fixed:
        existing folders get the contents copied in.
 
+8. [x] **A shell in a Docker container became a game, with phantom
+       playtime.** Walking the Floppy and Steam imports on the desktop,
+       Floppy added SUPERHOT (`steam:322500`), whose known executables
+       include `sh`. The process watcher matched the busybox `sh` running in
+       the Floppy container, set the game's executable to `/floppy/sh` and
+       counted it as played (171 s and rising, last played "now"). Nothing
+       reached Floppy (checked against a backup of its database). Fixed:
+       shells, interpreters, Wine and Steam binaries, and system folders
+       never match by name (`isPlausibleGameProcessPath`).
+
 ## Performance on a modest machine
 
 8. [ ] **The laptop ran out of memory during a game.** At 13:27:41
