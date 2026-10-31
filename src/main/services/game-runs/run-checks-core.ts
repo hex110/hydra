@@ -14,9 +14,10 @@ const TOOL_NAMES: Record<CheckedTool, string> = {
 };
 
 /**
- * RenoDX logs `ChangeColorSpace` failing (0x80070057) when the swapchain
- * cannot go HDR: the wrong Proton build or a monitor that is not in HDR
- * (docs/renodx-hdr-plan.md, findings 3 and 11).
+ * RenoDX logs `ChangeColorSpace(Failed to set DirectX color space, hr =
+ * 0x80070057)` when the swapchain cannot go HDR: the wrong Proton build or a
+ * monitor that is not in HDR (docs/renodx-hdr-plan.md, findings 3 and 11).
+ * The text is from RenoDX's src/utils/swapchain.hpp, checked 2026-10-31.
  */
 const COLOUR_SPACE_FAILURE =
   /ChangeColorSpace[^\n]*(fail|0x8007|error)|(fail|could not|couldn't|unable)[^\n]*(set|change)[^\n]*colou?r ?space/i;

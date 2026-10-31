@@ -310,10 +310,10 @@ app that works for someone who isn't the developer.
    go into [Phase 13 review](phase-13-review.md) before any are fixed, marked
    bug, coherence or polish, with where upstream 4.3.0 already covers them.
    First pass done 2026-10-31 (26 findings, the first real umu runs among
-   them). Still to walk, needing real games and accounts: the first-run
-   checks' RenoDX and OptiScaler log lines (taken from the plan, not real
-   runs), Floppy sync, the Steam history import, the AnkerGames handoff, and
-   save sync after the 2026-10-30 fixes.
+   them). Walked on the desktop the same day: Floppy and the Steam history
+   import from an empty library, save sync against R2 (a test path), and the
+   first-run checks' log lines against RenoDX's source and real OptiScaler
+   logs. Still to walk: the AnkerGames browser handoff.
 2. **Fix the findings.** Bugs first, then coherence, then polish.
 3. **Auto fits the machine.** Auto resolves from the hardware it runs on, not
    only the game: no HDR output means the HDR rule, the monitor switch and

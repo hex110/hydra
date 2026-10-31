@@ -25,6 +25,16 @@ describe("evaluateRunChecks", () => {
     assert.strictEqual(check.reason.code, "check_renodx_colour_space");
   });
 
+  it("matches the lines RenoDX actually logs (src/utils/swapchain.hpp)", () => {
+    for (const line of [
+      "22:29:51:819 [15256] | WARN  | renodx::utils::swapchain::ChangeColorSpace(Failed to set DirectX color space, hr = 0x80070057)",
+      "22:29:51:819 [15256] | ERROR | changeColorSpace(Failed to get native swap chain)",
+    ]) {
+      const [check] = evaluateRunChecks(run(), { "ReShade.log": line });
+      assert.strictEqual(check.status, "failed", line);
+    }
+  });
+
   it("passes RenoDX when ReShade logged without the failure", () => {
     const [check] = evaluateRunChecks(run(), {
       "ReShade.log": "Colour space hdr10_st2084\nPeak Nits: 1499",
