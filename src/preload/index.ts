@@ -1187,6 +1187,8 @@ contextBridge.exposeInMainWorld("electron", {
     ),
   getLocalSourceRepacks: (title: string) =>
     ipcRenderer.invoke("getLocalSourceRepacks", title),
+  hasLocalSourceRepacks: (titles: string[]) =>
+    ipcRenderer.invoke("hasLocalSourceRepacks", titles),
   getLocalSourceStatuses: () => ipcRenderer.invoke("getLocalSourceStatuses"),
   refreshLocalSources: () => ipcRenderer.invoke("refreshLocalSources"),
   verifyLocalSource: (sourceId: string) =>

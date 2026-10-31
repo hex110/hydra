@@ -218,6 +218,20 @@ export class LocalSources {
     return index;
   }
 
+  /**
+   * Whether AnkerGames or a local source has the game, from their indexes
+   * only (no network per game), for marking catalogue results.
+   */
+  public static async hasRepacks(title: string): Promise<boolean> {
+    if (await AnkerGamesCatalogue.lists(title).catch(() => false)) return true;
+    const key = sourceMatchKey(title);
+    if (!key || !(await this.isEnabled())) return false;
+    for (const source of await downloadSourcesSublevel.values().all()) {
+      if ((await this.getIndex(source.id))?.get(key)?.length) return true;
+    }
+    return false;
+  }
+
   /** Downloads from AnkerGames and every source whose release title names this game. */
   public static async findRepacks(title: string): Promise<GameRepack[]> {
     const ankerGames = await AnkerGamesCatalogue.findRepacks(title).catch(

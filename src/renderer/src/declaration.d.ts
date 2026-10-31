@@ -603,6 +603,7 @@ declare global {
       ignoreDefaultLaunchOptions: boolean
     ) => Promise<void>;
     getLocalSourceRepacks: (title: string) => Promise<GameRepack[]>;
+    hasLocalSourceRepacks: (titles: string[]) => Promise<boolean[]>;
     getLocalSourceStatuses: () => Promise<LocalSourceStatus[]>;
     refreshLocalSources: () => Promise<void>;
     verifyLocalSource: (sourceId: string) => Promise<void>;

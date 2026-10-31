@@ -16,7 +16,8 @@
 
   &:hover,
   &:focus-within {
-    .game-item__plus-wrapper {
+    .game-item__plus-wrapper,
+    .game-item__download {
       opacity: 1;
     }
   }
@@ -42,7 +43,8 @@
     }
   }
 
-  &__plus-wrapper {
+  &__plus-wrapper,
+  &__download {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -66,6 +68,10 @@
       opacity: 0.5;
       cursor: default;
     }
+  }
+
+  &__download {
+    right: calc(globals.$spacing-unit * 4.5);
   }
 
   &__plus-wrapper--added {

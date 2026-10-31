@@ -819,6 +819,32 @@ export default function Catalogue() {
   );
   const effectiveView = mode === "modern" ? view : "list";
 
+  // AnkerGames and local sources aren't in a result's downloadSources, so
+  // ask which of the shown games they can download, for the Download button.
+  const [locallyDownloadable, setLocallyDownloadable] = useState<Set<string>>(
+    () => new Set()
+  );
+  useEffect(() => {
+    if (mode !== "modern" || visibleResults.length === 0) return;
+    let cancelled = false;
+    window.electron
+      .hasLocalSourceRepacks(visibleResults.map((game) => game.title))
+      .then((found) => {
+        if (cancelled) return;
+        setLocallyDownloadable(
+          new Set(
+            visibleResults
+              .filter((_game, index) => found[index])
+              .map((game) => catalogueKey(game))
+          )
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, visibleResults]);
+
   const protonThresholdValue =
     protonCompatibilityThresholds.find((threshold) =>
       areSameValues(threshold.values, filters.protondbSupportBadges)
@@ -1015,6 +1041,10 @@ export default function Catalogue() {
                   libraryState={libraryStates.get(catalogueKey(game))}
                   details={rowDetails.get(catalogueKey(game))}
                   view={effectiveView}
+                  canDownload={
+                    game.downloadSources.length > 0 ||
+                    locallyDownloadable.has(catalogueKey(game))
+                  }
                 />
               ))
             )}

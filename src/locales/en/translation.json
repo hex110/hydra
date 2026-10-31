@@ -296,6 +296,7 @@
     "installation_complete_message": "Common redistributables installed successfully"
   },
   "catalogue": {
+    "download_game": "Download",
     "search": "Filter…",
     "developers": "Developers",
     "genres": "Genres",

@@ -70,6 +70,13 @@ The data comes from Hydra's API: the batched Steam store details (score and
 screenshots, one request per ten rows), the How Long to Beat endpoint and the
 download-sources list per game. The main process keeps it for an hour.
 
+A row or grid card for a game that can be downloaded shows a **Download**
+button next to **+** on hover. It opens the game page with its download
+options, which go straight to the download settings when there is one
+option. Whether a game can be downloaded comes from its sources and, for
+AnkerGames and local sources, from their indexes alone: checking a page of
+results never fetches AnkerGames game pages.
+
 ## Load more
 
 Numbered pages are replaced by **Load more**, which appends the next 30

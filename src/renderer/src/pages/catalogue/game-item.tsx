@@ -3,6 +3,7 @@ import { buildGameDetailsPath } from "@renderer/helpers";
 import { useAppSelector, useLibrary } from "@renderer/hooks";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@renderer/components/link/link";
+import { useNavigate } from "react-router-dom";
 
 import "./game-item.scss";
 import { useTranslation } from "react-i18next";
@@ -36,6 +37,8 @@ export interface GameItemProps {
   libraryState?: CatalogueLibraryState;
   details?: CatalogueRowDetails;
   view?: CatalogueView;
+  /** A download option exists, from a source or AnkerGames. */
+  canDownload?: boolean;
 }
 
 const PREVIEW_DELAY_MS = 400;
@@ -84,8 +87,10 @@ export function GameItem({
   libraryState,
   details,
   view = "list",
+  canDownload = false,
 }: GameItemProps) {
   const { i18n, t } = useTranslation("game_details");
+  const navigate = useNavigate();
   const { previewUrl, hoverProps } = useHoverPreview(
     details?.screenshots ?? []
   );
@@ -279,6 +284,21 @@ export function GameItem({
       >
         {added ? <CheckIcon size={16} /> : <PlusIcon size={16} />}
       </button>
+      {canDownload && (
+        <button
+          type="button"
+          className="game-item__download"
+          onClick={() =>
+            navigate(buildGameDetailsPath(game), {
+              state: { openRepacks: true },
+            })
+          }
+          title={t("download_game", { ns: "catalogue" })}
+          aria-label={t("download_game", { ns: "catalogue" })}
+        >
+          <DownloadIcon size={16} />
+        </button>
+      )}
     </article>
   );
 }

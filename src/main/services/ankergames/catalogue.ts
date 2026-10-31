@@ -255,6 +255,18 @@ export class AnkerGamesCatalogue {
   }
 
   /** AnkerGames releases of the game with this title. */
+  /**
+   * Whether AnkerGames lists the game, from the sitemap index only. Never
+   * fetches game pages, so it is safe for a whole page of catalogue results.
+   */
+  public static async lists(title: string): Promise<boolean> {
+    const key = sourceMatchKey(title);
+    if (!key || !(await this.isEnabled())) return false;
+    const catalogue = await this.load();
+    if (!catalogue) await this.refresh();
+    return (this.index?.get(key)?.length ?? 0) > 0;
+  }
+
   public static async findRepacks(title: string): Promise<GameRepack[]> {
     const key = sourceMatchKey(title);
     if (!key || !(await this.isEnabled())) return [];
