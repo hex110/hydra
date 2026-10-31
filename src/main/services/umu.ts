@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -48,11 +47,13 @@ const getVersionName = (directoryPath: string) => {
 const getSharedUmuLogPath = () => path.join(logsPath, "umu.log");
 
 // PROTON_LOG=1 writes steam-<SteamGameId>.log to PROTON_LOG_DIR, or $HOME.
+// Hydra points it at its own logs folder so the files don't pile up in $HOME,
+// unless the user set one.
+const getProtonLogDirectory = () =>
+  process.env.PROTON_LOG_DIR || path.join(logsPath, "proton");
+
 const getProtonLogPath = (gameId?: string | null) =>
-  path.join(
-    process.env.PROTON_LOG_DIR || os.homedir(),
-    `steam-${gameId || 0}.log`
-  );
+  path.join(getProtonLogDirectory(), `steam-${gameId || 0}.log`);
 
 const getUmuLogPath = (gameId?: string | null) =>
   gameId
@@ -333,12 +334,14 @@ export class Umu {
       : ["createprefix"];
     const launchEnv = {
       PROTON_LOG: "1",
+      PROTON_LOG_DIR: getProtonLogDirectory(),
       WINEPREFIX: options.winePrefixPath,
       ...(options.gameId ? { GAMEID: `umu-${options.gameId}` } : {}),
       ...(options.protonPath ? { PROTONPATH: options.protonPath } : {}),
     };
 
     fs.mkdirSync(path.dirname(umuLogPath), { recursive: true });
+    fs.mkdirSync(getProtonLogDirectory(), { recursive: true });
     fs.mkdirSync(path.dirname(options.winePrefixPath), { recursive: true });
     ensureExecutablePermission(umuBinaryPath);
     appendUmuLogHeader(
@@ -503,6 +506,7 @@ export class Umu {
 
     const env: Record<string, string> = {
       PROTON_LOG: "1",
+      PROTON_LOG_DIR: getProtonLogDirectory(),
       ...(options?.gameId ? { GAMEID: `umu-${options.gameId}` } : {}),
       ...(options?.winePrefixPath
         ? { WINEPREFIX: options.winePrefixPath }
@@ -561,6 +565,7 @@ export class Umu {
       resolvedLaunchCommand;
 
     fs.mkdirSync(path.dirname(umuLogPath), { recursive: true });
+    fs.mkdirSync(getProtonLogDirectory(), { recursive: true });
     ensureExecutablePermission(umuBinaryPath);
 
     const launchHeader =

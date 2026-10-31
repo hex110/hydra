@@ -124,7 +124,8 @@ folder, next to upstream's Winetricks and Proton-switch reset:
 When umu-run exits cleanly within a minute of the launch and Hydra never saw
 the game running, the launcher window says **The game closed right after
 starting** instead of closing quietly. It has a **Show log** button that opens
-the Proton log (`steam-<id>.log` in the home folder, or in `PROTON_LOG_DIR`),
+the Proton log (`~/.config/hydra-plus/logs/proton/steam-<id>.log`, or in
+`PROTON_LOG_DIR`),
 or the umu log (`~/.config/hydra-plus/logs/umu-<id>.log`) when there is no
 Proton log. The game page treats it like a failed launch.
 
