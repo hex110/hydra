@@ -16,6 +16,7 @@ import type {
   IntegrationName,
   LibraryImportSource,
   SaveStoreConfig,
+  R2Credentials,
   ManualSaveBackupProgress,
   ManualSaveBackupScope,
   GameUpdateFailedEvent,
@@ -1036,6 +1037,9 @@ contextBridge.exposeInMainWorld("electron", {
   testSaveStore: (config: SaveStoreConfig) =>
     ipcRenderer.invoke("testSaveStore", config),
   isRcloneAvailable: () => ipcRenderer.invoke("isRcloneAvailable"),
+  installRclone: () => ipcRenderer.invoke("installRclone"),
+  createR2Remote: (credentials: R2Credentials) =>
+    ipcRenderer.invoke("createR2Remote", credentials),
   getSaveStoreUsage: () => ipcRenderer.invoke("getSaveStoreUsage"),
   cleanUpSaveStore: () => ipcRenderer.invoke("cleanUpSaveStore"),
   listSyncDevices: () => ipcRenderer.invoke("listSyncDevices"),

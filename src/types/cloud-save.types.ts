@@ -839,3 +839,9 @@ export interface CloudSaveMergeResult {
   unresolvedRemoteEntryIds: string[];
   partial: boolean;
 }
+
+export interface R2Credentials {
+  accountId: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+}

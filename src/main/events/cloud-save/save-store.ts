@@ -1,5 +1,7 @@
 import {
   cleanUpActiveSaveStore,
+  createR2Remote,
+  installRclone,
   getSaveStoreUsage,
   isRcloneAvailable,
   testSaveStore,
@@ -16,7 +18,11 @@ import {
   isManualSaveBackupRunning,
   runManualSaveBackup,
 } from "@main/services/cloud-save/manual-backup";
-import type { ManualSaveBackupScope, SaveStoreConfig } from "@types";
+import type {
+  ManualSaveBackupScope,
+  R2Credentials,
+  SaveStoreConfig,
+} from "@types";
 
 import { registerEvent } from "../register-event";
 
@@ -24,6 +30,10 @@ registerEvent("testSaveStore", (_event, config: SaveStoreConfig) =>
   testSaveStore(config)
 );
 registerEvent("isRcloneAvailable", () => isRcloneAvailable());
+registerEvent("installRclone", () => installRclone());
+registerEvent("createR2Remote", (_event, credentials: R2Credentials) =>
+  createR2Remote(credentials)
+);
 registerEvent("getSaveStoreUsage", () => getSaveStoreUsage());
 registerEvent("cleanUpSaveStore", () => cleanUpActiveSaveStore());
 registerEvent("listSyncDevices", () => listSyncDevices());

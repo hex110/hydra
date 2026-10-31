@@ -36,6 +36,7 @@ import {
 } from "@main/services";
 import { migrateDownloadSources } from "./helpers/migrate-download-sources";
 import { addBundledCommandsToPath } from "./services/bundled-commands";
+import { addHydraBinToPath } from "./services/cloud-save/save-store/rclone-setup";
 import { GameRuns } from "./services/game-runs/game-runs";
 import { getDirSize } from "./services/download/helpers";
 import { isDebridPendingError } from "./services/download/debrid-files";
@@ -91,6 +92,7 @@ const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
 export const loadState = async () => {
   await Lock.acquireLock();
   addBundledCommandsToPath();
+  addHydraBinToPath();
   await clearLegacyAchievementPersistence();
   await migrateCloudSaveAutomaticSyncDefaults();
   await migrateEmulatorCloudSaveDefaults();

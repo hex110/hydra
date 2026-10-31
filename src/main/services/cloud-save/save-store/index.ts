@@ -17,6 +17,11 @@ export const DEFAULT_KEEP_VERSIONS = 5;
 
 export { isRcloneAvailable } from "./backends";
 export {
+  addHydraBinToPath,
+  createR2Remote,
+  installRclone,
+} from "./rclone-setup";
+export {
   SaveStoreConflictError,
   SelfHostedSaveStore,
 } from "./self-hosted-save-store";

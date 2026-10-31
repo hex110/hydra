@@ -1,7 +1,10 @@
+import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CopyIcon } from "@primer/octicons-react";
-import { Button, Modal } from "@renderer/components";
+import { Button, Modal, TextField } from "@renderer/components";
+import { settingsContext } from "@renderer/context";
 import { useToast } from "@renderer/hooks";
+import type { SaveStoreConfig } from "@types";
 
 import "./settings-cloud.scss";
 
@@ -9,16 +12,6 @@ const R2_DASHBOARD_URL =
   "https://dash.cloudflare.com/?to=/:account/r2/overview";
 
 const BUCKET_NAME = "hydra-saves";
-const INSTALL_COMMAND = "sudo pacman -S rclone";
-const CHECK_COMMAND = `rclone lsf r2:${BUCKET_NAME}`;
-const REMOTE_CONFIG = `[r2]
-type = s3
-provider = Cloudflare
-access_key_id = <ACCESS_KEY_ID>
-secret_access_key = <SECRET_ACCESS_KEY>
-endpoint = https://<ACCOUNT_ID>.r2.cloudflarestorage.com
-acl = private
-no_check_bucket = true`;
 
 function CodeBlock({ code }: Readonly<{ code: string }>) {
   const { t } = useTranslation("settings");
@@ -41,6 +34,98 @@ function CodeBlock({ code }: Readonly<{ code: string }>) {
       >
         <CopyIcon size={14} />
       </Button>
+    </div>
+  );
+}
+
+/**
+ * Turns the R2 keys into an rclone remote (rclone.conf holds them, as with a
+ * remote made by hand) and turns save sync on with it.
+ */
+function R2ConnectForm({ onConnected }: Readonly<{ onConnected: () => void }>) {
+  const { t } = useTranslation("settings");
+  const { updateUserPreferences } = useContext(settingsContext);
+  const { showSuccessToast, showErrorToast } = useToast();
+  const [accountId, setAccountId] = useState("");
+  const [accessKeyId, setAccessKeyId] = useState("");
+  const [secretAccessKey, setSecretAccessKey] = useState("");
+  const [bucket, setBucket] = useState(BUCKET_NAME);
+  const [busy, setBusy] = useState(false);
+
+  const connect = async () => {
+    setBusy(true);
+    try {
+      if (!(await window.electron.isRcloneAvailable()))
+        await window.electron.installRclone();
+      const remote = await window.electron.createR2Remote({
+        accountId,
+        accessKeyId,
+        secretAccessKey,
+      });
+      const config: SaveStoreConfig = {
+        kind: "rclone",
+        remote: `${remote}:${bucket.trim()}`,
+      };
+      await window.electron.testSaveStore(config);
+      await updateUserPreferences({ saveStore: config });
+      showSuccessToast(t("cloud_r2_connected"));
+      onConnected();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      showErrorToast(
+        t(
+          message.includes("r2_account_id")
+            ? "cloud_r2_bad_account_id"
+            : "cloud_r2_connect_failed"
+        )
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="settings-cloud__form">
+      <TextField
+        label={t("cloud_r2_account_id")}
+        hint={t("cloud_r2_account_id_hint")}
+        value={accountId}
+        onChange={(event) => setAccountId(event.target.value)}
+        theme="dark"
+      />
+      <TextField
+        label={t("cloud_r2_access_key_id")}
+        value={accessKeyId}
+        onChange={(event) => setAccessKeyId(event.target.value)}
+        theme="dark"
+      />
+      <TextField
+        label={t("cloud_r2_secret_access_key")}
+        type="password"
+        value={secretAccessKey}
+        onChange={(event) => setSecretAccessKey(event.target.value)}
+        theme="dark"
+      />
+      <TextField
+        label={t("cloud_r2_bucket")}
+        value={bucket}
+        onChange={(event) => setBucket(event.target.value)}
+        theme="dark"
+      />
+      <div>
+        <Button
+          disabled={
+            busy ||
+            !accountId.trim() ||
+            !accessKeyId.trim() ||
+            !secretAccessKey.trim() ||
+            !bucket.trim()
+          }
+          onClick={() => void connect()}
+        >
+          {busy ? t("cloud_r2_connecting") : t("cloud_r2_connect")}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -87,24 +172,10 @@ export function CloudR2GuideModal({
           <p>{t("cloud_r2_step_token_body")}</p>
         </li>
         <li>
-          <h4>{t("cloud_r2_step_rclone_title")}</h4>
-          <p>{t("cloud_r2_step_rclone_body")}</p>
-          <CodeBlock code={INSTALL_COMMAND} />
-          <p>{t("cloud_r2_step_rclone_other")}</p>
-        </li>
-        <li>
-          <h4>{t("cloud_r2_step_remote_title")}</h4>
-          <p>{t("cloud_r2_step_remote_body")}</p>
-          <CodeBlock code={REMOTE_CONFIG} />
-        </li>
-        <li>
-          <h4>{t("cloud_r2_step_check_title")}</h4>
-          <CodeBlock code={CHECK_COMMAND} />
-          <p>{t("cloud_r2_step_check_body")}</p>
-        </li>
-        <li>
-          <h4>{t("cloud_r2_step_hydra_title")}</h4>
-          <p>{t("cloud_r2_step_hydra_body")}</p>
+          <h4>{t("cloud_r2_step_connect_title")}</h4>
+          <p>{t("cloud_r2_step_connect_body")}</p>
+          <R2ConnectForm onConnected={onClose} />
+          <p>{t("cloud_r2_step_manual")}</p>
         </li>
       </ol>
       <p className="settings-cloud__warning">{t("cloud_r2_secret_warning")}</p>

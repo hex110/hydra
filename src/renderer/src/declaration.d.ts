@@ -76,6 +76,7 @@ import type {
   DownloadProgress,
   SeedingStatus,
   UserPreferences,
+  R2Credentials,
   SettingsTransferResult,
   StartGameDownloadPayload,
   RealDebridUser,
@@ -467,6 +468,8 @@ declare global {
     dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     testSaveStore: (config: SaveStoreConfig) => Promise<void>;
     isRcloneAvailable: () => Promise<boolean>;
+    installRclone: () => Promise<string>;
+    createR2Remote: (credentials: R2Credentials) => Promise<string>;
     getSaveStoreUsage: () => Promise<SaveStoreUsage>;
     cleanUpSaveStore: () => Promise<SaveStoreCleanupResult>;
     listSyncDevices: () => Promise<SaveStoreDevice[]>;

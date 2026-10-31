@@ -88,6 +88,19 @@ export function SettingsSaveSync({
     }
   };
 
+  const installRclone = async () => {
+    setIsBusy(true);
+    try {
+      const version = await window.electron.installRclone();
+      showSuccessToast(t("cloud_rclone_installed", { version }));
+      checkRclone();
+    } catch {
+      showErrorToast(t("cloud_rclone_install_failed"));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const turnOff = async () => {
     await updateUserPreferences({ saveStore: null });
     showSuccessToast(t("save_sync_disabled"));
@@ -181,6 +194,14 @@ export function SettingsSaveSync({
               {rcloneAvailable === false ? (
                 <p className="settings-integration-card__message settings-tracking__error">
                   {t("save_sync_rclone_missing")}{" "}
+                  <button
+                    type="button"
+                    className="settings-cloud__link"
+                    disabled={isBusy}
+                    onClick={() => void installRclone()}
+                  >
+                    {t("cloud_rclone_install")}
+                  </button>{" "}
                   <button
                     type="button"
                     className="settings-cloud__link"
