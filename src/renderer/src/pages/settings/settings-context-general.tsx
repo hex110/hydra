@@ -18,6 +18,7 @@ import {
   replaceSavedDownloadDirectoryAndSetDefault,
 } from "@shared";
 import { SettingsAppearance } from "./appearance/settings-appearance";
+import { SettingsTransferGroup } from "./settings-transfer-group";
 import { DownloadDirectoryReplacementModal } from "./download-directory-replacement-modal";
 
 interface LanguageOption {
@@ -283,6 +284,8 @@ export function SettingsContextGeneral({
           />
         </div>
       )}
+
+      <SettingsTransferGroup onImported={() => window.location.reload()} />
 
       <div className="settings-context-panel__group">
         <h3>{t("appearance")}</h3>

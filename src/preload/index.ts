@@ -953,6 +953,9 @@ contextBridge.exposeInMainWorld("electron", {
   getUserPreferences: () => ipcRenderer.invoke("getUserPreferences"),
   updateUserPreferences: (preferences: Partial<UserPreferences>) =>
     ipcRenderer.invoke("updateUserPreferences", preferences),
+  exportSettings: (includeSecrets: boolean) =>
+    ipcRenderer.invoke("exportSettings", includeSecrets),
+  importSettings: () => ipcRenderer.invoke("importSettings"),
   onUserPreferencesUpdated: (
     cb: (preferences: UserPreferences | null) => void
   ) => {

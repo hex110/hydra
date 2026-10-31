@@ -125,8 +125,8 @@ const applyDownloadManagerPreferences = async (
   }
 };
 
-const updateUserPreferences = async (
-  _event: Electron.IpcMainInvokeEvent,
+/** Saves preference changes and applies them, as the settings pages do. */
+export const applyUserPreferences = async (
   preferences: Partial<UserPreferences>
 ) => {
   const userPreferences = await db.get<string, UserPreferences | null>(
@@ -173,4 +173,10 @@ const updateUserPreferences = async (
   await applyDownloadManagerPreferences(preferences);
 };
 
-registerEvent("updateUserPreferences", updateUserPreferences);
+registerEvent(
+  "updateUserPreferences",
+  (
+    _event: Electron.IpcMainInvokeEvent,
+    preferences: Partial<UserPreferences>
+  ) => applyUserPreferences(preferences)
+);

@@ -76,6 +76,7 @@ import type {
   DownloadProgress,
   SeedingStatus,
   UserPreferences,
+  SettingsTransferResult,
   StartGameDownloadPayload,
   RealDebridUser,
   PremiumizeUser,
@@ -1086,6 +1087,10 @@ declare global {
     updateUserPreferences: (
       preferences: Partial<UserPreferences>
     ) => Promise<void>;
+    exportSettings: (
+      includeSecrets: boolean
+    ) => Promise<SettingsTransferResult>;
+    importSettings: () => Promise<SettingsTransferResult>;
     /* Emulators */
     getEmulatorConfigs: () => Promise<EmulatorConfigMap>;
     getRpcs3ConfigRootStatus: () => Promise<

@@ -497,3 +497,8 @@ export interface ScreenState {
   width: number;
   isMaximized: boolean;
 }
+
+export type SettingsTransferResult =
+  | { status: "done"; path: string }
+  | { status: "cancelled" }
+  | { status: "failed"; message: string };

@@ -221,7 +221,7 @@ in the sections below.
     2. [ ] Fix what the review found
     3. [ ] Auto fits the machine
     4. [x] Settings regrouped (six groups)
-    5. [ ] Export and import settings (from phase 16)
+    5. [x] Export and import settings ([Moving settings](features/settings-transfer.md))
     6. [ ] Cloud backup without friction
     7. [ ] Shared patterns for every page
     8. [ ] Catalogue
