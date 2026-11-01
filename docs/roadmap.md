@@ -247,7 +247,13 @@ in the sections below.
     1. [ ] pacman updates
     2. [x] Sign the browser add-on
     3. [ ] Translations
-17. **Mods.** Native mod support, after a design.
+17. **Mods.** Native mod support. Design: [Mods](mods-design.md)
+    (Nexus browsed without a key, downloads through TorBox, staging and
+    linked deploys).
+    1. [ ] Mod store: staging, deploy, backups, install from file
+    2. [ ] Nexus source and TorBox downloads
+    3. [ ] Mods page, sidebar section, updates
+    4. [ ] `nxm://` links, requirements, FOMOD defaults
 18. **In-game overlay** (was phase 12 item 5). Achievements and what is
     running in the game; compare a Hyprland layer-shell window with a
     ReShade add-on first.
