@@ -38,6 +38,7 @@ import "./retroarch";
 import "./epic";
 import "./optiscaler";
 import "./renodx";
+import "./mods";
 import "./game-runs";
 import "./capabilities";
 import "./save-import";

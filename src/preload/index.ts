@@ -4,6 +4,9 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  ModInstallProgress,
+  NexusGameMatch,
+  NexusModSort,
   SavedLibraryFilter,
   MangoHudSettings,
   ProtonFlavor,
@@ -1262,6 +1265,67 @@ contextBridge.exposeInMainWorld("electron", {
   installGameOptiScaler: (shop: GameShop, objectId: string, version?: string) =>
     ipcRenderer.invoke("installGameOptiScaler", shop, objectId, version),
   getRenoDxOverview: () => ipcRenderer.invoke("getRenoDxOverview"),
+  getGameMods: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameMods", shop, objectId),
+  getNexusGameForLibraryGame: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getNexusGameForLibraryGame", shop, objectId),
+  setNexusGameForLibraryGame: (
+    shop: GameShop,
+    objectId: string,
+    game: NexusGameMatch | null
+  ) => ipcRenderer.invoke("setNexusGameForLibraryGame", shop, objectId, game),
+  searchNexusGames: (name: string) =>
+    ipcRenderer.invoke("searchNexusGames", name),
+  searchNexusMods: (
+    gameDomain: string,
+    search: string,
+    sort: NexusModSort,
+    offset: number
+  ) => ipcRenderer.invoke("searchNexusMods", gameDomain, search, sort, offset),
+  getNexusModFiles: (gameId: number, modId: number) =>
+    ipcRenderer.invoke("getNexusModFiles", gameId, modId),
+  hasTorBoxToken: () => ipcRenderer.invoke("hasTorBoxToken"),
+  installNexusModFile: (
+    shop: GameShop,
+    objectId: string,
+    file: {
+      modId: number;
+      fileId: number;
+      name: string;
+      version: string | null;
+      replaces?: string;
+    }
+  ) => ipcRenderer.invoke("installNexusModFile", shop, objectId, file),
+  installModFromFile: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("installModFromFile", shop, objectId),
+  setModEnabled: (
+    shop: GameShop,
+    objectId: string,
+    modId: string,
+    enabled: boolean
+  ) => ipcRenderer.invoke("setModEnabled", shop, objectId, modId, enabled),
+  moveMod: (
+    shop: GameShop,
+    objectId: string,
+    modId: string,
+    direction: -1 | 1
+  ) => ipcRenderer.invoke("moveMod", shop, objectId, modId, direction),
+  removeMod: (shop: GameShop, objectId: string, modId: string) =>
+    ipcRenderer.invoke("removeMod", shop, objectId, modId),
+  checkModUpdates: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("checkModUpdates", shop, objectId),
+  onModInstallProgress: (
+    cb: (progress: ModInstallProgress | null, key: string) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      progress: ModInstallProgress | null,
+      key: string
+    ) => cb(progress, key);
+    ipcRenderer.on("on-mod-install-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-mod-install-progress", listener);
+  },
   checkRenoDxUpdates: () => ipcRenderer.invoke("checkRenoDxUpdates"),
   clearRenoDxCache: () => ipcRenderer.invoke("clearRenoDxCache"),
   runRenoDxBulk: (mode: RenoDxBulkMode) =>

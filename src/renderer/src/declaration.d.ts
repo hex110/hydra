@@ -1,4 +1,11 @@
 import type {
+  GameMods,
+  ModActionResult,
+  ModInstallProgress,
+  NexusGameMatch,
+  NexusModFile,
+  NexusModSearchResult,
+  NexusModSort,
   AuthPage,
   CatalogueRowDetails,
   Downloader,
@@ -645,6 +652,64 @@ declare global {
       objectId: string
     ) => Promise<GameOptiScalerStatus>;
     getRenoDxOverview: () => Promise<RenoDxOverview>;
+    getGameMods: (shop: GameShop, objectId: string) => Promise<GameMods>;
+    getNexusGameForLibraryGame: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<NexusGameMatch | null>;
+    setNexusGameForLibraryGame: (
+      shop: GameShop,
+      objectId: string,
+      game: NexusGameMatch | null
+    ) => Promise<void>;
+    searchNexusGames: (name: string) => Promise<NexusGameMatch[]>;
+    searchNexusMods: (
+      gameDomain: string,
+      search: string,
+      sort: NexusModSort,
+      offset: number
+    ) => Promise<NexusModSearchResult>;
+    getNexusModFiles: (
+      gameId: number,
+      modId: number
+    ) => Promise<NexusModFile[]>;
+    hasTorBoxToken: () => Promise<boolean>;
+    installNexusModFile: (
+      shop: GameShop,
+      objectId: string,
+      file: {
+        modId: number;
+        fileId: number;
+        name: string;
+        version: string | null;
+        replaces?: string;
+      }
+    ) => Promise<ModActionResult>;
+    installModFromFile: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<ModActionResult | null>;
+    setModEnabled: (
+      shop: GameShop,
+      objectId: string,
+      modId: string,
+      enabled: boolean
+    ) => Promise<ModActionResult>;
+    moveMod: (
+      shop: GameShop,
+      objectId: string,
+      modId: string,
+      direction: -1 | 1
+    ) => Promise<ModActionResult>;
+    removeMod: (
+      shop: GameShop,
+      objectId: string,
+      modId: string
+    ) => Promise<ModActionResult>;
+    checkModUpdates: (shop: GameShop, objectId: string) => Promise<number>;
+    onModInstallProgress: (
+      cb: (progress: ModInstallProgress | null, key: string) => void
+    ) => () => void;
     checkRenoDxUpdates: () => Promise<void>;
     clearRenoDxCache: () => Promise<void>;
     runRenoDxBulk: (mode: RenoDxBulkMode) => Promise<boolean>;
