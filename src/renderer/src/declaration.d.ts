@@ -5,6 +5,7 @@ import type {
   ModInstallProgress,
   NexusGameMatch,
   NexusModFile,
+  NexusModRequirement,
   NexusModSearchResult,
   NexusModSort,
   AuthPage,
@@ -684,6 +685,10 @@ declare global {
       gameId: number,
       modId: number
     ) => Promise<NexusModFile[]>;
+    getNexusModRequirements: (
+      gameId: number,
+      modId: number
+    ) => Promise<NexusModRequirement[]>;
     hasTorBoxToken: () => Promise<boolean>;
     isNxmHandler: () => Promise<boolean>;
     registerNxmHandler: () => Promise<boolean>;

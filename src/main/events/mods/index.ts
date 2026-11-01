@@ -12,6 +12,7 @@ import {
 } from "@main/services/mods/mods";
 import {
   getNexusModFiles,
+  getNexusModRequirements,
   searchNexusGames,
   searchNexusMods,
 } from "@main/services/mods/nexus";
@@ -50,6 +51,11 @@ registerEvent(
   ) => searchNexusMods({ gameDomain, search, sort, offset })
 );
 
+registerEvent(
+  "getNexusModRequirements",
+  (_event, gameId: number, modId: number) =>
+    getNexusModRequirements(gameId, modId)
+);
 registerEvent("getNexusModFiles", (_event, gameId: number, modId: number) =>
   getNexusModFiles(gameId, modId)
 );

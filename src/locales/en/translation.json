@@ -4767,6 +4767,12 @@
     "nxm_hint": "Nexus Mods' own Mod Manager Download buttons can install straight into Hydra too.",
     "nxm_register": "Use Hydra for those buttons",
     "nxm_no_game": "{{game}} isn't in your library with an executable, so the mod has nowhere to go.",
-    "nxm_installed": "Installed {{mod}} in {{game}}."
+    "nxm_installed": "Installed {{mod}} in {{game}}.",
+    "requirements": "Requires",
+    "requirement_installed": "Installed",
+    "requirement_find": "Find",
+    "requirement_open": "Open page",
+    "requirements_missing": "Needs {{names}}",
+    "requirements_missing_hint": "Its Nexus page lists these as required and they are not in this list. Ignore it if you installed them another way."
   }
 }

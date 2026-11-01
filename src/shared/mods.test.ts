@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   findModUpdate,
+  getMissingModRequirements,
   isFomodArchive,
   parseNxmLink,
   planDeployment,
@@ -124,5 +125,32 @@ describe("findModUpdate", () => {
 
   it("doesn't offer an older main file for a newer optional one", () => {
     assert.equal(findModUpdate(files, 3), null);
+  });
+});
+
+describe("getMissingModRequirements", () => {
+  const nexus = (modId: number) => ({
+    source: {
+      kind: "nexus" as const,
+      gameDomain: "stardewvalley",
+      gameId: 1303,
+      modId,
+      fileId: 1,
+    },
+  });
+
+  it("lists same-game Nexus requirements that are not installed", () => {
+    const mod = {
+      requirements: [
+        { modId: 2400, name: "SMAPI", url: null, notes: null },
+        { modId: 1915, name: "Content Patcher", url: null, notes: null },
+        { modId: null, name: "Outside tool", url: "https://x", notes: null },
+      ],
+    };
+    assert.deepEqual(
+      getMissingModRequirements(mod, [nexus(1915)]).map((item) => item.name),
+      ["SMAPI"]
+    );
+    assert.deepEqual(getMissingModRequirements({}, []), []);
   });
 });

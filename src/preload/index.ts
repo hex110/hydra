@@ -1290,6 +1290,8 @@ contextBridge.exposeInMainWorld("electron", {
     sort: NexusModSort,
     offset: number
   ) => ipcRenderer.invoke("searchNexusMods", gameDomain, search, sort, offset),
+  getNexusModRequirements: (gameId: number, modId: number) =>
+    ipcRenderer.invoke("getNexusModRequirements", gameId, modId),
   getNexusModFiles: (gameId: number, modId: number) =>
     ipcRenderer.invoke("getNexusModFiles", gameId, modId),
   hasTorBoxToken: () => ipcRenderer.invoke("hasTorBoxToken"),

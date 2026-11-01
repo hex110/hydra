@@ -37,6 +37,15 @@ other games take mods in their own folder. `resolveModLayout` lines up
 archives packed with or without the mod folder, in a wrapper folder, or
 mirroring the game folder.
 
+**Requirements.** Opening a Nexus mod lists what its page says it requires
+(read from the same keyless API): a requirement that is installed says so, a
+Nexus mod for the same game has **Find** (searches for it), and an outside
+tool or another game's mod has **Open page**. Installing a Nexus file stores
+its requirements with the mod, and an installed row says **Needs …** while a
+required Nexus mod is not in the list. Nothing is installed by itself: many
+requirements are tools with their own installer (SMAPI, Script Extender), so
+the hint says to ignore it when that is the case.
+
 A FOMOD installer archive is installed as packed and marked **FOMOD**; its
 options are not offered yet.
 
@@ -68,7 +77,6 @@ default (`xdg-mime`), so another mod manager keeps the links until then.
 
 ## Not yet
 
-Requirements,
 FOMOD options, Bethesda plugin load order, profiles, mods in the Wine prefix
 (`Documents/My Games`), Wabbajack and other sites. See the design's build
 order.

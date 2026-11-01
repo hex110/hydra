@@ -6,6 +6,7 @@ import type {
   NexusFileCategory,
   NexusGameMatch,
   NexusModFile,
+  NexusModRequirement,
   NexusModSearchResult,
   NexusModSort,
 } from "@types";
@@ -186,6 +187,57 @@ export const getNexusModFiles = async (
     uploadedAt: file.date,
     description: file.description,
   }));
+};
+
+const REQUIREMENTS_QUERY = `query Requirements($modId: ID!, $gameId: ID!) {
+  mod(modId: $modId, gameId: $gameId) {
+    modRequirements {
+      nexusRequirements {
+        nodes { modId modName url externalRequirement notes gameId }
+      }
+    }
+  }
+}`;
+
+/** The mods and tools a Nexus mod's page lists as required. */
+export const getNexusModRequirements = async (
+  gameId: number,
+  modId: number
+): Promise<NexusModRequirement[]> => {
+  const data = await query<{
+    mod: {
+      modRequirements: {
+        nexusRequirements: {
+          nodes: {
+            modId: string | null;
+            modName: string | null;
+            url: string | null;
+            externalRequirement: boolean;
+            notes: string | null;
+            gameId: string | null;
+          }[];
+        };
+      } | null;
+    } | null;
+  }>(REQUIREMENTS_QUERY, { modId, gameId });
+  return (data.mod?.modRequirements?.nexusRequirements.nodes ?? []).flatMap(
+    (node) => {
+      const sameGame =
+        !node.externalRequirement &&
+        node.modId &&
+        Number(node.gameId) === gameId;
+      const name = node.modName?.trim() || node.url || "";
+      if (!name) return [];
+      return [
+        {
+          modId: sameGame ? Number(node.modId) : null,
+          name,
+          url: node.url || null,
+          notes: node.notes?.trim() || null,
+        },
+      ];
+    }
+  );
 };
 
 const MOD_QUERY = `query Mod($modId: ID!, $gameId: ID!) {

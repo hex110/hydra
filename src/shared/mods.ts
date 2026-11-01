@@ -1,4 +1,4 @@
-import type { NexusModFile } from "../types/mods.types.js";
+import type { InstalledMod, NexusModFile } from "../types/mods.types.js";
 
 /**
  * Where a game loads mods from, relative to its folder, by Nexus game domain.
@@ -231,4 +231,20 @@ export const findModUpdate = <
   if (!newest || newest.fileId === installedFileId) return null;
   if (installed && newest.uploadedAt <= installed.uploadedAt) return null;
   return newest;
+};
+
+/** Nexus mods of the same game a mod requires that are not installed. */
+export const getMissingModRequirements = (
+  mod: Pick<InstalledMod, "requirements">,
+  installed: Pick<InstalledMod, "source">[]
+) => {
+  const installedModIds = new Set(
+    installed.flatMap((other) =>
+      other.source.kind === "nexus" ? [other.source.modId] : []
+    )
+  );
+  return (mod.requirements ?? []).filter(
+    (requirement) =>
+      requirement.modId !== null && !installedModIds.has(requirement.modId)
+  );
 };

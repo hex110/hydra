@@ -13,6 +13,7 @@ import { Badge, Button, CheckboxField } from "@renderer/components";
 import { setHeaderTitle } from "@renderer/features";
 import { useAppDispatch, useToast } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
+import { getMissingModRequirements } from "@shared";
 import type {
   GameMods,
   GameShop,
@@ -169,6 +170,7 @@ export default function Mods() {
           <ol className="mods__list">
             {mods.map((mod, index) => {
               const overridden = gameMods.overridden[mod.id]?.length ?? 0;
+              const missing = getMissingModRequirements(mod, mods);
               return (
                 <li key={mod.id} className="mods__row">
                   <CheckboxField
@@ -195,6 +197,13 @@ export default function Mods() {
                     </Badge>
                     {mod.fomod && (
                       <span title={t("fomod_hint")}>{t("fomod")}</span>
+                    )}
+                    {missing.length > 0 && (
+                      <span title={t("requirements_missing_hint")}>
+                        {t("requirements_missing", {
+                          names: missing.map((item) => item.name).join(", "),
+                        })}
+                      </span>
                     )}
                     {overridden > 0 && (
                       <span title={gameMods.overridden[mod.id].join("\n")}>

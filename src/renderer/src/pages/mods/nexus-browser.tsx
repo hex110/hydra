@@ -16,6 +16,7 @@ import type {
   NexusGameMatch,
   NexusMod,
   NexusModFile,
+  NexusModRequirement,
   NexusModSort,
 } from "@types";
 
@@ -67,6 +68,9 @@ export function NexusBrowser({
   const [failed, setFailed] = useState(false);
   const [openModId, setOpenModId] = useState<number | null>(null);
   const [files, setFiles] = useState<NexusModFile[] | null>(null);
+  const [requirements, setRequirements] = useState<
+    NexusModRequirement[] | null
+  >(null);
   const [gameSearch, setGameSearch] = useState("");
   const [gameResults, setGameResults] = useState<NexusGameMatch[]>([]);
 
@@ -140,6 +144,14 @@ export function NexusBrowser({
     }
     setOpenModId(mod.modId);
     setFiles(null);
+    setRequirements(null);
+    window.electron
+      .getNexusModRequirements(nexusGame!.id, mod.modId)
+      .then(setRequirements)
+      .catch((error) => {
+        logger.warn("Nexus requirements failed", error);
+        setRequirements([]);
+      });
     try {
       const result = await window.electron.getNexusModFiles(
         nexusGame!.id,
@@ -172,6 +184,11 @@ export function NexusBrowser({
     if (reportResult(result)) onInstalled();
   };
 
+  const installedModIds = new Set(
+    installedMods.flatMap((installed) =>
+      installed.source.kind === "nexus" ? [installed.source.modId] : []
+    )
+  );
   const installedFileIds = new Set(
     installedMods.flatMap((mod) =>
       mod.source.kind === "nexus" ? [mod.source.fileId] : []
@@ -301,6 +318,53 @@ export function NexusBrowser({
 
                 {openModId === mod.modId && (
                   <div className="mods__files">
+                    {requirements && requirements.length > 0 && (
+                      <div className="mods__requirements">
+                        <span className="mods__file-name">
+                          {t("requirements")}
+                        </span>
+                        {requirements.map((requirement) => {
+                          const installed =
+                            requirement.modId !== null &&
+                            installedModIds.has(requirement.modId);
+                          return (
+                            <div
+                              key={`${requirement.modId}:${requirement.name}`}
+                              className="mods__requirement"
+                            >
+                              <span title={requirement.notes ?? undefined}>
+                                {requirement.name}
+                              </span>
+                              {installed ? (
+                                <span className="mods__result-meta">
+                                  {t("requirement_installed")}
+                                </span>
+                              ) : requirement.modId !== null ? (
+                                <button
+                                  type="button"
+                                  className="mods__link"
+                                  onClick={() => setSearch(requirement.name)}
+                                >
+                                  {t("requirement_find")}
+                                </button>
+                              ) : requirement.url ? (
+                                <button
+                                  type="button"
+                                  className="mods__link"
+                                  onClick={() =>
+                                    window.electron.openExternal(
+                                      requirement.url!
+                                    )
+                                  }
+                                >
+                                  {t("requirement_open")}
+                                </button>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     {files === null ? (
                       <p className="mods__hint">{t("loading")}</p>
                     ) : files.length === 0 ? (

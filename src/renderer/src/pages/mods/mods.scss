@@ -206,6 +206,22 @@
     gap: calc(globals.$spacing-unit * 2);
   }
 
+  &__requirements {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    padding-bottom: globals.$spacing-unit;
+    border-bottom: 1px solid globals.$border-color;
+  }
+
+  &__requirement {
+    display: flex;
+    align-items: baseline;
+    gap: globals.$spacing-unit;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
   &__link {
     align-self: flex-start;
     border: 0;

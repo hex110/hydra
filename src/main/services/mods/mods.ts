@@ -16,7 +16,11 @@ import { downloadToFile } from "../download-to-file";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import { ModError, ModStore } from "./mod-store";
-import { findNexusGame, getNexusModFiles } from "./nexus";
+import {
+  findNexusGame,
+  getNexusModFiles,
+  getNexusModRequirements,
+} from "./nexus";
 import { requestNexusFileThroughTorBox } from "./torbox-nexus";
 
 const toError = (error: unknown): ModActionResult => {
@@ -117,7 +121,15 @@ export const installNexusModFile = async (
     if (!ok) return { ok: false, error: "download-failed" };
 
     progress("installing", null);
+    const requirements = await getNexusModRequirements(
+      nexusGame.id,
+      file.modId
+    ).catch((error) => {
+      logger.warn("[Mods] Could not read the mod's requirements", error);
+      return undefined;
+    });
     await ModStore.installFromFile(shop, objectId, downloaded, {
+      requirements,
       name: file.name,
       version: file.version,
       replaces: file.replaces,

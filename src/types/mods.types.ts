@@ -27,6 +27,18 @@ export interface InstalledMod {
   update?: { fileId: number; version: string | null; name: string } | null;
   /** The archive looked like a FOMOD installer; its default layout was used. */
   fomod?: boolean;
+  /** What the mod's Nexus page says it needs, read when it was installed. */
+  requirements?: NexusModRequirement[];
+}
+
+/** A requirement listed on a Nexus mod page. */
+export interface NexusModRequirement {
+  /** The Nexus mod, for requirements on Nexus for the same game. */
+  modId: number | null;
+  name: string;
+  /** A page outside Nexus (a tool such as SMAPI's site), or another game's mod. */
+  url: string | null;
+  notes: string | null;
 }
 
 export interface NexusGameMatch {

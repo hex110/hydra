@@ -254,7 +254,9 @@ in the sections below.
     2. [x] Nexus source and TorBox downloads
     3. [x] Mods page, sidebar section, updates ([Mods](features/mods.md))
     4. [x] `nxm://` links
-    5. [ ] Requirements, FOMOD options, profiles
+    5. [x] Requirements (listed and flagged, not installed by themselves)
+    6. [ ] FOMOD options
+    7. [ ] Profiles
 18. **In-game overlay** (was phase 12 item 5). Design:
     [In-game overlay](overlay-design.md).
     1. [x] In-game notices through MangoHud ([In-game notices](features/in-game-notices.md))

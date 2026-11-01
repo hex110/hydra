@@ -17,6 +17,7 @@ import type {
   InstalledMod,
   ModSource,
   NexusGameMatch,
+  NexusModRequirement,
 } from "@types";
 
 import { SevenZip } from "../7zip";
@@ -311,6 +312,7 @@ export class ModStore {
       source: ModSource;
       /** Replaces this mod (an update), keeping its place and on/off. */
       replaces?: string;
+      requirements?: NexusModRequirement[];
     }
   ): Promise<InstalledMod> {
     const game = await this.loadGame(shop, objectId);
@@ -371,6 +373,9 @@ export class ModStore {
         installedAt: Date.now(),
         update: null,
         fomod: isFomodArchive(extracted) || undefined,
+        requirements: details.requirements?.length
+          ? details.requirements
+          : undefined,
       };
 
       let replaced: InstalledMod | undefined;
