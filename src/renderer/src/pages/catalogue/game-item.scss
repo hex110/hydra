@@ -17,7 +17,8 @@
   &:hover,
   &:focus-within {
     .game-item__plus-wrapper,
-    .game-item__download {
+    .game-item__download,
+    .game-item__wishlist {
       opacity: 1;
     }
   }
@@ -44,7 +45,8 @@
   }
 
   &__plus-wrapper,
-  &__download {
+  &__download,
+  &__wishlist {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -70,8 +72,18 @@
     }
   }
 
-  &__download {
+  &__download,
+  &__wishlist {
     right: calc(globals.$spacing-unit * 4.5);
+  }
+
+  &__wishlist--after-download {
+    right: calc(globals.$spacing-unit * 8);
+  }
+
+  // A wishlisted row keeps its star visible, like the added check.
+  &__wishlist--active {
+    opacity: 0.8;
   }
 
   &__plus-wrapper--added {

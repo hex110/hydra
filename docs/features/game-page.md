@@ -31,7 +31,7 @@ friends playing, similar games, the catalogue grid) or a catalogue row
 (`GameItem`). Upstream's wide `GameCard` stays only in its Hot now shelf.
 
 **One library badge.** A store card or row that is in your library carries
-`GameLibraryBadge` (`components/`): **Installed** or **In library**, from
+`GameLibraryBadge` (`components/`): **Installed**, **In library** or **Wishlisted**, from
 `useLibraryStates()`. On a cover it is the `overlay` variant in the top-left
 corner. No page invents its own wording for this.
 
@@ -45,13 +45,14 @@ because it searches the store, not your games.
 **Every card opens the game page**, through `buildGameDetailsPath`; the game
 page links back to where a fact lives (this table) instead of repeating it.
 
-| Fact                     | Shown as                                              |
-| ------------------------ | ----------------------------------------------------- |
-| In your library          | `GameLibraryBadge` on store cards and rows            |
-| Installed                | The same badge; on your own cards, a cover not dimmed |
-| Update available         | The dot on `LibraryGameCard`; the hero bar's chip     |
-| Playtime                 | `LibraryGameCard` badge when there is some; hero bar  |
-| Saves backed up / failed | The game page's save widget (one home; see above)     |
+| Fact                     | Shown as                                                |
+| ------------------------ | ------------------------------------------------------- |
+| In your library          | `GameLibraryBadge` on store cards and rows              |
+| On your wishlist         | `GameLibraryBadge` (**Wishlisted**); the catalogue star |
+| Installed                | The same badge; on your own cards, a cover not dimmed   |
+| Update available         | The dot on `LibraryGameCard`; the hero bar's chip       |
+| Playtime                 | `LibraryGameCard` badge when there is some; hero bar    |
+| Saves backed up / failed | The game page's save widget (one home; see above)       |
 
 ## Options
 

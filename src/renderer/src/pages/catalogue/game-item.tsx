@@ -14,6 +14,8 @@ import {
   CheckIcon,
   ClockIcon,
   DownloadIcon,
+  StarFillIcon,
+  StarIcon,
 } from "@primer/octicons-react";
 import {
   formatBytes,
@@ -24,7 +26,10 @@ import cn from "classnames";
 import { logger } from "@renderer/logger";
 import { GameLibraryBadge } from "@renderer/components";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
-import type { CatalogueLibraryState } from "./catalogue-library-state";
+import {
+  isOwnedLibraryState,
+  type CatalogueLibraryState,
+} from "./catalogue-library-state";
 import type { CatalogueView } from "./catalogue-results-cache";
 
 const ProtonDBBadge = lazy(async () => {
@@ -101,7 +106,8 @@ export function GameItem({
 
   const [isAddingToLibrary, setIsAddingToLibrary] = useState(false);
 
-  const added = Boolean(libraryState);
+  const added = isOwnedLibraryState(libraryState);
+  const wishlisted = libraryState === "wishlisted";
 
   const { updateLibrary } = useLibrary();
   const shouldShowProtonFeatures = window.electron.platform === "linux";
@@ -123,6 +129,27 @@ export function GameItem({
       logger.error("Failed to add game to library", error);
     } finally {
       setIsAddingToLibrary(false);
+    }
+  };
+
+  const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
+  const toggleWishlist = async () => {
+    if (added || isUpdatingWishlist) return;
+
+    setIsUpdatingWishlist(true);
+    try {
+      await window.electron.setGameWishlisted(
+        game.shop,
+        game.objectId,
+        !wishlisted,
+        game.title,
+        game.platform ?? null
+      );
+      updateLibrary();
+    } catch (error) {
+      logger.error("Failed to update the wishlist", error);
+    } finally {
+      setIsUpdatingWishlist(false);
     }
   };
 
@@ -284,6 +311,27 @@ export function GameItem({
       >
         {added ? <CheckIcon size={16} /> : <PlusIcon size={16} />}
       </button>
+      {!added && (
+        <button
+          type="button"
+          className={cn("game-item__wishlist", {
+            "game-item__wishlist--active": wishlisted,
+            "game-item__wishlist--after-download": canDownload,
+          })}
+          onClick={toggleWishlist}
+          title={t(wishlisted ? "remove_from_wishlist" : "add_to_wishlist", {
+            ns: "library",
+          })}
+          aria-label={t(
+            wishlisted ? "remove_from_wishlist" : "add_to_wishlist",
+            { ns: "library" }
+          )}
+          aria-pressed={wishlisted}
+          disabled={isUpdatingWishlist}
+        >
+          {wishlisted ? <StarFillIcon size={16} /> : <StarIcon size={16} />}
+        </button>
+      )}
       {canDownload && (
         <button
           type="button"

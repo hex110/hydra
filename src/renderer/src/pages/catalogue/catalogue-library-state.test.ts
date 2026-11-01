@@ -48,4 +48,24 @@ describe("getCatalogueLibraryStates", () => {
     ]);
     assert.equal(result.get("steam:9"), "installed");
   });
+
+  it("marks wishlist-only entries wishlisted, below owned", () => {
+    const result = getCatalogueLibraryStates(
+      [
+        { shop: "steam", objectId: "1", installed: false, wished: true },
+        { shop: "steam", objectId: "2", installed: false, wished: true },
+        {
+          shop: "epic",
+          objectId: "x",
+          installed: false,
+          wished: false,
+          catalogueGame: { shop: "steam", objectId: "2" },
+        },
+      ],
+      (game) => game.installed,
+      (game) => game.wished
+    );
+    assert.equal(result.get("steam:1"), "wishlisted");
+    assert.equal(result.get("steam:2"), "owned");
+  });
 });

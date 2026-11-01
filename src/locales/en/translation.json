@@ -338,6 +338,7 @@
     "platforms": "Platforms",
     "library_state_installed": "Installed",
     "library_state_owned": "In library",
+    "library_state_wishlisted": "Wishlisted",
     "hide_owned": "Hide my games",
     "hide_owned_tooltip": "Hide games that are already in your library",
     "metacritic_score": "Metacritic score",

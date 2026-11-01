@@ -347,8 +347,11 @@ app that works for someone who isn't the developer.
    - [x] Download from a result: a **Download** button on rows and cards
          that can be downloaded, and one option opening its settings directly.
    - [x] The best option marked **Recommended** in every download list.
-   - [ ] Sort by release date, rating and ProtonDB tier (Steam's sort menu).
-   - [ ] Wishlist from a result, next to **+**.
+   - [x] Sort by release date and rating (already there). ProtonDB tier
+         dropped as a sort: the search API can't sort by it, and sorting one
+         loaded page would mislead; the ProtonDB filter covers it.
+   - [x] Wishlist from a result, next to **+**
+         ([Library state](features/catalogue.md#library-state)).
    - [ ] A header search that suggests games as you type, like Steam's.
 9. **Library, and tracking without Floppy.** Gap list against Steam's and
    Playnite's libraries (2026-10-31). Hydra already tracks playtime (edited

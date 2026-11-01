@@ -58,7 +58,9 @@ import {
   CATALOGUE_HIDE_OWNED_STORAGE_KEY,
   catalogueKey,
   getCatalogueLibraryStates,
+  isOwnedLibraryState,
 } from "./catalogue-library-state";
+import { isWishlistOnly } from "@shared";
 import {
   ClassicsOnboardingModal,
   hasDismissedClassicsOnboarding,
@@ -205,7 +207,7 @@ export default function Catalogue() {
 
   const { library } = useLibrary();
   const libraryStates = useMemo(
-    () => getCatalogueLibraryStates(library, isGameReadyToPlay),
+    () => getCatalogueLibraryStates(library, isGameReadyToPlay, isWishlistOnly),
     [library]
   );
   const [hideOwned, setHideOwned] = useState(() => {
@@ -227,7 +229,10 @@ export default function Catalogue() {
   const visibleResults = useMemo(
     () =>
       hideOwned
-        ? results.filter((game) => !libraryStates.has(catalogueKey(game)))
+        ? results.filter(
+            (game) =>
+              !isOwnedLibraryState(libraryStates.get(catalogueKey(game)))
+          )
         : results,
     [results, hideOwned, libraryStates]
   );
@@ -811,7 +816,12 @@ export default function Catalogue() {
     selectedSortValue === "popularity:desc";
 
   const ownedKeys = useMemo(
-    () => new Set(libraryStates.keys()),
+    () =>
+      new Set(
+        [...libraryStates]
+          .filter(([, state]) => isOwnedLibraryState(state))
+          .map(([key]) => key)
+      ),
     [libraryStates]
   );
   const rowDetails = useCatalogueRowDetails(

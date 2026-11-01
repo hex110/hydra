@@ -46,6 +46,12 @@ turns into a check. **Hide my games** in the header leaves them out. The
 search API can't exclude games, so a page with many owned games shows fewer
 rows.
 
+The star next to + adds a game you don't have to your wishlist (the same
+wishlist as the game page's star, with its download alerts) and removes it
+again. Wishlisted games carry **Wishlisted** instead; until 2026-11-01 they
+were wrongly marked **In library**, because a wishlist entry is a library
+record. **Hide my games** keeps them.
+
 ## Rows and grid
 
 **List** and **Grid** in the header switch between upstream's rows and a grid
