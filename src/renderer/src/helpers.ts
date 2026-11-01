@@ -562,6 +562,13 @@ const compareLibraryGamesByTitle = (
     ? libraryTitleCollator.compare(a.title ?? "", b.title ?? "")
     : libraryTitleCollator.compare(b.title ?? "", a.title ?? "");
 
+const PLAY_STATUS_ORDER: Record<string, number> = {
+  playing: 4,
+  backlog: 3,
+  finished: 2,
+  dropped: 1,
+};
+
 export const sortLibraryGames = (
   games: LibraryGame[],
   sortBy: SortOption
@@ -646,6 +653,21 @@ export const sortLibraryGames = (
           a.metadata?.howLongToBeat?.mainStory,
           b.metadata?.howLongToBeat?.mainStory,
           true
+        );
+        if (difference !== 0) return difference;
+        break;
+      }
+
+      case "rating": {
+        const difference = compareKnownValues(a.rating, b.rating);
+        if (difference !== 0) return difference;
+        break;
+      }
+
+      case "play_status": {
+        const difference = compareKnownValues(
+          a.playStatus ? PLAY_STATUS_ORDER[a.playStatus] : null,
+          b.playStatus ? PLAY_STATUS_ORDER[b.playStatus] : null
         );
         if (difference !== 0) return difference;
         break;

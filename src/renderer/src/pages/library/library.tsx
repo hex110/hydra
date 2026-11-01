@@ -22,6 +22,7 @@ import {
   ChevronRightIcon,
   GraphIcon,
   HeartIcon,
+  ListUnorderedIcon,
   SidebarExpandIcon,
   StarIcon,
   TelescopeIcon,
@@ -49,6 +50,15 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { LibraryGameCard } from "./library-game-card";
 import { LibraryGameCardLarge } from "./library-game-card-large";
 import { ViewOptions } from "./view-options";
+import {
+  getLibraryListColumns,
+  LIBRARY_LAYOUT_STORAGE_KEY,
+  LIBRARY_LIST_ROW_HEIGHT,
+  readStoredLayout,
+  type LibraryLayout,
+} from "./library-list";
+import { LibraryListHeader } from "./library-list-header";
+import { LibraryListRow } from "./library-list-row";
 import { FilterOptions, SORT_OPTIONS, SortOption } from "./filter-options";
 import { GroupBySelect } from "./group-by-select";
 import { CategoryFilter } from "./category-filter";
@@ -262,7 +272,11 @@ export default function Library() {
   const [cardSize, setCardSize] = useState(() =>
     readStoredCardSize({ getItem: readStorage })
   );
-  const isLargeView = isLargeCardStep(cardSize);
+  const [layout, setLayout] = useState<LibraryLayout>(() =>
+    readStoredLayout(readStorage(LIBRARY_LAYOUT_STORAGE_KEY))
+  );
+  const isListView = layout === "list";
+  const isLargeView = !isListView && isLargeCardStep(cardSize);
   const [sortBy, setSortBy] = useState<SortOption>(() => {
     const savedSortBy = readStorage("library-sort-by");
     if (savedSortBy && SORT_OPTIONS.includes(savedSortBy as SortOption)) {
@@ -412,6 +426,14 @@ export default function Library() {
         LIBRARY_COLLAPSED_GROUPS_STORAGE_KEY,
         JSON.stringify([...next])
       );
+      return next;
+    });
+  }, []);
+
+  const handleToggleListView = useCallback(() => {
+    setLayout((previous) => {
+      const next: LibraryLayout = previous === "list" ? "covers" : "list";
+      writeStorage(LIBRARY_LAYOUT_STORAGE_KEY, next);
       return next;
     });
   }, []);
@@ -751,8 +773,12 @@ export default function Library() {
   ]);
 
   const columnsCount = useMemo(
-    () => getLibraryColumns(containerWidth, cardSize, GAP),
-    [containerWidth, cardSize]
+    () => (isListView ? 1 : getLibraryColumns(containerWidth, cardSize, GAP)),
+    [containerWidth, cardSize, isListView]
+  );
+  const listColumns = useMemo(
+    () => getLibraryListColumns(containerWidth),
+    [containerWidth]
   );
 
   const groups = useMemo(
@@ -840,13 +866,14 @@ export default function Library() {
   }, [isDetailsPaneOpen, focusedKey, selection.anchor, displayedGames]);
 
   const estimatedRowHeight = useMemo(() => {
+    if (isListView) return LIBRARY_LIST_ROW_HEIGHT;
     if (isLargeView) return LARGE_CARD_ESTIMATED_HEIGHT + GAP;
     const itemWidth =
       containerWidth > 0
         ? (containerWidth - GAP * (columnsCount - 1)) / columnsCount
         : FALLBACK_ITEM_WIDTH;
     return Math.round((itemWidth * 3) / 2) + GAP;
-  }, [isLargeView, containerWidth, columnsCount]);
+  }, [isListView, isLargeView, containerWidth, columnsCount]);
 
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -1124,6 +1151,9 @@ export default function Library() {
       selected: selection.keys.has(key),
       focused: focusedKey === key,
     };
+    if (isListView) {
+      return <LibraryListRow key={key} {...props} columns={listColumns} />;
+    }
     return isLargeView ? (
       <LibraryGameCardLarge key={key} {...props} />
     ) : (
@@ -1181,10 +1211,22 @@ export default function Library() {
                 onGroupByChange={handleGroupByChange}
               />
               <FilterOptions sortBy={sortBy} onSortChange={handleSortChange} />
-              <ViewOptions
-                cardSize={cardSize}
-                onCardSizeChange={handleCardSizeChange}
-              />
+              {!isListView && (
+                <ViewOptions
+                  cardSize={cardSize}
+                  onCardSizeChange={handleCardSizeChange}
+                />
+              )}
+              <button
+                type="button"
+                className={`library__tool-button${isListView ? " library__tool-button--active" : ""}`}
+                onClick={handleToggleListView}
+                aria-pressed={isListView}
+                title={t("list_view_tooltip")}
+              >
+                <ListUnorderedIcon size={16} />
+                <span className="library__tool-label">{t("list_view")}</span>
+              </button>
               <button
                 type="button"
                 className={`library__tool-button${isDetailsPaneOpen ? " library__tool-button--active" : ""}`}
@@ -1329,12 +1371,20 @@ export default function Library() {
           {containerWidth > 0 && isLibraryLoading && (
             <LibraryGamesSkeleton
               large={isLargeView}
+              list={isListView}
               columns={columnsCount}
               rows={Math.max(
                 2,
                 Math.ceil(window.innerHeight / estimatedRowHeight)
               )}
               gap={GAP}
+            />
+          )}
+          {showGames && isListView && (
+            <LibraryListHeader
+              columns={listColumns}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
             />
           )}
           {showGames && (
@@ -1391,6 +1441,7 @@ export default function Library() {
                       transform: `translateY(${virtualRow.start}px)`,
                       display: "grid",
                       gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+                      height: isListView ? LIBRARY_LIST_ROW_HEIGHT : undefined,
                       gap: `${GAP}px`,
                     }}
                   >

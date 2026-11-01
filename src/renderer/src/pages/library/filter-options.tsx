@@ -14,7 +14,9 @@ export type SortOption =
   | "release_date"
   | "critic_score"
   | "installed_size"
-  | "shortest";
+  | "shortest"
+  | "rating"
+  | "play_status";
 
 export const SORT_OPTIONS: SortOption[] = [
   "title_asc",
@@ -28,6 +30,8 @@ export const SORT_OPTIONS: SortOption[] = [
   "achievements",
   "installed_first",
   "installed_size",
+  "rating",
+  "play_status",
 ];
 
 const SORT_LABEL_KEYS: Record<SortOption, string> = {
@@ -43,6 +47,8 @@ const SORT_LABEL_KEYS: Record<SortOption, string> = {
   achievements: "sort_achievements",
   installed_first: "sort_installed_first",
   installed_size: "sort_installed_size",
+  rating: "sort_rating",
+  play_status: "sort_play_status",
 };
 
 interface FilterOptionsProps {

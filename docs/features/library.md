@@ -58,6 +58,8 @@ labelled **Installed** toggle (before, an unlabelled check-circle icon), then:
 - **Sort by**.
 - **Card size**: one slider from small covers to the wide cards, replacing
   the three unlabelled view buttons (the old choice maps onto it).
+- **List**: the [list view](#list-view) instead of covers; the card size
+  slider hides while it is on.
 - **Details pane**, **Surprise me** and **Statistics** (below).
 
 ## Cards
@@ -69,6 +71,15 @@ labelled **Installed** toggle (before, an unlabelled check-circle icon), then:
 - Hovering an installed game shows a **Play** button over the cover; it
   starts the game without opening its page (**Close** while it runs).
 - Classics show their emulator as an icon instead of a text badge.
+
+## List view
+
+**List** shows one row per game, like Playnite's details view: icon, title,
+playtime, last played, added, play status, your rating and installed size.
+Clicking a column heading sorts by it (the same choice as **Sort by**); Title
+flips between A-Z and Z-A. Narrow windows drop columns from the right in the
+order added, size, rating, status. Rows select, open, take the keyboard and
+show **Play** on hover the way cards do. The choice is remembered.
 
 ## Selecting games
 
@@ -181,13 +192,15 @@ accents, punctuation and ™/®.
 
 Added to upstream's options:
 
-| Sort             | Order                      |
-| ---------------- | -------------------------- |
-| Recently added   | Newest first.              |
-| Release date     | Newest first.              |
-| Metacritic score | Highest first.             |
-| Shortest to beat | Shortest main story first. |
-| Installed size   | Largest first.             |
+| Sort             | Order                                |
+| ---------------- | ------------------------------------ |
+| Recently added   | Newest first.                        |
+| Release date     | Newest first.                        |
+| Metacritic score | Highest first.                       |
+| Shortest to beat | Shortest main story first.           |
+| Installed size   | Largest first.                       |
+| Your rating      | Highest first.                       |
+| Play status      | Playing, backlog, finished, dropped. |
 
 Games without the value go last, in title order.
 

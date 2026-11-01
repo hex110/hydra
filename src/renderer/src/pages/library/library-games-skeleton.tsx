@@ -4,6 +4,8 @@ import "./library-games-skeleton.scss";
 
 interface LibraryGamesSkeletonProps {
   large: boolean;
+  /** Short rows, one per game, for the list view. */
+  list?: boolean;
   columns: number;
   rows: number;
   gap: number;
@@ -11,6 +13,7 @@ interface LibraryGamesSkeletonProps {
 
 export function LibraryGamesSkeleton({
   large,
+  list = false,
   columns,
   rows,
   gap,
@@ -28,6 +31,7 @@ export function LibraryGamesSkeleton({
             containerClassName="library-games-skeleton__item"
             className={cn("library-games-skeleton__card", {
               "library-games-skeleton__card--large": large,
+              "library-games-skeleton__card--list": list,
             })}
           />
         ))}

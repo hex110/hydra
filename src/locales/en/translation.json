@@ -3789,7 +3789,20 @@
     "surprise_me": "Surprise me",
     "surprise_me_tooltip": "Pick an installed game for me",
     "library_filters_applied_one": "{{count}} library filter applies · Clear",
-    "library_filters_applied_other": "{{count}} library filters apply · Clear"
+    "library_filters_applied_other": "{{count}} library filters apply · Clear",
+    "list_view": "List",
+    "list_view_tooltip": "Show the library as a list with sortable columns",
+    "list_column_title": "Title",
+    "list_column_playtime": "Playtime",
+    "list_column_last_played": "Last played",
+    "list_column_added": "Added",
+    "list_column_status": "Status",
+    "list_column_rating": "Your rating",
+    "list_column_size": "Size",
+    "list_sort_by": "Sort by {{column}}",
+    "list_rating_value": "{{rating}}/10",
+    "sort_rating": "Your rating",
+    "sort_play_status": "Play status"
   },
   "achievement": {
     "achievement_unlocked": "Achievement unlocked",

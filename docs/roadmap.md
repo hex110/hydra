@@ -368,14 +368,16 @@ app that works for someone who isn't the developer.
          loaded page would mislead; the ProtonDB filter covers it.
    - [x] Wishlist from a result, next to **+**
          ([Library state](features/catalogue.md#library-state)).
-   - [ ] A header search that suggests games as you type, like Steam's.
+   - [x] A header search that suggests games as you type, like Steam's
+         (already there, signed out too).
 9. **Library, and tracking without Floppy.** Gap list against Steam's and
    Playnite's libraries (2026-10-31). Hydra already tracks playtime (edited
    by hand in a game's options), play days, status, rating, notes,
    favourites and collections by itself; Floppy and Steam are optional
    sources and sync targets.
-   - [ ] A list view with sortable columns (Playnite's details view):
-         playtime, last played, added, status, rating, size.
+   - [x] A list view with sortable columns (Playnite's details view):
+         playtime, last played, added, status, rating, size
+         ([List view](features/library.md#list-view)).
    - [x] Started and finished dates on play status, shown in the game's
          **Your game** section ([Library](features/library.md#play-status));
          not in the statistics yet.
