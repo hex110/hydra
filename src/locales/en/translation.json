@@ -1730,7 +1730,9 @@
     "dlc_see_all_one": "See all {{count}} DLC on Steam",
     "dlc_see_all_other": "See all {{count}} DLC on Steam",
     "news_title": "News",
-    "settings_category_save_sync": "Save sync"
+    "settings_category_save_sync": "Save sync",
+    "your_game_started": "Started {{date}}",
+    "your_game_finished": "Finished {{date}}"
   },
   "activation": {
     "title": "Activate Hydra",

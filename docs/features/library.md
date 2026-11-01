@@ -36,6 +36,13 @@ badge by **Hide the playtime badge on library cards**.
 Starting a game marked **Backlog** moves it to **Playing**. Nothing else
 changes a status on its own.
 
+**Started and finished dates.** Setting a game to **Playing** the first time
+records when it was started; setting it to **Finished** records when it was
+finished (again on each finish). A game started before this existed counts
+from the first day Hydra recorded play on it. The **Your game** section
+shows "Started … · Finished …". The first pull from Floppy after linking a
+game brings its status without dating it today.
+
 The status is stored on this machine only; Hydra's servers have no field for
 it. For a game with copies from several stores, it is set on every copy.
 

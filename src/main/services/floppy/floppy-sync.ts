@@ -317,6 +317,13 @@ const runPull = async (
     await updateGameRecord(key, {
       ...change,
       ...(matchChanged ? { floppyMediaId: mediaId } : {}),
+      // The first pull brings history, not a change made today: no dates.
+      ...(matchChanged && change.playStatus !== undefined
+        ? {
+            startedAt: game.startedAt ?? null,
+            finishedAt: game.finishedAt ?? null,
+          }
+        : {}),
     });
     if (Object.keys(change).length > 0) result.updated += 1;
   }

@@ -22,6 +22,11 @@
     letter-spacing: 0.04em;
   }
 
+  &__dates {
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+  }
+
   &__toggles {
     display: flex;
     flex-wrap: wrap;

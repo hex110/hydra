@@ -198,6 +198,10 @@ export interface Game extends LibraryCatalogueMetadata {
   playStatus?: PlayStatus | null;
   /** When the status last changed here, for save-store sync: the latest edit wins. */
   playStatusUpdatedAt?: string;
+  /** When the game was set to Playing the first time; else the first play day counts. */
+  startedAt?: string | null;
+  /** When the game was last set to Finished. */
+  finishedAt?: string | null;
   /** On the wishlist: notify when a download source adds the game. */
   wishlisted?: boolean;
   /** When the wish last changed here, for save-store sync. */

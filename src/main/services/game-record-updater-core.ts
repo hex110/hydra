@@ -30,6 +30,16 @@ const stampEdits = (game: Game, patch: Partial<Game>): Partial<Game> => {
     (patch.playStatus ?? null) !== (game.playStatus ?? null)
   ) {
     stamps.playStatusUpdatedAt = now;
+    if (
+      patch.playStatus === "playing" &&
+      !game.startedAt &&
+      !("startedAt" in patch)
+    ) {
+      stamps.startedAt = now;
+    }
+    if (patch.playStatus === "finished" && !("finishedAt" in patch)) {
+      stamps.finishedAt = now;
+    }
   }
   if (
     "wishlisted" in patch &&

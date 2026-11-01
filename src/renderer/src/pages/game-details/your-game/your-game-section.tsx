@@ -20,7 +20,7 @@ import {
 import { Button, RatingInput } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
 import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
-import { useGameCard, useLibrary, useToast } from "@renderer/hooks";
+import { useDate, useGameCard, useLibrary, useToast } from "@renderer/hooks";
 import { PlayStatusMenu } from "../hero/play-status-menu";
 import { SidebarSection } from "../sidebar-section/sidebar-section";
 import { useGameToggles } from "../use-game-toggles";
@@ -29,6 +29,7 @@ import { libraryTabIncludes } from "@renderer/pages/library/library-filters";
 import { SteamHistorySection } from "./steam-history-section";
 import { useSteamHistory } from "./use-steam-history";
 import { findRelatedLibraryGames } from "./related-library-games";
+import { usePlayDates } from "./use-play-dates";
 import "./your-game-section.scss";
 
 const COPY_SOURCES = ["steam", "epic", "classics", "local"] as const;
@@ -50,6 +51,8 @@ export function YourGameSection() {
     () => presentation?.members ?? (game ? [game] : []),
     [presentation, game]
   );
+  const { formatDate } = useDate();
+  const playDates = usePlayDates(members as LibraryGame[]);
 
   const related = useMemo(() => {
     if (!shown) return [];
@@ -185,6 +188,20 @@ export function YourGameSection() {
             onChange={(playStatus) => void setPlayStatus(playStatus)}
           />
         </div>
+
+        {(playDates.startedAt || playDates.finishedAt) && (
+          <p className="your-game__dates">
+            {playDates.startedAt &&
+              t("your_game_started", {
+                date: formatDate(playDates.startedAt),
+              })}
+            {playDates.startedAt && playDates.finishedAt && " · "}
+            {playDates.finishedAt &&
+              t("your_game_finished", {
+                date: formatDate(playDates.finishedAt),
+              })}
+          </p>
+        )}
 
         <div className="your-game__field">
           <span className="your-game__label">{t("your_rating")}</span>

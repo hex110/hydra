@@ -376,8 +376,9 @@ app that works for someone who isn't the developer.
    sources and sync targets.
    - [ ] A list view with sortable columns (Playnite's details view):
          playtime, last played, added, status, rating, size.
-   - [ ] Started and finished dates on play status, shown in the game's
-         **Your game** section and the statistics.
+   - [x] Started and finished dates on play status, shown in the game's
+         **Your game** section ([Library](features/library.md#play-status));
+         not in the statistics yet.
    - [ ] Import installed games from Heroic and Lutris (Playnite's library
          importers), next to the save sources of phase 15.
    - [ ] A Playnite library import (its database export), and Backloggd only

@@ -30,6 +30,28 @@ const game: Game = {
 describe("game record updater", () => {
   afterEach(() => AchievementMemoryStore.clear());
 
+  it("dates starting and finishing a game from its play status", async () => {
+    let storedGame: Game = { ...game };
+    const updateGame = createGameRecordUpdater({
+      get: async () => ({ ...storedGame }),
+      put: async (_key, value) => {
+        storedGame = { ...value };
+      },
+    });
+
+    await updateGame("steam:620", { playStatus: "playing" });
+    const startedAt = storedGame.startedAt;
+    assert.ok(startedAt);
+    assert.equal(storedGame.finishedAt, undefined);
+
+    await updateGame("steam:620", { playStatus: "backlog" });
+    await updateGame("steam:620", { playStatus: "playing" });
+    assert.equal(storedGame.startedAt, startedAt, "the first start is kept");
+
+    await updateGame("steam:620", { playStatus: "finished" });
+    assert.ok(storedGame.finishedAt);
+  });
+
   it("dates a profile edit, and keeps the date of a value adopted from another device", async () => {
     let storedGame: Game = { ...game, notes: "old", rating: 5 };
     const updateGame = createGameRecordUpdater({
