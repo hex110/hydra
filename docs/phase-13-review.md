@@ -126,7 +126,7 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         filters pointed at it (checked with `vulkaninfo` on the laptop: the
         MX550 becomes the first device). Auto stays off until a game is
         confirmed to show a picture that way; then make it the default.
-12. [ ] **A new user gets no tools.** OptiScaler, RenoDX, MangoHud, GameMode
+12. [x] **A new user gets no tools.** OptiScaler, RenoDX, MangoHud, GameMode
         and the HDR rules all default to Never on a fresh install; they stay
         off until the user finds Tool defaults. Auto can become the default
         once it checks the machine (findings 10–11), e.g. GameMode on when
@@ -134,6 +134,10 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         where it is installed). RenoDX and OptiScaler stay Never by default
         for now: RenoDX now checks the display, but OptiScaler still needs
         the GPU check (FSR4 or not) before its Auto can be the default.
+        Fixed for OptiScaler: Auto, now the default, reads the GPU (RDNA 4
+        gets FSR 4 everywhere, NVIDIA keeps DLSS, others only in DLSS-only
+        games). RenoDX stays Never: it changes how a game looks, which is the
+        owner's call per game more than the machine's.
 13. [x] **The default Proton build is unclear.** Settings → Proton and Wine
         offers "Auto (global default or umu default)" without saying which
         build that is. umu's default (UMU-Proton 10) has no Wayland HDR, so

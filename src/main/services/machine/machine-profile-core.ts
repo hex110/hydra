@@ -1,4 +1,4 @@
-import type { GpuVendor, MachineGpu } from "@types";
+import type { GpuUpscalerFit, GpuVendor, MachineGpu } from "@types";
 
 const EDID_BLOCK = 128;
 const CTA_EXTENSION_TAG = 0x02;
@@ -62,4 +62,37 @@ export const findOffloadGpu = (gpus: MachineGpu[]): MachineGpu | null => {
           (gpu.vendor === "amd" && boot.vendor === "intel"))
     ) ?? null
   );
+};
+
+/** The GPU games use unless told otherwise: the boot display's, or the only one. */
+export const findGameGpu = (gpus: MachineGpu[]): MachineGpu | null =>
+  gpus.find((gpu) => gpu.bootDisplay) ?? (gpus.length === 1 ? gpus[0] : null);
+
+/** RDNA 4 (Navi 44 and 48, the RX 9000 series) has PCI device ids 0x75xx. */
+const isRdna4 = (gpu: MachineGpu) =>
+  gpu.vendor === "amd" && /^0x75[0-9a-f]{2}$/i.test(gpu.deviceId ?? "");
+
+export const gpuUpscalerFit = (
+  gpu: MachineGpu | null
+): GpuUpscalerFit | null => {
+  if (!gpu) return null;
+  if (gpu.vendor === "nvidia") return "dlss";
+  return isRdna4(gpu) ? "fsr4" : "fsr3";
+};
+
+const isDlssLibrary = (file: string) => /nvngx_dlss\.dll$/i.test(file);
+
+/**
+ * Whether OptiScaler improves on what the game already runs on this GPU.
+ * RDNA 4 gains FSR 4 in any game with an upscaler; NVIDIA already runs the
+ * game's own DLSS; other GPUs gain FSR 3.1 or XeSS only where the game ships
+ * DLSS alone.
+ */
+export const optiScalerSuitsGpu = (
+  fit: GpuUpscalerFit | null,
+  upscalerLibraries: string[]
+) => {
+  if (fit === null || fit === "fsr4") return true;
+  if (fit === "dlss") return false;
+  return upscalerLibraries.length > 0 && upscalerLibraries.every(isDlssLibrary);
 };

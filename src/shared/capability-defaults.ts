@@ -57,7 +57,7 @@ export const getCapabilityDefault = (
     case "renodx":
       return preferences?.renoDxAutoInstall === true ? "auto" : "never";
     case "optiscaler":
-      return preferences?.optiScalerAutoInstall === true ? "auto" : "never";
+      return preferences?.optiScalerAutoInstall === false ? "never" : "auto";
     case "mangohud":
       return preferences?.autoRunMangohud === true ? "always" : "never";
     case "gamemode":

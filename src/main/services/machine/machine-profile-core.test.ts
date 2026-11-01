@@ -7,13 +7,17 @@ import type { MachineGpu } from "@types";
 
 import {
   edidSupportsHdr,
+  findGameGpu,
   findOffloadGpu,
+  gpuUpscalerFit,
   gpuVendorFromPciId,
+  optiScalerSuitsGpu,
 } from "./machine-profile-core.ts";
 
 const gpu = (fields: Partial<MachineGpu>): MachineGpu => ({
   card: "card0",
   vendor: "amd",
+  deviceId: null,
   driver: "amdgpu",
   bootDisplay: false,
   ...fields,
@@ -78,5 +82,60 @@ describe("findOffloadGpu", () => {
   it("maps PCI vendor ids", () => {
     assert.equal(gpuVendorFromPciId("0x10de\n"), "nvidia");
     assert.equal(gpuVendorFromPciId("0x1234"), "other");
+  });
+});
+
+describe("gpuUpscalerFit", () => {
+  it("gives RDNA 4 FSR 4 (RX 9070, Navi 48)", () => {
+    assert.equal(gpuUpscalerFit(gpu({ deviceId: "0x7550" })), "fsr4");
+  });
+
+  it("gives older AMD and Intel FSR 3", () => {
+    assert.equal(gpuUpscalerFit(gpu({ deviceId: "0x744c" })), "fsr3");
+    assert.equal(
+      gpuUpscalerFit(gpu({ vendor: "intel", deviceId: "0x46a8" })),
+      "fsr3"
+    );
+  });
+
+  it("gives NVIDIA DLSS, and knows nothing without a GPU", () => {
+    assert.equal(gpuUpscalerFit(gpu({ vendor: "nvidia" })), "dlss");
+    assert.equal(gpuUpscalerFit(null), null);
+  });
+});
+
+describe("findGameGpu", () => {
+  it("picks the boot display's GPU over the integrated one", () => {
+    const discrete = gpu({ card: "card1", bootDisplay: true });
+    assert.equal(findGameGpu([gpu({}), discrete]), discrete);
+  });
+
+  it("takes a lone GPU without a boot flag, and no guess among several", () => {
+    const only = gpu({});
+    assert.equal(findGameGpu([only]), only);
+    assert.equal(findGameGpu([gpu({}), gpu({ card: "card1" })]), null);
+  });
+});
+
+describe("optiScalerSuitsGpu", () => {
+  const dlss = ["bin/nvngx_dlss.dll"];
+  const fsr = ["amd_fidelityfx_dx12.dll"];
+
+  it("installs on RDNA 4 for any upscaler", () => {
+    assert.equal(optiScalerSuitsGpu("fsr4", fsr), true);
+  });
+
+  it("leaves NVIDIA on the game's DLSS", () => {
+    assert.equal(optiScalerSuitsGpu("dlss", dlss), false);
+  });
+
+  it("helps other GPUs only in DLSS-only games", () => {
+    assert.equal(optiScalerSuitsGpu("fsr3", dlss), true);
+    assert.equal(optiScalerSuitsGpu("fsr3", [...dlss, ...fsr]), false);
+    assert.equal(optiScalerSuitsGpu("fsr3", []), false);
+  });
+
+  it("doesn't judge an unknown GPU", () => {
+    assert.equal(optiScalerSuitsGpu(null, fsr), true);
   });
 });

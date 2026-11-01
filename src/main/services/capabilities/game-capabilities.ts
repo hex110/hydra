@@ -156,7 +156,8 @@ export const getGameCapabilities = async (
       resolveOptiScaler(
         game,
         optiScalerStatus,
-        resolveOptiScalerSettings(userPreferences).autoInstall
+        resolveOptiScalerSettings(userPreferences).autoInstall,
+        machine.upscalerFit
       )
     );
   }

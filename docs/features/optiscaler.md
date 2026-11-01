@@ -10,8 +10,8 @@ page in its options.
 
 ## Automatic installation
 
-With OptiScaler set to **Auto** in **Settings → Tool defaults** (the default is
-Never), Hydra
+With OptiScaler set to **Auto** in **Settings → Tool defaults** (the default
+since 2026-11-01; earlier installs that never changed it get it too), Hydra
 installs OptiScaler as part of [game setup](game-setup.md), after the Wine
 prefix is created. Setup runs when a download finishes, when a library scan
 adds or links a game and when a game gets a new executable.
@@ -22,6 +22,21 @@ A game qualifies when either check below is enabled and passes:
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Games that ship DLSS, FSR or XeSS   | The game folder contains `nvngx_dlss.dll`, `libxess.dll`, `amd_fidelityfx_dx12.dll`/`_vk.dll`/`_upscaler_dx12.dll`, an `ffx_fsr2_api_*.dll`/`ffx_fsr3upscaler_x64.dll`, or `sl.interposer.dll`. |
 | Games listed as working on the wiki | The game's title matches a working entry on the [compatibility list](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List). The list is downloaded daily.                           |
+
+Auto then checks that OptiScaler beats what the game already runs on this
+machine's GPU (the boot display's GPU, read from `/sys/class/drm`):
+
+| GPU                                 | Auto installs in                           | Why                                              |
+| ----------------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| AMD RDNA 4 (PCI device id `0x75xx`) | Every game that qualifies                  | OptiScaler upgrades the game's upscaler to FSR 4 |
+| NVIDIA                              | None                                       | The game's own DLSS is already the best one      |
+| Any other (older AMD, Intel)        | Games that ship DLSS and no other upscaler | OptiScaler gives them FSR 3.1 or XeSS            |
+| Unknown (no GPU readable)           | Every game that qualifies                  | No GPU to judge by                               |
+
+OptiScaler itself picks FSR 4 on RDNA 4 and FSR 3.1 elsewhere
+(`Fsr4Update=auto`), so Hydra writes no GPU-specific settings. Set to **On**,
+**Run** in the setup log and **Install in all games** skip the GPU check; the
+Tools tab says why Auto left a game alone.
 
 A game is never installed automatically when:
 

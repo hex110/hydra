@@ -249,7 +249,8 @@ export interface OptiScalerSettings extends OptiScalerDetectionSettings {
 export const resolveOptiScalerSettings = (
   preferences: UserPreferences | null | undefined
 ): OptiScalerSettings => ({
-  autoInstall: preferences?.optiScalerAutoInstall === true,
+  // Unset is Auto, which checks the GPU before installing.
+  autoInstall: preferences?.optiScalerAutoInstall !== false,
   channel: preferences?.optiScalerChannel === "nightly" ? "nightly" : "stable",
   proxyDll: isOptiScalerProxyDll(preferences?.optiScalerProxyDll)
     ? preferences.optiScalerProxyDll

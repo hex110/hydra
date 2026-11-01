@@ -6,7 +6,9 @@ import type { MachineGpu, MachineProfile } from "@types";
 import { logger } from "../logger";
 import {
   edidSupportsHdr,
+  findGameGpu,
   findOffloadGpu,
+  gpuUpscalerFit,
   gpuVendorFromPciId,
 } from "./machine-profile-core";
 
@@ -41,6 +43,7 @@ const readGpus = (entries: string[]): MachineGpu[] =>
         {
           card,
           vendor: gpuVendorFromPciId(vendorId),
+          deviceId: readText(path.join(device, "device")),
           driver,
           bootDisplay: readText(path.join(device, "boot_vga")) === "1",
         },
@@ -69,6 +72,8 @@ const readProfile = (): MachineProfile => {
   if (process.platform !== "linux")
     return {
       gpus: [],
+      gameGpu: null,
+      upscalerFit: null,
       offloadGpu: null,
       hdrDisplays: [],
       displaysKnown: false,
@@ -76,8 +81,11 @@ const readProfile = (): MachineProfile => {
   try {
     const entries = fs.readdirSync(DRM_PATH);
     const gpus = readGpus(entries);
+    const gameGpu = findGameGpu(gpus);
     return {
       gpus,
+      gameGpu,
+      upscalerFit: gpuUpscalerFit(gameGpu),
       offloadGpu: findOffloadGpu(gpus),
       hdrDisplays: readHdrDisplays(entries),
       displaysKnown: entries.some((entry) => /^card\d+-/.test(entry)),
@@ -86,6 +94,8 @@ const readProfile = (): MachineProfile => {
     logger.warn("Could not read the machine's GPUs and displays", error);
     return {
       gpus: [],
+      gameGpu: null,
+      upscalerFit: null,
       offloadGpu: null,
       hdrDisplays: [],
       displaysKnown: false,

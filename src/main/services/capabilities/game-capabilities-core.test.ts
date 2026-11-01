@@ -279,6 +279,7 @@ describe("resolveDiscreteGpu", () => {
     vendor: "nvidia" as const,
     driver: "nvidia",
     bootDisplay: false,
+    deviceId: null,
   };
 
   it("leaves the game on the screen's GPU in Auto and names the other one", () => {

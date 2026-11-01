@@ -3,6 +3,7 @@ import {
   getCapabilityOverride,
 } from "../../../shared/game-capabilities.js";
 import { isLaunchRuleApplied } from "../../../shared/launch-rules.js";
+import { optiScalerSuitsGpu } from "../machine/machine-profile-core.js";
 import type {
   Game,
   GameCapability,
@@ -12,6 +13,7 @@ import type {
   GameCapabilityReason,
   GameOptiScalerStatus,
   GameRenoDxStatus,
+  GpuUpscalerFit,
   LaunchRule,
   MachineGpu,
   UserPreferences,
@@ -227,7 +229,8 @@ export const resolveRenoDx = (
 export const resolveOptiScaler = (
   game: Game,
   status: Omit<GameOptiScalerStatus, "conflictingWrappers">,
-  autoInstall: boolean
+  autoInstall: boolean,
+  upscalerFit: GpuUpscalerFit | null = null
 ): GameCapability => {
   const override = getCapabilityOverride(game, "optiscaler");
 
@@ -282,6 +285,14 @@ export const resolveOptiScaler = (
       reason: reason("optiscaler_not_eligible"),
     });
   const found = eligibility.upscalerLibraries.join(", ");
+  if (
+    autoInstall &&
+    !optiScalerSuitsGpu(upscalerFit, eligibility.upscalerLibraries)
+  )
+    return capability("optiscaler", game, {
+      active: false,
+      reason: reason(`optiscaler_gpu_${upscalerFit}`, { found: found || "-" }),
+    });
   return capability("optiscaler", game, {
     active: false,
     reason: reason(

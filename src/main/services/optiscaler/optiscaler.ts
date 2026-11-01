@@ -44,6 +44,8 @@ import {
   uninstallOptiScaler,
 } from "./game-files";
 import { detectGraphicsApis } from "../graphics/graphics-api";
+import { getMachineProfile } from "../machine/machine-profile";
+import { optiScalerSuitsGpu } from "../machine/machine-profile-core";
 import { OptiScalerAssets } from "./optiscaler-assets";
 
 export type OptiScalerInstallError =
@@ -480,6 +482,17 @@ export class OptiScaler {
     const eligibility = await this.evaluate(game, installDirectory, settings);
     if (!eligibility.eligible) {
       return eligibility.blocked ? "blocked" : "not-eligible";
+    }
+    // Asking for it (On, Run, Install in all games) skips the GPU check.
+    if (
+      !forcedOn &&
+      !options.ignoreAutoInstallSetting &&
+      !optiScalerSuitsGpu(
+        getMachineProfile().upscalerFit,
+        eligibility.upscalerLibraries
+      )
+    ) {
+      return "gpu-not-suited";
     }
 
     logger.info("[OptiScaler] Game qualifies for OptiScaler", {

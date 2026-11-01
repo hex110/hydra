@@ -6,16 +6,16 @@ place a game's tools are switched; the other tabs hold their details
 (versions, DLL names, layouts) and link here. The OptiScaler and RenoDX tabs
 appear once the tool is installed in the game.
 
-| Capability              | Platforms | Auto means                                                                                    |
-| ----------------------- | --------- | --------------------------------------------------------------------------------------------- |
-| OnlineFix               | Linux     | Loaded when OnlineFix files are found; there is no On, as there would be nothing to load      |
-| HDR                     | Linux     | The built-in HDR launch rule's setting for every game                                         |
-| HDR: switch the monitor | Linux     | The `hypr-hdr` launch rule's setting for every game                                           |
-| RenoDX HDR mod          | All       | Installed during setup when a mod exists, a display accepts HDR and **Tool defaults** is Auto |
-| OptiScaler              | All       | Installed during setup when the game qualifies and **Tool defaults** is Auto                  |
-| MangoHud                | Linux     | The global setting, or a launch rule that turns it on                                         |
-| GameMode                | Linux     | On where `gamemoderun` is installed, unless **Tool defaults** says Never                      |
-| Second GPU              | Linux     | Off: games stay on the GPU that drives the screen (shown on hybrid laptops only)              |
+| Capability              | Platforms | Auto means                                                                                          |
+| ----------------------- | --------- | --------------------------------------------------------------------------------------------------- |
+| OnlineFix               | Linux     | Loaded when OnlineFix files are found; there is no On, as there would be nothing to load            |
+| HDR                     | Linux     | The built-in HDR launch rule's setting for every game                                               |
+| HDR: switch the monitor | Linux     | The `hypr-hdr` launch rule's setting for every game                                                 |
+| RenoDX HDR mod          | All       | Installed during setup when a mod exists, a display accepts HDR and **Tool defaults** is Auto       |
+| OptiScaler              | All       | Installed during setup when the game qualifies, the GPU gains from it and **Tool defaults** is Auto |
+| MangoHud                | Linux     | The global setting, or a launch rule that turns it on                                               |
+| GameMode                | Linux     | On where `gamemoderun` is installed, unless **Tool defaults** says Never                            |
+| Second GPU              | Linux     | Off: games stay on the GPU that drives the screen (shown on hybrid laptops only)                    |
 
 Tools apply to Windows games only, except MangoHud and GameMode, which wrap
 any game.

@@ -69,7 +69,8 @@ export type OptiScalerAutoInstallOutcome =
   | "other-launcher"
   | "external"
   | "blocked"
-  | "not-eligible";
+  | "not-eligible"
+  | "gpu-not-suited";
 
 export interface OptiScalerEligibility {
   eligible: boolean;
