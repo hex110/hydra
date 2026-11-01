@@ -18,7 +18,9 @@ import {
   useLibrary,
   useLibraryView,
   useToast,
+  useUserDetails,
 } from "@renderer/hooks";
+import { useGlobalLeaderboardsFeature } from "@renderer/hooks/use-global-leaderboards-feature";
 import { selectIsLibraryLoading } from "@renderer/features";
 import { routes } from "./routes";
 
@@ -399,6 +401,16 @@ export function Sidebar() {
     }
   };
 
+  const { userDetails } = useUserDetails();
+  const { isEnabled: isGlobalLeaderboardsEnabled } =
+    useGlobalLeaderboardsFeature();
+  // Leaderboards rank Hydra accounts, so they need one.
+  const visibleRoutes = routes.filter(
+    (route) =>
+      !("isGlobalLeaderboards" in route && route.isGlobalLeaderboards) ||
+      (userDetails !== null && isGlobalLeaderboardsEnabled)
+  );
+
   return (
     <aside
       ref={sidebarRef}
@@ -429,7 +441,7 @@ export function Sidebar() {
         <div className="sidebar__content">
           <section className="sidebar__section">
             <ul className="sidebar__menu">
-              {routes.map(({ nameKey, path, render }) => (
+              {visibleRoutes.map(({ nameKey, path, render }) => (
                 <li
                   key={nameKey}
                   className={cn("sidebar__menu-item", {
