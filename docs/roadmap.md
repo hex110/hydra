@@ -266,8 +266,9 @@ in the sections below.
     the right folder; this phase makes the game load them, then adds what
     Prism Launcher does for Minecraft (packs, more sources) for every game.
     Details in [Mods, part 2](#mods-part-2).
-    1. [ ] Study the open-source managers (Vortex extensions, MO2, Limo,
+    1. [x] Study the open-source managers (Vortex extensions, MO2, Limo,
            r2modman, Prism) and write the per-game design
+           ([design](mods-game-support-design.md))
     2. [ ] Game support definitions: mod folders, mod types, the loader,
            extra folders, one file per game
     3. [ ] Loaders installed for you (SMAPI, BepInEx, script extenders,
