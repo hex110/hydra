@@ -13,6 +13,7 @@ import { db, gamesSublevel, levelKeys } from "@main/level";
 import { CloudSync } from "./cloud-sync";
 import { logger, networkLogger } from "./logger";
 import { PowerSaveBlockerManager } from "./power-save-blocker";
+import os from "node:os";
 import path from "node:path";
 import { AchievementWatcherManager } from "./achievements/achievement-watcher-manager";
 import { abortAchievementMetadataExport } from "./achievements/metadata-export";
@@ -28,6 +29,7 @@ import {
   isImportedEntry,
 } from "../../shared/imported-games";
 import { markGameLauncherGameDetected } from "./game-launcher-status";
+import { resolveHideToTrayOnGameStart } from "../../shared/game-start-window";
 import {
   isValidProcessWatcherScan,
   startOptionalExecutableCatalogueLoad,
@@ -515,8 +517,13 @@ async function onOpenGame(game: Game, matchedPath: string) {
     valueEncoding: "json",
   })
     .then((userPreferences) => {
-      if (userPreferences?.hideToTrayOnGameStart) {
-        WindowManager.mainWindow?.hide();
+      if (
+        resolveHideToTrayOnGameStart(
+          userPreferences?.hideToTrayOnGameStart,
+          os.totalmem()
+        )
+      ) {
+        WindowManager.closeMainWindowToTray();
       }
     })
     .catch(() => {});

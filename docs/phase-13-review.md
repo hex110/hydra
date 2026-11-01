@@ -79,7 +79,7 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## Performance on a modest machine
 
-8. [ ] **The laptop ran out of memory during a game.** At 13:27:41
+8. [x] **The laptop ran out of memory during a game.** At 13:27:41
        `systemd-oomd` killed the whole Hyprland session (635 processes, the
        game included). The 3.5 GB peak (plus 866 MB swap) first read as
        Hydra's was its systemd scope, which also holds everything Hydra
@@ -92,6 +92,11 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
        uncollected garbage and image caches. On a 7.4 GB machine 1 GB for a
        launcher in the background is still a lot: measure a production build
        on the laptop and consider freeing the renderer while a game runs.
+       Fixed: upstream's "hide to tray on game start" now closes the window
+       (freeing the renderer) instead of hiding it, and is on by default
+       below 12 GB of memory
+       ([Game runs](features/game-runs.md#hydras-window-while-a-game-runs)).
+       Still worth measuring a production build on the laptop.
 9. [x] **Hydra uses CPU while idle.** The laptop scope's 1 h 6 min of CPU in
        a 34-minute session includes the game (see 8). Hydra itself, idle with
        775 games, used ~11 % of a core here. A CPU profile put the achievement

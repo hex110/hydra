@@ -10,6 +10,7 @@ import { useAppSelector } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
 import "./settings-behavior.scss";
 import type { ProtonVersion } from "@types";
+import { resolveHideToTrayOnGameStart } from "@shared";
 
 export function SettingsBehavior() {
   const userPreferences = useAppSelector(
@@ -43,6 +44,8 @@ export function SettingsBehavior() {
   });
 
   const { t } = useTranslation("settings");
+  // Until it is known, assume plenty: the window stays open by default.
+  const [totalMemory, setTotalMemory] = useState(Number.MAX_SAFE_INTEGER);
 
   const protonVersionAutoLabel = t("proton_version_auto", {
     ns: ["settings", "game_details"],
@@ -83,7 +86,10 @@ export function SettingsBehavior() {
         enableSteamAchievements:
           userPreferences.enableSteamAchievements ?? false,
         autoplayGameTrailers: userPreferences.autoplayGameTrailers ?? false,
-        hideToTrayOnGameStart: userPreferences.hideToTrayOnGameStart ?? false,
+        hideToTrayOnGameStart: resolveHideToTrayOnGameStart(
+          userPreferences.hideToTrayOnGameStart,
+          totalMemory
+        ),
         enableNewDownloadOptionsBadges:
           userPreferences.enableNewDownloadOptionsBadges ?? true,
         createStartMenuShortcut:
@@ -92,7 +98,14 @@ export function SettingsBehavior() {
 
       setSelectedDefaultProtonPath(userPreferences.defaultProtonPath ?? "");
     }
-  }, [userPreferences]);
+  }, [userPreferences, totalMemory]);
+
+  useEffect(() => {
+    window.electron
+      .getTotalMemory()
+      .then(setTotalMemory)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (window.electron.platform !== "linux") return;

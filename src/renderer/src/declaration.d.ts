@@ -1452,6 +1452,7 @@ declare global {
     getDiskFreeSpace: (path: string) => Promise<DiskUsage | null>;
     checkFolderWritePermission: (path: string) => Promise<boolean>;
     getNetworkInterfaces: () => Promise<NetworkInterface[]>;
+    getTotalMemory: () => Promise<number>;
 
     /* Cloud save */
     uploadSaveGame: (

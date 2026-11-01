@@ -107,6 +107,20 @@ export class WindowManager {
     this.mainWindowInstance = null;
   }
 
+  private static closingToTray = false;
+
+  /**
+   * Closes the main window but keeps Hydra running in the tray, also with
+   * "quit instead of hiding" on. Closing frees the renderer's memory, which
+   * hiding does not.
+   */
+  public static closeMainWindowToTray(): void {
+    const main = this.mainWindowInstance;
+    if (!main || main.isDestroyed()) return;
+    this.closingToTray = true;
+    main.close();
+  }
+
   private static readonly DEFAULT_WINDOW_WIDTH = 1200;
   private static readonly DEFAULT_WINDOW_HEIGHT = 860;
   private static readonly MIN_WINDOW_WIDTH = 1024;
@@ -487,7 +501,9 @@ export class WindowManager {
 
       await this.saveScreenConfig(screenConfig);
 
-      if (userPreferences?.preferQuitInsteadOfHiding) {
+      const closingToTray = this.closingToTray;
+      this.closingToTray = false;
+      if (userPreferences?.preferQuitInsteadOfHiding && !closingToTray) {
         app.quit();
       }
     });

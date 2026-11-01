@@ -97,3 +97,16 @@ process handle, so their runs have no exit code or output.
 
 - Runs are not shown outside the game's options; the planned compatibility
   overview (roadmap phase 12) will list the last run of every game.
+
+## Hydra's window while a game runs
+
+**Settings → Behavior → Close the window to the tray while a game runs**
+closes Hydra's window when a game starts; Hydra keeps running in the tray
+(tracking playtime, achievements, downloads and the after-exit save sync) and
+the tray icon opens the window again. Closing, unlike upstream's hide, frees
+the renderer, about 500 MB with a large library.
+
+Left unset, it follows the machine: on with less than 12 GB of memory, off
+otherwise (`resolveHideToTrayOnGameStart` in `src/shared/game-start-window.ts`).
+It also works with **Quit instead of hiding** on: a window closed for a game
+never quits Hydra.

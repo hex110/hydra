@@ -9,7 +9,9 @@ import {
 } from "electron";
 import updater from "electron-updater";
 import i18n from "i18next";
+import os from "node:os";
 import path from "node:path";
+import { resolveHideToTrayOnGameStart } from "../shared/game-start-window";
 import url from "node:url";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import {
@@ -269,7 +271,12 @@ const handleRunGame = async (shop: GameShop, objectId: string) => {
   );
 
   // Only open main window if setting is disabled
-  if (!userPreferences?.hideToTrayOnGameStart) {
+  if (
+    !resolveHideToTrayOnGameStart(
+      userPreferences?.hideToTrayOnGameStart,
+      os.totalmem()
+    )
+  ) {
     WindowManager.createMainWindow();
   }
 
