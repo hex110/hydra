@@ -229,7 +229,14 @@ in the sections below.
     10. [ ] Home page
 14. **Merge upstream 4.3.0.** Fit upstream's new features into the
     principles and the reworked interface. Details in
-    [Upstream 4.3.0](#upstream-430).
+    [Upstream 4.3.0](#upstream-430). Merged 2026-11-01 (b53fbd333);
+    the follow-ups are listed there.
+    1. [x] Merge, keeping our library, sidebar, Downloads page and game
+           page sidebar
+    2. [x] Screenshot hotkey moved to F12 (F10 stays ReShade's)
+    3. [x] Leaderboards hidden while signed out
+    4. [ ] Follow-ups: virtualised sidebar list, CDN covers on library
+           cards, screenshots on the game page
 15. **More save sources.**
     1. [ ] Heroic and Lutris
     2. [ ] Ludusavi backups
@@ -397,6 +404,34 @@ already merged. The parts that matter to us:
 
 Upstream also changed the Steam integration we deleted (Steam store session,
 sync orchestrator); take our deletion there.
+
+### How it was merged (2026-11-01)
+
+- **Kept ours:** the library page and cards, the sidebar (one filter
+  system with the library), the Downloads page (completed-download states,
+  dismiss, updates and background tasks) and the game page sidebar. Our
+  Steam integration deletion stands.
+- **Took upstream's:** the achievements page redesign and sets (signed out
+  it shows your local achievements under "Your achievements"; the points
+  upsell is hidden), Epic updates through Legendary, the finished-download
+  guide on the game page hero, the tracked installer run (a download still
+  in its archive is shown in its folder instead), in-place extraction and
+  multi-part hoster mirrors (upstream's feature flags, public, so they
+  behave the same signed out), `LD_LIBRARY_PATH` not leaking into games.
+- **Combined:** extraction keeps the free-space check and game setup after
+  an executable is found; achievement notifications use upstream's module
+  with our cap for large batches and notifications for unlocks without
+  metadata.
+- **Decided:** screenshots default to **F12** (Steam's key), F10 stays
+  ReShade's overlay key; Leaderboards show only when signed in;
+  AnkerGames moved from downloader 16 (upstream's FileKeeper) to 100, with
+  a startup migration (`ankergames/downloader-migration.ts`).
+- **Not wired in yet:** upstream's virtualised sidebar list (#3010; our
+  library is ~800 games, measure before porting), library covers from
+  Hydra's CDN with ThumbHash (#3013) on our cards, the game page's
+  screenshots section, upstream's Downloads-page installer actions (the
+  game page hero has them). Installer detection (Not scheduled yet) is
+  covered by upstream's guide.
 
 ## See and steer what Hydra does to a game
 
@@ -632,10 +667,8 @@ it's wanted.
       without native FSR4 (RDNA3, integrated graphics). Not needed on RDNA4.
 - [ ] **Anti-cheat scan for OptiScaler.** Look for anti-cheat files in the
       game folder, on top of the compatibility list.
-- [ ] **Installer detection.** Offer to run a `setup`/`install` exe found in
-      a finished download. Compare with the exe guess after extraction
-      first. Upstream 4.3.0's finished-download guide (#2935) covers much of
-      this; decide in phase 14.
+- [x] **Installer detection.** Covered by upstream 4.3.0's finished-download
+      guide (#2935), merged in phase 14.
 - [ ] **`--no-tray`.** Quit when the window closes.
 - [ ] **Backloggd or IGDB suggestions.** Backloggd has no API or export and
       sits behind a proof-of-work bot check; IGDB needs the user's own Twitch
