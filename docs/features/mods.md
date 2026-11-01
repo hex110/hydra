@@ -108,6 +108,6 @@ the game's `mods.json`.
 
 ## Not yet
 
-Bethesda plugin load order, mods in the Wine prefix
-(`Documents/My Games`), Wabbajack and other sites. See the design's build
-order.
+Loaders, load order, the game's own mod list, files in the Wine prefix, more
+sources and modpacks: roadmap phase 19, planned in
+[Mods, phase 19](../mods-phase-19.md).

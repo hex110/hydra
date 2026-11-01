@@ -263,25 +263,30 @@ in the sections below.
     2. [ ] Overlay panel on a hotkey (decide where it draws with the owner)
     3. [ ] ReShade add-on for ReShade games
 19. **Mods that work in each game.** Added 2026-11-01. Phase 17 puts files in
-    the right folder; this phase makes the game load them, then adds what
-    Prism Launcher does for Minecraft (packs, more sources) for every game.
-    Details in [Mods, part 2](#mods-part-2).
-    1. [x] Study the open-source managers (Vortex extensions, MO2, Limo,
-           r2modman, Prism) and write the per-game design
-           ([design](mods-game-support-design.md))
-    2. [ ] Game support definitions: mod folders, mod types, the loader,
-           extra folders, one file per game
-    3. [ ] Loaders installed for you (SMAPI, BepInEx, script extenders,
-           REFramework), with Proton DLL overrides
-    4. [ ] Turn mods on in the game's own list: Bethesda `plugins.txt` and
-           load order, RimWorld, Baldur's Gate 3, Bannerlord
-    5. [ ] Mods in the Wine prefix (`Documents/My Games`, AppData)
-    6. [ ] Did it load: read the loader's log after a run
-    7. [ ] More sources: Thunderstore, GameBanana, ModDB, Modrinth
-    8. [ ] Modpacks: import (Nexus Collections, Thunderstore and Modrinth
-           packs), export a profile as a pack
-    9. [ ] Prism's comforts: a mod's details and changelog, update all,
-           install requirements with the mod, game-version filtering
+    the right folder; this phase makes each game load them, for a user
+    without Nexus Premium, and makes modding part of Hydra. Spec and plan:
+    [Mods, phase 19](mods-phase-19.md) (start there); research:
+    [Mods: research](mods-game-support-design.md).
+    1. [x] Research the open-source managers and mod sites
+    2. [ ] Modding as part of Hydra: activity log and Copy report, Play
+           (modded) split button, mods in run records, mod downloads in the
+           Downloads queue, states, Settings → Mods
+    3. [ ] Game support definitions, Thunderstore data for 372 games,
+           Valheim first
+    4. [ ] Loaders installed and started automatically (BepInEx, SMAPI,
+           script extenders, REFramework), proxy DLL clash check
+    5. [ ] Load order and the game's own list: `plugins.txt`, LOOT, manual
+           order, generic dependency order, Baldur's Gate 3
+    6. [ ] Files in the Wine prefix
+    7. [ ] Did it load: the loader's log after a run
+    8. [ ] Downloads without Premium: TorBox for big files, the limit shown,
+           Prism-style manual queue with the Downloads folder watched
+    9. [ ] Install knowledge in layers: content preview, archive clues,
+           optional AI plan, shared install plans
+    10. [ ] More sources: Thunderstore, GameBanana, ModDB, Modrinth last
+    11. [ ] Modpacks: Thunderstore, Nexus Collections, export a profile
+    12. [ ] Prism's comforts: details page, update all, requirements with
+            the mod, game-version filtering
 
 Why this order:
 
@@ -765,67 +770,11 @@ redirects shipped, nothing in use still needs `bgmod`.
 
 ## Mods, part 2
 
-Phase 19, from the owner's review of phase 17 on 2026-11-01: "shouldn't we
-have a more proper method to correctly install mods for each game?" Phase 17
-copies Vortex's deploy model and a table of mod folders. For games that load
-whatever sits in a folder (RimWorld, Darkest Dungeon, Cyberpunk's `archive/`)
-that is enough. For most popular modded games it is not: the files land in
-the right place and the game ignores them.
-
-### Learn from the open-source managers, don't copy them
-
-Hydra Plus is MIT. Mod Organizer 2, Vortex, Limo, Prism Launcher and
-Wabbajack are GPL-3, so their code can't be pasted in without relicensing
-the fork; their design, file formats and per-game facts (paths, file names,
-load-order rules) can be used. r2modman is MIT. Check each licence again
-before borrowing.
-
-- **Vortex game extensions** are the closest fit: Hydra already uses
-  Vortex's staging and hard-link deploys. Each extension says where mods go,
-  which mod types exist and how to recognise them, which tools a game needs
-  and what setup it does. About 300 games; the data for the first games
-  comes from there.
-- **MO2's game plugins** hold the Bethesda details: `plugins.txt` and
-  `loadorder.txt` formats, master and light plugins, which plugins are always
-  on. Its virtual file system (USVFS) is Windows-only and not wanted (see
-  [Mods](mods-design.md)).
-- **Limo** is the same model on Linux; see how it handles case matching,
-  Proton prefixes and its per-game "auto setup".
-- **r2modman / Thunderstore Mod Manager** is the Prism of BepInEx and
-  MelonLoader games: loader installed for you, dependencies resolved from the
-  package's manifest, profiles shared as a code.
-- **LOOT** sorts Bethesda load orders. Its masterlists have their own licence
-  (check before use); running LOOT itself may be simpler than reading them.
-
-### Game support definitions
-
-Turn the `MOD_FOLDERS` table into one small definition per game: mod types
-(where each goes and how a file is recognised), the loader and how to
-install it, the enable list to write, folders inside the prefix, and the log
-to read after a run. Games without a definition keep phase 17's behaviour.
-First games, by how badly they break now: Stardew Valley (SMAPI), Skyrim SE,
-Fallout 4 and New Vegas (plugins and load order), Valheim (BepInEx),
-Baldur's Gate 3 (`modsettings.lsx`), RimWorld (`ModsConfig.xml`).
-
-### Sources
-
-- **Thunderstore**: open API, no key; Valheim, Lethal Company, Risk of
-  Rain 2 and other BepInEx games. Packages declare dependencies exactly.
-- **GameBanana** and **ModDB**: open sites with many mods Nexus lacks.
-- **Modrinth**: almost all Minecraft, which Prism already does well; low
-  value unless it grows other games. Check before building.
-- **CurseForge** (outside Minecraft) and **mod.io** need an API key granted
-  to the app, and mod.io a game's permission. Ask before designing around
-  them, as with Nexus.
-- **Steam Workshop** needs a Steam copy; out of scope for now.
-
-### Modpacks
-
-Prism imports and exports packs (`.mrpack`). For other games: **Nexus
-Collections** (public through the same GraphQL API; a large one can pass
-TorBox's 100 Nexus links a day, so downloads must queue across days or fall
-back to manual), Thunderstore profile codes, Modrinth packs, and Wabbajack
-lists later. Export a profile as a pack other Hydra Plus users can import.
+Phase 19. Started from the owner's review of phase 17 on 2026-11-01:
+"shouldn't we have a more proper method to correctly install mods for each
+game?" Everything about it, including the owner's decisions, is in
+[Mods, phase 19](mods-phase-19.md); the findings behind it are in
+[Mods: research](mods-game-support-design.md).
 
 ## Save import, later sources
 

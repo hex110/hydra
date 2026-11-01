@@ -1,10 +1,9 @@
-# Mods that work in each game: design
+# Mods that work in each game: research
 
-Roadmap phase 19, item 1, written 2026-11-01. Phase 17 ([Mods](mods-design.md))
-puts a mod's files in the right folder. This phase makes the game actually
-load them: the loader is installed, the game's own mod list is written, files
-that belong in the Wine prefix go there, and after a run Hydra says whether
-the mods loaded.
+Roadmap phase 19, item 1, written 2026-11-01: what the open-source mod
+managers and the mod sites do, read from their sources and APIs. The
+decisions and the work built on it are in
+[Mods, phase 19](mods-phase-19.md); this file only records the findings.
 
 ## What was read
 
@@ -98,134 +97,18 @@ download URL and dependencies).
 
 **Prism Launcher** is the interface model, already followed in phase 17.
 
-## Decisions
-
-### One support definition per game, from two sources
-
-`src/main/services/mods/games/` holds one definition per game Hydra knows
-better than "put files in the mod folder". A definition is data plus, only
-where needed, a small function:
-
-```ts
-interface GameSupport {
-  /** Matches the library game: Steam app ids, Nexus domain, exe names. */
-  match: { steamAppIds?: string[]; nexusDomain?: string; exeNames?: string[] };
-  /** Named targets; "game" is the game folder, "prefix:<path>" is in the Wine prefix. */
-  modTypes: ModTypeRule[]; // target, how a mod's files are recognised, default
-  loader?: LoaderSupport; // which mod is the loader, how it is installed and started
-  enableList?: EnableListWriter; // plugins.txt, modsettings.lsx, ModsConfig.xml
-  logs?: LogRule[]; // where the loader writes, how to read success and failure
-  source: string; // where the facts came from (project, commit)
-}
-```
-
-- **Thunderstore games come from Thunderstore's data.** Hydra fetches the
-  ecosystem schema (cached, refreshed weekly) and turns each game's loader
-  and install rules into a `GameSupport`. That covers 372 games, including
-  Valheim, Lethal Company and Risk of Rain 2, without writing them by hand.
-- **Nexus games are written by hand**, from the facts above, starting with
-  the games that break worst today (build order below). Each names its
-  source.
-- **Games without a definition** keep phase 17's behaviour, and the Mods page
-  says so in one line ("Hydra places files in `<folder>`; it doesn't know
-  this game's loader or mod list"), so it is never silent.
-- The phase 17 `MOD_FOLDERS` table becomes the fallback inside this, not a
-  second system.
-
-### Loaders
-
-A loader is installed as a mod (staged, deployed, removable like any other)
-with a flag that it is the game's loader, so the existing deploy, backup and
-undo code covers it. What differs per loader is how it is installed and how
-the game is started:
-
-| Loader                                     | Installed by                                                                                        | Started by                                                    |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| SMAPI                                      | extracting `windows/install.dat` (Proton) into the game root, writing `StardewModdingAPI.deps.json` | running `StardewModdingAPI.exe` instead of the game's exe     |
-| BepInEx / MelonLoader                      | the Thunderstore loader package into the game root                                                  | `WINEDLLOVERRIDES` `winhttp=n,b` (MelonLoader also `version`) |
-| Script extenders (SKSE, F4SE, xNVSE, OBSE) | the release archive into the game root                                                              | running the loader exe (`skse64_loader.exe` …)                |
-| REFramework                                | `dinput8.dll` into the game root                                                                    | `dinput8=n,b`                                                 |
-
-- **Starting through a loader** is an override of the launch target, not a
-  change to the game's stored executable: turning the loader off goes back
-  to the game's exe. Run records show which one started.
-- **DLL overrides** go through the existing `buildLaunchEnvironment` like
-  OptiScaler's and RenoDX's. A clash (OptiScaler installed as `winhttp.dll`
-  and BepInEx needing `winhttp.dll`) is refused with a reason before
-  deploying. No such check exists yet; it is new here and should cover
-  OptiScaler, RenoDX and OnlineFix proxies too.
-- **Where the loader comes from:** Thunderstore packages directly (no key);
-  SMAPI and the script extenders from their GitHub releases where they
-  publish there, otherwise Nexus through TorBox like any mod. Missing loader:
-  one row at the top of the Mods page, "<Loader> is needed for mods to load",
-  with **Install**, as Vortex does.
-
-### The game's own mod list
-
-Written on every deploy from Hydra's list order and on/off, into the game's
-prefix, so profiles switch it too:
-
-- **Creation games** (Skyrim SE, Fallout 4, Starfield):
-  `<prefix>/drive_c/users/steamuser/AppData/Local/<Game>/plugins.txt`, `*`
-  for active, base masters and `.ccc` plugins left out. **Gamebryo games**
-  (Oblivion, Fallout 3, New Vegas): `plugins.txt` with active plugins only plus
-  `loadorder.txt`. Morrowind: `Morrowind.ini`.
-- **Plugin order** starts as the order of the mods in Hydra's list, with
-  masters (`.esm`, light `.esl`) placed before plain plugins, and a
-  **Plugins** view on the Mods page to reorder them. Automatic sorting with
-  LOOT is later; libloot is GPL-3 and its masterlists have their own licence,
-  so it would run as a separate tool, decided then.
-- **Baldur's Gate 3**: `.pak` mods deploy to the prefix's `Mods` folder and
-  are listed in `modsettings.lsx` with the UUID read from each pak.
-- **RimWorld**: left to the game's Mods screen at first, as Vortex does; the
-  Mods page says where to turn them on. Writing `ModsConfig.xml` can come
-  later.
-
-### Files in the Wine prefix
-
-A mod type's target can be `prefix:<path>`, resolved through
-`Wine.resolvePrefixPath` as launch does; deploying there uses the same
-links, backups and manifest. A game with no prefix yet (never started) gets
-"Start the game once so its prefix exists" instead of a deploy.
-
-### Did it load
-
-After a run, if the game has `logs` rules, Hydra reads the loader's log
-(SMAPI: `AppData/Roaming/StardewValley/ErrorLogs/SMAPI-latest.txt` in the
-prefix; BepInEx: `BepInEx/LogOutput.log` in the game folder; script
-extenders: their log under `Documents/My Games/<Game>`) and records loaded,
-failed and skipped mods in the run record. The Mods page shows a mod that
-failed to load on its row, with the log line. This is what lets Claude Code
-debug a modded crash from the run record.
-
-### Where it shows (one home per fact)
-
-All on the existing Mods page; nothing new elsewhere except the run record.
-
-- **Loader row** at the top of the installed list: installed version, or
-  "needed" with **Install**. One home of the loader's state.
-- **Plugins** view (Bethesda games only) next to the mod list.
-- A mod's row gets "failed to load" from the last run.
-- Games without a definition: the one-line note above.
-
-## Build order (roadmap phase 19)
-
-1. Game support definitions and the Thunderstore data import; the fallback
-   note. Valheim as the first game (BepInEx, no account, Thunderstore).
-2. Loaders: BepInEx from Thunderstore, then SMAPI (Stardew), then SKSE.
-3. Enable lists: Skyrim SE and Fallout 4 `plugins.txt`, then New Vegas and
-   Oblivion, then BG3.
-4. Prefix targets (needed by step 3 for BG3, by step 5 for SMAPI's log).
-5. Logs after a run: SMAPI and BepInEx first.
-6. Thunderstore as a source (search, versions, dependencies installed with
-   the mod); then GameBanana and ModDB.
-7. Modpacks: Thunderstore profile codes, then Nexus Collections.
-8. Prism's comforts.
-
-Each game step is checked on a real install under Proton before it is ticked,
-and on the laptop (signed out, MX550) for one Thunderstore game.
-
 ## Checked against the live APIs (2026-11-01)
+
+- TorBox's hoster list (`https://api.torbox.app/v1/api/webdl/hosters`, no
+  sign-in) gives NexusMods `daily_link_limit: 100`, a 10 TB daily bandwidth
+  limit and a 100 GB per-file limit. Read signed out; whether the link limit
+  depends on the TorBox plan is not known (the owner doesn't remember hitting
+  one). Read it with the user's token before relying on it.
+- Nexus file content preview:
+  `https://file-metadata.nexusmods.com/file/nexus-files-s3-meta/<gameId>/<modId>/<file uri, URL-encoded>.json`
+  returns the archive's file tree without a key (the file `uri` comes from
+  GraphQL `modFiles`). A mod's full `description` (HTML/BBCode) is in GraphQL
+  `mod { description }`, also without a key.
 
 - Thunderstore: schema and package API answer without a key.
 - GameBanana `apiv11` search answers without a key.
@@ -238,12 +121,3 @@ and on the laptop (signed out, MX550) for one Thunderstore game.
   so collection installs must queue across days, show that, and accept
   files the user downloads by hand. Whether the collection's install choices
   (FOMOD options) are readable without a key is still to check.
-
-## Open questions for the owner
-
-1. **Starting through a loader** changes what Play runs for that game. Fine
-   as automatic when the loader is on, or ask the first time?
-2. **LOOT** for automatic plugin sorting: worth a separate download later, or
-   manual order only?
-3. **Nexus Collections** over several days because of TorBox's limit: worth
-   it, or Thunderstore packs first and collections only on request?

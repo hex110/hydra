@@ -121,7 +121,7 @@ Nexus files.
 Load order for Bethesda plugins (`plugins.txt`), profiles (several mod lists
 per game), mods in the Wine prefix (`Documents/My Games/...`, AppData),
 modpack export, Wabbajack. These and per-game support are roadmap phase 19,
-[Mods, part 2](roadmap.md#mods-part-2). (FOMOD installers with options and profiles came after the
+[Mods, phase 19](mods-phase-19.md). (FOMOD installers with options and profiles came after the
 first version: [Mods](features/mods.md).)
 
 ## Build order
