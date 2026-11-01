@@ -9,6 +9,7 @@ import {
   mergeLocalRepacks,
 } from "@shared";
 import { orderBy } from "lodash-es";
+import { Feature, useFeature } from "../use-feature.hook";
 
 export type DownloadOptionsEmptyStateReason =
   | "no-configured-sources"
@@ -135,7 +136,8 @@ async function fetchDownloadOptions(
   game: Pick<Game, "objectId" | "shop"> & { title?: string },
   signal: { cancelled: boolean },
   setters: DownloadStateSetters,
-  knownGameSourcesEmptyStateReason: DownloadOptionsEmptyStateReason | null
+  knownGameSourcesEmptyStateReason: DownloadOptionsEmptyStateReason | null,
+  multipartHosterDownloads: boolean
 ) {
   resetDownloadOptionsState(signal, setters);
 
@@ -181,7 +183,8 @@ async function fetchDownloadOptions(
       fetchLocalRepacks(game.title),
     ]);
     const options = filterDownloadableRepacks(
-      mergeLocalRepacks(Array.isArray(response) ? response : [], localRepacks)
+      mergeLocalRepacks(Array.isArray(response) ? response : [], localRepacks),
+      multipartHosterDownloads
     );
 
     if (options.length === 0 && knownGameSourcesEmptyStateReason !== null) {
@@ -218,6 +221,10 @@ export function useGameDownloadOptions(
 ) {
   const shouldLoadDownloadOptions =
     visible && IS_DESKTOP && game.shop !== "custom";
+  const { isFeatureEnabled } = useFeature();
+  const multipartHosterDownloads = isFeatureEnabled(
+    Feature.MultipartHosterDownloads
+  );
   const knownGameSourcesEmptyStateReason = getKnownGameSourcesEmptyStateReason(
     game.downloadSources
   );
@@ -272,7 +279,8 @@ export function useGameDownloadOptions(
         setIsLoading,
         setEmptyStateReason,
       },
-      knownGameSourcesEmptyStateReason
+      knownGameSourcesEmptyStateReason,
+      multipartHosterDownloads
     );
 
     return () => {
@@ -285,6 +293,7 @@ export function useGameDownloadOptions(
     game.title,
     knownEmptyState,
     knownGameSourcesEmptyStateReason,
+    multipartHosterDownloads,
     shouldLoadDownloadOptions,
   ]);
 

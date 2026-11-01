@@ -6,3 +6,4 @@ import "./get-retroachievements-achievements";
 import "./reset-retroachievements-achievements";
 import "./sync-steam-game-on-game-page";
 import "./retroachievements-connection-window";
+import "./link-retroachievements-emulator-account";

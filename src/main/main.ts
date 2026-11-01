@@ -3,10 +3,12 @@ import {
   startEpicSyncOnStartup,
 } from "./services/epic";
 import { downloadsSublevel } from "./level/sublevels/downloads";
+import { recoverInterruptedInstallers } from "./helpers/recover-interrupted-installers";
 import { orderBy } from "lodash-es";
 import { Downloader } from "@shared";
 import { levelKeys, db } from "./level";
 import { refreshGlobalTrackersUrlCache } from "@main/helpers";
+import { syncRetroAchievementsEmulatorCredentials } from "@main/services/retro-achievements/emulator-credentials/emulator-credential-sync";
 import { type Download, type UserPreferences } from "../types";
 import path from "node:path";
 import fs from "node:fs";
@@ -29,6 +31,7 @@ import {
   SSEClient,
   Wine,
   WindowManager,
+  ScreenshotInputService,
   logger,
   migrateCloudSaveAutomaticSyncDefaults,
   retryPendingCloudSaveUploads,
@@ -60,12 +63,15 @@ import { applyFirstRunDownloadDefaults } from "./services/first-run-defaults";
 import { UmuUpdater } from "./services/umu-updater";
 import { LocalSources } from "@main/services/local-sources/local-sources";
 import { AnkerGamesHomeFeed } from "@main/services/ankergames";
+import { migrateAnkerGamesDownloader } from "@main/services/ankergames/downloader-migration";
 import { AppLauncherEntries } from "./services/app-launcher-entries";
 import { GameUpdates } from "./services/game-updates";
 import { ProtonManager } from "./services/proton-manager";
 import { scheduleExecutableStatusCheck } from "./services/executable-status";
 import { LibraryMetadata } from "./services/library-metadata";
 import { LibraryFolderWatcher } from "./services/library-folder-watcher";
+import { initializeScreenshots } from "./services/screenshots";
+import { setTrackedGamesRunningListenerErrorReporter } from "./services/game-running-state";
 
 const hasMissingSeedFiles = async (download: Download): Promise<boolean> => {
   if (!download.folderName) return false;
@@ -99,6 +105,7 @@ export const loadState = async () => {
   await migrateGameVisibilityFields();
   await migrateLegacyLaunchRuleSettings();
   await applyFirstRunDownloadDefaults();
+  await migrateAnkerGamesDownloader();
 
   const userPreferences = await db.get<string, UserPreferences | null>(
     levelKeys.userPreferences,
@@ -108,6 +115,10 @@ export const loadState = async () => {
   );
 
   Wine.syncUserPreferences(userPreferences);
+  setTrackedGamesRunningListenerErrorReporter((error) =>
+    logger.error("Tracked games running listener failed", error)
+  );
+  ScreenshotInputService.syncUserPreferences(userPreferences);
 
   await import("./events");
 
@@ -158,9 +169,15 @@ export const loadState = async () => {
   LibraryMetadata.watch();
   LibraryFolderWatcher.watch();
   scheduleExecutableStatusCheck();
+  void syncRetroAchievementsEmulatorCredentials();
 
   await HydraApi.setupApi().then(async () => {
-    await initializeEpicIntegration();
+    void ScreenshotInputService.refreshFeatureFlag();
+    try {
+      await initializeEpicIntegration();
+    } catch (err) {
+      logger.warn("Epic integration initialization failed on startup", err);
+    }
     uploadGamesBatch();
     void migrateDownloadSources();
 
@@ -181,6 +198,8 @@ export const loadState = async () => {
       await DownloadSourcesChecker.checkForChanges();
     })();
 
+    initializeScreenshots();
+
     if (HydraApi.isLoggedIn()) {
       SSEClient.connect();
       void groupedSouvenirWorker.trigger();
@@ -197,6 +216,12 @@ export const loadState = async () => {
       download.extracting &&
       (download.status === "complete" || download.status === "seeding")
   );
+  void recoverInterruptedInstallers().catch((error) => {
+    logger.error(
+      "[GameInstaller] Failed to recover interrupted installs",
+      error
+    );
+  });
 
   const downloadToResume =
     await DownloadOrchestrator.bootstrapDownloadsOnStartup();

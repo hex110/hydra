@@ -6,6 +6,7 @@ import {
   levelKeys,
 } from "@main/level";
 import { HydraApi } from "@main/services/hydra-api";
+import { isMultipartHosterDownloadsEnabled } from "../download/multipart-hoster-feature";
 import { LocalSources } from "@main/services/local-sources/local-sources";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { logger } from "@main/services/logger";
@@ -71,7 +72,8 @@ export class GameUpdates {
     ]);
 
     return filterDownloadableRepacks(
-      mergeLocalRepacks(Array.isArray(server) ? server : [], local)
+      mergeLocalRepacks(Array.isArray(server) ? server : [], local),
+      await isMultipartHosterDownloadsEnabled()
     );
   }
 

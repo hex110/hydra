@@ -224,6 +224,25 @@ export const publishNotificationUpdateReadyToInstall = async (
   );
 };
 
+export const publishLeaderboardNotification = async (
+  content: { title: string; body: string; imageUrl: string | null },
+  onClick: () => void,
+  signal?: AbortSignal
+) => {
+  const notificationIcon =
+    (await downloadImage(content.imageUrl, signal).catch(() => undefined)) ??
+    trayIcon;
+  if (signal?.aborted) return;
+
+  const notification = new Notification({
+    title: content.title,
+    body: content.body,
+    icon: notificationIcon,
+  });
+  notification.on("click", onClick);
+  notification.show();
+};
+
 export const publishNewFriendRequestNotification = async (
   user: UserProfile,
   signal?: AbortSignal
@@ -258,12 +277,16 @@ export const publishNewFriendRequestNotification = async (
 };
 
 export const publishFriendStartedPlayingGameNotification = async (
-  friend: UserProfile,
+  friend: {
+    displayName: string;
+    profileImageUrl: string | null;
+    gameTitle: string | null;
+  },
   signal?: AbortSignal
 ) => {
   if (signal?.aborted) return;
   const notificationIcon =
-    (friend?.profileImageUrl
+    (friend.profileImageUrl
       ? await downloadImage(friend.profileImageUrl, signal)
       : undefined) ?? trayIcon;
   if (signal?.aborted) return;
@@ -273,7 +296,7 @@ export const publishFriendStartedPlayingGameNotification = async (
       ns: "notifications",
       displayName: friend.displayName,
     }),
-    body: friend?.currentGame?.title,
+    body: friend.gameTitle ?? undefined,
     icon: notificationIcon,
   }).show();
 };

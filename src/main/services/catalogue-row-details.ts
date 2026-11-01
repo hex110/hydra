@@ -85,9 +85,13 @@ const fetchGameExtras = async (
     howLongToBeatHours: parseHowLongToBeat(howLongToBeat)?.mainStory ?? null,
     downloadSizes: getMatchingDownloadSizes(
       title,
-      filterDownloadableRepacks(Array.isArray(repacks) ? repacks : []).map(
-        (repack) => ({ title: repack.title, size: parseBytes(repack.fileSize) })
-      )
+      filterDownloadableRepacks(
+        Array.isArray(repacks) ? repacks : [],
+        false
+      ).map((repack) => ({
+        title: repack.title,
+        size: parseBytes(repack.fileSize),
+      }))
     ),
   };
 };

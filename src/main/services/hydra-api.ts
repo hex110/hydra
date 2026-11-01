@@ -172,7 +172,7 @@ export class HydraApi {
       void import("./linux-game-capture-session").then(
         ({ stopAllLinuxGameCaptureSessions }) => {
           if (!this.hasActiveSubscription()) {
-            stopAllLinuxGameCaptureSessions();
+            stopAllLinuxGameCaptureSessions("souvenir");
           }
         }
       );
@@ -335,7 +335,7 @@ export class HydraApi {
         "./linux-game-capture-session"
       );
       if (generation !== this.authContexts.generation) return;
-      stopAllLinuxGameCaptureSessions();
+      stopAllLinuxGameCaptureSessions("souvenir");
       const { groupedSouvenirWorker } = await import(
         "./achievements/grouped-souvenir-worker"
       );
@@ -426,9 +426,13 @@ export class HydraApi {
           if (error.request) {
             const errorData = error.toJSON();
             logger.error("Request error:", summarizeNetworkError(error));
+            // Keep the code so callers can tell a timeout from going offline.
             return Promise.reject(
-              new Error(
-                `Request failed with ${errorData.code} ${errorData.message}`
+              Object.assign(
+                new Error(
+                  `Request failed with ${errorData.code} ${errorData.message}`
+                ),
+                { code: errorData.code }
               )
             );
           }
@@ -604,7 +608,7 @@ export class HydraApi {
           "./linux-game-capture-session"
         );
         if (signedOutGeneration !== this.authContexts.generation) throw err;
-        stopAllLinuxGameCaptureSessions();
+        stopAllLinuxGameCaptureSessions("souvenir");
         const { groupedSouvenirWorker } = await import(
           "./achievements/grouped-souvenir-worker"
         );

@@ -126,17 +126,29 @@ export function useDownload() {
     return paused;
   };
 
-  const resumeDownload = async (shop: GameShop, objectId: string) => {
-    const resumed = await window.electron.resumeGameDownload(shop, objectId);
+  const resumeDownload = async (
+    shop: GameShop,
+    objectId: string,
+    strategy?: "interruptActive" | "queueIfActive"
+  ) => {
+    const resumed = await window.electron.resumeGameDownload(
+      shop,
+      objectId,
+      strategy
+    );
     await updateLibrary();
     return resumed;
   };
 
-  const removeGameInstaller = async (shop: GameShop, objectId: string) => {
+  const removeGameInstaller = async (
+    shop: GameShop,
+    objectId: string,
+    options?: { deleteSourceArchive?: boolean; keepEpicUpdateFiles?: boolean }
+  ) => {
     dispatch(setGameDeleting(objectId));
 
     try {
-      await window.electron.deleteGameFolder(shop, objectId);
+      await window.electron.deleteGameFolder(shop, objectId, options);
       updateLibrary();
     } finally {
       dispatch(removeGameFromDeleting(objectId));
@@ -158,7 +170,8 @@ export function useDownload() {
     }
 
     updateLibrary();
-    if (!keepFiles) removeGameInstaller(shop, objectId);
+    if (!keepFiles)
+      await removeGameInstaller(shop, objectId, { keepEpicUpdateFiles: true });
   };
 
   const removeGameFromLibrary = (shop: GameShop, objectId: string) =>

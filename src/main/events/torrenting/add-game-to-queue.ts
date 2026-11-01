@@ -12,6 +12,7 @@ import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { parseBytes } from "@shared";
 import {
   getGlobalTrackers,
+  getMultipartDownloadParts,
   handleDownloadError,
   isKnownDownloadError,
   prepareGameEntry,
@@ -28,6 +29,7 @@ const addGameToQueue = async (
     downloadPath,
     downloader,
     uri,
+    parts,
     automaticallyExtract,
     automaticallyDeleteArchiveFiles,
     fileSize,
@@ -54,6 +56,7 @@ const addGameToQueue = async (
       downloadPath,
       downloader,
       uri,
+      parts: await getMultipartDownloadParts(uri, parts, downloader),
       folderName: null,
       fileSize: selectedFilesSize ?? parsedFileSize,
       shouldSeed: false,

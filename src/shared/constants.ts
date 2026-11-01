@@ -14,7 +14,9 @@ export enum Downloader {
   AllDebrid = 13,
   ArchiveOrg = 14,
   Epic = 15,
-  AnkerGames = 16,
+  FileKeeper = 16,
+  // Hydra Plus's own, far from upstream's numbers; was 16 before 4.3.0.
+  AnkerGames = 100,
 }
 
 export enum DownloadSourceStatus {

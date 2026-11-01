@@ -48,6 +48,31 @@ type PreflightStatus =
 
 type AchievementsExportStatus = GameLauncherStatus | "idle";
 
+const getCoverImageSource = (
+  shop: GameShop,
+  objectId: string | null,
+  game: Game | null,
+  gameAssets: ShopAssets | null
+) => {
+  const normalizeImageUrl = (url?: string | null) =>
+    url?.replaceAll("\\", "/").trim() || "";
+
+  const fallbackSteamCoverImage =
+    shop === "steam" && objectId
+      ? `https://shared.steamstatic.com/store_item_assets/steam/apps/${objectId}/library_600x900_2x.jpg`
+      : "";
+
+  const coverImageSource =
+    normalizeImageUrl(game?.customCoverImageUrl) ||
+    normalizeImageUrl(gameAssets?.coverImageUrl) ||
+    normalizeImageUrl(gameAssets?.libraryImageUrl) ||
+    normalizeImageUrl(game?.customIconUrl) ||
+    normalizeImageUrl(game?.iconUrl ?? gameAssets?.iconUrl) ||
+    fallbackSteamCoverImage;
+
+  return coverImageSource;
+};
+
 export default function GameLauncher() {
   const { t } = useTranslation("game_launcher");
   const [searchParams] = useSearchParams();
@@ -57,6 +82,7 @@ export default function GameLauncher() {
 
   const [game, setGame] = useState<Game | null>(null);
   const [gameAssets, setGameAssets] = useState<ShopAssets | null>(null);
+  const [hasLoadedLocalData, setHasLoadedLocalData] = useState(false);
   const [coverImage, setCoverImage] = useState("");
   const [imageResolved, setImageResolved] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -103,13 +129,40 @@ export default function GameLauncher() {
 
   useEffect(() => {
     if (shop && objectId) {
-      window.electron.getGameByObjectId(shop, objectId).then((gameData) => {
-        setGame(gameData);
-      });
-
-      window.electron.getGameAssets(objectId, shop).then((assets) => {
+      let hasAssets = false;
+      let hasCoverAssets = false;
+      const hasCover = (assets: ShopAssets) =>
+        Boolean(assets.coverImageUrl || assets.libraryImageUrl);
+      const applyAssets = (assets: ShopAssets | null) => {
+        if (!assets || hasCoverAssets) return;
+        if (hasAssets && !hasCover(assets)) return;
+        hasAssets = true;
+        hasCoverAssets = hasCover(assets);
         setGameAssets(assets);
-      });
+      };
+
+      const loadGameData = async () => {
+        await Promise.all([
+          window.electron
+            .getGameByObjectId(shop, objectId)
+            .then(setGame)
+            .catch(() => {}),
+          window.electron
+            .getGameAssets(objectId, shop, { cacheOnly: true })
+            .then(applyAssets)
+            .catch(() => {}),
+        ]);
+        setHasLoadedLocalData(true);
+        if (hasCoverAssets) return;
+
+        applyAssets(
+          await window.electron.getGameAssets(objectId, shop).catch(() => null)
+        );
+      };
+
+      void loadGameData();
+    } else {
+      setHasLoadedLocalData(true);
     }
   }, [shop, objectId]);
 
@@ -256,25 +309,13 @@ export default function GameLauncher() {
     void window.electron.closeGameLauncherWindow();
   };
 
-  const normalizeImageUrl = (url?: string | null) =>
-    url?.replaceAll("\\", "/").trim() || "";
-
-  const fallbackSteamCoverImage =
-    shop === "steam" && objectId
-      ? `https://shared.steamstatic.com/store_item_assets/steam/apps/${objectId}/library_600x900_2x.jpg`
-      : "";
-
-  // Resolve the cover from the artwork the launcher already has for custom/
-  // non-Steam games (whose assets live on the Game object, not ShopAssets).
-  // The guessed Steam capsule URL comes last, since it 404s for games without
-  // a capsule and would otherwise shadow the real assets below it.
-  const coverImageSource =
-    normalizeImageUrl(game?.customCoverImageUrl) ||
-    normalizeImageUrl(gameAssets?.coverImageUrl) ||
-    normalizeImageUrl(gameAssets?.libraryImageUrl) ||
-    normalizeImageUrl(game?.customIconUrl) ||
-    normalizeImageUrl(game?.iconUrl ?? gameAssets?.iconUrl) ||
-    fallbackSteamCoverImage;
+  const coverImageSource = getCoverImageSource(
+    shop,
+    objectId,
+    game,
+    gameAssets
+  );
+  const isCoverSourcePending = !coverImageSource && !hasLoadedLocalData;
   const gameTitle = game?.title ?? gameAssets?.title ?? "";
   const playTime = game ? getDisplayedPlayTimeInMilliseconds(game) : 0;
   const achievementCount = game?.achievementCount ?? 0;
@@ -352,6 +393,8 @@ export default function GameLauncher() {
   const launcherAction = getGameLauncherAction(compatibilityLayerStatus);
 
   useEffect(() => {
+    if (isCoverSourcePending) return;
+
     let cancelled = false;
 
     setImageError(false);
@@ -393,7 +436,7 @@ export default function GameLauncher() {
     return () => {
       cancelled = true;
     };
-  }, [coverImageSource]);
+  }, [coverImageSource, isCoverSourcePending]);
 
   useEffect(() => {
     if (coverImage && !colorExtracted) {

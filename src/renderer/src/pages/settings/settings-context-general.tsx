@@ -73,6 +73,7 @@ const buildForm = (
   hideToTrayOnGameStart: preferences?.hideToTrayOnGameStart ?? false,
   launchToLibraryPage: preferences?.launchToLibraryPage ?? false,
   enableAutoInstall: preferences?.enableAutoInstall ?? false,
+  openFriendsWindowOnStartup: preferences?.openFriendsWindowOnStartup ?? false,
 });
 
 export function SettingsContextGeneral({
@@ -266,6 +267,16 @@ export function SettingsContextGeneral({
           onChange={() =>
             handleChange({
               launchToLibraryPage: !form.launchToLibraryPage,
+            })
+          }
+        />
+
+        <CheckboxField
+          label={t("open_friends_window_on_startup")}
+          checked={form.openFriendsWindowOnStartup}
+          onChange={() =>
+            handleChange({
+              openFriendsWindowOnStartup: !form.openFriendsWindowOnStartup,
             })
           }
         />

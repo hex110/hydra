@@ -312,7 +312,7 @@ export function DownloadSettingsModal({
     deleteArchiveFilesAfterExtraction,
     setDeleteArchiveFilesAfterExtraction,
   ] = useState(
-    userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? false
+    userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? true
   );
   const isInstalled =
     !!installedGame?.executablePath &&
@@ -594,7 +594,7 @@ export function DownloadSettingsModal({
   useEffect(() => {
     if (visible) {
       setDeleteArchiveFilesAfterExtraction(
-        userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? false
+        userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? true
       );
       setAutomaticExtractionEnabled(
         userPreferences?.extractFilesByDefault ?? true

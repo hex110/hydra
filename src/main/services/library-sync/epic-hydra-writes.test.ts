@@ -237,6 +237,10 @@ function fixture() {
             mode === "legacy",
           shouldRunV2AutomaticCloudSave: () => false,
         },
+        "./screenshots": {
+          onScreenshotGameStarted: async () => {},
+          onScreenshotGameClosed: () => {},
+        },
         "./linux-game-capture-session": {
           prepareLinuxGameCaptureSession: async () => {},
           stopLinuxGameCaptureSession: () => {},
@@ -254,6 +258,10 @@ function fixture() {
           },
         },
         "node:path": {},
+        "node:os": { totalmem: () => 64 * 1024 ** 3 },
+        "../../shared/game-start-window": {
+          resolveHideToTrayOnGameStart: () => false,
+        },
         "./wine": {},
         "./native-addon": {},
         "./emulators/emulator-session-tracker": {},

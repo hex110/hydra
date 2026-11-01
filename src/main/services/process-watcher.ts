@@ -64,6 +64,7 @@ import {
 } from "./linux-game-capture-session";
 import { updateGameRecord } from "./game-record-updater";
 import { recordPlayActivity } from "./play-activity";
+import { onScreenshotGameClosed, onScreenshotGameStarted } from "./screenshots";
 import { GameExecutables } from "./game-executables";
 import {
   onManagedEpicClosed,
@@ -505,6 +506,8 @@ async function onOpenGame(game: Game, matchedPath: string) {
     matchedPath,
   });
 
+  void onScreenshotGameStarted(gameKey);
+
   // On Linux, keep the launcher visible briefly and let it auto-close itself.
   if (process.platform !== "linux") {
     WindowManager.closeGameLauncherWindow();
@@ -689,7 +692,7 @@ function onTickGame(game: Game) {
   }
 }
 
-const onCloseGame = (game: Game) => {
+const onCloseGame = (game: Game, options: { isShutdown?: boolean } = {}) => {
   const authContext = HydraApi.getAuthContext();
   const hydraRevision = getHydraPlaytimeRevision(
     levelKeys.game(game.shop, game.objectId)
@@ -731,6 +734,8 @@ const onCloseGame = (game: Game) => {
   void persistGamePlaytime(gameKey, updatedGame, authContext, delta);
   queueFloppySync(game.shop, game.objectId, "playtime");
   queueCloudLibrarySync();
+
+  if (!options.isShutdown) onScreenshotGameClosed(gameKey);
 
   if (game.shop === "custom") return;
 
@@ -802,13 +807,15 @@ const onCloseGame = (game: Game) => {
 };
 
 export const clearGamesPlaytime = async () => {
-  for (const game of gamesPlaytime.keys()) {
-    const gameData = await gamesSublevel.get(game);
+  await Promise.all(
+    Array.from(gamesPlaytime.keys(), async (game) => {
+      const gameData = await gamesSublevel.get(game);
 
-    if (gameData) {
-      await onCloseGame(gameData);
-    }
-  }
+      if (gameData) {
+        await onCloseGame(gameData, { isShutdown: true });
+      }
+    })
+  );
 
   clearGamesPlaytimeState();
 };

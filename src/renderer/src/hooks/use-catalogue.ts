@@ -67,20 +67,20 @@ export function useCatalogue() {
   }, [dispatch, i18n.language]);
 
   const getSteamPublishers = useCallback(() => {
-    window.electron.hydraApi
-      .get<string[]>("/catalogue/steam/publishers", { needsAuth: false })
+    window.electron
+      .getCatalogueNames("publishers")
       .then(setSteamPublishers)
-      .catch((error: unknown) => {
-        logger.error("Failed to load catalogue publishers", error);
+      .catch((error) => {
+        logger.error("Failed to load Steam publishers", error);
       });
   }, []);
 
   const getSteamDevelopers = useCallback(() => {
-    window.electron.hydraApi
-      .get<string[]>("/catalogue/steam/developers", { needsAuth: false })
+    window.electron
+      .getCatalogueNames("developers")
       .then(setSteamDevelopers)
-      .catch((error: unknown) => {
-        logger.error("Failed to load catalogue developers", error);
+      .catch((error) => {
+        logger.error("Failed to load Steam developers", error);
       });
   }, []);
 

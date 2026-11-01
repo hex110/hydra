@@ -24,6 +24,10 @@ import { spawnSupervisedUmu } from "./umu-supervised-process";
 import { EPIC_LINUX_MANAGED_UMU_MAX_BYTES } from "./epic/linux-runtime-constants.js";
 import supervisedRuntimeManifest from "../../shared/epic-linux-runtime-manifest.json";
 export type { UmuProcessHandle } from "./umu-supervised-process";
+import {
+  findFlatpakCompatibilityTools,
+  getFlatpakInstallationRoots,
+} from "./flatpak-compatibility-tools";
 
 export type { UmuStatus } from "./umu-launch-monitor";
 
@@ -283,6 +287,15 @@ export class Umu {
           source: "compatibility_tools",
         });
       }
+    }
+
+    const flatpakTools = await findFlatpakCompatibilityTools(
+      getFlatpakInstallationRoots(homePath),
+      isValidProtonDirectory
+    ).catch(() => []);
+
+    for (const tool of flatpakTools) {
+      versions.push({ ...tool, source: "compatibility_tools" });
     }
 
     const uniqueVersions = new Map<string, ProtonVersion>();
@@ -549,7 +562,7 @@ export class Umu {
       /** Called when umu-run ends after a successful start. */
       onExit?: (code: number | null, signal: NodeJS.Signals | null) => void;
     }
-  ): Promise<void> {
+  ): Promise<number | undefined> {
     const QUICK_EXIT_THRESHOLD_MS = 3000;
     const SILENT_EXIT_WINDOW_MS = 60_000;
     const workingDirectory = path.dirname(executablePath);
@@ -646,6 +659,7 @@ export class Umu {
       });
       started = true;
       child.unref();
+      return child.pid;
     } catch (error) {
       const logLine =
         error instanceof UmuEarlyExitError

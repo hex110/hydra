@@ -30,3 +30,5 @@ TO-DO.md
 native/torrent-bridge/build/
 native/torrent-bridge/vcpkg_installed/
 extensions/steam/.amo-upload-uuid
+*.local.ts
+src/renderer/public/*.local/

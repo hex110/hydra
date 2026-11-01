@@ -56,4 +56,5 @@ export interface GameArtworkOptions {
 
 export interface GameAssetsOptions extends GameArtworkOptions {
   forceFresh?: boolean;
+  cacheOnly?: boolean;
 }

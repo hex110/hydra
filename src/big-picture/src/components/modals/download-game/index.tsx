@@ -16,6 +16,7 @@ import {
   resolveDownloadDirectories,
   findLibraryGamePresentation,
   getOfficialStoreMembers,
+  getRepackUriParts,
   isEpicMemberInCurrentScope,
   toDownloadRelease,
 } from "@shared";
@@ -555,7 +556,7 @@ function DownloadGameModalSession({
   const [
     deleteArchiveFilesAfterExtraction,
     setDeleteArchiveFilesAfterExtraction,
-  ] = useState(false);
+  ] = useState(true);
   const [isPreparingOptions, setIsPreparingOptions] = useState(false);
   const stepFrameRef = useRef<HTMLDivElement | null>(null);
   const activeStepRef = useRef<HTMLDivElement | null>(null);
@@ -730,7 +731,7 @@ function DownloadGameModalSession({
 
       if (!deleteArchiveTouchedRef.current) {
         setDeleteArchiveFilesAfterExtraction(
-          userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? false
+          userPreferences?.deleteArchiveFilesAfterExtractionByDefault ?? true
         );
       }
 
@@ -1685,6 +1686,7 @@ function DownloadGameOptions({
       title: game.title,
       shop: game.shop,
       uri: selectedUri,
+      parts: getRepackUriParts(option, selectedUri),
       downloadPath: selectedDownloadPath,
       downloader: resolvedDownloader,
       automaticallyExtract: automaticExtractionEnabled,

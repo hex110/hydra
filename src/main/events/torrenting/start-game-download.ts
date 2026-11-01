@@ -16,6 +16,7 @@ import {
 } from "@main/services/ankergames";
 import {
   getGlobalTrackers,
+  getMultipartDownloadParts,
   handleDownloadError,
   isKnownDownloadError,
   prepareGameEntry,
@@ -32,6 +33,7 @@ const startGameDownload = async (
     downloadPath,
     downloader,
     uri,
+    parts,
     automaticallyExtract,
     automaticallyDeleteArchiveFiles,
     fileSize,
@@ -68,6 +70,7 @@ const startGameDownload = async (
       downloadPath,
       downloader,
       uri,
+      parts: await getMultipartDownloadParts(uri, parts, downloader),
       folderName: null,
       shouldSeed: false,
       timestamp: Date.now(),

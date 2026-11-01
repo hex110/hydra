@@ -27,6 +27,7 @@ import "./main-window-controls";
 import "./misc";
 import "./notifications";
 import "./profile";
+import "./screenshots";
 import "./themes";
 import "./torrenting";
 import "./user";
@@ -42,6 +43,7 @@ import "./capabilities";
 import "./save-import";
 import "./game-updates";
 import "./linux-gaming";
+import "./screenshot-input";
 
 ipcMain.handle("ping", () => "pong");
 ipcMain.handle("getVersion", () => appVersion);

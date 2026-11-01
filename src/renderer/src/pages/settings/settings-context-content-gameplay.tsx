@@ -9,7 +9,7 @@ import {
   TextField,
 } from "@renderer/components";
 import { settingsContext } from "@renderer/context";
-import { useAppSelector, useUserDetails } from "@renderer/hooks";
+import { useAppSelector, useFeature, useUserDetails } from "@renderer/hooks";
 import { FileDirectoryIcon, HistoryIcon } from "@primer/octicons-react";
 import { useLocation } from "react-router-dom";
 import { isAchievementSouvenirsEnabled } from "@shared";
@@ -20,6 +20,7 @@ import "./settings-behavior.scss";
 const buildForm = (preferences: UserPreferences | null) => ({
   autoplayGameTrailers: preferences?.autoplayGameTrailers ?? false,
   disableNsfwAlert: preferences?.disableNsfwAlert ?? false,
+  showSensitiveScreenshots: preferences?.showSensitiveScreenshots ?? false,
   showHiddenAchievementsDescription:
     preferences?.showHiddenAchievementsDescription ?? false,
   enableSteamAchievements: preferences?.enableSteamAchievements ?? false,
@@ -47,6 +48,8 @@ export function SettingsContextContentGameplay() {
   const { updateUserPreferences } = useContext(settingsContext);
   const { hasActiveSubscription } = useUserDetails();
   const { hash } = useLocation();
+  const { isFeatureEnabled, Feature } = useFeature();
+  const isScreenshotsEnabled = isFeatureEnabled(Feature.Screenshots);
 
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
@@ -163,6 +166,18 @@ export function SettingsContextContentGameplay() {
             handleChange({ disableNsfwAlert: !form.disableNsfwAlert })
           }
         />
+
+        {isScreenshotsEnabled && (
+          <CheckboxField
+            label={t("screenshots_show_sensitive")}
+            checked={form.showSensitiveScreenshots}
+            onChange={() =>
+              handleChange({
+                showSensitiveScreenshots: !form.showSensitiveScreenshots,
+              })
+            }
+          />
+        )}
 
         <CheckboxField
           label={t("show_hidden_achievement_description")}
