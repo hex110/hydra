@@ -1,0 +1,260 @@
+@use "../../scss/globals.scss";
+
+.mods {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(globals.$spacing-unit * 3);
+  padding: calc(globals.$spacing-unit * 3);
+  align-items: start;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  &__installed,
+  &__browser {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+    min-width: 0;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: calc(globals.$spacing-unit * 2);
+    flex-wrap: wrap;
+  }
+
+  &__header-actions {
+    display: flex;
+    gap: globals.$spacing-unit;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    font-size: calc(globals.$body-font-size * 1.25);
+    font-weight: 600;
+    color: globals.$muted-color;
+  }
+
+  &__hint {
+    font-size: globals.$hint-font-size;
+    color: globals.$body-color;
+    opacity: globals.$active-opacity;
+    overflow-wrap: anywhere;
+  }
+
+  &__empty,
+  &__notice {
+    font-size: globals.$body-font-size;
+    padding: calc(globals.$spacing-unit * 2);
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    background: globals.$dark-background-color;
+  }
+
+  &__notice {
+    border-color: globals.$warning-color;
+  }
+
+  &__list,
+  &__results {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: globals.$spacing-unit calc(globals.$spacing-unit * 1.5);
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    background: globals.$dark-background-color;
+    flex-wrap: wrap;
+  }
+
+  &__row-meta,
+  &__result-meta {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+    flex-wrap: wrap;
+  }
+
+  &__row-meta {
+    flex: 1;
+  }
+
+  &__row-actions {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    margin-left: auto;
+  }
+
+  &__icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(globals.$spacing-unit * 4);
+    height: calc(globals.$spacing-unit * 4);
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: globals.$body-color;
+    cursor: pointer;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      color: globals.$muted-color;
+      background: globals.$border-color;
+    }
+
+    &:disabled {
+      opacity: globals.$disabled-opacity;
+      cursor: default;
+    }
+  }
+
+  &__browser-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: globals.$spacing-unit;
+    align-items: end;
+  }
+
+  &__result {
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    background: globals.$dark-background-color;
+    overflow: hidden;
+  }
+
+  &__result-summary {
+    display: flex;
+    gap: calc(globals.$spacing-unit * 1.5);
+    width: 100%;
+    padding: globals.$spacing-unit;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: globals.$border-color;
+    }
+  }
+
+  &__result-image {
+    flex-shrink: 0;
+    width: calc(globals.$spacing-unit * 14);
+    height: calc(globals.$spacing-unit * 8);
+    border-radius: 4px;
+    object-fit: cover;
+    background: globals.$border-color;
+  }
+
+  &__result-text,
+  &__file-text {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    min-width: 0;
+  }
+
+  &__result-name,
+  &__file-name {
+    font-size: globals.$body-font-size;
+    font-weight: 600;
+    color: globals.$muted-color;
+    overflow-wrap: anywhere;
+  }
+
+  &__result-summary-text {
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__files {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    padding: globals.$spacing-unit calc(globals.$spacing-unit * 1.5)
+      calc(globals.$spacing-unit * 1.5);
+    border-top: 1px solid globals.$border-color;
+  }
+
+  &__file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__link {
+    align-self: flex-start;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  &__game-picker {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+  }
+
+  &__game-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__game-result {
+    width: 100%;
+    padding: globals.$spacing-unit;
+    border: 1px solid globals.$border-color;
+    border-radius: 6px;
+    background: globals.$dark-background-color;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: globals.$border-color;
+    }
+  }
+
+  &__wrong-game {
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+
+    summary {
+      cursor: pointer;
+      margin-bottom: globals.$spacing-unit;
+    }
+  }
+}

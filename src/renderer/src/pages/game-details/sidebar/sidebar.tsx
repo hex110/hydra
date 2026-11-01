@@ -15,6 +15,7 @@ import { LaunchboxDetailsSection } from "./launchbox-details-section";
 import { GenresSection } from "./genres-section";
 import { LinksSection } from "./links-section";
 import { ReceptionSection } from "./reception-section";
+import { ModsSection } from "./mods-section";
 import { YourGameSection } from "../your-game/your-game-section";
 import { getGenreNames, getOfficialStoreMembers } from "@shared";
 import { SidebarSection } from "../sidebar-section/sidebar-section";
@@ -229,6 +230,8 @@ export function Sidebar() {
           </ul>
         </SidebarSection>
       )}
+
+      <ModsSection />
 
       <ReceptionSection steamAppId={steamAppId} />
 

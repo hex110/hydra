@@ -250,9 +250,9 @@ in the sections below.
 17. **Mods.** Native mod support. Design: [Mods](mods-design.md)
     (Nexus browsed without a key, downloads through TorBox, staging and
     linked deploys).
-    1. [ ] Mod store: staging, deploy, backups, install from file
-    2. [ ] Nexus source and TorBox downloads
-    3. [ ] Mods page, sidebar section, updates
+    1. [x] Mod store: staging, deploy, backups, install from file
+    2. [x] Nexus source and TorBox downloads
+    3. [x] Mods page, sidebar section, updates ([Mods](features/mods.md))
     4. [ ] `nxm://` links, requirements, FOMOD defaults
 18. **In-game overlay** (was phase 12 item 5). Achievements and what is
     running in the game; compare a Hyprland layer-shell window with a

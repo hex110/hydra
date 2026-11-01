@@ -283,6 +283,17 @@ export const buildGameAchievementPath = (
   return `/achievements/?${searchParams.toString()}`;
 };
 
+export const buildGameModsPath = (game: {
+  shop: GameShop;
+  objectId: string;
+  title: string;
+}) =>
+  `/mods?${new URLSearchParams({
+    title: game.title,
+    shop: game.shop,
+    objectId: game.objectId,
+  }).toString()}`;
+
 export const darkenColor = (color: string, amount: number, alpha: number = 1) =>
   new Color(color).darken(amount).alpha(alpha).toString();
 

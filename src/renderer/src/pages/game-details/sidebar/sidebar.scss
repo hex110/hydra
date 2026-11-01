@@ -389,3 +389,19 @@
 .achievements-placeholder__blur {
   filter: blur(4px);
 }
+
+.mods-section {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  padding: calc(globals.$spacing-unit * 2);
+
+  &__summary {
+    font-size: globals.$body-font-size;
+    color: globals.$body-color;
+  }
+
+  &__link {
+    font-size: globals.$small-font-size;
+  }
+}

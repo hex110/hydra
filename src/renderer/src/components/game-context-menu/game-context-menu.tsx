@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   applyLibraryGroupAction,
   getRemoveFilesTarget,
@@ -30,6 +30,7 @@ import {
   StarIcon,
   StarFillIcon,
   CheckIcon,
+  PackageIcon,
 } from "@primer/octicons-react";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import {
@@ -51,7 +52,7 @@ import {
   useSteamUninstallAction,
 } from "@renderer/hooks";
 import { useCollectionContextMenu } from "@renderer/context";
-import { getGameCollectionIds } from "@renderer/helpers";
+import { buildGameModsPath, getGameCollectionIds } from "@renderer/helpers";
 import { RemoveGameFromLibraryModal } from "@renderer/pages/game-details/modals/remove-from-library-modal";
 import { DeleteGameModal } from "@renderer/pages/downloads/delete-game-modal";
 import type { GameCollection, PlayStatus } from "@types";
@@ -82,6 +83,7 @@ export function GameContextMenu({
   onClose,
 }: GameContextMenuProps) {
   const { t } = useTranslation("game_details");
+  const navigate = useNavigate();
   const { showSuccessToast, showErrorToast } = useToast();
   const { userDetails } = useUserDetails();
   const group = useLibraryGamePresentation(game);
@@ -550,6 +552,24 @@ export function GameContextMenu({
           closeOnClick: false,
           disabled: isDeleting || isVisibilityPending || !userDetails,
         },
+        ...(game.executablePath
+          ? [
+              {
+                id: "mods",
+                label: t("section_title", { ns: "mods" }),
+                icon: <PackageIcon size={16} />,
+                onClick: () =>
+                  navigate(
+                    buildGameModsPath({
+                      shop: game.shop,
+                      objectId: game.objectId,
+                      title: game.title,
+                    })
+                  ),
+                disabled: isDeleting,
+              },
+            ]
+          : []),
         ...(game.executablePath
           ? [
               {

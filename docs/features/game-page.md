@@ -9,6 +9,7 @@ summary that links there. Add a row here when a feature adds a new fact.
 | ---------------------------------------------------- | --------------------------------------------------------------------------- |
 | Playtime, last played, launch state, update chip     | Hero bar                                                                    |
 | Play status, rating, favourite, pin, wishlist, notes | **Your game** sidebar section                                               |
+| Installed mods, their order and updates              | **Mods** page; the **Mods** sidebar section summarises and links to it      |
 | Copies and other versions in your library            | **Your game** sidebar section, only when there are any                      |
 | Achievements                                         | Sidebar summary (icon, name, description), details on the achievements page |
 | Outside ratings and player counts                    | **Reception** sidebar section (Steam games)                                 |
