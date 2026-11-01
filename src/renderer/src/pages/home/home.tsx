@@ -50,6 +50,7 @@ import {
 import { GearIcon } from "@primer/octicons-react";
 import { HomeShelf } from "./home-shelf";
 import { useSaveSyncSummary } from "./use-save-sync-summary";
+import { useOtherDeviceGames } from "./use-other-device-games";
 import { HomeGetStarted } from "./home-get-started";
 import { LastPlayedHero } from "./last-played-hero";
 import { PlayActivityPanel } from "./play-activity-panel";
@@ -150,6 +151,7 @@ export default function Home() {
     [groupedLibrary]
   );
   const [lastPlayed, ...otherRecentGames] = continuePlaying;
+  const otherDeviceGames = useOtherDeviceGames(groupedLibrary, lastPlayed);
   const continueKeys = useMemo(
     () => new Set(continuePlaying.map(gameKey)),
     [continuePlaying]
@@ -371,6 +373,33 @@ export default function Home() {
         return otherRecentGames.length > 0 ? (
           <HomeShelf title={t("continue_playing")}>
             {renderCards(otherRecentGames)}
+          </HomeShelf>
+        ) : null;
+
+      case "other_devices":
+        return otherDeviceGames.length > 0 ? (
+          <HomeShelf
+            title={t("shelf_other_devices")}
+            description={t("other_devices_description")}
+          >
+            {otherDeviceGames.map(({ game, hostname, lastTimePlayed }) => (
+              <div key={game.id} className="home__suggestion">
+                <LibraryGameCard game={game} onContextMenu={openContextMenu} />
+                <p className="home__suggestion-reason">
+                  {t(
+                    hostname
+                      ? "other_devices_played_on"
+                      : "other_devices_played",
+                    {
+                      device: hostname,
+                      time: formatDistance(lastTimePlayed, new Date(), {
+                        addSuffix: true,
+                      }),
+                    }
+                  )}
+                </p>
+              </div>
+            ))}
           </HomeShelf>
         ) : null;
 

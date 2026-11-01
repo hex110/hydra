@@ -23,7 +23,7 @@ describe("home shelf layout", () => {
       "catalogue",
       "activity",
       "continue_playing",
-      "downloads",
+      "other_devices",
     ]);
     assert.equal(layout.order.length, HOME_SHELVES.length);
     assert.deepEqual(layout.hidden, ["activity"]);

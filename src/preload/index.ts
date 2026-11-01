@@ -1075,6 +1075,8 @@ contextBridge.exposeInMainWorld("electron", {
   getSaveStoreUsage: () => ipcRenderer.invoke("getSaveStoreUsage"),
   cleanUpSaveStore: () => ipcRenderer.invoke("cleanUpSaveStore"),
   listSyncDevices: () => ipcRenderer.invoke("listSyncDevices"),
+  listOtherDeviceRecentGames: () =>
+    ipcRenderer.invoke("listOtherDeviceRecentGames"),
   syncCloudLibraryNow: () => ipcRenderer.invoke("syncCloudLibraryNow"),
   listCloudLibraryImports: () => ipcRenderer.invoke("listCloudLibraryImports"),
   importCloudLibrary: (deviceId: string) =>

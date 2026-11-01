@@ -9,6 +9,7 @@ import {
 import {
   importCloudLibrary,
   listCloudLibraryImports,
+  listOtherDeviceRecentGames,
   listSyncDevices,
   syncCloudLibrary,
 } from "@main/services/cloud-library-sync";
@@ -37,6 +38,7 @@ registerEvent("createR2Remote", (_event, credentials: R2Credentials) =>
 registerEvent("getSaveStoreUsage", () => getSaveStoreUsage());
 registerEvent("cleanUpSaveStore", () => cleanUpActiveSaveStore());
 registerEvent("listSyncDevices", () => listSyncDevices());
+registerEvent("listOtherDeviceRecentGames", () => listOtherDeviceRecentGames());
 registerEvent("syncCloudLibraryNow", () => syncCloudLibrary());
 registerEvent("listCloudLibraryImports", () => listCloudLibraryImports());
 registerEvent("importCloudLibrary", (_event, deviceId: string) =>

@@ -13,6 +13,7 @@ import type {
   CloudLibraryImportOption,
   CloudLibraryImportResult,
   Game,
+  OtherDeviceRecentGame,
   SaveStoreDevice,
   UserPreferences,
 } from "@types";
@@ -35,6 +36,7 @@ import {
   buildDeviceGames,
   buildLibraryEntries,
   gameKey,
+  pickOtherDeviceRecent,
   planLibraryImport,
   planMerge,
   unionAchievements,
@@ -262,6 +264,23 @@ export const startCloudLibrarySchedule = () => {
   if (intervalTimer) return;
   setTimeout(() => void syncCloudLibrary(), STARTUP_DELAY_MS);
   intervalTimer = setInterval(() => void syncCloudLibrary(), INTERVAL_MS);
+};
+
+const OTHER_DEVICE_RECENT_DAYS = 14;
+
+/** Games the other devices played in the last two weeks, newest first. */
+export const listOtherDeviceRecentGames = async (): Promise<
+  OtherDeviceRecentGame[]
+> => {
+  const store = getActiveSaveStore();
+  if (!store) return [];
+  const states = await store.readDeviceStates<DeviceState>();
+  return pickOtherDeviceRecent(
+    states,
+    store.deviceId,
+    new Date(),
+    OTHER_DEVICE_RECENT_DAYS
+  );
 };
 
 /** The devices that have synced through the store, newest first. */

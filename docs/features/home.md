@@ -76,6 +76,17 @@ last automatic sync of each game for this (`save-sync-status` in the
 database); manual backups from the game page are not counted. The shelf can
 be hidden and moved like the others.
 
+## On your other devices
+
+With save sync's [library sync](save-sync.md#library-sync) on, the games whose
+last play in the past two weeks was on another computer, newest first, each
+captioned with that computer's name and when ("On hp-laptop-ari, 3 hours
+ago"). A game played here since then is left out (it is in Continue playing),
+and so is a game not in this library (**Settings → Cloud → Import your
+library** adds those). The list comes from the other devices' sync files
+(`listOtherDeviceRecentGames`, `pickOtherDeviceRecent` in
+`cloud-library-core.ts`); it is read when the home page opens.
+
 ## Continue playing
 
 The next most recently played games after the hero, newest first, without

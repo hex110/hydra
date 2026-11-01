@@ -33,6 +33,16 @@ export interface SaveStoreDevice {
   games: number;
 }
 
+/** A game another device played recently, from its library sync file. */
+export interface OtherDeviceRecentGame {
+  shop: GameShop;
+  objectId: string;
+  title: string;
+  hostname: string | null;
+  /** When that device last played it (ISO). */
+  lastTimePlayed: string;
+}
+
 /** Another device's library as a source to import from. */
 export interface CloudLibraryImportOption {
   deviceId: string;

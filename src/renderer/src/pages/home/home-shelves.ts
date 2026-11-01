@@ -1,6 +1,7 @@
 export const HOME_SHELVES = [
   "activity",
   "continue_playing",
+  "other_devices",
   "downloads",
   "updates",
   "backups",

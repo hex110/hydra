@@ -5,6 +5,7 @@ import {
   buildDeviceCollections,
   buildDeviceGames,
   buildLibraryEntries,
+  pickOtherDeviceRecent,
   planLibraryImport,
   planMerge,
   type SyncedCollection,
@@ -770,6 +771,54 @@ describe("collections", () => {
         here(["local-a", collection("A")])
       ),
       []
+    );
+  });
+});
+
+describe("pickOtherDeviceRecent", () => {
+  const state = (
+    deviceId: string,
+    games: Record<string, DeviceGameState>
+  ): DeviceState => ({
+    version: 1,
+    deviceId,
+    hostname: `${deviceId}-host`,
+    platform: "linux",
+    updatedAt: "2026-11-01T00:00:00.000Z",
+    games,
+  });
+  const now = new Date("2026-11-01T12:00:00.000Z");
+
+  it("keeps other devices' recent plays, newest device per game, newest first", () => {
+    const result = pickOtherDeviceRecent(
+      [
+        state("here", {
+          "steam:1": { title: "Mine", lastTimePlayed: "2026-11-01T11:00:00Z" },
+        }),
+        state("laptop", {
+          "steam:2": { title: "Two", lastTimePlayed: "2026-10-30T10:00:00Z" },
+          "steam:3": { title: "Old", lastTimePlayed: "2026-09-01T10:00:00Z" },
+          "steam:4": { title: "Never", lastTimePlayed: null },
+        }),
+        state("deck", {
+          "steam:2": { title: "Two", lastTimePlayed: "2026-10-31T10:00:00Z" },
+          "custom:a:b": {
+            title: "Colon",
+            lastTimePlayed: "2026-10-29T10:00:00Z",
+          },
+        }),
+      ],
+      "here",
+      now,
+      14
+    );
+
+    assert.deepEqual(
+      result.map((game) => [game.shop, game.objectId, game.hostname]),
+      [
+        ["steam", "2", "deck-host"],
+        ["custom", "a:b", "deck-host"],
+      ]
     );
   });
 });

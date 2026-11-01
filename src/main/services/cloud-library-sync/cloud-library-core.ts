@@ -1,6 +1,8 @@
 import type {
   Game,
+  GameShop,
   LocalCollection,
+  OtherDeviceRecentGame,
   PlayStatus,
   SavedLibraryFilter,
   UnlockedAchievement,
@@ -565,6 +567,45 @@ export const planMerge = (
 };
 
 /** One game of a device's library, as uploaded. Imported only on request. */
+/**
+ * Games other devices played in the last `days`, newest first, one entry per
+ * game (the device that played it last).
+ */
+export const pickOtherDeviceRecent = (
+  states: DeviceState[],
+  thisDeviceId: string,
+  now: Date,
+  days: number
+): OtherDeviceRecentGame[] => {
+  const since = now.getTime() - days * 24 * 60 * 60 * 1000;
+  const newest = new Map<string, OtherDeviceRecentGame>();
+
+  for (const state of states) {
+    if (!state.deviceId || state.deviceId === thisDeviceId) continue;
+    for (const [key, game] of Object.entries(state.games ?? {})) {
+      const playedAt = game.lastTimePlayed
+        ? new Date(game.lastTimePlayed).getTime()
+        : Number.NaN;
+      if (!Number.isFinite(playedAt) || playedAt < since) continue;
+      const separator = key.indexOf(":");
+      if (separator <= 0) continue;
+      const previous = newest.get(key);
+      if (previous && previous.lastTimePlayed >= game.lastTimePlayed!) continue;
+      newest.set(key, {
+        shop: key.slice(0, separator) as GameShop,
+        objectId: key.slice(separator + 1),
+        title: game.title,
+        hostname: state.hostname ?? null,
+        lastTimePlayed: new Date(playedAt).toISOString(),
+      });
+    }
+  }
+
+  return [...newest.values()].sort((a, b) =>
+    b.lastTimePlayed.localeCompare(a.lastTimePlayed)
+  );
+};
+
 export interface LibraryEntry {
   shop: Game["shop"];
   objectId: string;

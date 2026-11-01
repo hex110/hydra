@@ -92,7 +92,11 @@
     "backups_never": "No save has been backed up yet.",
     "backups_all_ok": "Every game's last backup worked.",
     "backups_failed": "{{title}}: backup failed",
-    "backups_conflict": "{{title}}: two devices changed the save"
+    "backups_conflict": "{{title}}: two devices changed the save",
+    "shelf_other_devices": "On your other devices",
+    "other_devices_description": "Games you played last on another computer, from library sync.",
+    "other_devices_played_on": "On {{device}}, {{time}}",
+    "other_devices_played": "On another device, {{time}}"
   },
   "sidebar": {
     "leaderboards": "Leaderboards",

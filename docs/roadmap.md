@@ -390,8 +390,9 @@ app that works for someone who isn't the developer.
     activity, friends, customisable shelves and Get started.
     - [x] A backups line: when the last save sync ran and anything that
           failed, linking to the game ([Home](features/home.md#backups)).
-    - [ ] Games played recently on another device (from library sync), so
-          the laptop's session shows on the desktop.
+    - [x] Games played recently on another device (from library sync), so
+          the laptop's session shows on the desktop
+          ([Home](features/home.md#on-your-other-devices)).
 
 ## Upstream 4.3.0
 

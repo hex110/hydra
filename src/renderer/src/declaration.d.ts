@@ -28,6 +28,7 @@ import type {
   LibraryImportSource,
   SaveStoreCleanupResult,
   SaveStoreConfig,
+  OtherDeviceRecentGame,
   SaveStoreDevice,
   CloudLibraryImportOption,
   CloudLibraryImportResult,
@@ -497,6 +498,7 @@ declare global {
     getSaveStoreUsage: () => Promise<SaveStoreUsage>;
     cleanUpSaveStore: () => Promise<SaveStoreCleanupResult>;
     listSyncDevices: () => Promise<SaveStoreDevice[]>;
+    listOtherDeviceRecentGames: () => Promise<OtherDeviceRecentGame[]>;
     syncCloudLibraryNow: () => Promise<void>;
     listCloudLibraryImports: () => Promise<CloudLibraryImportOption[]>;
     importCloudLibrary: (deviceId: string) => Promise<CloudLibraryImportResult>;
