@@ -1,0 +1,44 @@
+@use "../../scss/globals.scss";
+
+.launcher-import {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 2);
+
+  &__hint,
+  &__meta {
+    margin: 0;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    max-height: 60vh;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: calc(globals.$spacing-unit * 1.5);
+    border-radius: globals.$spacing-unit;
+    background-color: globals.$dark-background-color;
+  }
+
+  &__meta {
+    padding-left: calc(globals.$spacing-unit * 3.5);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: globals.$spacing-unit;
+  }
+}

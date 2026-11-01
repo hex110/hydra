@@ -819,7 +819,12 @@ const findGamesOutsideLibrary = async (
 
 export const addGameOutsideLibrary = async (
   objectId: string,
-  executablePath: string
+  executablePath: string,
+  /** Kept from another launcher; ignored when the game is already here. */
+  imported?: Pick<
+    Game,
+    "winePrefixPath" | "playTimeInMilliseconds" | "lastTimePlayed"
+  >
 ): Promise<FoundGame | null> => {
   const assets = await getGameAssets(objectId, DISCOVERED_GAMES_SHOP).catch(
     (err) => {
@@ -852,8 +857,14 @@ export const addGameOutsideLibrary = async (
       shop: DISCOVERED_GAMES_SHOP,
       remoteId: existingGame?.remoteId ?? null,
       isDeleted: false,
-      playTimeInMilliseconds: existingGame?.playTimeInMilliseconds ?? 0,
-      lastTimePlayed: existingGame?.lastTimePlayed ?? null,
+      playTimeInMilliseconds:
+        existingGame?.playTimeInMilliseconds ??
+        imported?.playTimeInMilliseconds ??
+        0,
+      lastTimePlayed:
+        existingGame?.lastTimePlayed ?? imported?.lastTimePlayed ?? null,
+      winePrefixPath:
+        existingGame?.winePrefixPath ?? imported?.winePrefixPath ?? undefined,
       addedToLibraryAt: existingGame?.addedToLibraryAt ?? new Date(),
       platform: existingGame?.platform ?? null,
     },

@@ -22,6 +22,7 @@ import type {
   R2Credentials,
   ManualSaveBackupProgress,
   ManualSaveBackupScope,
+  LauncherImportPick,
   GameUpdateFailedEvent,
   OptiScalerBulkProgress,
   OptiScalerProxyDll,
@@ -1075,6 +1076,10 @@ contextBridge.exposeInMainWorld("electron", {
   getSaveStoreUsage: () => ipcRenderer.invoke("getSaveStoreUsage"),
   cleanUpSaveStore: () => ipcRenderer.invoke("cleanUpSaveStore"),
   listSyncDevices: () => ipcRenderer.invoke("listSyncDevices"),
+  listLauncherImportCandidates: () =>
+    ipcRenderer.invoke("listLauncherImportCandidates"),
+  importLauncherGames: (picks: LauncherImportPick[]) =>
+    ipcRenderer.invoke("importLauncherGames", picks),
   listOtherDeviceRecentGames: () =>
     ipcRenderer.invoke("listOtherDeviceRecentGames"),
   syncCloudLibraryNow: () => ipcRenderer.invoke("syncCloudLibraryNow"),

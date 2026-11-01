@@ -30,6 +30,9 @@ import type {
   SaveStoreConfig,
   OtherDeviceRecentGame,
   SaveStoreDevice,
+  LauncherImportCandidate,
+  LauncherImportPick,
+  LauncherImportResult,
   CloudLibraryImportOption,
   CloudLibraryImportResult,
   ManualSaveBackupProgress,
@@ -498,6 +501,10 @@ declare global {
     getSaveStoreUsage: () => Promise<SaveStoreUsage>;
     cleanUpSaveStore: () => Promise<SaveStoreCleanupResult>;
     listSyncDevices: () => Promise<SaveStoreDevice[]>;
+    listLauncherImportCandidates: () => Promise<LauncherImportCandidate[]>;
+    importLauncherGames: (
+      picks: LauncherImportPick[]
+    ) => Promise<LauncherImportResult>;
     listOtherDeviceRecentGames: () => Promise<OtherDeviceRecentGame[]>;
     syncCloudLibraryNow: () => Promise<void>;
     listCloudLibraryImports: () => Promise<CloudLibraryImportOption[]>;

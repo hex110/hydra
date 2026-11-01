@@ -51,6 +51,7 @@ import "./reset-game-achievements";
 import "./reset-game-playtime";
 import "./scan-installed-games";
 import "./add-scanned-game";
+import "./launcher-import";
 import "./select-game-proton-path";
 import "./select-game-wine-prefix";
 import "./set-game-hydra-playtime-enabled";

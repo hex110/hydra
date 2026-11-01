@@ -50,7 +50,7 @@ const normalize = (value: string) =>
 const isInside = (child: string, parent: string) =>
   child === parent || child.startsWith(`${parent}/`);
 
-const searchCatalogue = async (
+export const searchCatalogue = async (
   query: string
 ): Promise<FolderChoice[] | null> => {
   try {

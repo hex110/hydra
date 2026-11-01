@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { FileDirectoryIcon, SyncIcon, XIcon } from "@primer/octicons-react";
@@ -7,12 +7,14 @@ import { Button, CheckboxField } from "@renderer/components";
 import { settingsContext } from "@renderer/context";
 import { useAppSelector } from "@renderer/hooks";
 
+import { LauncherImportModal } from "./launcher-import-modal";
 import "./settings-library-folders.scss";
 
 export function SettingsContextLibraryFolders() {
   const { t } = useTranslation("settings");
   const navigate = useNavigate();
   const { updateUserPreferences } = useContext(settingsContext);
+  const [showLauncherImport, setShowLauncherImport] = useState(false);
 
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
@@ -151,6 +153,27 @@ export function SettingsContextLibraryFolders() {
           </ul>
         </div>
       )}
+
+      <div className="settings-context-panel__group">
+        <h3>{t("launcher_import_section")}</h3>
+        <p className="settings-library-folders__hint">
+          {t("launcher_import_section_description")}
+        </p>
+        <div>
+          <Button
+            type="button"
+            theme="outline"
+            onClick={() => setShowLauncherImport(true)}
+          >
+            {t("launcher_import_open")}
+          </Button>
+        </div>
+      </div>
+
+      <LauncherImportModal
+        visible={showLauncherImport}
+        onClose={() => setShowLauncherImport(false)}
+      />
 
       <div className="settings-library-folders__actions">
         <Button

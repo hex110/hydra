@@ -381,8 +381,9 @@ app that works for someone who isn't the developer.
    - [x] Started and finished dates on play status, shown in the game's
          **Your game** section ([Library](features/library.md#play-status));
          not in the statistics yet.
-   - [ ] Import installed games from Heroic and Lutris (Playnite's library
-         importers), next to the save sources of phase 15.
+   - [x] Import installed games from Heroic and Lutris (Playnite's library
+         importers), with their prefixes and playtime
+         ([Heroic and Lutris](features/launcher-import.md)).
    - [ ] A Playnite library import (its database export), and Backloggd only
          if it gains an export (none as of 2026-10-26).
 10. **Home page.** Gap list against Steam's library home (2026-10-31): it
