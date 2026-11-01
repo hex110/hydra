@@ -259,6 +259,9 @@ function fixture() {
         },
         "node:path": {},
         "node:os": { totalmem: () => 64 * 1024 ** 3 },
+        "./in-game-notices": {
+          InGameNotices: { unregister: async () => undefined },
+        },
         "../../shared/game-start-window": {
           resolveHideToTrayOnGameStart: () => false,
         },

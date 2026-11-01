@@ -21,6 +21,7 @@ import type {
   UserPreferences,
 } from "@types";
 import { UnmuteIcon } from "@primer/octicons-react";
+import { resolveInGameNotices } from "@shared";
 
 import "./settings-general.scss";
 
@@ -47,6 +48,7 @@ const buildForm = (preferences: UserPreferences | null) => ({
   achievementCustomNotificationPosition:
     (preferences?.achievementCustomNotificationPosition ??
       "top-left") as AchievementCustomNotificationPosition,
+  inGameNotices: preferences?.inGameNotices,
   achievementSoundVolume: Math.round(
     (preferences?.achievementSoundVolume ?? 0.15) * 100
   ),
@@ -63,6 +65,16 @@ export function SettingsContextNotifications() {
   const volumeUpdateTimeoutRef = useRef<NodeJS.Timeout>();
 
   const [form, setForm] = useState(() => buildForm(userPreferences));
+  const isLinux = window.electron.platform === "linux";
+  const [mangohudAvailable, setMangohudAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!isLinux) return;
+    window.electron
+      .isMangohudAvailable()
+      .then(setMangohudAvailable)
+      .catch(() => setMangohudAvailable(false));
+  }, [isLinux]);
 
   const { userDetails, patchUser } = useUserDetails();
   const { isEnabled: isGlobalLeaderboardsEnabled } =
@@ -285,6 +297,32 @@ export function SettingsContextNotifications() {
             window.electron.updateAchievementCustomNotificationWindow();
           }}
         />
+
+        {isLinux && (
+          <CheckboxField
+            label={hintedLabel(
+              t("enable_in_game_notices"),
+              mangohudAvailable
+                ? t("enable_in_game_notices_hint")
+                : t("enable_in_game_notices_no_mangohud")
+            )}
+            checked={resolveInGameNotices(
+              form.inGameNotices,
+              mangohudAvailable
+            )}
+            disabled={
+              !mangohudAvailable || !form.achievementNotificationsEnabled
+            }
+            onChange={() =>
+              handleChange({
+                inGameNotices: !resolveInGameNotices(
+                  form.inGameNotices,
+                  mangohudAvailable
+                ),
+              })
+            }
+          />
+        )}
 
         <CheckboxField
           label={t("enable_achievement_custom_notifications")}

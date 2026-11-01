@@ -9,6 +9,24 @@ import { publishNewAchievementNotification } from "../notifications";
 import { achievementsLogger } from "../logger";
 import { achievementNotificationPresenter } from "../achievement-notification-presenter-electron";
 import { AchievementWatcherManager } from "./achievement-watcher-manager";
+import { InGameNotices } from "../in-game-notices";
+import { levelKeys } from "@main/level";
+import i18next from "i18next";
+
+/** Up to three unlocks by name in the running game, then a count. */
+const showAchievementsInGame = (
+  game: Game,
+  achievements: SteamAchievement[]
+) => {
+  const t = i18next.getFixedT(null, "achievement");
+  const lines =
+    achievements.length > 3
+      ? [t("in_game_unlocked_many", { count: achievements.length })]
+      : achievements.map((achievement) =>
+          t("in_game_unlocked", { title: achievement.displayName })
+        );
+  InGameNotices.show(levelKeys.game(game.shop, game.objectId), lines);
+};
 
 // More unlocks than this at once are almost always old history (a Steam
 // cache or imported save seen for the first time), so they get one combined
@@ -60,6 +78,8 @@ export const publishAchievementUnlockNotifications = ({
   ) {
     return;
   }
+
+  showAchievementsInGame(game, achievements);
 
   if (achievements.length > MAX_INDIVIDUAL_ACHIEVEMENT_NOTIFICATIONS) {
     achievementsLogger.log(

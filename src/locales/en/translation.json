@@ -3243,7 +3243,10 @@
     "cloud_backup_conflicts_one": "{{count}} game has saves that changed here and in the cloud. Open it and choose which to keep:",
     "cloud_backup_conflicts_other": "{{count}} games have saves that changed here and in the cloud. Open one and choose which to keep:",
     "cloud_how_library": "Playtime, achievements, play status, wishlist, notes, ratings and favourites sync too while library sync is on.",
-    "cloud_how_library_list": "Each device keeps its own list of games in the cloud. A new device doesn't fill its library by itself: use Import your library above to add another device's games."
+    "cloud_how_library_list": "Each device keeps its own list of games in the cloud. A new device doesn't fill its library by itself: use Import your library above to add another device's games.",
+    "enable_in_game_notices": "Show achievements inside the game",
+    "enable_in_game_notices_hint": "Through MangoHud, which Hydra starts with the game for this (nothing else shows unless you set a MangoHud layout). Works in Vulkan and Proton games.",
+    "enable_in_game_notices_no_mangohud": "Needs MangoHud, which is not installed."
   },
   "notifications": {
     "download_complete": "Download complete",
@@ -3831,7 +3834,9 @@
     "achievement_set_other": "Other",
     "sort_recently_unlocked": "Recently unlocked",
     "compare_filter_both": "Unlocked by both",
-    "compare_filter_neither": "Locked for both"
+    "compare_filter_neither": "Locked for both",
+    "in_game_unlocked": "Achievement unlocked: {{title}}",
+    "in_game_unlocked_many": "{{count}} achievements unlocked"
   },
   "hydra_cloud": {
     "subscription_tour_title": "Hydra Cloud Subscription",

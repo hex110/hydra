@@ -6,6 +6,7 @@ import {
   scheduleEpicGameExitSync,
 } from "./epic";
 import { WindowManager } from "./window-manager";
+import { InGameNotices } from "./in-game-notices";
 import { updateGameExecutablePath } from "@main/helpers/update-executable-path";
 import { createGame, trackGamePlaytime } from "./library-sync";
 import type { Game, UserPreferences } from "@types";
@@ -701,6 +702,7 @@ const onCloseGame = (game: Game, options: { isShutdown?: boolean } = {}) => {
   const now = performance.now();
   const gamePlaytime = gamesPlaytime.get(gameKey);
   GameRuns.recordGameClosed(gameKey);
+  void InGameNotices.unregister(gameKey);
   if (!gamePlaytime) return;
   deleteGamePlaytime(gameKey);
   launchedGamePids.delete(gameKey);

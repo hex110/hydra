@@ -18,6 +18,7 @@ import {
   resolveLaunchRules,
   resolveRenoDxSettings,
   withDependencyRuleOverrides,
+  resolveInGameNotices,
 } from "@shared";
 import type {
   Game,
@@ -33,6 +34,7 @@ import { buildLaunchEnvironment } from "./launch-environment";
 import { findLaunchRuleMatches } from "./launch-rule-matching";
 import { isGamescopeSession, withDisplayDefaults } from "./gamescope-display";
 import { prepareMangoHudConfig } from "./mangohud-config";
+import { InGameNotices } from "@main/services/in-game-notices";
 import { resolveProtonChoice } from "./resolve-proton-path";
 
 const isWindowsExecutable = (executablePath: string) =>
@@ -287,17 +289,30 @@ export const resolveGameLaunchOptions = async ({
     userPreferences,
     prepareMissing,
   });
-  const { useMangohud, useGamemode } = getLaunchTools(
-    userPreferences,
-    game,
-    additions
-  );
-  const mangoHudConfigPath =
+  const tools = getLaunchTools(userPreferences, game, additions);
+  const { useGamemode } = tools;
+  let { useMangohud } = tools;
+  let mangoHudConfigPath =
     useMangohud && game
       ? await prepareMangoHudConfig(game, userPreferences, {
           write: writeMangoHudConfig,
         })
       : null;
+  // In-game notices run MangoHud with nothing on screen but the notices.
+  if (
+    !useMangohud &&
+    game &&
+    process.platform === "linux" &&
+    resolveInGameNotices(userPreferences?.inGameNotices, isMangohudAvailable())
+  ) {
+    mangoHudConfigPath = await InGameNotices.prepareNoticesOnlyConfig(game, {
+      write: writeMangoHudConfig,
+    });
+    useMangohud = mangoHudConfigPath !== null;
+  }
+  if (mangoHudConfigPath && writeMangoHudConfig) {
+    await InGameNotices.register(gameKey, mangoHudConfigPath);
+  }
 
   return {
     additions,
