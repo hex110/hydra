@@ -1,0 +1,16 @@
+@use "../../scss/globals.scss";
+
+.save-backup-alert {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: globals.$warning-color;
+
+  &--card {
+    width: calc(globals.$spacing-unit * 3);
+    height: calc(globals.$spacing-unit * 3);
+    border-radius: calc(globals.$spacing-unit / 2);
+    background-color: globals.$overlay-badge-color;
+  }
+}

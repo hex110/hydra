@@ -32,6 +32,7 @@ import {
 import { LibraryCardActivity } from "./library-card-activity";
 import { LibraryCardPlayButton } from "./library-card-play-button";
 import { PlayStatusBadge } from "./play-status-badge";
+import { SaveBackupAlert } from "./save-backup-alert";
 import "./library-game-card-large.scss";
 
 interface LibraryGameCardLargeProps {
@@ -474,6 +475,7 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
                 </div>
               )}
               {!hideBadges && <PlayStatusBadge playStatus={game.playStatus} />}
+              <SaveBackupAlert game={game} />
 
               {showEpicLibraryBadge && (
                 <SteamLibraryBadge

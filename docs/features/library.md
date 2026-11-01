@@ -71,6 +71,10 @@ labelled **Installed** toggle (before, an unlabelled check-circle icon), then:
 - Hovering an installed game shows a **Play** button over the cover; it
   starts the game without opening its page (**Close** while it runs).
 - Classics show their emulator as an icon instead of a text badge.
+- A yellow cloud alert in the corner (and after the title in the list view)
+  means the game's last automatic save backup failed or found saves changed
+  on two devices; its tooltip says which, and the game page's save widget
+  explains and fixes it. A backup that worked shows nothing.
 
 ## List view
 

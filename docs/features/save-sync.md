@@ -62,7 +62,10 @@ The same as Hydra Cloud's saves, signed in or not:
   "remote ahead" and its saves are written back;
 - conflicts: when two devices changed the same save, the second one sees a
   conflict and chooses **keep local** or **keep remote** instead of
-  overwriting.
+  overwriting;
+- a failed or conflicting last automatic backup marks the game's library card
+  with a cloud alert, and lists it on the home page's
+  [Backups](home.md#backups) shelf.
 
 Games need the same as with Hydra Cloud: a Steam or Epic game (or a supported
 emulator game) with an executable, and save locations known to the Ludusavi

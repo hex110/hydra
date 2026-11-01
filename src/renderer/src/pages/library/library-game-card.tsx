@@ -26,6 +26,7 @@ import {
 import { LibraryCardActivity } from "./library-card-activity";
 import { LibraryCardPlayButton } from "./library-card-play-button";
 import { PlayStatusBadge } from "./play-status-badge";
+import { SaveBackupAlert } from "./save-backup-alert";
 import "./library-game-card.scss";
 import { logger } from "@renderer/logger";
 
@@ -310,49 +311,45 @@ export const LibraryGameCard = memo(function LibraryGameCard({
               {!hideBadges && <PlayStatusBadge playStatus={game.playStatus} />}
             </div>
 
-            {(showSteamLibraryBadge ||
-              showEpicLibraryBadge ||
-              showPlatformBadge ||
-              showEmulatorBadge) && (
-              <div className="library-game-card__top-right">
-                {showEpicLibraryBadge && (
-                  <SteamLibraryBadge
-                    source="epic"
-                    availableShops={game.availableShops}
-                    hasActiveSteamImport={game.hasActiveSteamImport}
-                    hasActiveEpicImport={game.hasActiveEpicImport}
-                  />
-                )}
-                {showSteamLibraryBadge && (
-                  <SteamLibraryBadge
-                    availableShops={game.availableShops}
-                    hasActiveSteamImport={game.hasActiveSteamImport}
-                    hasActiveEpicImport={game.hasActiveEpicImport}
-                  />
-                )}
+            <div className="library-game-card__top-right">
+              <SaveBackupAlert game={game} />
+              {showEpicLibraryBadge && (
+                <SteamLibraryBadge
+                  source="epic"
+                  availableShops={game.availableShops}
+                  hasActiveSteamImport={game.hasActiveSteamImport}
+                  hasActiveEpicImport={game.hasActiveEpicImport}
+                />
+              )}
+              {showSteamLibraryBadge && (
+                <SteamLibraryBadge
+                  availableShops={game.availableShops}
+                  hasActiveSteamImport={game.hasActiveSteamImport}
+                  hasActiveEpicImport={game.hasActiveEpicImport}
+                />
+              )}
 
-                {showPlatformBadge && (
-                  <div className="library-game-card__classics-badges">
-                    <span className="library-game-card__platform-badge">
-                      {classicsPlatformLabel}
-                    </span>
-                  </div>
-                )}
+              {showPlatformBadge && (
+                <div className="library-game-card__classics-badges">
+                  <span className="library-game-card__platform-badge">
+                    {classicsPlatformLabel}
+                  </span>
+                </div>
+              )}
 
-                {showEmulatorBadge && classicsEmulatorIcon && (
-                  <div
-                    className="library-game-card__installed-badge library-game-card__installed-badge--classics"
-                    title={t("installed_tooltip")}
-                  >
-                    <img
-                      src={classicsEmulatorIcon}
-                      alt=""
-                      className="library-game-card__installed-emulator-icon"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+              {showEmulatorBadge && classicsEmulatorIcon && (
+                <div
+                  className="library-game-card__installed-badge library-game-card__installed-badge--classics"
+                  title={t("installed_tooltip")}
+                >
+                  <img
+                    src={classicsEmulatorIcon}
+                    alt=""
+                    className="library-game-card__installed-emulator-icon"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {!hideAchievementProgress &&

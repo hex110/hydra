@@ -8,6 +8,7 @@ import { useDate, useGameCard } from "@renderer/hooks";
 import { isGameReadyToPlay } from "@renderer/helpers";
 import { LibraryCardPlayButton } from "./library-card-play-button";
 import { PlayStatusBadge } from "./play-status-badge";
+import { SaveBackupAlert } from "./save-backup-alert";
 import { getLibraryListTemplate, type LibraryListColumn } from "./library-list";
 import "./library-list.scss";
 
@@ -119,6 +120,7 @@ export const LibraryListRow = memo(function LibraryListRow({
             )}
           </span>
           <span className="library-list__title">{game.title}</span>
+          <SaveBackupAlert game={game} variant="row" />
         </span>
         {columns.map((column) => (
           <span key={column} className="library-list__cell">

@@ -46,14 +46,14 @@ because it searches the store, not your games.
 **Every card opens the game page**, through `buildGameDetailsPath`; the game
 page links back to where a fact lives (this table) instead of repeating it.
 
-| Fact                     | Shown as                                                |
-| ------------------------ | ------------------------------------------------------- |
-| In your library          | `GameLibraryBadge` on store cards and rows              |
-| On your wishlist         | `GameLibraryBadge` (**Wishlisted**); the catalogue star |
-| Installed                | The same badge; on your own cards, a cover not dimmed   |
-| Update available         | The dot on `LibraryGameCard`; the hero bar's chip       |
-| Playtime                 | `LibraryGameCard` badge when there is some; hero bar    |
-| Saves backed up / failed | The game page's save widget (one home; see above)       |
+| Fact                     | Shown as                                                                                                        |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| In your library          | `GameLibraryBadge` on store cards and rows                                                                      |
+| On your wishlist         | `GameLibraryBadge` (**Wishlisted**); the catalogue star                                                         |
+| Installed                | The same badge; on your own cards, a cover not dimmed                                                           |
+| Update available         | The dot on `LibraryGameCard`; the hero bar's chip                                                               |
+| Playtime                 | `LibraryGameCard` badge when there is some; hero bar                                                            |
+| Saves backed up / failed | The game page's save widget; a failure also as a cloud alert on `LibraryGameCard` and list rows, pointing there |
 
 ## Options
 

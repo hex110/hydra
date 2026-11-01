@@ -3802,7 +3802,9 @@
     "list_sort_by": "Sort by {{column}}",
     "list_rating_value": "{{rating}}/10",
     "sort_rating": "Your rating",
-    "sort_play_status": "Play status"
+    "sort_play_status": "Play status",
+    "save_backup_failed_tooltip": "The last save backup failed. Open the game to see why.",
+    "save_backup_conflict_tooltip": "Saves changed on two devices. Open the game to choose which to keep."
   },
   "achievement": {
     "achievement_unlocked": "Achievement unlocked",
