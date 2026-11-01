@@ -26,6 +26,7 @@ import {
   useAppSelector,
   useLibrary,
   useLibraryStates,
+  useDate,
 } from "@renderer/hooks";
 import { useCollectionContextMenu } from "@renderer/context";
 import { LibraryGameCard } from "@renderer/pages/library/library-game-card";
@@ -48,6 +49,7 @@ import {
 } from "@shared";
 import { GearIcon } from "@primer/octicons-react";
 import { HomeShelf } from "./home-shelf";
+import { useSaveSyncSummary } from "./use-save-sync-summary";
 import { HomeGetStarted } from "./home-get-started";
 import { LastPlayedHero } from "./last-played-hero";
 import { PlayActivityPanel } from "./play-activity-panel";
@@ -99,6 +101,8 @@ const steamAppIdOf = (game: LibraryGame) => {
 export default function Home() {
   const { t } = useTranslation("home");
   const navigate = useNavigate();
+  const saveSync = useSaveSyncSummary();
+  const { formatDistance } = useDate();
 
   const { library } = useLibrary();
   const { stateOf } = useLibraryStates();
@@ -411,6 +415,57 @@ export default function Home() {
             })}
           </HomeShelf>
         ) : null;
+
+      case "backups": {
+        if (!saveSync) return null;
+        const titleOf = (shop: string, objectId: string) =>
+          library.find(
+            (game) => game.shop === shop && game.objectId === objectId
+          )?.title ?? objectId;
+        return (
+          <HomeShelf
+            title={t("shelf_backups")}
+            description={
+              saveSync.lastBackupAt
+                ? t("backups_last", {
+                    time: formatDistance(saveSync.lastBackupAt, new Date(), {
+                      addSuffix: true,
+                    }),
+                  })
+                : t("backups_never")
+            }
+            wrap
+          >
+            {saveSync.failing.length === 0 ? (
+              <p className="home__backups-ok">{t("backups_all_ok")}</p>
+            ) : (
+              saveSync.failing.map((entry) => (
+                <button
+                  key={`${entry.shop}:${entry.objectId}`}
+                  type="button"
+                  className="home__caption-button"
+                  onClick={() =>
+                    navigate(
+                      buildGameDetailsPath({
+                        shop: entry.shop,
+                        objectId: entry.objectId,
+                        title: titleOf(entry.shop, entry.objectId),
+                      })
+                    )
+                  }
+                >
+                  {t(
+                    entry.status === "conflict"
+                      ? "backups_conflict"
+                      : "backups_failed",
+                    { title: titleOf(entry.shop, entry.objectId) }
+                  )}
+                </button>
+              ))
+            )}
+          </HomeShelf>
+        );
+      }
 
       case "recently_added":
         return recentlyAdded.length > 0 ? (

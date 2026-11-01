@@ -66,6 +66,16 @@ time per game) and was not recorded before 4.1.6-plus.11, so the heatmap
 starts empty. Time Steam or Epic count for games Hydra doesn't track is not
 included.
 
+## Backups
+
+Shown once an automatic save sync has run: when saves were last backed up
+(the newest successful automatic sync of any game), and each game whose last
+automatic sync failed or found a conflict between two devices, linking to its
+game page, where the save widget explains and resolves it. Hydra records the
+last automatic sync of each game for this (`save-sync-status` in the
+database); manual backups from the game page are not counted. The shelf can
+be hidden and moved like the others.
+
 ## Continue playing
 
 The next most recently played games after the hero, newest first, without

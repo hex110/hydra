@@ -1,4 +1,5 @@
 import type {
+  SaveSyncStatus,
   GameMods,
   ModActionResult,
   ModInstallProgress,
@@ -489,6 +490,7 @@ declare global {
     getBackgroundTasks: () => Promise<BackgroundTask[]>;
     dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
     testSaveStore: (config: SaveStoreConfig) => Promise<void>;
+    getSaveSyncStatuses: () => Promise<SaveSyncStatus[]>;
     isRcloneAvailable: () => Promise<boolean>;
     installRclone: () => Promise<string>;
     createR2Remote: (credentials: R2Credentials) => Promise<string>;

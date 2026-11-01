@@ -1068,6 +1068,7 @@ contextBridge.exposeInMainWorld("electron", {
   testSaveStore: (config: SaveStoreConfig) =>
     ipcRenderer.invoke("testSaveStore", config),
   isRcloneAvailable: () => ipcRenderer.invoke("isRcloneAvailable"),
+  getSaveSyncStatuses: () => ipcRenderer.invoke("getSaveSyncStatuses"),
   installRclone: () => ipcRenderer.invoke("installRclone"),
   createR2Remote: (credentials: R2Credentials) =>
     ipcRenderer.invoke("createR2Remote", credentials),

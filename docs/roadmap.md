@@ -386,8 +386,8 @@ app that works for someone who isn't the developer.
 10. **Home page.** Gap list against Steam's library home (2026-10-31): it
     already has what to play next, updates and downloads, news, play
     activity, friends, customisable shelves and Get started.
-    - [ ] A backups line: when the last save sync ran and anything that
-          failed, linking to the game.
+    - [x] A backups line: when the last save sync ran and anything that
+          failed, linking to the game ([Home](features/home.md#backups)).
     - [ ] Games played recently on another device (from library sync), so
           the laptop's session shows on the desktop.
 

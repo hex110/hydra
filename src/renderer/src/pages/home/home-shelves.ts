@@ -3,6 +3,7 @@ export const HOME_SHELVES = [
   "continue_playing",
   "downloads",
   "updates",
+  "backups",
   "recently_added",
   "almost_done",
   "backlog",

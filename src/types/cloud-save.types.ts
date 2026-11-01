@@ -845,3 +845,15 @@ export interface R2Credentials {
   accessKeyId: string;
   secretAccessKey: string;
 }
+
+/** How the last automatic save sync of a game went, for the home page. */
+export interface SaveSyncStatus {
+  shop: GameShop;
+  objectId: string;
+  /** ISO time it finished. */
+  at: string;
+  status: "completed" | "failed" | "conflict";
+  /** The last time it completed, kept across later failures. */
+  lastSuccessAt: string | null;
+  errorCode?: string;
+}

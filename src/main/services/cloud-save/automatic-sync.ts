@@ -14,6 +14,7 @@ import {
   cloudSavePendingUploadsSublevel,
   gamesSublevel,
   levelKeys,
+  saveSyncStatusSublevel,
 } from "@main/level";
 
 import { HydraApi } from "../hydra-api";
@@ -114,8 +115,38 @@ export const canRunAutomaticCloudSaveSync = async (
   return true;
 };
 
+const recordAutomaticSyncStatus = async (
+  event: CloudSaveAutomaticSyncEvent
+) => {
+  if (
+    event.status !== "completed" &&
+    event.status !== "failed" &&
+    event.status !== "conflict"
+  ) {
+    return;
+  }
+  const { shop, objectId } = event.gameId;
+  const key = levelKeys.game(shop, objectId);
+  const previous = await saveSyncStatusSublevel.get(key).catch(() => undefined);
+  const at = new Date().toISOString();
+  await saveSyncStatusSublevel.put(key, {
+    shop,
+    objectId,
+    at,
+    status: event.status,
+    lastSuccessAt:
+      event.status === "completed" ? at : (previous?.lastSuccessAt ?? null),
+    ...(event.status === "failed" && event.errorCode
+      ? { errorCode: event.errorCode }
+      : {}),
+  });
+};
+
 const emitAutomaticSyncEvent = (event: CloudSaveAutomaticSyncEvent) => {
   WindowManager.sendToAppWindows("on-cloud-save-automatic-sync", event);
+  void recordAutomaticSyncStatus(event).catch((error) =>
+    logger.warn("Could not record the save sync status", error)
+  );
 };
 
 export const runAutomaticCloudSaveSyncDetailed = async (

@@ -86,7 +86,13 @@
     "move_shelf_up": "Move {{shelf}} up",
     "move_shelf_down": "Move {{shelf}} down",
     "reset_home": "Reset",
-    "done": "Done"
+    "done": "Done",
+    "shelf_backups": "Backups",
+    "backups_last": "Saves last backed up {{time}}.",
+    "backups_never": "No save has been backed up yet.",
+    "backups_all_ok": "Every game's last backup worked.",
+    "backups_failed": "{{title}}: backup failed",
+    "backups_conflict": "{{title}}: two devices changed the save"
   },
   "sidebar": {
     "leaderboards": "Leaderboards",

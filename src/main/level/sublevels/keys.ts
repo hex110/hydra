@@ -61,6 +61,7 @@ export const levelKeys = {
   cloudSaveEmulatorDestinations: "cloud-save-emulator-destinations",
   cloudSaveRetroArchBindings: "cloud-save-retroarch-bindings",
   cloudSavePendingDeletions: "cloud-save-pending-deletions",
+  saveSyncStatus: "save-sync-status",
   cloudSavePendingUploads: "cloud-save-pending-uploads",
   chatNotificationCursor: "chatNotificationCursor", // Newest chat message already announced
   leaderboardNotificationsShown: "leaderboardNotificationsShown",
