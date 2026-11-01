@@ -15,9 +15,9 @@ summary that links there. Add a row here when a feature adds a new fact.
 | Outside ratings and player counts                    | **Reception** sidebar section (Steam games)                                 |
 | ProtonDB, How Long to Beat                           | Their own sidebar sections, each with its site link in the header           |
 | Other external links (Steam, SteamDB, PCGamingWiki)  | **Links** sidebar section                                                   |
-| RenoDX mod, ReShade version, HDR mod status          | **Options → RenoDX**                                                        |
+| RenoDX mod, ReShade version, HDR mod status          | **Options → Tools**, the RenoDX part below the tool list                    |
 | Which tools apply (OnlineFix, HDR, RenoDX, …), why   | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there   |
-| Past launches: outcome, exit code, tools, logs       | **Options → Runs** ([Game runs](game-runs.md))                              |
+| Past launches: outcome, exit code, tools, logs       | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))      |
 
 ## Patterns across pages
 

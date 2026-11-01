@@ -951,7 +951,26 @@ export function GameOptionsModal({
     game.winePrefixPath ??
     defaultHydraWinePrefixPath;
 
-  const categories = useMemo(
+  // These categories show as sections of a broader tab, not tabs of their own.
+  const showHydraCloudTab =
+    showCloudSaveV2Settings && cloudSaveAccessAction === "open";
+  const mergedCategories = useMemo(() => {
+    const merged: Partial<
+      Record<GameSettingsCategoryId, GameSettingsCategoryId>
+    > = {};
+    if (shouldShowWinePrefixConfiguration) merged.runs = "compatibility";
+    if (showToolsSettings) {
+      merged.optiscaler = "tools";
+      merged.renodx = "tools";
+    }
+    if (showHydraCloudTab) merged.save_import = "hydra_cloud";
+    return merged;
+  }, [shouldShowWinePrefixConfiguration, showToolsSettings, showHydraCloudTab]);
+  const showsCategory = (category: GameSettingsCategoryId) =>
+    selectedCategory === category ||
+    mergedCategories[category] === selectedCategory;
+
+  const allCategories = useMemo(
     () => [
       {
         id: "general" as const,
@@ -1086,11 +1105,72 @@ export function GameOptionsModal({
       showOptiScalerSettings,
       showRunsSettings,
       showToolsSettings,
+      showOptiScalerTab,
+      showRenoDxTab,
       showSaveImportSettings,
       shouldShowWinePrefixConfiguration,
       t,
     ]
   );
+  const categories = useMemo(
+    () => allCategories.filter((category) => !mergedCategories[category.id]),
+    [allCategories, mergedCategories]
+  );
+
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [scrollTarget, setScrollTarget] = useState<{
+    category: GameSettingsCategoryId;
+  } | null>(null);
+  const openCategory = useCallback(
+    (category: GameSettingsCategoryId) => {
+      setSelectedCategory(mergedCategories[category] ?? category);
+      setScrollTarget({ category });
+    },
+    [mergedCategories]
+  );
+
+  // scrollIntoView would scroll the window too; only the modal's body moves.
+  // Sections above the target load late (Proton builds, the setup log), so
+  // the position is applied again while the panel grows in the first second.
+  useEffect(() => {
+    if (!scrollTarget) return;
+    const panel = panelRef.current;
+    let scroller = panel?.parentElement ?? null;
+    while (
+      scroller &&
+      !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)
+    ) {
+      scroller = scroller.parentElement;
+    }
+    if (!panel || !scroller) return;
+    const container = scroller;
+    const merged = Boolean(mergedCategories[scrollTarget.category]);
+
+    const apply = () => {
+      const section = merged
+        ? panel.querySelector<HTMLElement>(
+            `[data-category="${scrollTarget.category}"]`
+          )
+        : null;
+      container.scrollTop = section
+        ? section.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop
+        : 0;
+    };
+
+    const frame = requestAnimationFrame(apply);
+    if (!merged) return () => cancelAnimationFrame(frame);
+
+    const observer = new ResizeObserver(apply);
+    observer.observe(panel);
+    const stop = window.setTimeout(() => observer.disconnect(), 1000);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.clearTimeout(stop);
+    };
+  }, [scrollTarget, selectedCategory, mergedCategories]);
 
   useEffect(() => {
     const currentInitializationState = { visible, initialCategory };
@@ -1111,8 +1191,9 @@ export function GameOptionsModal({
       showDownloadSettings,
     });
 
-    setSelectedCategory(availableCategory);
+    openCategory(availableCategory);
   }, [
+    openCategory,
     cloudSaveAccessAction,
     initialCategory,
     showDownloadSettings,
@@ -1149,8 +1230,8 @@ export function GameOptionsModal({
       (selectedCategory === "optiscaler" && !showOptiScalerTab) ||
       (selectedCategory === "renodx" && !showRenoDxTab)
     )
-      setSelectedCategory("tools");
-  }, [selectedCategory, showOptiScalerTab, showRenoDxTab]);
+      openCategory("tools");
+  }, [selectedCategory, showOptiScalerTab, showRenoDxTab, openCategory]);
 
   const handleSelectCategory = (category: typeof selectedCategory) => {
     if (
@@ -1167,7 +1248,7 @@ export function GameOptionsModal({
     ) {
       return;
     }
-    setSelectedCategory(category);
+    openCategory(category);
   };
   const shouldShowCreateStartMenuShortcut =
     globalThis.window.electron.platform === "win32";
@@ -1391,6 +1472,7 @@ export function GameOptionsModal({
             onSelectCategory={handleSelectCategory}
           />
           <div
+            ref={panelRef}
             className={`game-options-modal__panel${
               selectedCategory === "assets"
                 ? " game-options-modal__panel--assets"
@@ -1482,29 +1564,48 @@ export function GameOptionsModal({
                   onClearWinePrefixPath={handleClearWinePrefixPath}
                   onOpenWinetricks={handleOpenWinetricks}
                   onChangeProtonVersion={handleChangeProtonVersion}
-                  onOpenTools={() => setSelectedCategory("tools")}
+                  onOpenTools={() => openCategory("tools")}
                 />
               )}
             {selectedCategory === "tools" && showToolsSettings && (
-              <ToolsSection game={game} onOpenCategory={handleSelectCategory} />
+              <div data-category="tools" className="game-options-modal__part">
+                <ToolsSection
+                  game={game}
+                  onOpenCategory={handleSelectCategory}
+                />
+              </div>
             )}
-            {selectedCategory === "runs" && showRunsSettings && (
-              <RunsSection game={game} />
+            {showsCategory("runs") && showRunsSettings && (
+              <div data-category="runs" className="game-options-modal__part">
+                <RunsSection game={game} />
+              </div>
             )}
-            {selectedCategory === "optiscaler" && showOptiScalerTab && (
-              <OptiScalerSettingsSection
-                game={game}
-                onOpenTools={() => setSelectedCategory("tools")}
-              />
+            {showsCategory("optiscaler") && showOptiScalerTab && (
+              <div
+                data-category="optiscaler"
+                className="game-options-modal__part"
+              >
+                <OptiScalerSettingsSection
+                  game={game}
+                  onOpenTools={() => openCategory("tools")}
+                />
+              </div>
             )}
-            {selectedCategory === "renodx" && showRenoDxTab && (
-              <RenoDxSettingsSection
-                game={game}
-                onOpenTools={() => setSelectedCategory("tools")}
-              />
+            {showsCategory("renodx") && showRenoDxTab && (
+              <div data-category="renodx" className="game-options-modal__part">
+                <RenoDxSettingsSection
+                  game={game}
+                  onOpenTools={() => openCategory("tools")}
+                />
+              </div>
             )}
-            {selectedCategory === "save_import" && showSaveImportSettings && (
-              <SaveImportSection game={game} />
+            {showsCategory("save_import") && showSaveImportSettings && (
+              <div
+                data-category="save_import"
+                className="game-options-modal__part"
+              >
+                <SaveImportSection game={game} />
+              </div>
             )}
             {selectedCategory === "downloads" && showDownloadSettings && (
               <DownloadsSettingsSection

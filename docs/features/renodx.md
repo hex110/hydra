@@ -8,8 +8,8 @@ wrote and removes it cleanly. It does the job the Windows tool
 [RHI](https://github.com/RankFTW/RHI) does, for the part that works under
 Proton too.
 
-Settings live in **Settings → RenoDX**. Each Windows game has a **RenoDX**
-page in its options. The [HDR and RenoDX plan](../renodx-hdr-plan.md) has the
+Settings live in **Settings → RenoDX**. Each Windows game shows a **RenoDX**
+part in its **Options → Tools** once the mod is installed. The [HDR and RenoDX plan](../renodx-hdr-plan.md) has the
 background, the test results and what is still to come.
 
 ## HDR needs more than the mod

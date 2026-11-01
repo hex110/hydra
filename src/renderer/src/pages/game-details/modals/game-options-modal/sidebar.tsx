@@ -20,23 +20,25 @@ export function GameOptionsSidebar({
 }: Readonly<GameOptionsSidebarProps>) {
   return (
     <aside className="game-options-modal__sidebar">
-      {categories.map((category) => (
-        <button
-          key={category.id}
-          type="button"
-          className={`game-options-modal__sidebar-button ${
-            selectedCategory === category.id
-              ? "game-options-modal__sidebar-button--active"
-              : ""
-          }`}
-          onClick={() => onSelectCategory(category.id)}
-        >
-          <span className="game-options-modal__sidebar-button-icon">
-            {category.icon}
-          </span>
-          <span>{category.label}</span>
-        </button>
-      ))}
+      <div className="game-options-modal__sidebar-list">
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            type="button"
+            className={`game-options-modal__sidebar-button ${
+              selectedCategory === category.id
+                ? "game-options-modal__sidebar-button--active"
+                : ""
+            }`}
+            onClick={() => onSelectCategory(category.id)}
+          >
+            <span className="game-options-modal__sidebar-button-icon">
+              {category.icon}
+            </span>
+            <span>{category.label}</span>
+          </button>
+        ))}
+      </div>
     </aside>
   );
 }

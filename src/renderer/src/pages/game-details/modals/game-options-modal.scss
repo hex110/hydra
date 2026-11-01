@@ -20,6 +20,15 @@ $disc-menu-transition-duration: 0.15s;
     background: globals.$dark-background-color;
   }
 
+  // Stays in view while a long tab scrolls.
+  &__sidebar-list {
+    position: sticky;
+    top: calc(globals.$spacing-unit * 2);
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+  }
+
   &__sidebar-button {
     width: 100%;
     display: flex;
@@ -65,6 +74,18 @@ $disc-menu-transition-duration: 0.15s;
 
     &--assets {
       padding-bottom: 0;
+    }
+  }
+
+  // A section merged into a broader tab; its heading starts a new part.
+  &__part {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2.5);
+
+    & + & {
+      padding-top: calc(globals.$spacing-unit * 2.5);
+      border-top: 1px solid globals.$border-color;
     }
   }
 
@@ -291,6 +312,12 @@ $disc-menu-transition-duration: 0.15s;
         globals.$spacing-unit;
       border-right: none;
       border-bottom: 1px solid globals.$border-color;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    &__sidebar-list {
+      position: static;
       flex-direction: row;
       flex-wrap: wrap;
     }

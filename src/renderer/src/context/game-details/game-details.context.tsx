@@ -38,6 +38,12 @@ import {
   SteamContentDescriptor,
 } from "@shared";
 
+const LINKABLE_OPTIONS_CATEGORIES: GameOptionsCategoryId[] = [
+  "save_import",
+  "runs",
+  "tools",
+];
+
 export const gameDetailsContext = createContext<GameDetailsContext>({
   game: null,
   downloadGame: null,
@@ -531,7 +537,9 @@ export function GameDetailsContextProvider({
     );
     if (state.openGameOptions || requestedCategory) {
       setGameOptionsInitialCategory(
-        requestedCategory === "save_import" ? "save_import" : "general"
+        LINKABLE_OPTIONS_CATEGORIES.find(
+          (category) => category === requestedCategory
+        ) ?? "general"
       );
       setShowGameOptionsModal(true);
 

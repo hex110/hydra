@@ -5,7 +5,7 @@ build and tools, how it ended, and copies of the logs that belong to it. The
 point is that a game that broke can be looked at afterwards, by you or by
 Claude Code, without launching it again.
 
-The runs are listed in the game's **Options → Runs**. It is the only place
+The runs are listed in the game's **Options → Compatibility**, under **Runs** (a tab of its own where there is no Compatibility tab). It is the only place
 they are shown.
 
 ## What a run records
@@ -57,7 +57,7 @@ so.
 When a run ends, Hydra reads the copied logs and the ending for each tool it
 installed (RenoDX, OptiScaler) and records a **check** in `run.json` and the
 summary: ok, failed, or unclear. Non-ok checks show under the run in
-**Options → Runs**. What counts as failed, and what the first run after an
+**Options → Compatibility → Runs**. What counts as failed, and what the first run after an
 automatic install does with it, is in
 [Tools and fixes](game-tools.md#the-first-run-is-checked). Runs recorded
 before checks existed have none, and a run whose end Hydra did not see has

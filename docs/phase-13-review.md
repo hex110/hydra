@@ -172,7 +172,7 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
 
 ## Coherence
 
-17. [ ] **Twelve tabs in a game's options.** Tools, Compatibility, Runs,
+17. [x] **Twelve tabs in a game's options.** Tools, Compatibility, Runs,
         OptiScaler, RenoDX and Saves all describe what Hydra does to the game;
         Compatibility's setup log repeats the ReShade, RenoDX and OptiScaler
         steps that Tools shows, and four tabs (General, Compatibility,
@@ -180,7 +180,10 @@ OptiScaler on a real game, save sync with R2 after the 2026-10-30 fixes.
         OptiScaler and RenoDX tabs appear only once the tool is installed in
         the game (most games then show ten tabs), and their Tools rows link to
         them only then. Merging Compatibility, Runs and Saves is part of the
-        shared patterns (roadmap item 7).
+        shared patterns (roadmap item 7). Fixed: Runs is a part of
+        Compatibility, OptiScaler and RenoDX parts of Tools, and Save import
+        a part of the save sync tab, so a Linux game shows seven to nine
+        tabs ([The options tabs](features/game-tools.md#the-options-tabs)).
 18. [x] **Defaults live in three places.** The Tools tab's reasons point to
         Settings → Launch rules (HDR), Settings → Tool defaults (MangoHud,
         GameMode) and Settings → RenoDX (beta mods). Fixed: the HDR rows

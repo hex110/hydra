@@ -5,8 +5,8 @@ FSR or XeSS and replaces it with the upscaler of your choice (FSR 4 and XeSS
 on any GPU, DLSS on NVIDIA), and can add frame generation. Hydra downloads it,
 installs it into games, keeps track of what it changed and removes it cleanly.
 
-Settings live in **Settings → OptiScaler**. Each game has an **OptiScaler**
-page in its options.
+Settings live in **Settings → OptiScaler**. Each game shows an **OptiScaler**
+part in its **Options → Tools** once it is installed.
 
 ## Automatic installation
 

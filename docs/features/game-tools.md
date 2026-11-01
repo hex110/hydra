@@ -3,8 +3,27 @@
 Each game's **Options → Tools** lists what Hydra applies to it, sets each item
 to **Auto**, **On** or **Off**, and says why it is on or off. It is the one
 place a game's tools are switched; the other tabs hold their details
-(versions, DLL names, layouts) and link here. The OptiScaler and RenoDX tabs
-appear once the tool is installed in the game.
+(versions, DLL names, layouts) and link here. Once OptiScaler or RenoDX is
+installed in the game, its details follow the tool list in the same tab, and
+the tool's row scrolls to them.
+
+## The options tabs
+
+Finding 17 of the [phase 13 review](../phase-13-review.md): a game's options had
+up to fourteen tabs. Sections that describe what Hydra does to the game now
+share a tab instead of each having one:
+
+| Tab           | Holds                                                         |
+| ------------- | ------------------------------------------------------------- |
+| Tools         | The tool list, then OptiScaler and RenoDX once installed      |
+| Compatibility | Wine prefix, setup log, MangoHud layout, Proton, then Runs    |
+| Save sync     | Cloud saves, then Save import (when the cloud tab is offered) |
+
+A section keeps its own tab where its host tab is not offered (Runs on
+Windows, Save import with no save sync). Links to a merged section
+(`?options=runs`, `save_import` or `tools` on a game's URL, a Tools row) open
+the host tab scrolled to it, and the tab list stays in view while a long tab
+scrolls.
 
 | Capability              | Platforms | Auto means                                                                                          |
 | ----------------------- | --------- | --------------------------------------------------------------------------------------------------- |
