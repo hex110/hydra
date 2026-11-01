@@ -1,3 +1,5 @@
+import type { PendingFomodInstall } from "./fomod.types";
+
 export type ModSource =
   | {
       kind: "nexus";
@@ -27,6 +29,8 @@ export interface InstalledMod {
   update?: { fileId: number; version: string | null; name: string } | null;
   /** The archive looked like a FOMOD installer; its default layout was used. */
   fomod?: boolean;
+  /** Installed through its FOMOD installer with options the user picked. */
+  fomodChosen?: boolean;
   /** What the mod's Nexus page says it needs, read when it was installed. */
   requirements?: NexusModRequirement[];
 }
@@ -54,6 +58,8 @@ export interface GameMods {
   nexusGame: NexusGameMatch | null;
   /** Files a mod ships that a mod lower in the list also ships (it loses them). */
   overridden: Record<string, string[]>;
+  /** FOMOD installers waiting for the user's choices. */
+  pendingFomods: PendingFomodInstall[];
 }
 
 export interface NexusMod {

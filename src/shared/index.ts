@@ -433,3 +433,4 @@ export * from "./mods";
 export * from "./in-game-notices";
 export * from "./play-dates";
 export * from "./save-sync-summary";
+export * from "./fomod";

@@ -63,6 +63,30 @@ registerEvent("getNexusModFiles", (_event, gameId: number, modId: number) =>
 registerEvent("hasTorBoxToken", () => hasTorBoxToken());
 
 registerEvent(
+  "getPendingFomod",
+  (_event, shop: GameShop, objectId: string, pendingId: string) =>
+    ModStore.getPendingFomod(shop, objectId, pendingId)
+);
+registerEvent(
+  "completeFomod",
+  (
+    _event,
+    shop: GameShop,
+    objectId: string,
+    pendingId: string,
+    selected: string[]
+  ) =>
+    runModAction(() =>
+      ModStore.completeFomod(shop, objectId, pendingId, selected)
+    )
+);
+registerEvent(
+  "cancelFomod",
+  (_event, shop: GameShop, objectId: string, pendingId: string) =>
+    runModAction(() => ModStore.cancelFomod(shop, objectId, pendingId))
+);
+
+registerEvent(
   "installNexusModFile",
   (
     _event,

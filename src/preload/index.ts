@@ -1308,6 +1308,16 @@ contextBridge.exposeInMainWorld("electron", {
       replaces?: string;
     }
   ) => ipcRenderer.invoke("installNexusModFile", shop, objectId, file),
+  getPendingFomod: (shop: GameShop, objectId: string, pendingId: string) =>
+    ipcRenderer.invoke("getPendingFomod", shop, objectId, pendingId),
+  completeFomod: (
+    shop: GameShop,
+    objectId: string,
+    pendingId: string,
+    selected: string[]
+  ) => ipcRenderer.invoke("completeFomod", shop, objectId, pendingId, selected),
+  cancelFomod: (shop: GameShop, objectId: string, pendingId: string) =>
+    ipcRenderer.invoke("cancelFomod", shop, objectId, pendingId),
   installModFromFile: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("installModFromFile", shop, objectId),
   setModEnabled: (

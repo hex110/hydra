@@ -18,9 +18,13 @@ import type {
   ModSource,
   NexusGameMatch,
   NexusModRequirement,
+  PendingFomodDetails,
+  PendingFomodInstall,
+  FomodConfig,
 } from "@types";
 
 import { SevenZip } from "../7zip";
+import { applyFomod, readFomodConfig } from "./fomod";
 import { isTrackedGameKeyRunning } from "../game-running-state";
 import { logger } from "../logger";
 import { SystemPath } from "../system-path";
@@ -64,6 +68,26 @@ const deployedFilePath = (folder: string) => path.join(folder, "deployed.json");
 const stagingFolder = (folder: string, modId: string) =>
   path.join(folder, "staging", modId);
 const backupFolder = (folder: string) => path.join(folder, "backup");
+const pendingFolder = (folder: string, id: string) =>
+  path.join(folder, "pending", id);
+const pendingFilePath = (folder: string, id: string) =>
+  path.join(folder, "pending", `${id}.json`);
+
+type InstallDetails = {
+  name: string;
+  version: string | null;
+  source: ModSource;
+  /** Replaces this mod (an update), keeping its place and on/off. */
+  replaces?: string;
+  requirements?: NexusModRequirement[];
+};
+
+interface PendingFomodFile extends PendingFomodInstall {
+  details: InstallDetails;
+  /** The folder holding `fomod/`, relative to the pending folder. */
+  root: string;
+  config: FomodConfig;
+}
 
 const readJson = async <T>(filePath: string, fallback: T): Promise<T> => {
   try {
@@ -178,6 +202,15 @@ export class ModStore {
       mods,
       nexusGame,
       overridden: planDeployment(mods).overridden,
+      pendingFomods: (await this.readPendingFomods(folder)).map(
+        ({ id, name, version, moduleName, createdAt }) => ({
+          id,
+          name,
+          version,
+          moduleName,
+          createdAt,
+        })
+      ),
     };
   }
 
@@ -306,15 +339,8 @@ export class ModStore {
     shop: GameShop,
     objectId: string,
     filePath: string,
-    details: {
-      name: string;
-      version: string | null;
-      source: ModSource;
-      /** Replaces this mod (an update), keeping its place and on/off. */
-      replaces?: string;
-      requirements?: NexusModRequirement[];
-    }
-  ): Promise<InstalledMod> {
+    details: InstallDetails
+  ): Promise<InstalledMod | null> {
     const game = await this.loadGame(shop, objectId);
     const gameFolder = resolveModGameFolder(game.executablePath ?? null);
     if (!gameFolder) throw new ModError("no-game-folder");
@@ -344,6 +370,38 @@ export class ModStore {
       const extracted = await listFiles(partial);
       if (extracted.length === 0) throw new ModError("empty-archive");
 
+      // A FOMOD installer waits for the user's choices (completeFomod).
+      const fomod = await readFomodConfig(partial, extracted).catch((error) => {
+        logger.warn("[Mods] Could not read the FOMOD installer", error);
+        return null;
+      });
+      if (fomod) {
+        const pending: PendingFomodFile = {
+          id,
+          name: details.name,
+          version: details.version,
+          moduleName: fomod.config.moduleName,
+          createdAt: Date.now(),
+          details,
+          root: path.relative(partial, fomod.root),
+          config: fomod.config,
+        };
+        await fs.promises.mkdir(path.join(folder, "pending"), {
+          recursive: true,
+        });
+        await fs.promises.rename(partial, pendingFolder(folder, id));
+        await fs.promises.writeFile(
+          pendingFilePath(folder, id),
+          JSON.stringify(pending)
+        );
+        logger.info("[Mods] FOMOD installer waits for options", {
+          gameKey: levelKeys.game(shop, objectId),
+          name: details.name,
+          steps: fomod.config.steps.length,
+        });
+        return null;
+      }
+
       const { nexusGame } = await this.readMods(folder);
       const gameRootEntries = new Set(
         (await fs.promises.readdir(gameFolder).catch(() => [])).map((entry) =>
@@ -359,57 +417,180 @@ export class ModStore {
       const root = layout.stripPrefix
         ? path.join(partial, layout.stripPrefix)
         : partial;
-      const staging = stagingFolder(folder, id);
-      await fs.promises.rename(root, staging);
-
-      const mod: InstalledMod = {
-        id,
-        name: details.name,
-        version: details.version,
-        source: details.source,
-        enabled: true,
+      return await this.recordInstall(shop, objectId, folder, id, root, {
+        details,
         deployRoot: layout.deployRoot,
-        files: await listFiles(staging),
-        installedAt: Date.now(),
-        update: null,
-        fomod: isFomodArchive(extracted) || undefined,
-        requirements: details.requirements?.length
-          ? details.requirements
-          : undefined,
-      };
-
-      let replaced: InstalledMod | undefined;
-      await this.change(shop, objectId, (state) => {
-        replaced = details.replaces
-          ? state.mods.find((existing) => existing.id === details.replaces)
-          : undefined;
-        if (!replaced) return { ...state, mods: [...state.mods, mod] };
-        return {
-          ...state,
-          mods: state.mods.map((existing) =>
-            existing.id === replaced!.id
-              ? { ...mod, enabled: existing.enabled }
-              : existing
-          ),
-        };
+        fomod: isFomodArchive(extracted) ? "default" : undefined,
       });
-      if (replaced) {
-        await fs.promises.rm(stagingFolder(folder, replaced.id), {
-          recursive: true,
-          force: true,
-        });
+    } finally {
+      await fs.promises.rm(partial, { recursive: true, force: true });
+    }
+  }
+
+  private static async readPendingFomods(folder: string) {
+    const entries = await fs.promises
+      .readdir(path.join(folder, "pending"))
+      .catch(() => [] as string[]);
+    const pending: PendingFomodFile[] = [];
+    for (const entry of entries.filter((name) => name.endsWith(".json"))) {
+      const file = await readJson<PendingFomodFile | null>(
+        path.join(folder, "pending", entry),
+        null
+      );
+      if (file?.id) pending.push(file);
+    }
+    return pending.sort((a, b) => a.createdAt - b.createdAt);
+  }
+
+  public static async getPendingFomod(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ): Promise<PendingFomodDetails> {
+    const folder = storeFolder(shop, objectId);
+    const pending = await readJson<PendingFomodFile | null>(
+      pendingFilePath(folder, pendingId),
+      null
+    );
+    if (!pending) throw new ModError("not-found");
+    return {
+      id: pending.id,
+      name: pending.name,
+      version: pending.version,
+      moduleName: pending.moduleName,
+      createdAt: pending.createdAt,
+      config: pending.config,
+      imageRoot: path.join(pendingFolder(folder, pendingId), pending.root),
+    };
+  }
+
+  public static async cancelFomod(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ) {
+    const folder = storeFolder(shop, objectId);
+    await fs.promises.rm(pendingFolder(folder, pendingId), {
+      recursive: true,
+      force: true,
+    });
+    await fs.promises.rm(pendingFilePath(folder, pendingId), { force: true });
+  }
+
+  /** Installs a pending FOMOD with the plugins the user picked. */
+  public static async completeFomod(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string,
+    selected: string[]
+  ): Promise<InstalledMod> {
+    const folder = storeFolder(shop, objectId);
+    const pending = await readJson<PendingFomodFile | null>(
+      pendingFilePath(folder, pendingId),
+      null
+    );
+    if (!pending) throw new ModError("not-found");
+    const game = await this.loadGame(shop, objectId);
+    if (!resolveModGameFolder(game.executablePath ?? null))
+      throw new ModError("no-game-folder");
+
+    const partial = path.join(folder, "staging", `${pendingId}.partial`);
+    try {
+      const missing = await applyFomod(
+        path.join(pendingFolder(folder, pendingId), pending.root),
+        pending.config,
+        new Set(selected),
+        partial
+      );
+      if (missing.length > 0) {
+        logger.warn("[Mods] FOMOD files not found in the archive", missing);
       }
+      if ((await listFiles(partial)).length === 0)
+        throw new ModError("empty-archive");
 
-      logger.info("[Mods] Installed", {
-        gameKey: levelKeys.game(shop, objectId),
-        name: mod.name,
-        files: mod.files.length,
-        deployRoot: mod.deployRoot,
-      });
+      const { nexusGame } = await this.readMods(folder);
+      const mod = await this.recordInstall(
+        shop,
+        objectId,
+        folder,
+        pendingId,
+        partial,
+        {
+          details: pending.details,
+          deployRoot: getModFolder(nexusGame?.domainName),
+          fomod: "chosen",
+        }
+      );
+      await this.cancelFomod(shop, objectId, pendingId);
       return mod;
     } finally {
       await fs.promises.rm(partial, { recursive: true, force: true });
     }
+  }
+
+  /** Moves a prepared folder into staging and adds (or swaps in) the mod. */
+  private static async recordInstall(
+    shop: GameShop,
+    objectId: string,
+    folder: string,
+    id: string,
+    preparedFolder: string,
+    options: {
+      details: InstallDetails;
+      deployRoot: string;
+      fomod?: "default" | "chosen";
+    }
+  ): Promise<InstalledMod> {
+    const { details } = options;
+    const staging = stagingFolder(folder, id);
+    await fs.promises.rename(preparedFolder, staging);
+
+    const mod: InstalledMod = {
+      id,
+      name: details.name,
+      version: details.version,
+      source: details.source,
+      enabled: true,
+      deployRoot: options.deployRoot,
+      files: await listFiles(staging),
+      installedAt: Date.now(),
+      update: null,
+      fomod: options.fomod === "default" || undefined,
+      fomodChosen: options.fomod === "chosen" || undefined,
+      requirements: details.requirements?.length
+        ? details.requirements
+        : undefined,
+    };
+
+    let replaced: InstalledMod | undefined;
+    await this.change(shop, objectId, (state) => {
+      replaced = details.replaces
+        ? state.mods.find((existing) => existing.id === details.replaces)
+        : undefined;
+      if (!replaced) return { ...state, mods: [...state.mods, mod] };
+      return {
+        ...state,
+        mods: state.mods.map((existing) =>
+          existing.id === replaced!.id
+            ? { ...mod, enabled: existing.enabled }
+            : existing
+        ),
+      };
+    });
+    if (replaced) {
+      await fs.promises.rm(stagingFolder(folder, replaced.id), {
+        recursive: true,
+        force: true,
+      });
+    }
+
+    logger.info("[Mods] Installed", {
+      gameKey: levelKeys.game(shop, objectId),
+      name: mod.name,
+      files: mod.files.length,
+      deployRoot: mod.deployRoot,
+    });
+    return mod;
   }
 
   public static setEnabled(

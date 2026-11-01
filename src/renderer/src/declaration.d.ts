@@ -6,6 +6,7 @@ import type {
   NexusGameMatch,
   NexusModFile,
   NexusModRequirement,
+  PendingFomodDetails,
   NexusModSearchResult,
   NexusModSort,
   AuthPage,
@@ -707,6 +708,22 @@ declare global {
       shop: GameShop,
       objectId: string
     ) => Promise<ModActionResult | null>;
+    getPendingFomod: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string
+    ) => Promise<PendingFomodDetails>;
+    completeFomod: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string,
+      selected: string[]
+    ) => Promise<ModActionResult>;
+    cancelFomod: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string
+    ) => Promise<ModActionResult>;
     setModEnabled: (
       shop: GameShop,
       objectId: string,

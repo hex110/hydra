@@ -75,6 +75,7 @@
     "electron-updater": "^6.6.2",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "fast-xml-parser": "5.2.5",
     "file-type": "^21.3.2",
     "framer-motion": "^12.15.0",
     "hls.js": "^1.5.12",

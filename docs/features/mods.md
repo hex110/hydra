@@ -46,8 +46,26 @@ required Nexus mod is not in the list. Nothing is installed by itself: many
 requirements are tools with their own installer (SMAPI, Script Extender), so
 the hint says to ignore it when that is the case.
 
-A FOMOD installer archive is installed as packed and marked **FOMOD**; its
-options are not offered yet.
+**FOMOD installers.** An archive with `fomod/ModuleConfig.xml` (UTF-8 or
+UTF-16) is unpacked into `…/pending/<id>/` and waits for options: the
+installer opens at once when the Mods page is open, and otherwise the
+installed list shows the archive as **Installer waiting for your options**
+with **Choose options** and **Discard** (so a Mod Manager Download from Nexus
+waits there too). The installer shows the FOMOD's pages in order, skipping
+pages whose conditions the earlier choices don't meet; each group says how
+many options it takes (pick one, pick any, all included…), required and
+recommended options start ticked, an option an earlier pick rules out is
+greyed as **not usable**, and pointing at an option shows its picture and
+description. **Install** copies the required files, the picked options' files
+and the conditional files whose flags hold (higher `priority` wins) into the
+mod's staging folder, matching the archive's folder names whatever their
+case, and deploys it into the game's mod folder (`Data` for Bethesda games).
+**Later** keeps it waiting. The logic lives in `src/shared/fomod.ts` (shared by
+the installer window and the install), the XML parsing in
+`services/mods/fomod.ts`; both are tested. Not evaluated: conditions on other
+mods' plugin files (only "missing" can be known) and game version checks
+(taken as met). Mods installed before this, as packed, still carry the old
+**FOMOD** mark.
 
 ## Nexus Mods
 
@@ -77,6 +95,6 @@ default (`xdg-mime`), so another mod manager keeps the links until then.
 
 ## Not yet
 
-FOMOD options, Bethesda plugin load order, profiles, mods in the Wine prefix
+Bethesda plugin load order, profiles, mods in the Wine prefix
 (`Documents/My Games`), Wabbajack and other sites. See the design's build
 order.

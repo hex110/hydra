@@ -206,6 +206,78 @@
     gap: calc(globals.$spacing-unit * 2);
   }
 
+  &__fomod {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__fomod-body {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: calc(globals.$spacing-unit * 2);
+    max-height: 60vh;
+
+    @media (max-width: 800px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &__fomod-groups {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+    overflow-y: auto;
+  }
+
+  &__fomod-group {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin: 0;
+    padding: calc(globals.$spacing-unit * 1.5);
+    border: 1px solid globals.$border-color;
+    border-radius: globals.$spacing-unit;
+
+    legend {
+      padding: 0 globals.$spacing-unit;
+      color: globals.$muted-color;
+      font-weight: 600;
+    }
+  }
+
+  &__fomod-note {
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    font-weight: 400;
+  }
+
+  &__fomod-details {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    overflow-y: auto;
+  }
+
+  &__fomod-image {
+    width: 100%;
+    border-radius: globals.$spacing-unit;
+    object-fit: contain;
+  }
+
+  &__fomod-description {
+    margin: 0;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    white-space: pre-wrap;
+  }
+
+  &__fomod-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: globals.$spacing-unit;
+  }
+
   &__requirements {
     display: flex;
     flex-direction: column;

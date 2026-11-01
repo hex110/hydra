@@ -1049,3 +1049,4 @@ export type ExtractionFailure =
   | { reason: "not-enough-space"; required: number; available: number };
 export type { SystemPowerAction } from "./system-power";
 export * from "./mods.types";
+export * from "./fomod.types";

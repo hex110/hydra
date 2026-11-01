@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -23,6 +23,7 @@ import type {
 } from "@types";
 
 import { NexusBrowser } from "./nexus-browser";
+import { FomodWizard } from "./fomod-wizard";
 import "./mods.scss";
 
 export const useModActionToast = () => {
@@ -51,6 +52,8 @@ export default function Mods() {
   const reportResult = useModActionToast();
 
   const [gameMods, setGameMods] = useState<GameMods | null>(null);
+  const [fomodId, setFomodId] = useState<string | null>(null);
+  const seenPending = useRef<Set<string> | null>(null);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
   const [progress, setProgress] = useState<Record<string, ModInstallProgress>>(
@@ -74,6 +77,17 @@ export default function Mods() {
     void refresh();
   }, [refresh]);
 
+  // A FOMOD that arrives while the page is open asks for its options at once.
+  useEffect(() => {
+    if (!gameMods) return;
+    const ids = gameMods.pendingFomods.map((pending) => pending.id);
+    if (seenPending.current) {
+      const fresh = ids.find((id) => !seenPending.current!.has(id));
+      if (fresh) setFomodId(fresh);
+    }
+    seenPending.current = new Set(ids);
+  }, [gameMods]);
+
   useEffect(
     () =>
       window.electron.onModInstallProgress((next, key) => {
@@ -87,6 +101,8 @@ export default function Mods() {
       }),
     [objectId, refresh]
   );
+
+  const closeFomod = useCallback(() => setFomodId(null), []);
 
   if (!shop || !objectId) return null;
 
@@ -162,6 +178,39 @@ export default function Mods() {
           </div>
         </header>
 
+        {gameMods && gameMods.pendingFomods.length > 0 && (
+          <ul className="mods__list">
+            {gameMods.pendingFomods.map((pending) => (
+              <li key={pending.id} className="mods__row">
+                <span className="mods__file-name">{pending.name}</span>
+                <div className="mods__row-meta">
+                  <span>{t("fomod_waiting")}</span>
+                </div>
+                <div className="mods__row-actions">
+                  <Button
+                    theme="primary"
+                    disabled={busy}
+                    onClick={() => setFomodId(pending.id)}
+                  >
+                    {t("fomod_choose")}
+                  </Button>
+                  <Button
+                    theme="outline"
+                    disabled={busy}
+                    onClick={() =>
+                      run(() =>
+                        window.electron.cancelFomod(shop, objectId, pending.id)
+                      )
+                    }
+                  >
+                    {t("fomod_discard")}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {gameMods === null ? (
           <p className="mods__hint">{t("loading")}</p>
         ) : mods.length === 0 ? (
@@ -197,6 +246,9 @@ export default function Mods() {
                     </Badge>
                     {mod.fomod && (
                       <span title={t("fomod_hint")}>{t("fomod")}</span>
+                    )}
+                    {mod.fomodChosen && (
+                      <span title={t("fomod_chosen_hint")}>{t("fomod")}</span>
                     )}
                     {missing.length > 0 && (
                       <span title={t("requirements_missing_hint")}>
@@ -274,6 +326,17 @@ export default function Mods() {
         )}
         {mods.length > 1 && <p className="mods__hint">{t("order_hint")}</p>}
       </section>
+
+      <FomodWizard
+        shop={shop}
+        objectId={objectId}
+        pendingId={fomodId}
+        onClose={closeFomod}
+        onDone={() => {
+          setFomodId(null);
+          void refresh();
+        }}
+      />
 
       <NexusBrowser
         shop={shop}

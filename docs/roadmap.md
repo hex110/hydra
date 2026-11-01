@@ -255,7 +255,7 @@ in the sections below.
     3. [x] Mods page, sidebar section, updates ([Mods](features/mods.md))
     4. [x] `nxm://` links
     5. [x] Requirements (listed and flagged, not installed by themselves)
-    6. [ ] FOMOD options
+    6. [x] FOMOD options (an installer window with the FOMOD's pages)
     7. [ ] Profiles
 18. **In-game overlay** (was phase 12 item 5). Design:
     [In-game overlay](overlay-design.md).
