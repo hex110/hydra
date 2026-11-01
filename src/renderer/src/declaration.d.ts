@@ -708,6 +708,22 @@ declare global {
       shop: GameShop,
       objectId: string
     ) => Promise<ModActionResult | null>;
+    createModProfile: (
+      shop: GameShop,
+      objectId: string,
+      name: string,
+      defaultName: string
+    ) => Promise<ModActionResult>;
+    switchModProfile: (
+      shop: GameShop,
+      objectId: string,
+      profileId: string
+    ) => Promise<ModActionResult>;
+    deleteModProfile: (
+      shop: GameShop,
+      objectId: string,
+      profileId: string
+    ) => Promise<ModActionResult>;
     getPendingFomod: (
       shop: GameShop,
       objectId: string,

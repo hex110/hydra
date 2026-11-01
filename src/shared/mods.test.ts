@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   findModUpdate,
+  applyModProfile,
   getMissingModRequirements,
   isFomodArchive,
   parseNxmLink,
@@ -152,5 +153,27 @@ describe("getMissingModRequirements", () => {
       ["SMAPI"]
     );
     assert.deepEqual(getMissingModRequirements({}, []), []);
+  });
+});
+
+describe("mod profiles", () => {
+  it("applies a profile's order and on/off, new mods last and off", () => {
+    const mods = [
+      { id: "a", enabled: true },
+      { id: "b", enabled: true },
+      { id: "c", enabled: true },
+    ];
+    assert.deepEqual(
+      applyModProfile(mods, [
+        { modId: "b", enabled: false },
+        { modId: "gone", enabled: true },
+        { modId: "a", enabled: true },
+      ]),
+      [
+        { id: "b", enabled: false },
+        { id: "a", enabled: true },
+        { id: "c", enabled: false },
+      ]
+    );
   });
 });

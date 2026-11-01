@@ -45,6 +45,13 @@ export interface NexusModRequirement {
   notes: string | null;
 }
 
+/** A saved mod list: which mods are on, in which order. */
+export interface ModProfile {
+  id: string;
+  name: string;
+  entries: { modId: string; enabled: boolean }[];
+}
+
 export interface NexusGameMatch {
   id: number;
   domainName: string;
@@ -60,6 +67,8 @@ export interface GameMods {
   overridden: Record<string, string[]>;
   /** FOMOD installers waiting for the user's choices. */
   pendingFomods: PendingFomodInstall[];
+  profiles: { id: string; name: string }[];
+  activeProfileId: string | null;
 }
 
 export interface NexusMod {

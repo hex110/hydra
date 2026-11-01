@@ -93,8 +93,21 @@ desktop notification says when it is done, or that no game matched. The
 desktop file declares `x-scheme-handler/nxm`; the button sets Hydra as the
 default (`xdg-mime`), so another mod manager keeps the links until then.
 
+## Profiles
+
+**New profile** above the installed list saves the list as it is now (which
+mods are on, in which order) under a name and makes it active; the first one
+also keeps the list as it was, as **Default**. From then on every change
+(turning a mod on or off, moving it, installing or removing one) is saved into
+the active profile. Picking another profile in **Profile** redeploys the game
+folder with that profile's list. Mods are installed once and shared by all
+profiles: a mod installed while another profile is active shows up off and at
+the end of the list. **Delete profile** removes the active one and switches
+to the first left; the mods themselves stay installed. Profiles are kept in
+the game's `mods.json`.
+
 ## Not yet
 
-Bethesda plugin load order, profiles, mods in the Wine prefix
+Bethesda plugin load order, mods in the Wine prefix
 (`Documents/My Games`), Wabbajack and other sites. See the design's build
 order.

@@ -120,7 +120,7 @@ Nexus files.
 
 Load order for Bethesda plugins (`plugins.txt`), profiles (several mod lists
 per game), mods in the Wine prefix (`Documents/My Games/...`, AppData),
-modpack export, Wabbajack. (FOMOD installers with options came after the
+modpack export, Wabbajack. (FOMOD installers with options and profiles came after the
 first version: [Mods](features/mods.md).)
 
 ## Build order

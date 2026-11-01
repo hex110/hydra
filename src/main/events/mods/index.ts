@@ -63,6 +63,30 @@ registerEvent("getNexusModFiles", (_event, gameId: number, modId: number) =>
 registerEvent("hasTorBoxToken", () => hasTorBoxToken());
 
 registerEvent(
+  "createModProfile",
+  (
+    _event,
+    shop: GameShop,
+    objectId: string,
+    name: string,
+    defaultName: string
+  ) =>
+    runModAction(() =>
+      ModStore.createProfile(shop, objectId, name, defaultName)
+    )
+);
+registerEvent(
+  "switchModProfile",
+  (_event, shop: GameShop, objectId: string, profileId: string) =>
+    runModAction(() => ModStore.switchProfile(shop, objectId, profileId))
+);
+registerEvent(
+  "deleteModProfile",
+  (_event, shop: GameShop, objectId: string, profileId: string) =>
+    runModAction(() => ModStore.deleteProfile(shop, objectId, profileId))
+);
+
+registerEvent(
   "getPendingFomod",
   (_event, shop: GameShop, objectId: string, pendingId: string) =>
     ModStore.getPendingFomod(shop, objectId, pendingId)

@@ -8,8 +8,10 @@ import {
   FILE_EXTENSIONS_TO_EXTRACT,
   getModFolder,
   isFomodArchive,
+  applyModProfile,
   planDeployment,
   resolveModLayout,
+  snapshotModProfile,
 } from "@shared";
 import type {
   GameMods,
@@ -17,6 +19,7 @@ import type {
   InstalledMod,
   ModSource,
   NexusGameMatch,
+  ModProfile,
   NexusModRequirement,
   PendingFomodDetails,
   PendingFomodInstall,
@@ -32,6 +35,9 @@ import { SystemPath } from "../system-path";
 interface ModsFile {
   mods: InstalledMod[];
   nexusGame: NexusGameMatch | null;
+  profiles?: ModProfile[];
+  /** The profile the live list belongs to; every change is saved into it. */
+  activeProfileId?: string | null;
 }
 
 interface DeployedFile {
@@ -196,11 +202,14 @@ export class ModStore {
   ): Promise<GameMods> {
     const game = await this.loadGame(shop, objectId);
     const folder = storeFolder(shop, objectId);
-    const { mods, nexusGame } = await this.readMods(folder);
+    const { mods, nexusGame, profiles, activeProfileId } =
+      await this.readMods(folder);
     return {
       gameFolder: resolveModGameFolder(game.executablePath ?? null),
       mods,
       nexusGame,
+      profiles: (profiles ?? []).map(({ id, name }) => ({ id, name })),
+      activeProfileId: activeProfileId ?? null,
       overridden: planDeployment(mods).overridden,
       pendingFomods: (await this.readPendingFomods(folder)).map(
         ({ id, name, version, moduleName, createdAt }) => ({
@@ -327,7 +336,17 @@ export class ModStore {
       const gameFolder = resolveModGameFolder(game.executablePath ?? null);
       if (!gameFolder) throw new ModError("no-game-folder");
 
-      const state = await update(await this.readMods(folder));
+      const updated = await update(await this.readMods(folder));
+      const state: ModsFile = updated.activeProfileId
+        ? {
+            ...updated,
+            profiles: (updated.profiles ?? []).map((profile) =>
+              profile.id === updated.activeProfileId
+                ? { ...profile, entries: snapshotModProfile(updated.mods) }
+                : profile
+            ),
+          }
+        : updated;
       await writeJson(modsFilePath(folder), state);
       await this.deploy(folder, gameFolder, state.mods);
       return state;
@@ -591,6 +610,76 @@ export class ModStore {
       deployRoot: mod.deployRoot,
     });
     return mod;
+  }
+
+  /**
+   * Saves the current list as a new profile and makes it active. The first
+   * profile also keeps the list as it was, as "Default".
+   */
+  public static createProfile(
+    shop: GameShop,
+    objectId: string,
+    name: string,
+    defaultName: string
+  ) {
+    return this.change(shop, objectId, (state) => {
+      const profiles = [...(state.profiles ?? [])];
+      if (profiles.length === 0) {
+        profiles.push({
+          id: randomUUID(),
+          name: defaultName,
+          entries: snapshotModProfile(state.mods),
+        });
+      }
+      const profile: ModProfile = {
+        id: randomUUID(),
+        name: name.trim() || defaultName,
+        entries: snapshotModProfile(state.mods),
+      };
+      return {
+        ...state,
+        profiles: [...profiles, profile],
+        activeProfileId: profile.id,
+      };
+    });
+  }
+
+  /** Deploys another profile's list; the current one was saved as it changed. */
+  public static switchProfile(
+    shop: GameShop,
+    objectId: string,
+    profileId: string
+  ) {
+    return this.change(shop, objectId, (state) => {
+      const profile = state.profiles?.find((item) => item.id === profileId);
+      if (!profile) throw new ModError("not-found");
+      return {
+        ...state,
+        mods: applyModProfile(state.mods, profile.entries),
+        activeProfileId: profile.id,
+      };
+    });
+  }
+
+  /** Deletes a profile; deleting the active one switches to the first left. */
+  public static deleteProfile(
+    shop: GameShop,
+    objectId: string,
+    profileId: string
+  ) {
+    return this.change(shop, objectId, (state) => {
+      const profiles = (state.profiles ?? []).filter(
+        (item) => item.id !== profileId
+      );
+      if (state.activeProfileId !== profileId) return { ...state, profiles };
+      const next = profiles[0];
+      return {
+        ...state,
+        profiles,
+        mods: next ? applyModProfile(state.mods, next.entries) : state.mods,
+        activeProfileId: next?.id ?? null,
+      };
+    });
   }
 
   public static setEnabled(

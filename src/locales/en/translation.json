@@ -4796,6 +4796,15 @@
     "fomod_waiting": "Installer waiting for your options",
     "fomod_choose": "Choose options",
     "fomod_discard": "Discard",
-    "fomod_chosen_hint": "Installed through its installer with the options you picked."
+    "fomod_chosen_hint": "Installed through its installer with the options you picked.",
+    "profile": "Profile",
+    "profile_default": "Default",
+    "profile_name": "Profile name",
+    "profile_name_placeholder": "For example: Vanilla+, Full modpack",
+    "profile_save": "Save profile",
+    "profile_cancel": "Cancel",
+    "profile_new": "New profile",
+    "profile_new_hint": "Save the list as it is now as a profile; changes then go into the active profile, and switching profiles swaps which mods are on and their order.",
+    "profile_delete": "Delete profile"
   }
 }

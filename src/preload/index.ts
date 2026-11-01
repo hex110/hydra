@@ -1318,6 +1318,17 @@ contextBridge.exposeInMainWorld("electron", {
   ) => ipcRenderer.invoke("completeFomod", shop, objectId, pendingId, selected),
   cancelFomod: (shop: GameShop, objectId: string, pendingId: string) =>
     ipcRenderer.invoke("cancelFomod", shop, objectId, pendingId),
+  createModProfile: (
+    shop: GameShop,
+    objectId: string,
+    name: string,
+    defaultName: string
+  ) =>
+    ipcRenderer.invoke("createModProfile", shop, objectId, name, defaultName),
+  switchModProfile: (shop: GameShop, objectId: string, profileId: string) =>
+    ipcRenderer.invoke("switchModProfile", shop, objectId, profileId),
+  deleteModProfile: (shop: GameShop, objectId: string, profileId: string) =>
+    ipcRenderer.invoke("deleteModProfile", shop, objectId, profileId),
   installModFromFile: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("installModFromFile", shop, objectId),
   setModEnabled: (

@@ -1,4 +1,8 @@
-import type { InstalledMod, NexusModFile } from "../types/mods.types.js";
+import type {
+  InstalledMod,
+  ModProfile,
+  NexusModFile,
+} from "../types/mods.types.js";
 
 /**
  * Where a game loads mods from, relative to its folder, by Nexus game domain.
@@ -247,4 +251,31 @@ export const getMissingModRequirements = (
     (requirement) =>
       requirement.modId !== null && !installedModIds.has(requirement.modId)
   );
+};
+
+/** The list as a profile stores it: order and on/off. */
+export const snapshotModProfile = (
+  mods: Pick<InstalledMod, "id" | "enabled">[]
+): ModProfile["entries"] =>
+  mods.map((mod) => ({ modId: mod.id, enabled: mod.enabled }));
+
+/**
+ * Puts the mods in a profile's order with its on/off; mods installed since
+ * the profile was saved go last, turned off.
+ */
+export const applyModProfile = <T extends Pick<InstalledMod, "id" | "enabled">>(
+  mods: T[],
+  entries: ModProfile["entries"]
+): T[] => {
+  const byId = new Map(mods.map((mod) => [mod.id, mod]));
+  const ordered = entries.flatMap((entry) => {
+    const mod = byId.get(entry.modId);
+    if (!mod) return [];
+    byId.delete(entry.modId);
+    return [{ ...mod, enabled: entry.enabled }];
+  });
+  return [
+    ...ordered,
+    ...[...byId.values()].map((mod) => ({ ...mod, enabled: false })),
+  ];
 };

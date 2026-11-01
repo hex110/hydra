@@ -256,7 +256,7 @@ in the sections below.
     4. [x] `nxm://` links
     5. [x] Requirements (listed and flagged, not installed by themselves)
     6. [x] FOMOD options (an installer window with the FOMOD's pages)
-    7. [ ] Profiles
+    7. [x] Profiles (several mod lists per game, switch redeploys)
 18. **In-game overlay** (was phase 12 item 5). Design:
     [In-game overlay](overlay-design.md).
     1. [x] In-game notices through MangoHud ([In-game notices](features/in-game-notices.md))

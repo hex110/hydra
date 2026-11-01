@@ -24,6 +24,7 @@ import type {
 
 import { NexusBrowser } from "./nexus-browser";
 import { FomodWizard } from "./fomod-wizard";
+import { ModProfiles } from "./mod-profiles";
 import "./mods.scss";
 
 export const useModActionToast = () => {
@@ -177,6 +178,16 @@ export default function Mods() {
             </Button>
           </div>
         </header>
+
+        {gameMods && (
+          <ModProfiles
+            shop={shop}
+            objectId={objectId}
+            gameMods={gameMods}
+            busy={busy}
+            run={run}
+          />
+        )}
 
         {gameMods && gameMods.pendingFomods.length > 0 && (
           <ul className="mods__list">

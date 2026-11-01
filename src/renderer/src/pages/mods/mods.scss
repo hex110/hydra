@@ -278,6 +278,15 @@
     gap: globals.$spacing-unit;
   }
 
+  &__profiles,
+  &__profile-form,
+  &__profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: globals.$spacing-unit;
+  }
+
   &__requirements {
     display: flex;
     flex-direction: column;
