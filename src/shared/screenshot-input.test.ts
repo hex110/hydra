@@ -24,7 +24,8 @@ const hotkey = (
 
 describe("validateScreenshotHotkey", () => {
   const cases: [string, ScreenshotHotkeyCandidate, string | null][] = [
-    ["default F10", hotkey("F10"), null],
+    ["default F12", hotkey("F12"), null],
+    ["F10", hotkey("F10"), null],
     ["F12 alone", hotkey("F12"), null],
     ["PrintScreen alone", hotkey("PrintScreen"), null],
     ["numpad digit alone", hotkey("Numpad5"), "hotkey_modifier_required"],

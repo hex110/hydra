@@ -1,7 +1,8 @@
 import type { ScreenshotGamepadButton, ScreenshotHotkeyBinding } from "@types";
 
+// F12 like Steam: Hydra Plus gives F10 to ReShade's overlay.
 export const DEFAULT_SCREENSHOT_HOTKEY: Readonly<ScreenshotHotkeyBinding> = {
-  key: "F10",
+  key: "F12",
   ctrl: false,
   alt: false,
   shift: false,
