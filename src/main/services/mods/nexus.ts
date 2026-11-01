@@ -58,6 +58,20 @@ export const searchNexusGames = async (
   return data.games.nodes;
 };
 
+const GAME_BY_DOMAIN_QUERY = `query Game($domain: String!) {
+  game(domainName: $domain) { id domainName name }
+}`;
+
+export const findNexusGameByDomain = async (
+  domain: string
+): Promise<NexusGameMatch | null> => {
+  const data = await query<{ game: NexusGameMatch | null }>(
+    GAME_BY_DOMAIN_QUERY,
+    { domain }
+  );
+  return data.game;
+};
+
 /** The Nexus game for a library title, when one matches it exactly. */
 export const findNexusGame = async (
   title: string
@@ -172,4 +186,15 @@ export const getNexusModFiles = async (
     uploadedAt: file.date,
     description: file.description,
   }));
+};
+
+const MOD_QUERY = `query Mod($modId: ID!, $gameId: ID!) {
+  mod(modId: $modId, gameId: $gameId) { name version }
+}`;
+
+export const getNexusModName = async (gameId: number, modId: number) => {
+  const data = await query<{
+    mod: { name: string; version: string | null } | null;
+  }>(MOD_QUERY, { modId, gameId });
+  return data.mod?.name ?? null;
 };

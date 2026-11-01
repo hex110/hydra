@@ -55,9 +55,20 @@ Integrations**; TorBox allows 100 Nexus links a day. Without a token the
 page says so, and each file offers **Open on Nexus Mods** instead, for a
 manual download and **Install from file**.
 
+## Nexus's Mod Manager Download button
+
+Nexus's own download button opens `nxm://<game>/mods/<mod>/files/<file>`.
+With **Use Hydra for those buttons** on the Mods page (shown until Hydra is
+the handler), Hydra installs the file into the library game it belongs to:
+the game whose stored Nexus match has that domain, else the one game whose
+title matches, and opens its Mods page while TorBox fetches the file. A
+desktop notification says when it is done, or that no game matched. The
+desktop file declares `x-scheme-handler/nxm`; the button sets Hydra as the
+default (`xdg-mime`), so another mod manager keeps the links until then.
+
 ## Not yet
 
-`nxm://` links from Nexus's "Mod Manager Download" button, requirements,
+Requirements,
 FOMOD options, Bethesda plugin load order, profiles, mods in the Wine prefix
 (`Documents/My Games`), Wabbajack and other sites. See the design's build
 order.

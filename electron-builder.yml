@@ -130,6 +130,7 @@ linux:
   mimeTypes:
     - x-scheme-handler/hydralauncher
     - x-scheme-handler/hydraplus
+    - x-scheme-handler/nxm
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

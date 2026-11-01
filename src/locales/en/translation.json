@@ -4710,6 +4710,10 @@
     "error_game_running": "Close the game first: mods can't change while it runs.",
     "error_not_found": "The game is no longer in the library.",
     "error_failed": "Something went wrong. The log has the details.",
-    "page_title": "{{game}}: mods"
+    "page_title": "{{game}}: mods",
+    "nxm_hint": "Nexus Mods' own Mod Manager Download buttons can install straight into Hydra too.",
+    "nxm_register": "Use Hydra for those buttons",
+    "nxm_no_game": "{{game}} isn't in your library with an executable, so the mod has nowhere to go.",
+    "nxm_installed": "Installed {{mod}} in {{game}}."
   }
 }

@@ -1285,6 +1285,8 @@ contextBridge.exposeInMainWorld("electron", {
   getNexusModFiles: (gameId: number, modId: number) =>
     ipcRenderer.invoke("getNexusModFiles", gameId, modId),
   hasTorBoxToken: () => ipcRenderer.invoke("hasTorBoxToken"),
+  isNxmHandler: () => ipcRenderer.invoke("isNxmHandler"),
+  registerNxmHandler: () => ipcRenderer.invoke("registerNxmHandler"),
   installNexusModFile: (
     shop: GameShop,
     objectId: string,

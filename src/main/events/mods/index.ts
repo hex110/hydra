@@ -16,6 +16,7 @@ import {
   searchNexusMods,
 } from "@main/services/mods/nexus";
 import { WindowManager } from "@main/services/window-manager";
+import { isNxmHandler, registerNxmHandler } from "@main/services/mods/nxm";
 import { registerEvent } from "../register-event";
 
 registerEvent("getGameMods", (_event, shop: GameShop, objectId: string) =>
@@ -110,3 +111,7 @@ registerEvent(
 registerEvent("checkModUpdates", (_event, shop: GameShop, objectId: string) =>
   checkModUpdates(shop, objectId)
 );
+
+registerEvent("isNxmHandler", () => isNxmHandler());
+
+registerEvent("registerNxmHandler", () => registerNxmHandler());

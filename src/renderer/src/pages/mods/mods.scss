@@ -248,6 +248,14 @@
     }
   }
 
+  &__nxm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+    flex-wrap: wrap;
+  }
+
   &__wrong-game {
     font-size: globals.$small-font-size;
     color: globals.$body-color;

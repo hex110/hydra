@@ -41,6 +41,7 @@ import {
 import { isWaylandSession } from "./services/linux-game-capture-session";
 import { refreshPortableShortcutLauncher } from "./helpers/shortcut-launch";
 import { registerLinuxSchemeHandler } from "./helpers/linux-scheme-handler";
+import { handleNxmLink } from "./services/mods/nxm";
 import { lookupCachedPlatform } from "./events/library/get-library";
 import { loadState } from "./main";
 import {
@@ -98,7 +99,7 @@ const PROTOCOL = "hydralauncher";
 // Hydra Plus's own scheme, which upstream Hydra never claims; the browser
 // add-on uses it.
 const PLUS_PROTOCOL = "hydraplus";
-const DEEP_LINK_PATTERN = /^(hydralauncher|hydraplus):\/\//;
+const DEEP_LINK_PATTERN = /^(hydralauncher|hydraplus|nxm):\/\//;
 
 // Register the custom schemes as privileged so the renderer can fetch them
 // (supportFetchAPI) and use the results on a canvas without tainting it
@@ -352,6 +353,11 @@ const parseStoreGameDeepLink = (url: URL) => {
 
 const handleDeepLinkPath = (uri?: string) => {
   if (!uri) return;
+
+  if (uri.toLowerCase().startsWith("nxm://")) {
+    void handleNxmLink(uri);
+    return;
+  }
 
   try {
     const url = new URL(uri);

@@ -56,6 +56,7 @@ export function NexusBrowser({
   const [nexusGame, setNexusGame] = useState<NexusGameMatch | null>(null);
   const [gameLoaded, setGameLoaded] = useState(false);
   const [hasTorBox, setHasTorBox] = useState(true);
+  const [isNxmHandler, setIsNxmHandler] = useState(true);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<NexusModSort>("downloads");
   const [mods, setMods] = useState<NexusMod[]>([]);
@@ -79,6 +80,10 @@ export function NexusBrowser({
       .hasTorBoxToken()
       .then(setHasTorBox)
       .catch(() => setHasTorBox(false));
+    window.electron
+      .isNxmHandler()
+      .then(setIsNxmHandler)
+      .catch(() => setIsNxmHandler(true));
   }, [shop, objectId]);
 
   const load = useCallback(
@@ -214,6 +219,20 @@ export function NexusBrowser({
       </header>
 
       {!hasTorBox && <p className="mods__notice">{t("no_torbox")}</p>}
+
+      {hasTorBox && !isNxmHandler && (
+        <div className="mods__nxm">
+          <p className="mods__hint">{t("nxm_hint")}</p>
+          <Button
+            theme="outline"
+            onClick={async () =>
+              setIsNxmHandler(await window.electron.registerNxmHandler())
+            }
+          >
+            {t("nxm_register")}
+          </Button>
+        </div>
+      )}
 
       {gameLoaded && !nexusGame && gamePicker}
 

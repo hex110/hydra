@@ -674,6 +674,8 @@ declare global {
       modId: number
     ) => Promise<NexusModFile[]>;
     hasTorBoxToken: () => Promise<boolean>;
+    isNxmHandler: () => Promise<boolean>;
+    registerNxmHandler: () => Promise<boolean>;
     installNexusModFile: (
       shop: GameShop,
       objectId: string,
