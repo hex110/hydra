@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import type { CatalogueRowDetails } from "@shared";
+import type { StoreGameFacts } from "@shared";
 import type { GameShop } from "@types";
 import { logger } from "@renderer/logger";
 
 const CHUNK_SIZE = 10;
 
-const known = new Map<string, CatalogueRowDetails>();
+const known = new Map<string, StoreGameFacts>();
 
-/** Score, How Long to Beat, size and screenshots for the rows on screen. */
+/** Reviews, score, How Long to Beat, size and screenshots for the games on screen. */
 export function useCatalogueRowDetails(
-  games: { shop: GameShop; objectId: string; title: string }[]
+  games: {
+    shop: GameShop;
+    objectId: string;
+    title: string;
+    releaseYear?: number | null;
+  }[]
 ) {
   const [details, setDetails] = useState(() => new Map(known));
   const keys = games.map((game) => `${game.shop}:${game.objectId}`).join("|");
@@ -28,7 +33,12 @@ export function useCatalogueRowDetails(
       for (let index = 0; index < missing.length; index += CHUNK_SIZE) {
         const chunk = missing.slice(index, index + CHUNK_SIZE);
         const result = await window.electron.getCatalogueRowDetails(
-          chunk.map(({ shop, objectId, title }) => ({ shop, objectId, title }))
+          chunk.map(({ shop, objectId, title, releaseYear }) => ({
+            shop,
+            objectId,
+            title,
+            releaseYear,
+          }))
         );
         for (const [key, value] of Object.entries(result))
           known.set(key, value);

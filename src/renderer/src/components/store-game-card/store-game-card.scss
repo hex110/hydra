@@ -1,0 +1,65 @@
+@use "../../scss/globals.scss";
+
+.store-game-card {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  scroll-snap-align: start;
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    min-width: 0;
+    padding: 0 calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+  }
+
+  // The whole card opens the game: the title's link covers it, and the action
+  // buttons sit above.
+  &__title::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  &__title {
+    overflow: hidden;
+    color: globals.$muted-color;
+    font-size: globals.$body-font-size;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  &__reason {
+    overflow: hidden;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &--skeleton {
+    pointer-events: none;
+  }
+
+  &__skeleton-cover {
+    aspect-ratio: 92 / 43;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  // The skeleton's colours come from tokens, not the library's light theme.
+  &--skeleton .react-loading-skeleton {
+    --base-color: #{globals.$skeleton-base-color};
+    --highlight-color: #{globals.$skeleton-highlight-color};
+  }
+}

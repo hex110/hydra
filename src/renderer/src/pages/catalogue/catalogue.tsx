@@ -26,6 +26,11 @@ import {
 import "./catalogue.scss";
 
 import { Button } from "@renderer/components/button/button";
+import {
+  StoreGameCard,
+  StoreGameCardSkeleton,
+} from "@renderer/components/store-game-card/store-game-card";
+import { StoreGameRow } from "@renderer/components/store-game-row/store-game-row";
 import { CheckboxField } from "@renderer/components/checkbox-field/checkbox-field";
 import { isGameReadyToPlay } from "@renderer/helpers";
 import { SelectField } from "@renderer/components/select-field/select-field";
@@ -41,7 +46,6 @@ import { CatalogueModeToggle } from "./catalogue-mode-toggle";
 import { getClassicsPlatformGroup } from "./classics-platform-group";
 import { FilterItem } from "./filter-item";
 import { FilterSection } from "./filter-section";
-import { GameItem } from "./game-item";
 import { GameItemClassics } from "./game-item-classics";
 import { ListUnorderedIcon, TableIcon } from "@primer/octicons-react";
 import { CatalogueFrontPage } from "./catalogue-front-page";
@@ -815,15 +819,6 @@ export default function Catalogue() {
     selectedFiltersCount === 0 &&
     selectedSortValue === "popularity:desc";
 
-  const ownedKeys = useMemo(
-    () =>
-      new Set(
-        [...libraryStates]
-          .filter(([, state]) => isOwnedLibraryState(state))
-          .map(([key]) => key)
-      ),
-    [libraryStates]
-  );
   const rowDetails = useCatalogueRowDetails(
     mode === "modern" && !showSkeleton ? visibleResults : []
   );
@@ -1011,7 +1006,7 @@ export default function Catalogue() {
             <>
               <CatalogueFrontPage
                 downloadSources={downloadSources}
-                ownedKeys={ownedKeys}
+                libraryStates={libraryStates}
               />
               <h2 className="catalogue__all-games">{t("all_games")}</h2>
             </>
@@ -1024,14 +1019,18 @@ export default function Catalogue() {
           >
             {showSkeleton ? (
               <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
-                {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    className={cn("catalogue__skeleton", {
-                      "catalogue__skeleton--classics": mode === "classics",
-                    })}
-                  />
-                ))}
+                {Array.from({ length: PAGE_SIZE }).map((_, i) =>
+                  mode === "modern" && effectiveView === "grid" ? (
+                    <StoreGameCardSkeleton key={i} size="grid" />
+                  ) : (
+                    <Skeleton
+                      key={i}
+                      className={cn("catalogue__skeleton", {
+                        "catalogue__skeleton--classics": mode === "classics",
+                      })}
+                    />
+                  )
+                )}
               </SkeletonTheme>
             ) : searchFailed ? (
               <p className="catalogue__search-error">{t("search_failed")}</p>
@@ -1044,19 +1043,24 @@ export default function Catalogue() {
                 />
               ))
             ) : (
-              visibleResults.map((game) => (
-                <GameItem
-                  key={game.id}
-                  game={game}
-                  libraryState={libraryStates.get(catalogueKey(game))}
-                  details={rowDetails.get(catalogueKey(game))}
-                  view={effectiveView}
-                  canDownload={
+              visibleResults.map((game) => {
+                const key = catalogueKey(game);
+                const props = {
+                  game,
+                  facts: rowDetails.get(key),
+                  libraryState: libraryStates.get(key),
+                  sources: game.downloadSources,
+                  canDownload:
                     game.downloadSources.length > 0 ||
-                    locallyDownloadable.has(catalogueKey(game))
-                  }
-                />
-              ))
+                    locallyDownloadable.has(key),
+                };
+
+                return effectiveView === "grid" ? (
+                  <StoreGameCard key={game.id} size="grid" {...props} />
+                ) : (
+                  <StoreGameRow key={game.id} {...props} />
+                );
+              })
             )}
 
             {!showSkeleton && !searchFailed && results.length > 0 && (

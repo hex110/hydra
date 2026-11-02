@@ -4,6 +4,13 @@ import { registerEvent } from "../register-event";
 
 registerEvent(
   "getCatalogueRowDetails",
-  (_event, games: { shop: GameShop; objectId: string; title: string }[]) =>
-    getCatalogueRowDetails(Array.isArray(games) ? games : [])
+  (
+    _event,
+    games: {
+      shop: GameShop;
+      objectId: string;
+      title: string;
+      releaseYear?: number | null;
+    }[]
+  ) => getCatalogueRowDetails(Array.isArray(games) ? games : [])
 );

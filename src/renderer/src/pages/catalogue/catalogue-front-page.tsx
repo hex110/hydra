@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import Skeleton from "react-loading-skeleton";
 import { orderBy } from "lodash-es";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  QuestionIcon,
-  SyncIcon,
-} from "@primer/octicons-react";
+import { ChevronRightIcon, PlusIcon } from "@primer/octicons-react";
 
-import { Button } from "@renderer/components";
+import {
+  Button,
+  StoreGameCard,
+  StoreGameChip,
+  StoreGameMeta,
+  StoreShelf,
+} from "@renderer/components";
+import { StoreGameCover } from "@renderer/components/store-game-card/store-game-cover";
+import { Link } from "@renderer/components/link/link";
+import type { StoreGameFacts } from "@shared";
 import { buildGameDetailsPath, ensureArray } from "@renderer/helpers";
 import {
   useAppDispatch,
@@ -31,7 +34,12 @@ import type {
 } from "@types";
 import { usePlayActivity } from "../home/use-play-activity";
 import { useHomeSuggestions } from "../home/use-home-suggestions";
-import { catalogueKey } from "./catalogue-library-state";
+import {
+  catalogueKey,
+  isOwnedLibraryState,
+  type CatalogueLibraryState,
+} from "./catalogue-library-state";
+import { useCatalogueRowDetails } from "./use-catalogue-row-details";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
 import "./catalogue-front-page.scss";
 
@@ -55,11 +63,13 @@ interface FrontPageGame {
   libraryImageUrl: string | null;
   /** Why the game is shown, e.g. "Because you played …". */
   reason?: string;
+  /** The version AnkerGames lists it at. */
+  version?: string;
 }
 
 interface CatalogueFrontPageProps {
   downloadSources: DownloadSource[];
-  ownedKeys: Set<string>;
+  libraryStates: Map<string, CatalogueLibraryState>;
 }
 
 // Kept while Hydra runs, so returning to the catalogue doesn't reflow the page.
@@ -70,13 +80,13 @@ const shelvesCache = new Map<
 
 const toFrontPageGame = (
   game: Pick<ShopAssets, "shop" | "objectId" | "title" | "libraryImageUrl">,
-  reason?: string
+  extra: Pick<FrontPageGame, "reason" | "version"> = {}
 ): FrontPageGame => ({
   shop: game.shop,
   objectId: game.objectId,
   title: game.title,
   libraryImageUrl: game.libraryImageUrl,
-  reason,
+  ...extra,
 });
 
 const EMPTY_ANKERGAMES_FEED: AnkerGamesFeed = {
@@ -88,75 +98,45 @@ const EMPTY_ANKERGAMES_FEED: AnkerGamesFeed = {
 };
 
 const fromAnkerGames = (game: AnkerGamesFeedGame): FrontPageGame =>
-  toFrontPageGame(game, game.version ?? undefined);
+  toFrontPageGame(game, { version: game.version ?? undefined });
 
-function Capsule({ game }: Readonly<{ game: FrontPageGame }>) {
-  const navigate = useNavigate();
-
-  return (
-    <button
-      type="button"
-      className="catalogue-front-page__capsule"
-      onClick={() => navigate(buildGameDetailsPath(game))}
-      title={game.title}
-    >
-      {game.libraryImageUrl ? (
-        <img src={game.libraryImageUrl} alt="" loading="lazy" />
-      ) : (
-        <span className="catalogue-front-page__capsule-placeholder">
-          <QuestionIcon size={24} />
-        </span>
-      )}
-      <span className="catalogue-front-page__capsule-title">{game.title}</span>
-      {game.reason && (
-        <span className="catalogue-front-page__capsule-reason">
-          {game.reason}
-        </span>
-      )}
-    </button>
-  );
-}
-
-function Shelf({
+function FrontPageShelf({
   title,
   games,
   isLoading,
-  isRefreshing = false,
+  isRefreshing,
+  libraryStates,
+  facts,
 }: Readonly<{
   title: string;
   games: FrontPageGame[];
   isLoading: boolean;
   /** Shows the games already known and says that newer ones are on the way. */
   isRefreshing?: boolean;
+  libraryStates: Map<string, CatalogueLibraryState>;
+  facts: Map<string, StoreGameFacts>;
 }>) {
-  const { t } = useTranslation("catalogue");
   if (!isLoading && games.length === 0) return null;
 
   return (
-    <section className="catalogue-front-page__shelf">
-      <h2>
-        {title}
-        {isRefreshing && (
-          <SyncIcon
-            size={14}
-            className="catalogue-front-page__refreshing"
-            aria-label={t("ankergames_refreshing")}
+    <StoreShelf title={title} isLoading={isLoading} isRefreshing={isRefreshing}>
+      {games.map((game) => {
+        const key = catalogueKey(game);
+        return (
+          <StoreGameCard
+            key={key}
+            size="shelf"
+            game={game}
+            facts={facts.get(key)}
+            libraryState={libraryStates.get(key)}
+            reason={game.reason}
+            badge={
+              game.version && <StoreGameChip>{game.version}</StoreGameChip>
+            }
           />
-        )}
-      </h2>
-      <div className="catalogue-front-page__row">
-        {isLoading
-          ? Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton
-                key={index}
-                className="catalogue-front-page__capsule-skeleton"
-              />
-            ))
-          : games.map((game) => (
-              <Capsule key={catalogueKey(game)} game={game} />
-            ))}
-      </div>
-    </section>
+        );
+      })}
+    </StoreShelf>
   );
 }
 
@@ -173,10 +153,14 @@ function DiscoveryQueue({
     if (position >= queue.length && queue.length > 0) setPosition(0);
   }, [position, queue.length]);
 
-  if (queue.length === 0) return null;
+  const current = Math.min(position, queue.length - 1);
+  const game = queue[current];
+  const facts = useCatalogueRowDetails(game ? [game] : []);
 
-  const game = queue[Math.min(position, queue.length - 1)];
-  const next = () => setPosition((current) => (current + 1) % queue.length);
+  if (!game) return null;
+
+  const gameFacts = facts.get(catalogueKey(game));
+  const next = () => setPosition((value) => (value + 1) % queue.length);
 
   const addToLibrary = async () => {
     setIsAdding(true);
@@ -200,28 +184,21 @@ function DiscoveryQueue({
     <section className="catalogue-front-page__shelf">
       <h2>{t("discovery_queue")}</h2>
       <div className="catalogue-front-page__queue">
-        <button
-          type="button"
-          className="catalogue-front-page__queue-cover"
-          onClick={() => navigate(buildGameDetailsPath(game))}
-        >
-          {game.libraryImageUrl ? (
-            <img src={game.libraryImageUrl} alt={game.title} />
-          ) : (
-            <span className="catalogue-front-page__capsule-placeholder">
-              <QuestionIcon size={32} />
-            </span>
-          )}
-        </button>
+        <div className="catalogue-front-page__queue-cover">
+          <StoreGameCover game={game} previewUrl={null} variant="card" />
+        </div>
         <div className="catalogue-front-page__queue-details">
           <span className="catalogue-front-page__queue-position">
             {t("discovery_queue_position", {
-              position: Math.min(position, queue.length - 1) + 1,
+              position: current + 1,
               count: queue.length,
             })}
           </span>
-          <h3>{game.title}</h3>
+          <h3>
+            <Link to={buildGameDetailsPath(game)}>{game.title}</Link>
+          </h3>
           {game.reason && <p>{game.reason}</p>}
+          <StoreGameMeta facts={gameFacts} pending={!gameFacts} />
           <div className="catalogue-front-page__queue-actions">
             <Button
               theme="outline"
@@ -251,13 +228,23 @@ function DiscoveryQueue({
  */
 export function CatalogueFrontPage({
   downloadSources,
-  ownedKeys,
+  libraryStates,
 }: Readonly<CatalogueFrontPageProps>) {
   const { t } = useTranslation("catalogue");
   const dispatch = useAppDispatch();
   const { library, updateLibrary } = useLibrary();
   const tagLabels = useSteamTagLabels();
   const popularTags = usePopularSteamTags();
+
+  const ownedKeys = useMemo(
+    () =>
+      new Set(
+        [...libraryStates]
+          .filter(([, state]) => isOwnedLibraryState(state))
+          .map(([key]) => key)
+      ),
+    [libraryStates]
+  );
 
   const groupedLibrary = useMemo(
     () => groupLibraryGames(library, []),
@@ -398,10 +385,9 @@ export function CatalogueFrontPage({
   const recommended = useMemo(
     () =>
       suggestions.map(({ game, becauseOf }) =>
-        toFrontPageGame(
-          game,
-          t("because_you_played", { ns: "home", title: becauseOf })
-        )
+        toFrontPageGame(game, {
+          reason: t("because_you_played", { ns: "home", title: becauseOf }),
+        })
       ),
     [suggestions, t]
   );
@@ -450,35 +436,55 @@ export function CatalogueFrontPage({
     );
   }
 
+  const featuredGames = notOwned(featured);
+  const latestGames = ankerGamesRow(ankerGames?.latest);
+  const trendingGames = ankerGamesRow(ankerGames?.trending);
+  const recommendedGames = notOwned(recommended);
+  const newGames = notOwned(newReleases);
+  const facts = useCatalogueRowDetails([
+    ...featuredGames,
+    ...latestGames,
+    ...trendingGames,
+    ...recommendedGames,
+    ...newGames,
+  ]);
+
+  const shelfProps = { libraryStates, facts };
+
   return (
     <div className="catalogue-front-page">
-      <Shelf
+      <FrontPageShelf
         title={t("featured")}
-        games={notOwned(featured)}
+        games={featuredGames}
         isLoading={isLoading}
+        {...shelfProps}
       />
-      <Shelf
+      <FrontPageShelf
         title={t("ankergames_new")}
-        games={ankerGamesRow(ankerGames?.latest)}
+        games={latestGames}
         isLoading={ankerGamesLoading(ankerGames?.latest)}
         isRefreshing={ankerGames?.refreshing}
+        {...shelfProps}
       />
-      <Shelf
+      <FrontPageShelf
         title={t("ankergames_trending")}
-        games={ankerGamesRow(ankerGames?.trending)}
+        games={trendingGames}
         isLoading={ankerGamesLoading(ankerGames?.trending)}
         isRefreshing={ankerGames?.refreshing}
+        {...shelfProps}
       />
-      <Shelf
+      <FrontPageShelf
         title={t("recommended_for_you")}
-        games={notOwned(recommended)}
+        games={recommendedGames}
         isLoading={isLoadingSuggestions}
+        {...shelfProps}
       />
       <DiscoveryQueue queue={queue} onAdded={updateLibrary} />
-      <Shelf
+      <FrontPageShelf
         title={t("new_releases")}
-        games={notOwned(newReleases)}
+        games={newGames}
         isLoading={isLoading}
+        {...shelfProps}
       />
       {tagList}
     </div>

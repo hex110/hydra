@@ -3,6 +3,36 @@
 The catalogue plays the part of Steam's store. Hydra Plus adds a front page,
 a grid view, more data per game and a list that keeps your place.
 
+## One card, one row, one shelf
+
+Every store game in the catalogue is the same thing wherever it appears
+(`components/`):
+
+- `StoreGameCard`: Steam's wide header image (460×215), with the library
+  badge top-left, the ProtonDB tier bottom-right (Linux only), and under it
+  the title, the reason it is shown (when there is one) and the facts line.
+  The whole card opens the game; the buttons sit above that.
+- `StoreGameRow`: the same content beside a smaller cover, for the list view.
+- `StoreShelf`: a row of cards with a title, an optional **See all**, and
+  buttons to page through it. It shows whole cards only: 2 under 900 px of
+  shelf width, 3 under 1300, 4 under 1700, otherwise 5, measured on the shelf
+  itself, not the window. The vertical wheel keeps scrolling the page.
+
+**Facts line**, reserved at a fixed height so cards don't move when the facts
+arrive: up to three Steam tags, then chips for the **review score** (Steam's
+share of positive reviews, blue at 70 % and up, tan 40–69, orange under 40;
+none under 10 reviews, as on Steam; the tooltip says "Very Positive · 62,210
+reviews"), the release year, How Long to Beat's main story, the typical
+download size, and Metacritic. A chip with no value is left out. AnkerGames
+cards add their version as a chip.
+
+**Buttons**, on hover and on keyboard focus: download (when the game can be
+downloaded), wishlist star, and **+**. A wishlisted star and the added check
+stay visible, dimmed. Resting the pointer on a card cycles through
+screenshots (see below).
+
+Skeletons use the dark token colours, not the skeleton library's light theme.
+
 ## Front page
 
 With no search, no filters and the default sort, the catalogue opens with:
@@ -12,9 +42,9 @@ With no search, no filters and the default sort, the catalogue opens with:
   additions and its trending games ([details](ankergames.md#catalogue-rows)).
 - **Recommended for you**: the home page's
   [suggestions](home.md#suggested-for-you), each with the game it came from.
-- **Discovery queue**: one game at a time from the two rows above and the
-  new releases, with **Open**, **Add to library** and **Next**. Games added
-  leave the queue.
+- **Discovery queue**: one game at a time from the rows above and the new
+  releases, as a compact card with its facts and **Open**, **Add to
+  library** and **Next**. Games added leave the queue.
 - **New releases on your sources**: the newest games released up to this
   year. Sorting the whole catalogue by date shows mostly games nobody has
   uploaded, so this row only takes games your download sources have.
@@ -54,11 +84,14 @@ record. **Hide my games** keeps them.
 
 ## Rows and grid
 
-**List** and **Grid** in the header switch between upstream's rows and a grid
-of larger covers; the choice is remembered. Classics keep their own layout.
+**List** and **Grid** in the header switch between rows and a grid of cards
+([one card, one row](#one-card-one-row-one-shelf)); the choice is remembered.
+Classics keep their own layout.
 
-Once a row is on screen, Hydra fills in:
+Once a game is on screen, Hydra fills in:
 
+- Steam's **review score** and **release year** (the search result's year
+  when it has one), from the same Steam request as the tags;
 - the **Metacritic** score, coloured as on Metacritic (75 and up green, 50–74
   yellow, under 50 red);
 - How Long to Beat's **main story** time;
@@ -73,10 +106,10 @@ short pause. Steam's trailers only come as DASH/HLS streams, which a plain
 video element can't play, so previews use screenshots.
 
 The data comes from Hydra's API: the batched Steam store details (score and
-screenshots, one request per ten rows), the How Long to Beat endpoint and the
+screenshots, one request per ten games), the How Long to Beat endpoint and the
 download-sources list per game. The main process keeps it for an hour.
 
-A row or grid card for a game that can be downloaded shows a **Download**
+A card or row for a game that can be downloaded shows a **Download**
 button next to **+** on hover. It opens the game page with its download
 options, which go straight to the download settings when there is one
 option. Whether a game can be downloaded comes from its sources and, for

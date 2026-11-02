@@ -1,0 +1,79 @@
+@use "../../scss/globals.scss";
+
+.store-game-meta {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit / 2);
+  min-width: 0;
+  font-size: globals.$small-font-size;
+  color: globals.$body-color;
+
+  &__tags,
+  &__chips {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    height: calc(globals.$spacing-unit * 2.5);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  &__tags {
+    display: block;
+    height: calc(globals.$spacing-unit * 2);
+    line-height: calc(globals.$spacing-unit * 2);
+    text-overflow: ellipsis;
+  }
+
+  &__chips {
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &--pending {
+    // The same height as the two lines above.
+    gap: calc(globals.$spacing-unit / 2);
+    height: calc(globals.$spacing-unit * 5);
+    justify-content: center;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: calc(globals.$spacing-unit / 2);
+    height: calc(globals.$spacing-unit * 2.5);
+    padding: 0 calc(globals.$spacing-unit * 0.75);
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    font-weight: 600;
+
+    &--review-positive {
+      color: globals.$review-positive;
+    }
+
+    &--review-mixed {
+      color: globals.$review-mixed;
+    }
+
+    &--review-negative {
+      color: globals.$review-negative;
+    }
+
+    &--critic {
+      color: globals.$muted-color;
+    }
+
+    &--critic-good {
+      background-color: globals.$critic-good;
+    }
+
+    &--critic-mixed {
+      background-color: globals.$critic-mixed;
+      color: globals.$critic-dark-text;
+    }
+
+    &--critic-bad {
+      background-color: globals.$critic-bad;
+    }
+  }
+}

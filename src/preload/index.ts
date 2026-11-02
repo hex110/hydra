@@ -2813,7 +2813,12 @@ contextBridge.exposeInMainWorld("electron", {
   getSteamSimilarGames: (steamAppId: string) =>
     ipcRenderer.invoke("getSteamSimilarGames", steamAppId),
   getCatalogueRowDetails: (
-    games: { shop: GameShop; objectId: string; title: string }[]
+    games: {
+      shop: GameShop;
+      objectId: string;
+      title: string;
+      releaseYear?: number | null;
+    }[]
   ) => ipcRenderer.invoke("getCatalogueRowDetails", games),
   getFriendsSnapshot: () =>
     ipcRenderer.invoke("getFriendsSnapshot") as Promise<FriendsSnapshot | null>,

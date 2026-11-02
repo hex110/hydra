@@ -1,0 +1,18 @@
+@use "../../scss/globals.scss";
+
+// What a store card and a store row have in common.
+.store-game {
+  position: relative;
+  min-width: 0;
+  color: globals.$body-color;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: globals.$surface-hover-color;
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}

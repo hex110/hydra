@@ -1,22 +1,22 @@
 import type { GameRepack, GameShop, HowLongToBeatCategory } from "@types";
 import { downloadSourcesSublevel } from "@main/level";
 import {
-  buildCatalogueRowDetails,
+  buildStoreGameFacts,
   filterDownloadableRepacks,
   getMatchingDownloadSizes,
   parseBytes,
   parseHowLongToBeat,
-  type CatalogueRowDetails,
+  type StoreGameFacts,
 } from "@shared";
 import { HydraApi } from "./hydra-api";
-import { getSteamStoreTagIds } from "./steam-tags";
+import { getSteamStoreFacts } from "./steam-tags";
 
 const CACHE_MS = 60 * 60 * 1000;
 const MAX_GAMES = 60;
 const CONCURRENCY = 6;
 
 const requestOptions = { needsAuth: false } as const;
-const cache = new Map<string, { at: number; details: CatalogueRowDetails }>();
+const cache = new Map<string, { at: number; details: StoreGameFacts }>();
 
 interface SteamDetailsEntry {
   objectId: string;
@@ -53,6 +53,8 @@ interface CatalogueRowGame {
   shop: GameShop;
   objectId: string;
   title: string;
+  /** From the search result; Steam's release date is the fallback. */
+  releaseYear?: number | null;
 }
 
 const fetchGameExtras = async (
@@ -97,13 +99,13 @@ const fetchGameExtras = async (
 };
 
 /**
- * Score, How Long to Beat, download size and screenshots for catalogue rows.
+ * Reviews, score, How Long to Beat, download size and screenshots for store games.
  * Kept in memory for an hour; the catalogue asks again on every page.
  */
 export const getCatalogueRowDetails = async (
   games: CatalogueRowGame[]
-): Promise<Record<string, CatalogueRowDetails>> => {
-  const result: Record<string, CatalogueRowDetails> = {};
+): Promise<Record<string, StoreGameFacts>> => {
+  const result: Record<string, StoreGameFacts> = {};
   const missing: (CatalogueRowGame & { key: string })[] = [];
 
   for (const game of games.slice(0, MAX_GAMES)) {
@@ -121,9 +123,9 @@ export const getCatalogueRowDetails = async (
   const steamIds = missing
     .filter((game) => game.shop === "steam")
     .map((game) => game.objectId);
-  const [steamDetails, steamTagIds, sources] = await Promise.all([
+  const [steamDetails, steamFacts, sources] = await Promise.all([
     fetchSteamDetails(steamIds),
-    getSteamStoreTagIds(steamIds),
+    getSteamStoreFacts(steamIds),
     downloadSourcesSublevel
       .values()
       .all()
@@ -135,9 +137,16 @@ export const getCatalogueRowDetails = async (
   const worker = async () => {
     for (let game = queue.shift(); game; game = queue.shift()) {
       const extras = await fetchGameExtras(game, sourceIds);
-      const details = buildCatalogueRowDetails({
+      const steam = steamFacts.get(game.objectId);
+      const details = buildStoreGameFacts({
         steamDetails: steamDetails.get(game.objectId),
-        tagIds: steamTagIds.get(game.objectId) ?? [],
+        tagIds: steam?.tagIds ?? [],
+        reviews: steam && {
+          percentPositive: steam.reviewPercent ?? undefined,
+          count: steam.reviewCount ?? undefined,
+        },
+        steamReleaseDate: steam?.releaseDate,
+        releaseYear: game.releaseYear,
         ...extras,
       });
       cache.set(game.key, { at: Date.now(), details });

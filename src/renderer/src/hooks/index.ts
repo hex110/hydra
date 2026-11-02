@@ -41,3 +41,4 @@ export * from "./use-popular-steam-tags";
 export * from "./use-file-icons";
 export * from "./use-drag-text-selection";
 export * from "./use-save-sync-statuses";
+export * from "./use-hover-preview";

@@ -11,10 +11,16 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const STORE_BATCH_SIZE = 50;
 
 let namesById: Promise<Map<string, string>> | null = null;
-const storeTags = new Map<
+const storeFacts = new Map<
   string,
-  { at: number; ids: Promise<string[] | null> }
+  { at: number; facts: Promise<SteamStoreFacts | null> }
 >();
+const EMPTY_FACTS: SteamStoreFacts = {
+  tagIds: [],
+  reviewPercent: null,
+  reviewCount: null,
+  releaseDate: null,
+};
 
 /** Steam tag id → English name. Fetched once per session; a failure is retried next call. */
 export const getSteamTagNamesById = (): Promise<Map<string, string>> => {
@@ -33,58 +39,88 @@ export const getSteamTagNamesById = (): Promise<Map<string, string>> => {
   return namesById;
 };
 
-const requestStoreTagIds = (
+/** What one `GetItems` request tells about a game. */
+export interface SteamStoreFacts {
+  /** Tag ids, most voted first. */
+  tagIds: string[];
+  reviewPercent: number | null;
+  reviewCount: number | null;
+  /** Unix seconds. */
+  releaseDate: number | null;
+}
+
+interface StoreItem {
+  appid?: number;
+  tags?: SteamTagWeight[];
+  reviews?: {
+    summary_filtered?: { review_count?: number; percent_positive?: number };
+  };
+  release?: { steam_release_date?: number };
+}
+
+const positiveNumber = (value: unknown) =>
+  typeof value === "number" && value > 0 ? value : null;
+
+const toStoreFacts = (item: StoreItem): SteamStoreFacts => {
+  const summary = item.reviews?.summary_filtered;
+  const reviewCount = positiveNumber(summary?.review_count);
+
+  return {
+    tagIds: [...(item.tags ?? [])]
+      .sort((a, b) => b.weight - a.weight)
+      .map((tag) => String(tag.tagid)),
+    reviewPercent: reviewCount ? (summary?.percent_positive ?? null) : null,
+    reviewCount,
+    releaseDate: positiveNumber(item.release?.steam_release_date),
+  };
+};
+
+const requestStoreFacts = (
   appIds: string[]
-): Promise<Map<string, string[]> | null> =>
+): Promise<Map<string, SteamStoreFacts> | null> =>
   axios
-    .get<{
-      response?: {
-        store_items?: { appid?: number; tags?: SteamTagWeight[] }[];
-      };
-    }>(ITEMS_URL, {
+    .get<{ response?: { store_items?: StoreItem[] } }>(ITEMS_URL, {
       params: {
         input_json: JSON.stringify({
           ids: appIds.map((appid) => ({ appid: Number(appid) })),
           context: { language: "english", country_code: "US" },
-          data_request: { include_tag_count: 20 },
+          data_request: {
+            include_tag_count: 20,
+            include_reviews: true,
+            include_release: true,
+          },
         }),
       },
       timeout: REQUEST_TIMEOUT_MS,
     })
     .then((response) => {
-      const byApp = new Map<string, string[]>();
+      const byApp = new Map<string, SteamStoreFacts>();
       for (const item of response.data?.response?.store_items ?? []) {
-        if (!item.appid) continue;
-        byApp.set(
-          String(item.appid),
-          [...(item.tags ?? [])]
-            .sort((a, b) => b.weight - a.weight)
-            .map((tag) => String(tag.tagid))
-        );
+        if (item.appid) byApp.set(String(item.appid), toStoreFacts(item));
       }
       return byApp;
     })
     .catch((error) => {
-      logger.error("[SteamTags] Steam tags request failed", error);
+      logger.error("[SteamTags] Steam store items request failed", error);
       return null;
     });
 
 /**
- * Tag ids Steam itself lists for games, most voted first, in one request for
- * those not cached. The catalogue lags behind for new releases, so this covers
- * the games it has no tags for yet. A game is null when Steam could not be
- * reached.
+ * Tags, review summary and release date Steam lists for games, in one request
+ * per 50 games not cached. The catalogue lags behind for new releases, so this
+ * covers the games it has no tags for yet. A game is null when Steam could not
+ * be reached.
  */
-export const getSteamStoreTagIds = async (
+export const getSteamStoreFacts = async (
   appIds: string[]
-): Promise<Map<string, string[] | null>> => {
-  const pending = new Map<string, Promise<string[] | null>>();
+): Promise<Map<string, SteamStoreFacts | null>> => {
+  const pending = new Map<string, Promise<SteamStoreFacts | null>>();
   const missing: string[] = [];
 
   for (const appId of new Set(appIds)) {
-    const cached = storeTags.get(appId);
+    const cached = storeFacts.get(appId);
     if (cached && Date.now() - cached.at < CACHE_MS) {
-      pending.set(appId, cached.ids);
+      pending.set(appId, cached.facts);
     } else {
       missing.push(appId);
     }
@@ -92,26 +128,37 @@ export const getSteamStoreTagIds = async (
 
   for (let index = 0; index < missing.length; index += STORE_BATCH_SIZE) {
     const batch = missing.slice(index, index + STORE_BATCH_SIZE);
-    const request = requestStoreTagIds(batch);
+    const request = requestStoreFacts(batch);
 
     for (const appId of batch) {
-      const ids = request.then((byApp) =>
-        byApp ? (byApp.get(appId) ?? []) : null
+      const facts = request.then((byApp) =>
+        byApp ? (byApp.get(appId) ?? EMPTY_FACTS) : null
       );
-      storeTags.set(appId, { at: Date.now(), ids });
-      pending.set(appId, ids);
-      void ids.then((value) => {
-        if (value === null) storeTags.delete(appId);
+      storeFacts.set(appId, { at: Date.now(), facts });
+      pending.set(appId, facts);
+      void facts.then((value) => {
+        if (value === null) storeFacts.delete(appId);
       });
     }
   }
 
   return new Map(
     await Promise.all(
-      [...pending].map(async ([appId, ids]) => [appId, await ids] as const)
+      [...pending].map(async ([appId, facts]) => [appId, await facts] as const)
     )
   );
 };
+
+/** Tag ids only; null when Steam could not be reached. */
+export const getSteamStoreTagIds = async (
+  appIds: string[]
+): Promise<Map<string, string[] | null>> =>
+  new Map(
+    [...(await getSteamStoreFacts(appIds))].map(([appId, facts]) => [
+      appId,
+      facts ? facts.tagIds : null,
+    ])
+  );
 
 /**
  * A game's most voted Steam tags: the catalogue's tags, or Steam's own for

@@ -291,7 +291,7 @@ in the sections below.
     owner's design pass over the catalogue (continues phase 13 item 8).
     Spec and plan: [Catalogue, phase 20](catalogue-phase-20.md) (start
     there; every step names its files and how to check it).
-    1. [ ] One store card, row and shelf for every store game; the white
+    1. [x] One store card, row and shelf for every store game; the white
            skeletons, shelf scrollbars and AnkerGames subtitles fixed
     2. [ ] Discover, Charts and Browse tabs; Browse toolbar; one Hide my
            games switch for all tabs

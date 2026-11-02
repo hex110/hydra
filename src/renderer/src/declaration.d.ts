@@ -10,7 +10,7 @@ import type {
   NexusModSearchResult,
   NexusModSort,
   AuthPage,
-  CatalogueRowDetails,
+  StoreGameFacts,
   Downloader,
   GameNewsItem,
   GameReception,
@@ -2087,8 +2087,13 @@ declare global {
       steamAppId: string
     ) => Promise<SteamSimilarGame[] | null>;
     getCatalogueRowDetails: (
-      games: { shop: GameShop; objectId: string; title: string }[]
-    ) => Promise<Record<string, CatalogueRowDetails>>;
+      games: {
+        shop: GameShop;
+        objectId: string;
+        title: string;
+        releaseYear?: number | null;
+      }[]
+    ) => Promise<Record<string, StoreGameFacts>>;
     openFriendProfileInMainWindow: (userId: string) => Promise<void>;
     openAddFriendModalInMainWindow: () => Promise<void>;
     showToastInMainWindow: (toast: MainWindowToast) => Promise<boolean>;

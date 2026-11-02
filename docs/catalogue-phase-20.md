@@ -224,6 +224,17 @@ the position ("3 of 24") and **Open**, **Add to library**, **Not
 interested** and **Next**. Not interested here is the same action as on
 cards (step 7); until step 7 lands, leave it out.
 
+**As built (step 1).** Skeletons take their colours from CSS custom
+properties set from tokens in the card's SCSS rather than a `SkeletonTheme`,
+which would need raw colours in TSX. The shared `.store-game` styles and the
+cover (`StoreGameCover`, with the ProtonDB badge moved in beside it) live in
+`components/store-game-card/` and the row imports them. `StoreGameChip`
+(exported with `StoreGameMeta`) is the muted chip used for an AnkerGames
+version. Download-source names, which the old catalogue rows showed, are
+kept: Browse passes them as `sources` and the card or row shows them on one
+line under the facts. `getReviewLabel` (Steam's wording from percent and
+count) sits next to `getReviewTone` in `src/shared/catalogue-row-details.ts`.
+
 Update the patterns table in `docs/features/game-page.md`: a store game is a
 `StoreGameCard` or `StoreGameRow`; `VerticalCoverCard` stays for portrait
 covers outside the catalogue (friends playing, similar games) until step 9.

@@ -52,3 +52,8 @@ export * from "./rich-text-editor/rich-text-limit";
 export * from "./inline-edit-field/inline-edit-field";
 export * from "./rich-text-content/rich-text-content";
 export * from "./hydra-cloud-badge/hydra-cloud-badge";
+export * from "./store-game-card/store-game-card";
+export * from "./store-game-row/store-game-row";
+export * from "./store-game-meta/store-game-meta";
+export * from "./store-game-actions/store-game-actions";
+export * from "./store-shelf/store-shelf";

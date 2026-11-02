@@ -4,14 +4,16 @@ import { describe, it } from "node:test";
 import * as rowDetails from "./catalogue-row-details.ts";
 
 const {
-  buildCatalogueRowDetails,
+  buildStoreGameFacts,
   getCriticScoreTone,
+  getReviewTone,
+  getReviewLabel,
   getMatchingDownloadSizes,
 } = rowDetails;
 
-describe("catalogue row details", () => {
+describe("store game facts", () => {
   it("keeps the score, the median download and a few screenshots", () => {
-    const details = buildCatalogueRowDetails({
+    const details = buildStoreGameFacts({
       steamDetails: {
         metacritic: { score: 94 },
         screenshots: Array.from({ length: 8 }, (_, index) => ({
@@ -36,15 +38,18 @@ describe("catalogue row details", () => {
   });
 
   it("returns empty details when nothing is known", () => {
-    assert.deepEqual(buildCatalogueRowDetails({}), {
+    assert.deepEqual(buildStoreGameFacts({}), {
       criticScore: null,
       howLongToBeatHours: null,
       downloadSize: null,
       screenshots: [],
       tagIds: [],
+      reviewPercent: null,
+      reviewCount: null,
+      releaseYear: null,
     });
     assert.equal(
-      buildCatalogueRowDetails({ steamDetails: { metacritic: { score: 0 } } })
+      buildStoreGameFacts({ steamDetails: { metacritic: { score: 0 } } })
         .criticScore,
       null
     );
@@ -52,11 +57,52 @@ describe("catalogue row details", () => {
 
   it("keeps the first few Steam tag ids as numbers", () => {
     assert.deepEqual(
-      buildCatalogueRowDetails({
+      buildStoreGameFacts({
         tagIds: ["122", 4182, "19", "21", "492"],
       }).tagIds,
       [122, 4182, 19, 21]
     );
+  });
+
+  it("keeps Steam's reviews and takes the year from the search result first", () => {
+    const facts = buildStoreGameFacts({
+      reviews: { percentPositive: 96, count: 62210 },
+      steamReleaseDate: Date.UTC(2020, 5, 1) / 1000,
+      releaseYear: 2019,
+    });
+    assert.equal(facts.reviewPercent, 96);
+    assert.equal(facts.reviewCount, 62210);
+    assert.equal(facts.releaseYear, 2019);
+  });
+
+  it("falls back to Steam's release date for the year", () => {
+    assert.equal(
+      buildStoreGameFacts({ steamReleaseDate: Date.UTC(2020, 5, 1) / 1000 })
+        .releaseYear,
+      2020
+    );
+    assert.equal(
+      buildStoreGameFacts({ steamReleaseDate: 0 }).releaseYear,
+      null
+    );
+  });
+
+  it("leaves reviews out when the game has none", () => {
+    const facts = buildStoreGameFacts({
+      reviews: { percentPositive: 0, count: 0 },
+    });
+    assert.equal(facts.reviewPercent, null);
+    assert.equal(facts.reviewCount, null);
+  });
+
+  it("bands review scores like Steam and shows none under ten reviews", () => {
+    assert.equal(getReviewTone(96, 62210), "positive");
+    assert.equal(getReviewTone(70, 100), "positive");
+    assert.equal(getReviewTone(69, 100), "mixed");
+    assert.equal(getReviewTone(40, 100), "mixed");
+    assert.equal(getReviewTone(39, 100), "negative");
+    assert.equal(getReviewTone(100, 9), null);
+    assert.equal(getReviewTone(null, 100), null);
   });
 
   it("only counts downloads named after the game", () => {
@@ -83,5 +129,18 @@ describe("catalogue row details", () => {
     assert.equal(getCriticScoreTone(80), "good");
     assert.equal(getCriticScoreTone(60), "mixed");
     assert.equal(getCriticScoreTone(40), "bad");
+  });
+
+  it("words review scores like Steam", () => {
+    assert.equal(getReviewLabel(97, 287678), "overwhelmingly_positive");
+    assert.equal(getReviewLabel(97, 200), "very_positive");
+    assert.equal(getReviewLabel(85, 20), "positive");
+    assert.equal(getReviewLabel(75, 1000), "mostly_positive");
+    assert.equal(getReviewLabel(55, 1000), "mixed");
+    assert.equal(getReviewLabel(30, 1000), "mostly_negative");
+    assert.equal(getReviewLabel(10, 1000), "overwhelmingly_negative");
+    assert.equal(getReviewLabel(10, 100), "very_negative");
+    assert.equal(getReviewLabel(10, 20), "negative");
+    assert.equal(getReviewLabel(100, 5), null);
   });
 });

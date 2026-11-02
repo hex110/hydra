@@ -1,0 +1,9 @@
+@use "../../scss/globals.scss";
+
+.source-badges {
+  display: flex;
+  gap: globals.$spacing-unit;
+  max-height: calc(globals.$spacing-unit * 3);
+  overflow: hidden;
+  flex-wrap: wrap;
+}

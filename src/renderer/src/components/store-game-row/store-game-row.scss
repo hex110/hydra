@@ -1,0 +1,55 @@
+@use "../../scss/globals.scss";
+
+.store-game-row {
+  display: flex;
+  align-items: center;
+  gap: calc(globals.$spacing-unit * 2);
+  width: 100%;
+  border: 1px solid globals.$border-color;
+  background-color: globals.$dark-background-color;
+  overflow: hidden;
+
+  &:hover {
+    background-color: globals.$surface-hover-color;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    min-width: 0;
+    padding: globals.$spacing-unit 0;
+  }
+
+  // The whole row opens the game: the title's link covers it, and the action
+  // buttons sit above.
+  &__title::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  &__title {
+    overflow: hidden;
+    color: globals.$muted-color;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  &__reason {
+    overflow: hidden;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

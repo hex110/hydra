@@ -1,0 +1,94 @@
+@use "../../scss/globals.scss";
+
+.store-game-cover {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: globals.$dark-background-color;
+
+  &--card {
+    width: 100%;
+    aspect-ratio: 92 / 43;
+  }
+
+  &--row {
+    width: calc(globals.$spacing-unit * 25);
+    aspect-ratio: 200 / 94;
+  }
+
+  &__image,
+  &__preview,
+  &__placeholder {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__image,
+  &__preview {
+    display: block;
+    object-fit: cover;
+  }
+
+  &__preview {
+    position: absolute;
+    inset: 0;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: store-game-cover-preview-in 0.3s ease;
+    }
+  }
+
+  &__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: globals.$body-color;
+    background-color: globals.$surface-hover-color;
+  }
+
+  &__protondb {
+    position: absolute;
+    right: globals.$spacing-unit;
+    bottom: globals.$spacing-unit;
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: calc(globals.$spacing-unit / 2) calc(globals.$spacing-unit * 0.75);
+    border-radius: 4px;
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    color: globals.$dark-background-color;
+    background-color: globals.$protondb-platinum;
+    pointer-events: none;
+
+    &--gold {
+      background-color: globals.$protondb-gold;
+    }
+
+    &--silver {
+      background-color: globals.$protondb-silver;
+    }
+
+    &--bronze {
+      background-color: globals.$protondb-bronze;
+      color: globals.$muted-color;
+    }
+
+    &--borked {
+      background-color: globals.$protondb-borked;
+      color: globals.$muted-color;
+    }
+  }
+}
+
+@keyframes store-game-cover-preview-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
