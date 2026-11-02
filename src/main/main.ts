@@ -181,7 +181,6 @@ export const loadState = async () => {
       logger.warn("Epic integration initialization failed on startup", err);
     }
     uploadGamesBatch();
-    void migrateDownloadSources();
 
     const { syncDownloadSourcesFromApi } = await import("./services/user");
     void syncDownloadSourcesFromApi();
@@ -197,6 +196,9 @@ export const loadState = async () => {
 
     // Check for new download options on startup (if enabled)
     (async () => {
+      await migrateDownloadSources().catch((error) =>
+        logger.error("Failed to migrate download sources", error)
+      );
       await DownloadSourcesChecker.checkForChanges();
     })();
 
