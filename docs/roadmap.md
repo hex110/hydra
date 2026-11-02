@@ -224,7 +224,7 @@ in the sections below.
     5. [x] Export and import settings ([Moving settings](features/settings-transfer.md))
     6. [x] Cloud backup without friction (rclone download, R2 Connect form, backup failures on cards and the home Backups shelf; restore on a new device already happens before the first launch)
     7. [x] Shared patterns for every page ([Patterns across pages](features/game-page.md#patterns-across-pages))
-    8. [ ] Catalogue
+    8. [ ] Catalogue (the redesign continues as phase 20)
     9. [ ] Library, and tracking without Floppy
     10. [ ] Home page
 14. **Merge upstream 4.3.0.** Fit upstream's new features into the
@@ -287,6 +287,30 @@ in the sections below.
     11. [ ] Modpacks: Thunderstore, Nexus Collections, export a profile
     12. [ ] Prism's comforts: details page, update all, requirements with
             the mod, game-version filtering
+20. **Catalogue: Discover, Charts, Browse.** Added 2026-11-03 from the
+    owner's design pass over the catalogue (continues phase 13 item 8).
+    Spec and plan: [Catalogue, phase 20](catalogue-phase-20.md) (start
+    there; every step names its files and how to check it).
+    1. [ ] One store card, row and shelf for every store game; the white
+           skeletons, shelf scrollbars and AnkerGames subtitles fixed
+    2. [ ] Discover, Charts and Browse tabs; Browse toolbar; one Hide my
+           games switch for all tabs
+    3. [ ] Filter sidebar: counts per tag and genre in grey, ordered by
+           count, From your library, no software genres, searchable
+           developers, drawer on narrow windows
+    4. [ ] Store data in the main process: Steam store items, charts and
+           daily snapshots, SteamSpy, steamcmd build dates, ProtonDB
+    5. [ ] Charts: playing now, most played, trending, singleplayer, 30 and
+           90 days, top releases, best rated, as one sortable table
+    6. [ ] Recommender: taste profile from the whole library (idle playtime
+           at 10 %, ratings, status, cap per game), candidates from Steam's
+           "More like this" and tag searches, re-ranked
+    7. [ ] For you with the Tune panel: Based on, Avoid tags, Leans toward,
+           sliders, filters, presets, Not interested
+    8. [ ] Discover grouped by purpose (For you, Popular now, New, Explore),
+           See all on every shelf
+    9. [ ] Home suggestions on the same recommender and card
+    10. [ ] Docs: catalogue, home, patterns table
 
 Why this order:
 
@@ -336,6 +360,12 @@ Why this order:
 - Translations go last, once the settings pages stop changing.
 - Mods and the in-game overlay come last at the owner's request
   (2026-10-31); mods are the largest item and need a design first.
+- The catalogue redesign (phase 20) was added after them on 2026-11-03.
+  It depends on nothing in phases 15–19, so it can be done before them if
+  the owner wants. Inside it, the shared card comes first so every later
+  step builds on it, the data layer comes before the charts and the
+  recommender that read it, and Discover is regrouped last, once the shelves
+  it needs exist.
 
 ## One app, easy for everyone
 
