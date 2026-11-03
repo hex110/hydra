@@ -107,15 +107,14 @@ Continue playing, are left out.
 
 ## Suggested for you
 
-Games similar to the ones you played most, that aren't in your library. Hydra
-takes up to five games, weighting play in the last 30 days three times over
-total playtime and adding ten hours for games marked **Finished** (dropped
-games don't count), and asks for games similar to each (the list the game
-page shows under "Similar games", which is Steam's, re-ranked). A game similar to
-several of them, or near the top of a more played one's list, ranks higher,
-and no single game supplies more than its share of the row. Each card says
-which game it came from. Only Steam catalogue games are used, since the
-similar-games list exists for those. Results are kept until Hydra restarts.
+The same suggestions as the catalogue's [For you](catalogue.md#for-you-and-tune),
+made by the same recommender with the Tune settings you chose there: they
+learn from your whole library (playtime with idle games discounted, ratings,
+status, wishlist), skip what you own or marked **Not interested**, and honour
+your avoid list. The shelf shows the top 12 as store cards, each saying which
+game it came from; **See all** opens For you, and the ✕ on a card hides the
+game everywhere. The list is computed by the main process and kept for six
+hours.
 
 ### Other sources
 

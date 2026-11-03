@@ -299,18 +299,17 @@ in the sections below.
            count, From your library, no software genres, searchable
            developers, drawer on narrow windows
     4. [x] Store data in the main process: Steam store items, charts and
-           daily snapshots, SteamSpy, ProtonDB (steamcmd build dates wait
-           for Finished games, with the recommender)
+           daily snapshots, SteamSpy, ProtonDB, steamcmd build dates
     5. [x] Charts: playing now, most played, trending, singleplayer, 30 and
            90 days, top releases, best rated, as one sortable table
-    6. [ ] Recommender: taste profile from the whole library (idle playtime
+    6. [x] Recommender: taste profile from the whole library (idle playtime
            at 10 %, ratings, status, cap per game), candidates from Steam's
            "More like this" and tag searches, re-ranked
-    7. [ ] For you with the Tune panel: Based on, Avoid tags, Leans toward,
+    7. [x] For you with the Tune panel: Based on, Avoid tags, Leans toward,
            sliders, filters, presets, Not interested
-    8. [ ] Discover grouped by purpose (For you, Popular now, New, Explore),
+    8. [x] Discover grouped by purpose (For you, Popular now, New, Explore),
            See all on every shelf
-    9. [ ] Home suggestions on the same recommender and card
+    9. [x] Home suggestions on the same recommender and card
     10. [ ] Docs: catalogue, home, patterns table
 
 Why this order:

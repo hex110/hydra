@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { levelDBService } from "@renderer/services/leveldb.service";
+import { setDiscoverView } from "@renderer/features";
 import { orderBy } from "lodash-es";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +14,8 @@ import {
   GameContextMenu,
   Hero,
   GameLibraryBadge,
+  StoreGameCard,
+  StoreShelf,
   VerticalCoverCard,
 } from "@renderer/components";
 import type {
@@ -23,6 +26,7 @@ import type {
 } from "@types";
 import {
   useActiveGameSetups,
+  useAppDispatch,
   useAppSelector,
   useLibrary,
   useLibraryStates,
@@ -63,6 +67,7 @@ import {
   getCompletionProgress,
   getContinuePlaying,
   getNewDownloadOptionsCount,
+  getOwnedKeys,
   getRecentlyAdded,
   getWishlist,
 } from "./home-sections";
@@ -74,6 +79,13 @@ import {
 } from "./home-shelves";
 import { usePlayActivity } from "./use-play-activity";
 import { useHomeSuggestions } from "./use-home-suggestions";
+import {
+  getRecommendationReason,
+  toCardGame,
+} from "../catalogue/recommendation-card";
+import { useCatalogueRowDetails } from "../catalogue/use-catalogue-row-details";
+import { useNotInterested } from "../catalogue/use-not-interested";
+import { useSteamTagLabels } from "../catalogue/use-steam-tag-labels";
 import { useGameNews } from "./use-game-news";
 import { useFriendsPlaying } from "./use-friends-playing";
 import "./home.scss";
@@ -145,7 +157,7 @@ export default function Home() {
     () => groupLibraryGames(library, runningGameId ? [runningGameId] : []),
     [library, runningGameId]
   );
-  const { entries: playActivity, recentPlayByKey } = usePlayActivity();
+  const { entries: playActivity } = usePlayActivity();
   const continuePlaying = useMemo(
     () => getContinuePlaying(groupedLibrary),
     [groupedLibrary]
@@ -196,10 +208,16 @@ export default function Home() {
     [groupedLibrary, activeDownloadId, extractionId, setupGameIds]
   );
 
-  const { suggestions, isLoading: isLoadingSuggestions } = useHomeSuggestions(
-    groupedLibrary,
-    recentPlayByKey
+  const ownedKeys = useMemo(
+    () => getOwnedKeys(groupedLibrary),
+    [groupedLibrary]
   );
+  const { suggestions, isLoading: isLoadingSuggestions } =
+    useHomeSuggestions(ownedKeys);
+  const suggestionFacts = useCatalogueRowDetails(suggestions.map(toCardGame));
+  const tagLabels = useSteamTagLabels();
+  const { markNotInterested } = useNotInterested();
+  const dispatch = useAppDispatch();
 
   // News for what you play: recent games first, then the most played.
   const newsGames = useMemo(() => {
@@ -624,35 +642,33 @@ export default function Home() {
 
       case "suggestions":
         return isLoadingSuggestions || suggestions.length > 0 ? (
-          <HomeShelf
+          <StoreShelf
             title={t("suggested_for_you")}
-            description={t("suggested_for_you_description")}
+            subtitle={t("suggested_for_you_description")}
+            isLoading={isLoadingSuggestions}
+            onSeeAll={() => {
+              dispatch(setDiscoverView("for-you"));
+              navigate("/catalogue");
+            }}
           >
-            {isLoadingSuggestions
-              ? Array.from({ length: 8 }).map((_, index) => (
-                  <Skeleton key={index} className="home__shelf-skeleton" />
-                ))
-              : suggestions.map(({ game, becauseOf }) => (
-                  <div
-                    key={`${game.shop}:${game.objectId}`}
-                    className="home__suggestion"
-                  >
-                    <GameLibraryBadge overlay state={stateOf(game)} />
-                    <VerticalCoverCard
-                      gameTitle={game.title}
-                      coverImageUrls={[
-                        game.coverImageUrl,
-                        game.libraryImageUrl,
-                        game.iconUrl,
-                      ]}
-                      onClick={() => navigate(buildGameDetailsPath(game))}
-                    />
-                    <p className="home__suggestion-reason" title={becauseOf}>
-                      {t("because_you_played", { title: becauseOf })}
-                    </p>
-                  </div>
-                ))}
-          </HomeShelf>
+            {suggestions.map((suggestion) => {
+              const game = toCardGame(suggestion);
+              const key = `${game.shop}:${game.objectId}`;
+              return (
+                <StoreGameCard
+                  key={key}
+                  size="shelf"
+                  game={game}
+                  facts={suggestionFacts.get(key)}
+                  libraryState={stateOf(game)}
+                  {...getRecommendationReason(suggestion, tagLabels, (title) =>
+                    t("because_you_played", { title })
+                  )}
+                  onNotInterested={() => markNotInterested(game)}
+                />
+              );
+            })}
+          </StoreShelf>
         ) : null;
 
       case "catalogue":

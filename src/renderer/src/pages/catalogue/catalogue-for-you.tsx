@@ -126,7 +126,9 @@ export function CatalogueForYou({
         },
         facts: facts.get(key),
         libraryState: libraryStates.get(key),
-        ...getRecommendationReason(recommendation, tagLabels, t),
+        ...getRecommendationReason(recommendation, tagLabels, (title) =>
+          t("because_you_played", { ns: "home", title })
+        ),
         onNotInterested: () => notInterested.markNotInterested(game),
       };
 

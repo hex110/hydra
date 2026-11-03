@@ -562,7 +562,9 @@ export function CatalogueFrontPage({
       .map((recommendation) =>
         fromRecommendation(
           recommendation,
-          getRecommendationReason(recommendation, tagLabels, t)
+          getRecommendationReason(recommendation, tagLabels, (title) =>
+            t("because_you_played", { ns: "home", title })
+          )
         )
       );
 

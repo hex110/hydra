@@ -1,4 +1,3 @@
-import type { TFunction } from "i18next";
 import type { Recommendation } from "@shared";
 
 /** A recommendation as the store card shows it. */
@@ -16,7 +15,7 @@ export const toCardGame = (recommendation: Recommendation) => ({
 export const getRecommendationReason = (
   recommendation: Recommendation,
   tagLabels: ReadonlyMap<number, string>,
-  t: TFunction
+  becauseYouPlayed: (title: string) => string
 ) => {
   const tags = recommendation.matchTagIds
     .map((id) => tagLabels.get(id))
@@ -24,10 +23,7 @@ export const getRecommendationReason = (
     .join(", ");
 
   const reason = recommendation.becauseOf
-    ? t("because_you_played", {
-        ns: "home",
-        title: recommendation.becauseOf.title,
-      })
+    ? becauseYouPlayed(recommendation.becauseOf.title)
     : tags;
 
   const tooltip = [

@@ -16,8 +16,6 @@ const {
   getWishlist,
   getContinuePlaying,
   getOwnedKeys,
-  getSuggestionSeeds,
-  rankSuggestions,
 } = sections;
 
 const HOUR = 3_600_000;
@@ -78,39 +76,8 @@ describe("getBacklog", () => {
   });
 });
 
-describe("getSuggestionSeeds", () => {
-  it("weights recent play and finished games, and skips dropped ones", () => {
-    const list = [
-      game("lots-of-old-play", { playTimeInMilliseconds: 20 * HOUR }),
-      game("recent", { playTimeInMilliseconds: 2 * HOUR }),
-      game("finished", {
-        playStatus: "finished",
-        playTimeInMilliseconds: HOUR,
-      }),
-      game("dropped", {
-        playStatus: "dropped",
-        playTimeInMilliseconds: 99 * HOUR,
-      }),
-      game("unplayed"),
-      game("classic", { shop: "launchbox", playTimeInMilliseconds: 50 * HOUR }),
-    ];
-    const recent = new Map([["steam:recent", 8 * HOUR]]);
-    assert.deepEqual(ids(getSuggestionSeeds(list, recent)), [
-      "recent",
-      "lots-of-old-play",
-      "finished",
-    ]);
-  });
-});
-
-describe("rankSuggestions", () => {
-  const similar = (objectId: string) => ({
-    shop: "steam",
-    objectId,
-    title: objectId,
-  });
-
-  it("prefers games shared by several seeds and leaves owned ones out", () => {
+describe("getOwnedKeys", () => {
+  it("knows each copy of a game and the catalogue game it is linked to", () => {
     const owned = getOwnedKeys([
       game("owned"),
       game("epic-copy", {
@@ -118,45 +85,11 @@ describe("rankSuggestions", () => {
         catalogueGame: { shop: "steam", objectId: "owned-on-epic" },
       }),
     ]);
-    const ranked = rankSuggestions(
-      [
-        {
-          seedTitle: "Hades",
-          games: [similar("a"), similar("owned"), similar("b")],
-        },
-        {
-          seedTitle: "Celeste",
-          games: [similar("b"), similar("owned-on-epic"), similar("c")],
-        },
-      ],
-      owned
-    );
-    assert.deepEqual(
-      ranked.map((item) => [item.game.objectId, item.becauseOf]),
-      [
-        ["b", "Hades"],
-        ["a", "Hades"],
-        ["c", "Celeste"],
-      ]
-    );
-  });
 
-  it("spreads the list over the games it comes from", () => {
-    const many = (prefix: string) =>
-      Array.from({ length: 6 }, (_, index) => similar(`${prefix}${index}`));
-    const ranked = rankSuggestions(
-      [
-        { seedTitle: "Big", games: many("big") },
-        { seedTitle: "Small", games: many("small") },
-      ],
-      new Set(),
-      6
-    );
-    const bySeed = ranked.reduce<Record<string, number>>((counts, item) => {
-      counts[item.becauseOf] = (counts[item.becauseOf] ?? 0) + 1;
-      return counts;
-    }, {});
-    assert.deepEqual(bySeed, { Big: 3, Small: 3 });
+    assert.equal(owned.has("steam:owned"), true);
+    assert.equal(owned.has("epic:epic-copy"), true);
+    assert.equal(owned.has("steam:owned-on-epic"), true);
+    assert.equal(owned.has("steam:other"), false);
   });
 });
 

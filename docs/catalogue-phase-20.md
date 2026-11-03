@@ -716,6 +716,11 @@ saved Tune settings and shows the top 12 with their reason, as
 check first with a search. Update [Home](features/home.md#suggested-for-you):
 it now describes the recommender and links to the catalogue doc.
 
+**As built (step 9).** `use-home-suggestions.ts` is now a thin wrapper over
+`getRecommendations` with the saved Tune settings; the old ranking
+(`getSuggestionSeeds`, `rankSuggestions`) and its tests are gone. The shelf is a
+`StoreShelf` of `StoreGameCard`s, with **See all** to For you.
+
 ### Step 10. Docs
 
 Rewrite [Catalogue](features/catalogue.md) around the three tabs: Discover,

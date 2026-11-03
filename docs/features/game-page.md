@@ -30,9 +30,8 @@ is some, the update dot, a dimmed cover when it isn't installed, Play on
 hover. A game from the store is a `StoreGameCard` (the wide header image with
 review score, year and tags under it) or, in a list, a `StoreGameRow`
 (`components/`): the catalogue's shelves, grid and list use these. The
-portrait `VerticalCoverCard` stays for home suggestions, friends playing and
-similar games until the home page moves to the same card (roadmap phase 20,
-step 9). Upstream's wide `GameCard` stays only in its Hot now shelf.
+portrait `VerticalCoverCard` stays for friends playing and similar games.
+Home's suggestions are `StoreGameCard`s too. Upstream's wide `GameCard` stays only in its Hot now shelf.
 
 **One library badge.** A store card or row that is in your library carries
 `GameLibraryBadge` (`components/`): **Installed**, **In library** or **Wishlisted**, from

@@ -1,115 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
-import { orderBy } from "lodash-es";
+import { useMemo } from "react";
 
-import { levelDBService } from "@renderer/services/leveldb.service";
-import { logger } from "@renderer/logger";
-import {
-  fetchSimilarGames,
-  type SimilarGame,
-  type SimilarGamesGet,
-} from "@renderer/hooks/similar-games";
-import type { DownloadSource } from "@types";
-import {
-  getOwnedKeys,
-  getSuggestionSeeds,
-  rankSuggestions,
-  type HomeGame,
-  type RankedSuggestion,
-} from "./home-sections";
+import { useNotInterested } from "../catalogue/use-not-interested";
+import { useRecommendations } from "../catalogue/use-recommendations";
+import { useTuneSettings } from "../catalogue/use-tune-settings";
 
-const cache = new Map<string, RankedSuggestion<SimilarGame>[]>();
+export const HOME_SUGGESTIONS = 12;
 
-/** Games similar to what you played most, without the ones you own. */
-export function useHomeSuggestions<T extends HomeGame>(
-  games: T[],
-  recentPlayByKey: Map<string, number>
-) {
-  const seeds = useMemo(
-    () => getSuggestionSeeds(games, recentPlayByKey),
-    [games, recentPlayByKey]
+/**
+ * The catalogue's suggestions for you, with the Tune settings you chose, minus
+ * the games you own or hid. Hydra computes them; this only waits and filters.
+ */
+export function useHomeSuggestions(ownedKeys: ReadonlySet<string>) {
+  const { options, isLoaded } = useTuneSettings();
+  const { response, isRefreshing } = useRecommendations(
+    isLoaded ? options : null,
+    { debounce: false }
   );
-  const ownedKeys = useMemo(() => getOwnedKeys(games), [games]);
-  const cacheKey = seeds
-    .map((seed) => {
-      const identity = seed.catalogueGame ?? seed;
-      return `${identity.shop}:${identity.objectId}`;
-    })
-    .join("|");
+  const { keys: hidden } = useNotInterested();
 
-  const [suggestions, setSuggestions] = useState(
-    () => cache.get(cacheKey) ?? []
-  );
-  const [isLoading, setIsLoading] = useState(
-    seeds.length > 0 && !cache.has(cacheKey)
-  );
-
-  useEffect(() => {
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      setSuggestions(
-        cached.filter(
-          ({ game }) => !ownedKeys.has(`${game.shop}:${game.objectId}`)
-        )
-      );
-      setIsLoading(false);
-      return;
-    }
-    if (seeds.length === 0) {
-      setSuggestions([]);
-      setIsLoading(false);
-      return;
-    }
-
-    let current = true;
-    setIsLoading(true);
-
-    const get: SimilarGamesGet = (path, options) =>
-      window.electron.hydraApi.get<unknown>(path, options);
-
-    const getSteamSimilar = (appId: string) =>
-      window.electron.getSteamSimilarGames(appId);
-
-    const load = async () => {
-      const sources = (await levelDBService.values(
-        "downloadSources"
-      )) as DownloadSource[];
-      const downloadSourceIds = orderBy(sources, "createdAt", "desc").map(
-        (source) => source.id
-      );
-
-      const results = await Promise.all(
-        seeds.map(async (seed) => {
-          const identity = seed.catalogueGame ?? seed;
-          const similar = await fetchSimilarGames(
-            {
-              shop: identity.shop as SimilarGame["shop"],
-              objectId: identity.objectId,
-            },
-            get,
-            downloadSourceIds,
-            getSteamSimilar
-          ).catch(() => [] as SimilarGame[]);
-          return { seedTitle: seed.title ?? "", games: similar };
+  const suggestions = useMemo(
+    () =>
+      (response?.results ?? [])
+        .filter((game) => {
+          const key = `steam:${game.appId}`;
+          return !ownedKeys.has(key) && !hidden.has(key);
         })
-      );
+        .slice(0, HOME_SUGGESTIONS),
+    [response, ownedKeys, hidden]
+  );
 
-      const ranked = rankSuggestions(results, ownedKeys);
-      cache.set(cacheKey, ranked);
-      if (current) setSuggestions(ranked);
-    };
-
-    load()
-      .catch((error) => logger.error("Failed to load suggestions", error))
-      .finally(() => {
-        if (current) setIsLoading(false);
-      });
-
-    return () => {
-      current = false;
-    };
-    // Seeds are identified by cacheKey; ownedKeys only filters cached results.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey]);
-
-  return { suggestions, isLoading, hasSeeds: seeds.length > 0 };
+  return {
+    suggestions,
+    isLoading: !response && isRefreshing,
+    hasSeeds: (response?.profile.seedCount ?? 0) > 0,
+  };
 }

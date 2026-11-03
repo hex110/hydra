@@ -20,16 +20,8 @@ export interface HomeGame {
   unlockedAchievementCount?: number;
 }
 
-export interface SuggestedGame {
-  shop: string;
-  objectId: string;
-  title: string;
-}
-
 export const CONTINUE_PLAYING_LIMIT = 8;
 export const BACKLOG_LIMIT = 12;
-export const SUGGESTIONS_LIMIT = 12;
-export const SUGGESTION_SEEDS = 5;
 export const NEW_DOWNLOADS_LIMIT = 12;
 export const WISHLIST_LIMIT = 12;
 export const RECENTLY_ADDED_LIMIT = 12;
@@ -122,32 +114,6 @@ export const getBacklog = <T extends HomeGame>(
     .slice(0, limit);
 };
 
-/**
- * The games suggestions start from: most played in recent activity, then by
- * total playtime, with finished games counted up. Dropped games are left out.
- */
-export const getSuggestionSeeds = <T extends HomeGame>(
-  games: T[],
-  recentPlayByKey: Map<string, number>,
-  limit = SUGGESTION_SEEDS
-): T[] => {
-  const weight = (game: T) => {
-    const copies = game.members?.length ? game.members : [game];
-    const recent = copies.reduce(
-      (sum, copy) => sum + (recentPlayByKey.get(gameKey(copy)) ?? 0),
-      0
-    );
-    const finishedBonus = game.playStatus === "finished" ? 10 * 3_600_000 : 0;
-    return recent * 3 + totalPlayTime(game) + finishedBonus;
-  };
-
-  return games
-    .filter((game) => game.playStatus !== "dropped" && weight(game) > 0)
-    .filter((game) => (game.catalogueGame ?? game).shop === "steam")
-    .sort((a, b) => weight(b) - weight(a))
-    .slice(0, limit);
-};
-
 /** Keys a library game is known by: each copy and its catalogue game. */
 export const getOwnedKeys = (games: HomeGame[]): Set<string> =>
   new Set(
@@ -158,81 +124,6 @@ export const getOwnedKeys = (games: HomeGame[]): Set<string> =>
       ])
     )
   );
-
-export interface SeedSimilarGames<S extends SuggestedGame> {
-  seedTitle: string;
-  games: S[];
-}
-
-export interface RankedSuggestion<S extends SuggestedGame> {
-  game: S;
-  /** The played game that contributed most to the suggestion. */
-  becauseOf: string;
-}
-
-/**
- * Games similar to several seeds, or high in a stronger seed's list, rank
- * first. No seed explains more than its share of the list, so one heavily
- * played game doesn't fill it. Owned games are left out.
- */
-export const rankSuggestions = <S extends SuggestedGame>(
-  seeds: SeedSimilarGames<S>[],
-  ownedKeys: Set<string>,
-  limit = SUGGESTIONS_LIMIT
-): RankedSuggestion<S>[] => {
-  const scores = new Map<
-    string,
-    { game: S; score: number; best: number; becauseOf: string }
-  >();
-
-  seeds.forEach((seed, seedIndex) => {
-    const seedWeight = 1 / (seedIndex + 1);
-    const candidates = seed.games.filter(
-      (game) => !ownedKeys.has(gameKey(game))
-    );
-    candidates.forEach((game, index) => {
-      const key = gameKey(game);
-      const contribution = seedWeight * (1 - index / (candidates.length + 1));
-      const current = scores.get(key);
-      if (!current) {
-        scores.set(key, {
-          game,
-          score: contribution,
-          best: contribution,
-          becauseOf: seed.seedTitle,
-        });
-        return;
-      }
-      current.score += contribution;
-      if (contribution > current.best) {
-        current.best = contribution;
-        current.becauseOf = seed.seedTitle;
-      }
-    });
-  });
-
-  const ranked = [...scores.values()].sort((a, b) => b.score - a.score);
-  const seedsWithResults = new Set(ranked.map((item) => item.becauseOf)).size;
-  const perSeed = Math.ceil(limit / Math.max(1, seedsWithResults));
-  const counts = new Map<string, number>();
-  const picked: typeof ranked = [];
-  const overflow: typeof ranked = [];
-
-  for (const item of ranked) {
-    const count = counts.get(item.becauseOf) ?? 0;
-    if (count < perSeed) {
-      counts.set(item.becauseOf, count + 1);
-      picked.push(item);
-    } else {
-      overflow.push(item);
-    }
-  }
-
-  return [...picked, ...overflow]
-    .slice(0, limit)
-    .sort((a, b) => b.score - a.score)
-    .map(({ game, becauseOf }) => ({ game, becauseOf }));
-};
 
 const copiesOf = <T extends HomeGame>(game: T): HomeGame[] =>
   game.members?.length ? game.members : [game];
