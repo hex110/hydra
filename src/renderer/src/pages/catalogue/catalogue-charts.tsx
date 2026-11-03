@@ -111,6 +111,8 @@ export function CatalogueCharts({
     });
 
   const selectChart = (next: CatalogueChartId) => {
+    // The old chart's rows would sit under the new chart's headings.
+    setResult(null);
     setChart(next);
     setMonth(undefined);
     writeStored(CHART_STORAGE_KEY, next);
@@ -265,15 +267,50 @@ export function CatalogueCharts({
       });
     }
     if (chart === "days-30" || chart === "days-90") {
-      list.push({
-        id: "days",
-        label: t("chart_column_days"),
-        hint: t("chart_column_days_hint"),
-        width: "90px",
-        align: "end",
-        sortValue: (row) => row.days,
-        render: (row) => number(row.days),
-      });
+      const recorded = result?.rows.some((row) => row.days !== null);
+      if (recorded) {
+        // steamcharts.com was down: Hydra's own record of Steam's top 100.
+        list.push({
+          id: "days",
+          label: t("chart_column_days"),
+          hint: t("chart_column_days_hint"),
+          width: "90px",
+          align: "end",
+          sortValue: (row) => row.days,
+          render: (row) => number(row.days),
+        });
+      } else {
+        list.push(
+          chart === "days-30"
+            ? {
+                id: "hours",
+                label: t("chart_column_hours"),
+                hint: t("chart_column_hours_hint"),
+                width: "110px",
+                align: "end",
+                sortValue: (row) => row.hours,
+                render: (row) => number(row.hours),
+              }
+            : {
+                id: "players",
+                label: t("chart_column_average"),
+                hint: t("chart_column_average_hint"),
+                width: "110px",
+                align: "end",
+                sortValue: (row) => row.players,
+                render: (row) => number(row.players),
+              },
+          {
+            id: "peak",
+            label: t("chart_column_peak_window"),
+            hint: t("chart_column_peak_window_hint"),
+            width: "90px",
+            align: "end",
+            sortValue: (row) => row.peak,
+            render: (row) => number(row.peak),
+          }
+        );
+      }
     }
 
     list.push(
@@ -311,7 +348,7 @@ export function CatalogueCharts({
     }
 
     return list;
-  }, [chart, formatNumber, isLinux, t, tagLabels, tiers]);
+  }, [chart, formatNumber, isLinux, result, t, tagLabels, tiers]);
 
   const getGame = useCallback(
     (row: CatalogueChartRow) => ({

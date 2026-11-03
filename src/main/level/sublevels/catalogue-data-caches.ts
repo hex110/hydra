@@ -1,4 +1,4 @@
-import type { StoreItem } from "@shared";
+import type { StoreItem, SteamChartsApp, SteamChartsTopRow } from "@shared";
 
 import { db } from "../level";
 import { levelKeys } from "./keys";
@@ -29,3 +29,9 @@ export const steamSpyCacheSublevel = db.sublevel<
   string,
   { at: number; games: SteamSpyGame[] }
 >(levelKeys.steamSpyCache, { valueEncoding: "json" });
+
+/** steamcharts.com pages, keyed by `top:<page>` and `app:<id>`. */
+export const steamChartsCacheSublevel = db.sublevel<
+  string,
+  { at: number; data: SteamChartsTopRow[] | SteamChartsApp }
+>(levelKeys.steamChartsCache, { valueEncoding: "json" });

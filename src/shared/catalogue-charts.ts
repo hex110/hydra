@@ -33,18 +33,24 @@ export interface CatalogueChartRow {
   isSingleplayer: boolean;
   isEarlyAccess: boolean;
   isFree: boolean;
-  /** Players now, or yesterday's peak on the singleplayer chart. */
+  /** Players now, yesterday's peak (singleplayer), or the average over the window (30 and 90 days). */
   players: number | null;
   /** The day's highest number of players. */
   peak: number | null;
   /** Places gained since last week; negative for places lost. */
   places: number | null;
   isNew: boolean;
-  /** Days in the top 100 within the window (the 30 and 90 day charts). */
+  /** Days in the top 100 within the window (Hydra's own record, when steamcharts.com is down). */
   days: number | null;
+  /** Player-hours in the last 30 days (steamcharts.com). */
+  hours: number | null;
 }
 
-export type CatalogueChartSource = "steam" | "steamspy" | "hydra";
+export type CatalogueChartSource =
+  | "steam"
+  | "steamspy"
+  | "steamcharts"
+  | "hydra";
 
 export interface CatalogueChartResult {
   rows: CatalogueChartRow[];

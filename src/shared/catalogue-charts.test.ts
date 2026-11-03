@@ -22,6 +22,7 @@ const row = (appId: string, over: Record<string, unknown> = {}) => ({
   places: null,
   isNew: false,
   days: null,
+  hours: null,
   ...over,
 });
 

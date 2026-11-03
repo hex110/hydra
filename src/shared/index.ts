@@ -437,3 +437,4 @@ export * from "./fomod";
 export * from "./store-games";
 export * from "./steam-charts";
 export * from "./catalogue-charts";
+export * from "./steamcharts";

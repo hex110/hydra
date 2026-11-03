@@ -19,6 +19,7 @@ import { logger } from "./logger";
 import { getMostPlayed, getPlayingNow, getTopReleases } from "./steam-charts";
 import { getStoreItems } from "./steam-store-items";
 import { getSpyTag } from "./steamspy";
+import { getSteamCharts90Days, getSteamChartsTop } from "./steamcharts";
 
 /** Enough for the table and for the tag filters; Steam lists twenty. */
 const ROW_TAGS = 20;
@@ -32,6 +33,7 @@ interface Entry {
   places?: number | null;
   isNew?: boolean;
   days?: number | null;
+  hours?: number | null;
 }
 
 const toRow = (
@@ -57,6 +59,7 @@ const toRow = (
   places: entry.places ?? null,
   isNew: entry.isNew ?? false,
   days: entry.days ?? null,
+  hours: entry.hours ?? null,
 });
 
 /** Joins a ranked list with Steam's store facts; software and other non-games drop out. */
@@ -131,6 +134,20 @@ const result = (
 
 const failure = (source: CatalogueChartSource) =>
   result([], { failed: source });
+
+const ninetyDayEntries = async (
+  top: Parameters<typeof getSteamCharts90Days>[0]
+): Promise<Entry[]> => {
+  const figures = (await getSteamCharts90Days(top)) ?? [];
+  return figures
+    .sort((a, b) => b.averagePlayers - a.averagePlayers)
+    .slice(0, CHART_SIZE)
+    .map((game) => ({
+      appId: game.appId,
+      players: Math.round(game.averagePlayers),
+      peak: game.peak,
+    }));
+};
 
 /** One chart's rows, with Steam's store facts. Failures name the source that could not be reached. */
 export const getCatalogueChart = async (
@@ -208,6 +225,25 @@ export const getCatalogueChart = async (
     case "days-30":
     case "days-90": {
       const window = CHART_WINDOWS[request.chart];
+      const top = await getSteamChartsTop();
+
+      if (top) {
+        const entries: Entry[] =
+          request.chart === "days-30"
+            ? [...top]
+                .sort((a, b) => b.hours - a.hours)
+                .slice(0, CHART_SIZE)
+                .map((game) => ({
+                  appId: game.appId,
+                  hours: game.hours,
+                  peak: game.peak,
+                }))
+            : await ninetyDayEntries(top);
+
+        if (entries.length > 0) return result(await toRows(entries));
+      }
+
+      // steamcharts.com is down: fall back to what Hydra recorded itself.
       const ranking = await getSnapshotRanking(window.days);
       const rows = await toRows(
         ranking.rows.slice(0, CHART_SIZE).map((row) => ({
@@ -217,13 +253,10 @@ export const getCatalogueChart = async (
       );
 
       return result(rows, {
+        failed: "steamcharts",
         collecting:
           ranking.days < window.needed
-            ? {
-                since: ranking.since,
-                days: ranking.days,
-                needed: window.days,
-              }
+            ? { since: ranking.since, days: ranking.days, needed: window.days }
             : null,
       });
     }
