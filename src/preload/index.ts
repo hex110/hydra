@@ -138,6 +138,8 @@ import type {
   AuthPage,
   CatalogueChartRequest,
   NotInterestedGame,
+  FacetCounts,
+  LibraryFacets,
   RecommendationResponse,
   TuneOptions,
   TuneSettings,
@@ -2843,6 +2845,18 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getTuneSettings") as Promise<TuneSettings>,
   setTuneSettings: (settings: TuneSettings) =>
     ipcRenderer.invoke("setTuneSettings", settings) as Promise<void>,
+  getCatalogueFacetCounts: () =>
+    ipcRenderer.invoke(
+      "getCatalogueFacetCounts"
+    ) as Promise<FacetCounts | null>,
+  getLibraryFacets: () =>
+    ipcRenderer.invoke("getLibraryFacets") as Promise<LibraryFacets>,
+  onCatalogueFacetCountsUpdated: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on("on-catalogue-facet-counts-updated", listener);
+    return () =>
+      ipcRenderer.removeListener("on-catalogue-facet-counts-updated", listener);
+  },
   getStoreTagIds: (appIds: string[]) =>
     ipcRenderer.invoke("getStoreTagIds", appIds) as Promise<
       Record<string, number[]>

@@ -13,3 +13,4 @@ import "./get-steam-popular-tags";
 import "./get-catalogue-row-details";
 import "./get-catalogue-chart";
 import "./recommender";
+import "./get-catalogue-facet-counts";

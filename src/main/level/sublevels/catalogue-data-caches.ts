@@ -3,6 +3,7 @@ import type {
   SteamChartsApp,
   SteamChartsTopRow,
   TuneSettings,
+  FacetCounts,
 } from "@shared";
 
 import { db } from "../level";
@@ -58,3 +59,9 @@ export const catalogueNotInterestedSublevel = db.sublevel<
   string,
   { at: number; title: string }
 >(levelKeys.catalogueNotInterested, { valueEncoding: "json" });
+
+/** How many games the catalogue has per tag and genre, in one record under `counts`. */
+export const catalogueFacetCountsSublevel = db.sublevel<string, FacetCounts>(
+  levelKeys.catalogueFacetCounts,
+  { valueEncoding: "json" }
+);

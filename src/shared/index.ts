@@ -438,4 +438,5 @@ export * from "./store-games";
 export * from "./recommender/index";
 export * from "./steam-charts";
 export * from "./catalogue-charts";
+export * from "./catalogue-facets";
 export * from "./steamcharts";

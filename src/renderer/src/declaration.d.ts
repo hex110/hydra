@@ -13,6 +13,8 @@ import type {
   StoreGameFacts,
   CatalogueChartRequest,
   NotInterestedGame,
+  FacetCounts,
+  LibraryFacets,
   RecommendationResponse,
   TuneOptions,
   TuneSettings,
@@ -2108,6 +2110,11 @@ declare global {
     ) => Promise<RecommendationResponse>;
     getTuneSettings: () => Promise<TuneSettings>;
     setTuneSettings: (settings: TuneSettings) => Promise<void>;
+    getCatalogueFacetCounts: () => Promise<FacetCounts | null>;
+    getLibraryFacets: () => Promise<LibraryFacets>;
+    onCatalogueFacetCountsUpdated: (
+      cb: () => void
+    ) => () => Electron.IpcRenderer;
     getStoreTagIds: (appIds: string[]) => Promise<Record<string, number[]>>;
     getNotInterested: () => Promise<NotInterestedGame[]>;
     setNotInterested: (

@@ -22,6 +22,7 @@ export const levelKeys = {
   steamSpyCache: "steamSpyCache",
   steamChartsCache: "steamChartsCache",
   steamBuildDates: "steamBuildDates",
+  catalogueFacetCounts: "catalogueFacetCounts",
   catalogueTaste: "catalogueTaste",
   catalogueNotInterested: "catalogueNotInterested",
   gameShopCacheItem: (shop: GameShop, objectId: string, language: string) =>

@@ -11,6 +11,7 @@ import {
   toPlayActivityDate,
   toRecommendation,
   type BecauseShelf,
+  type LibraryFacets,
   type BuiltProfile,
   type PoolCandidate,
   type RecommendationResponse,
@@ -574,5 +575,52 @@ export const getRecommendations = async (
       noDownloadSources: false,
       failed: true,
     };
+  }
+};
+
+const FACET_TAGS = 8;
+const FACET_NAMES = 10;
+const FACET_GAMES = 60;
+
+/**
+ * What the library suggests as filters: the tags with the most playtime
+ * behind them (idle games discounted, as for suggestions) and the developers
+ * and publishers of the most played games.
+ */
+export const getLibraryFacets = async (): Promise<LibraryFacets> => {
+  const empty = { tagIds: [], developers: [], publishers: [] };
+
+  try {
+    const library = await getLibrary();
+    const { profile } = buildTasteProfile(library.inputs, DEFAULT_TUNE_OPTIONS);
+
+    const played = library.inputs
+      .filter((input) => input.hours > 0)
+      .sort((a, b) => b.hours - a.hours)
+      .slice(0, FACET_GAMES);
+    const items = await getStoreItems(played.map((input) => input.appId));
+
+    const tally = (pick: (item: StoreItem) => string[]) => {
+      const totals = new Map<string, number>();
+      for (const input of played) {
+        const item = items.get(input.appId);
+        for (const name of item ? pick(item) : []) {
+          totals.set(name, (totals.get(name) ?? 0) + input.hours);
+        }
+      }
+      return [...totals]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, FACET_NAMES)
+        .map(([name]) => name);
+    };
+
+    return {
+      tagIds: profile.tags.slice(0, FACET_TAGS).map((tag) => tag.tagId),
+      developers: tally((item) => item.developers),
+      publishers: tally((item) => item.publishers),
+    };
+  } catch (error) {
+    logger.warn("[Recommender] Could not read the library's facets", error);
+    return empty;
   }
 };
