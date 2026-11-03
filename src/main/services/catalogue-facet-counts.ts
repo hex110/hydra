@@ -53,7 +53,10 @@ const run = async (): Promise<boolean> => {
   const previous = await read();
   const isFresh = !!previous && Date.now() - previous.checkedAt < MAX_AGE_MS;
   const retryOnly =
-    isFresh && (previous.pending.tags.length || previous.pending.genres.length);
+    isFresh &&
+    (previous.pending.tags.length ||
+      previous.pending.genres.length ||
+      previous.total === undefined);
   if (isFresh && !retryOnly) return false;
 
   const [tagNames, genres] = await Promise.all([
@@ -69,6 +72,7 @@ const run = async (): Promise<boolean> => {
     checkedAt: isFresh ? previous.checkedAt : Date.now(),
     tags: { ...previous?.tags },
     genres: { ...previous?.genres },
+    total: (await countGames({})) ?? previous?.total,
     pending: { tags: [], genres: [] },
   };
 

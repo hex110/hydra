@@ -6,10 +6,20 @@ import * as profileModule from "./profile.ts";
 import * as scoringModule from "./scoring.ts";
 // @ts-ignore The Node ESM test runner requires the source extension.
 import * as typesModule from "./types.ts";
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as groupsModule from "./groups.ts";
 
 const { buildTasteProfile } = profileModule;
-const { rankCandidates, diversify, passesFilters } = scoringModule;
+const {
+  rankCandidates,
+  diversify,
+  passesFilters,
+  interleaveGroups,
+  seenFactor,
+  isoWeek,
+} = scoringModule;
 const { DEFAULT_TUNE_OPTIONS } = typesModule;
+const { groupSeeds } = groupsModule;
 
 const IDLER = 615955;
 const INDIE = 492;
@@ -55,6 +65,21 @@ const candidate = (appId: string, tagIds: number[], over = {}) => ({
 
 const options = DEFAULT_TUNE_OPTIONS;
 
+/** The whole library as one group without anchors, to test scoring alone. */
+const wholeGroup = (built: {
+  vector: Map<number, number>;
+  seeds: ReturnType<typeof buildTasteProfile>["seeds"];
+}) => ({
+  id: "all",
+  anchors: [],
+  seeds: built.seeds,
+  vector: built.vector,
+  hours: 0,
+  weight: 1,
+  share: 1,
+  rarestAnchorOnly: false,
+});
+
 describe("passesFilters", () => {
   it("drops an avoided tag within the strictness depth and not below it", () => {
     const avoid = { ...options, avoidTags: [IDLER] };
@@ -74,17 +99,10 @@ describe("passesFilters", () => {
     assert.equal(passesFilters(deep, { ...avoid, avoidStrictness: 10 }), false);
   });
 
-  it("leaves idle games out while the idle rule is on, unless the person leans toward one", () => {
+  it("leaves idle games out with the default avoid list, and lets them in once it is emptied", () => {
     const idle = candidate("idle", [ACTION, 560542, INDIE]);
     assert.equal(passesFilters(idle, options), false);
-    assert.equal(
-      passesFilters(idle, { ...options, idleDiscount: false }),
-      true
-    );
-    assert.equal(
-      passesFilters(idle, { ...options, leanTags: [IDLER], leanDepth: 5 }),
-      true
-    );
+    assert.equal(passesFilters(idle, { ...options, avoidTags: [] }), true);
   });
 
   it("takes the related tags with an avoided one unless told not to", () => {
@@ -92,7 +110,6 @@ describe("passesFilters", () => {
     assert.equal(
       passesFilters(related, {
         ...options,
-        idleDiscount: false,
         avoidTags: [IDLER],
       }),
       false
@@ -100,7 +117,6 @@ describe("passesFilters", () => {
     assert.equal(
       passesFilters(related, {
         ...options,
-        idleDiscount: false,
         avoidTags: [IDLER],
         avoidRelated: false,
       }),
@@ -192,7 +208,7 @@ describe("rankCandidates", () => {
     seed("Hades", [ROGUELIKE, ACTION, INDIE, DIFFICULT]),
     seed("Celeste", [PLATFORMER, INDIE, DIFFICULT]),
   ];
-  const { vector, seeds } = buildTasteProfile(library, options);
+  const group = wholeGroup(buildTasteProfile(library, options));
 
   it("ranks games that share the taste above games that do not", () => {
     const ranked = rankCandidates(
@@ -200,8 +216,7 @@ describe("rankCandidates", () => {
         candidate("match", [ROGUELIKE, ACTION, INDIE]),
         candidate("other", [CO_OP, 1667, 1742]),
       ],
-      vector,
-      seeds,
+      group,
       options
     );
 
@@ -216,8 +231,7 @@ describe("rankCandidates", () => {
           behaviour: [{ seedKey: "steam:Hades", place: 1 }],
         }),
       ],
-      vector,
-      seeds,
+      group,
       options
     );
 
@@ -232,11 +246,11 @@ describe("rankCandidates", () => {
     const names = (items: { candidate: { appId: string } }[]) =>
       items.map((item) => item.candidate.appId);
 
-    const popular = rankCandidates(pool, vector, seeds, {
+    const popular = rankCandidates(pool, group, {
       ...options,
       popularity: 1,
     });
-    const niche = rankCandidates(pool, vector, seeds, {
+    const niche = rankCandidates(pool, group, {
       ...options,
       popularity: -1,
     });
@@ -256,26 +270,25 @@ describe("rankCandidates", () => {
       }),
     ];
     assert.equal(
-      rankCandidates(pool, vector, seeds, { ...options, recency: 1 })[0]
-        .candidate.appId,
+      rankCandidates(pool, group, { ...options, recency: 1 })[0].candidate
+        .appId,
       "new"
     );
     assert.equal(
-      rankCandidates(pool, vector, seeds, { ...options, recency: -1 })[0]
-        .candidate.appId,
+      rankCandidates(pool, group, { ...options, recency: -1 })[0].candidate
+        .appId,
       "old"
     );
   });
 
-  it("has no idle game in the results when Idler is avoided, whatever the idle rule says", () => {
-    const avoid = { ...options, avoidTags: [IDLER], idleDiscount: false };
+  it("has no idle game in the results when Idler is avoided", () => {
+    const avoid = { ...options, avoidTags: [IDLER] };
     const ranked = rankCandidates(
       [
         candidate("idle", [IDLER, ACTION, INDIE]),
         candidate("fine", [ROGUELIKE, ACTION]),
       ],
-      vector,
-      seeds,
+      group,
       avoid
     );
 
@@ -296,6 +309,7 @@ describe("diversify", () => {
     developer: string
   ) => ({
     candidate: candidate(appId, [ACTION], { developers: [developer] }),
+    groupId: "all",
     score,
     similarity: score,
     vector: new Map([[ACTION, 1]]),
@@ -354,5 +368,164 @@ describe("diversify", () => {
   it("returns what it has when fewer games than the limit remain", () => {
     const ranked = [scored("a", 1, "A", "x"), scored("b", 0.9, "A", "x")];
     assert.equal(diversify(ranked, 10).length, 2);
+  });
+});
+
+const FLIGHT = 15045;
+const MILITARY = 4168;
+const WAR = 1678;
+const FPS = 1663;
+const SIMULATION = 599;
+const MANAGEMENT = 12472;
+const BUILDING = 1643;
+
+describe("groups and the anchor rule", () => {
+  // Flight is rare in the catalogue; Military, War and Action are common.
+  const idf = new Map([
+    [FLIGHT, 6],
+    [MILITARY, 2],
+    [WAR, 2],
+    [ACTION, 0.5],
+    [FPS, 2.5],
+    [INDIE, 0.4],
+    [SIMULATION, 1.5],
+    [PLATFORMER, 2.2],
+    [DIFFICULT, 2],
+  ]);
+
+  it("ranks a flight game above a military shooter for a game that leads with Flight", () => {
+    const aceCombat = seed("Ace Combat 7", [
+      FLIGHT,
+      MILITARY,
+      WAR,
+      ACTION,
+      SIMULATION,
+    ]);
+    const built = buildTasteProfile([aceCombat], {
+      ...options,
+      basedOn: "games",
+      pickedGames: ["steam:Ace Combat 7"],
+    });
+    const [group] = groupsModule.groupPickedGames(built.seeds, idf);
+    assert.deepEqual(group.anchors, [FLIGHT]);
+
+    const ranked = rankCandidates(
+      [
+        // Shares more tags, but not the one that defines the game.
+        candidate("squad", [MILITARY, WAR, FPS, ACTION, SIMULATION]),
+        candidate("flight sim", [SIMULATION, FLIGHT, ACTION]),
+      ],
+      group,
+      { ...options, avoidTags: [] },
+      { idf }
+    );
+    assert.deepEqual(
+      ranked.map(
+        (item: { candidate: { appId: string } }) => item.candidate.appId
+      ),
+      ["flight sim"]
+    );
+  });
+
+  it("splits a mixed library into groups named by what sets them apart", () => {
+    const shooters = Array.from({ length: 36 }, (_, index) =>
+      seed(`shooter ${index}`, [FPS, MILITARY, ACTION, WAR], 60)
+    );
+    const platformers = Array.from({ length: 36 }, (_, index) =>
+      seed(`platformer ${index}`, [PLATFORMER, DIFFICULT, INDIE], 40)
+    );
+    const builders = Array.from({ length: 36 }, (_, index) =>
+      seed(`builder ${index}`, [MANAGEMENT, BUILDING, SIMULATION], 30)
+    );
+    const built = buildTasteProfile(
+      [...shooters, ...platformers, ...builders],
+      {
+        ...options,
+        avoidTags: [],
+      }
+    );
+    const groups = groupSeeds(built.seeds, idf);
+
+    // 108 games make three groups, one per kind of game.
+    assert.equal(groups.length, 3);
+    const leads = groups.map((group: { anchors: number[] }) => group.anchors);
+    assert.ok(leads.some((anchors: number[]) => anchors.includes(FPS)));
+    assert.ok(leads.some((anchors: number[]) => anchors.includes(PLATFORMER)));
+    assert.ok(leads.some((anchors: number[]) => anchors.includes(MANAGEMENT)));
+    // Every game is in exactly one group.
+    const count = groups.reduce(
+      (sum: number, group: { seeds: unknown[] }) => sum + group.seeds.length,
+      0
+    );
+    assert.equal(count, 108);
+  });
+
+  it("always gives the same groups for the same library", () => {
+    const library = [
+      seed("a", [FPS, MILITARY, ACTION], 90),
+      seed("b", [PLATFORMER, DIFFICULT, INDIE], 50),
+      seed("c", [FPS, WAR, ACTION], 40),
+    ];
+    const built = buildTasteProfile(library, options);
+    const ids = (list: { id: string }[]) => list.map((group) => group.id);
+    assert.deepEqual(
+      ids(groupSeeds(built.seeds, idf)),
+      ids(groupSeeds(built.seeds, idf))
+    );
+  });
+});
+
+describe("mixing groups", () => {
+  const item = (appId: string, groupId: string) => ({
+    candidate: candidate(appId, [ACTION]),
+    groupId,
+    score: 1,
+    similarity: 1,
+    vector: new Map(),
+    becauseOf: null,
+    matchTagIds: [],
+  });
+
+  it("gives each group results in proportion to its share, without repeats", () => {
+    const big = Array.from({ length: 30 }, (_, index) =>
+      item(`b${index}`, "big")
+    );
+    const small = [
+      item("s0", "small"),
+      item("b0", "small"),
+      item("s1", "small"),
+    ];
+    const mixed = interleaveGroups(
+      [
+        { share: 0.75, items: big },
+        { share: 0.25, items: small },
+      ],
+      8
+    );
+    const ids = mixed.map(
+      (entry: { candidate: { appId: string } }) => entry.candidate.appId
+    );
+    assert.equal(new Set(ids).size, ids.length);
+    assert.equal(ids.filter((id: string) => id.startsWith("s")).length, 2);
+  });
+});
+
+describe("freshness", () => {
+  it("lets a game sink only after it was shown several times unopened", () => {
+    assert.equal(seenFactor(undefined), 1);
+    assert.equal(seenFactor(3), 1);
+    assert.ok(seenFactor(5) < 1);
+    assert.equal(seenFactor(100), 0.7);
+  });
+
+  it("keeps one week's order and changes it the next", () => {
+    assert.equal(
+      isoWeek(Date.UTC(2026, 10, 2)),
+      isoWeek(Date.UTC(2026, 10, 8))
+    );
+    assert.notEqual(
+      isoWeek(Date.UTC(2026, 10, 8)),
+      isoWeek(Date.UTC(2026, 10, 9))
+    );
   });
 });

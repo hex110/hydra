@@ -2890,6 +2890,10 @@ contextBridge.exposeInMainWorld("electron", {
       count: number;
       edges: CatalogueSearchResult[];
     } | null>,
+  recordCatalogueImpressions: (appIds: string[]) =>
+    ipcRenderer.invoke("recordCatalogueImpressions", appIds) as Promise<void>,
+  forgetCatalogueImpression: (appId: string) =>
+    ipcRenderer.invoke("forgetCatalogueImpression", appId) as Promise<void>,
   getStoreFilterFacts: (appIds: string[]) =>
     ipcRenderer.invoke("getStoreFilterFacts", appIds) as Promise<
       Record<string, { tags: number[]; players: number[] }>

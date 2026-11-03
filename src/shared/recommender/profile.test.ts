@@ -7,7 +7,7 @@ import * as typesModule from "./types.ts";
 // @ts-ignore The Node ESM test runner requires the source extension.
 import * as storeGames from "../store-games.ts";
 
-const { buildTasteProfile, pickRetrievalSeeds } = profileModule;
+const { buildTasteProfile } = profileModule;
 const { DEFAULT_TUNE_OPTIONS } = typesModule;
 const { IDLE_TAG_IDS } = storeGames;
 
@@ -79,34 +79,25 @@ const celeste = seed("Celeste", 30, [
 const library = [clicker, hades, hollow, celeste];
 
 describe("buildTasteProfile", () => {
-  it("counts an idle game's hours at 10 % and says so", () => {
+  it("leaves idle games out by default, since idle tags start in the avoid list", () => {
     const { profile, seeds } = buildTasteProfile(library, DEFAULT_TUNE_OPTIONS);
 
-    const idle = profile.seeds.find((entry: { key: string }) =>
-      entry.key.endsWith("Clicker Heroes")
+    assert.ok(
+      !seeds.some(
+        (entry: { title: string }) => entry.title === "Clicker Heroes"
+      )
     );
-    assert.ok(idle?.notes.includes("idle"));
-    // 3000 h counted as 300 h is still not more than a few times Hades' weight.
-    assert.ok(idle!.weight < Math.log2(1 + 3000));
-    assert.ok(seeds.length === 4);
-  });
-
-  it("leads with the taste of the games played for attention, not the idle game", () => {
-    const { profile } = buildTasteProfile(library, DEFAULT_TUNE_OPTIONS);
-
     assert.ok(!IDLE_TAG_IDS.includes(profile.tags[0].tagId));
-    const idleShare = profile.tags
-      .filter((tag: { tagId: number }) => IDLE_TAG_IDS.includes(tag.tagId))
-      .reduce((sum: number, tag: { share: number }) => sum + tag.share, 0);
-    assert.ok(idleShare < 0.2, `idle share was ${idleShare}`);
+    assert.ok(
+      !profile.tags.some((tag: { tagId: number }) => tag.tagId === CASUAL)
+    );
     assert.equal(profile.dominantFamily, null);
   });
 
-  it("lets the idle game lead when the discount is off, and names the family", () => {
+  it("lets the idle game lead when the avoid list is emptied, and names the family", () => {
     const { profile } = buildTasteProfile([clicker, celeste], {
       ...DEFAULT_TUNE_OPTIONS,
-      idleDiscount: false,
-      basedOn: "all-time",
+      avoidTags: [],
     });
 
     assert.equal(profile.seeds[0].title, "Clicker Heroes");
@@ -118,8 +109,8 @@ describe("buildTasteProfile", () => {
   it("leaves out games with an avoided tag in their first five, and the tags with them", () => {
     const { profile, seeds } = buildTasteProfile(library, {
       ...DEFAULT_TUNE_OPTIONS,
-      idleDiscount: false,
       avoidTags: [IDLER],
+      avoidRelated: false,
     });
 
     assert.ok(
@@ -129,19 +120,6 @@ describe("buildTasteProfile", () => {
     );
     assert.ok(
       !profile.tags.some((tag: { tagId: number }) => tag.tagId === CASUAL)
-    );
-    assert.equal(profile.dominantFamily, null);
-  });
-
-  it("keeps idle games out of the search for candidates while their hours are discounted", () => {
-    const { seeds } = buildTasteProfile(library, DEFAULT_TUNE_OPTIONS);
-    const retrieval = pickRetrievalSeeds(seeds, DEFAULT_TUNE_OPTIONS);
-
-    assert.ok(retrieval.length > 0);
-    assert.ok(
-      !retrieval.some(
-        (entry: { title: string }) => entry.title === "Clicker Heroes"
-      )
     );
   });
 
@@ -210,7 +188,7 @@ describe("buildTasteProfile", () => {
     assert.ok(wished!.weight < 1);
   });
 
-  it("uses only recent play in Recent mode and only the picked games in Picked", () => {
+  it("uses only recent play in Recent mode and only the chosen games in Games", () => {
     const recent = buildTasteProfile(
       [
         seed("Old", 500, [ACTION, INDIE]),
@@ -225,7 +203,7 @@ describe("buildTasteProfile", () => {
 
     const picked = buildTasteProfile(library, {
       ...DEFAULT_TUNE_OPTIONS,
-      basedOn: "picked",
+      basedOn: "games",
       pickedGames: ["steam:Celeste"],
     });
     assert.deepEqual(
@@ -246,5 +224,48 @@ describe("buildTasteProfile", () => {
       (base.vector.get(ROGUELIKE) ?? 0) * 2
     );
     assert.ok((leaning.vector.get(9999) ?? 0) > 0);
+  });
+});
+
+// @ts-ignore The Node ESM test runner requires the source extension.
+import * as settingsModule from "./settings.ts";
+
+describe("migrateTuneSettings", () => {
+  const { migrateTuneSettings } = settingsModule;
+
+  it("adds the idle tags once for settings saved with the idle rule on", () => {
+    const migrated = migrateTuneSettings({
+      options: {
+        basedOn: "all-time",
+        idleDiscount: true,
+        avoidTags: [ROGUELIKE],
+      },
+      presets: [],
+    });
+    assert.equal(migrated.version, 2);
+    assert.equal(migrated.options.basedOn, "groups");
+    assert.ok(
+      IDLE_TAG_IDS.every((id: number) =>
+        migrated.options.avoidTags.includes(id)
+      )
+    );
+    assert.ok(migrated.options.avoidTags.includes(ROGUELIKE));
+    assert.equal("idleDiscount" in migrated.options, false);
+
+    // Removed later, they stay removed.
+    const again = migrateTuneSettings({
+      ...migrated,
+      options: { ...migrated.options, avoidTags: [ROGUELIKE] },
+    });
+    assert.deepEqual(again.options.avoidTags, [ROGUELIKE]);
+  });
+
+  it("leaves the avoid list alone when the idle rule was off", () => {
+    const migrated = migrateTuneSettings({
+      options: { basedOn: "picked", idleDiscount: false, avoidTags: [] },
+      presets: [],
+    });
+    assert.deepEqual(migrated.options.avoidTags, []);
+    assert.equal(migrated.options.basedOn, "games");
   });
 });

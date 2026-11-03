@@ -1,9 +1,5 @@
 import type { SteamTagWeight } from "../similar-games.js";
-import {
-  expandTagFamilies,
-  IDLE_TAG_IDS,
-  TAG_FAMILIES,
-} from "../store-games.js";
+import { expandTagFamilies, TAG_FAMILIES } from "../store-games.js";
 import { tagVector, type TagVector } from "./vector.js";
 import type {
   ProfileFamily,
@@ -14,12 +10,6 @@ import type {
   TuneOptions,
 } from "./types.js";
 
-const IDLE_TAGS = new Set<number>(IDLE_TAG_IDS);
-
-/** Idle games run in the background, so their hours are not attention. */
-const IDLE_HOURS_SHARE = 0.1;
-/** Idle tags count among a game's first tags only. */
-const IDLE_DEPTH = 5;
 /** Where a seed's tags are checked against the avoid list. */
 const SEED_AVOID_DEPTH = 5;
 const MAX_SEED_SHARE = 0.2;
@@ -28,8 +18,6 @@ const FINISHED_MIN_WEIGHT = Math.log2(1 + 10);
 const PROFILE_SEEDS = 20;
 const PROFILE_TAGS = 15;
 const DOMINANT_FAMILY_SHARE = 0.3;
-/** Seeds whose lists and tags drive the search for candidates. */
-export const RETRIEVAL_SEEDS = 8;
 
 export const hasTagAmong = (
   tags: readonly SteamTagWeight[],
@@ -48,7 +36,6 @@ export const getAvoidedTags = (
 
 export interface WeightedSeed extends ProfileSeed {
   tags: SteamTagWeight[];
-  isIdle: boolean;
 }
 
 export interface BuiltProfile {
@@ -69,21 +56,15 @@ const ratingFactor = (rating: number): number => {
 /** One game's weight, positive for what to find more of; null when it says nothing. */
 const weighSeed = (
   seed: SeedInput,
-  options: TuneOptions,
-  isIdle: boolean
+  options: TuneOptions
 ): { weight: number; notes: SeedNote[] } | null => {
-  const notes: SeedNote[] = [];
+  const notes: SeedNote[] = seed.elsewhere ? ["elsewhere"] : [];
 
-  let hours =
+  const hours =
     options.basedOn === "recent"
       ? seed.recentHours
       : seed.hours *
         (1 + (seed.hours > 0 ? Math.min(1, seed.recentHours / seed.hours) : 0));
-
-  if (isIdle && options.idleDiscount) {
-    hours *= IDLE_HOURS_SHARE;
-    notes.push("idle");
-  }
 
   let weight = hours > 0 ? Math.log2(1 + hours) : 0;
 
@@ -191,9 +172,10 @@ const findDominantFamily = (
 
 /**
  * Learns what the person likes from their library: each game's weight comes
- * from playtime (idle games discounted), rating and status, no game supplies
- * more than a fifth of the whole, and the weighted tags of all of them make
- * the taste vector.
+ * from playtime, rating and status, no game supplies more than a fifth of the
+ * whole, and the weighted tags of all of them make the taste vector. Games
+ * with an avoided tag among their first five are left out entirely. In Games
+ * mode only the chosen games count, each the same.
  */
 export const buildTasteProfile = (
   inputs: readonly SeedInput[],
@@ -207,17 +189,21 @@ export const buildTasteProfile = (
   for (const input of inputs) {
     if (input.tags.length === 0) continue;
     if (excluded.has(input.key)) continue;
-    if (options.basedOn === "picked" && !picked.has(input.key)) continue;
-    if (hasTagAmong(input.tags, avoided, SEED_AVOID_DEPTH)) continue;
+    const isGames = options.basedOn === "games";
+    if (isGames && !picked.has(input.key)) continue;
+    if (options.basedOn === "tags") continue;
+    if (!isGames && hasTagAmong(input.tags, avoided, SEED_AVOID_DEPTH))
+      continue;
 
-    const isIdle = hasTagAmong(input.tags, IDLE_TAGS, IDLE_DEPTH);
-    const result = weighSeed(input, options, isIdle);
+    const result = isGames
+      ? {
+          weight: 1,
+          notes: input.elsewhere ? (["elsewhere"] as SeedNote[]) : [],
+        }
+      : weighSeed(input, options);
     if (!result) continue;
 
-    const weight =
-      options.basedOn === "picked"
-        ? Math.max(1, Math.abs(result.weight))
-        : result.weight;
+    const weight = result.weight;
 
     weighted.push({
       key: input.key,
@@ -228,7 +214,6 @@ export const buildTasteProfile = (
       share: 0,
       notes: result.notes,
       tags: input.tags,
-      isIdle,
     });
   }
 
@@ -276,22 +261,14 @@ export const buildTasteProfile = (
     profile: {
       seeds: seeds
         .slice(0, PROFILE_SEEDS)
-        .map(({ tags: _tags, isIdle: _isIdle, ...seed }) => seed),
+        .map(({ tags: _tags, ...seed }) => seed),
       tags,
       dominantFamily: findDominantFamily(vector, seeds),
       seedCount: seeds.length,
+      groups: [],
+      untaggedCount: 0,
     },
     vector,
     seeds,
   };
 };
-
-/** The games whose lists and tags the search for candidates starts from. */
-export const pickRetrievalSeeds = (
-  seeds: readonly WeightedSeed[],
-  options: Pick<TuneOptions, "idleDiscount">
-): WeightedSeed[] =>
-  seeds
-    .filter((seed) => seed.weight > 0)
-    .filter((seed) => !(options.idleDiscount && seed.isIdle))
-    .slice(0, RETRIEVAL_SEEDS);

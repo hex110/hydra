@@ -2132,6 +2132,8 @@ declare global {
     searchSteamStoreGames: (
       query: SteamSearchQuery
     ) => Promise<{ count: number; edges: CatalogueSearchResult[] } | null>;
+    recordCatalogueImpressions: (appIds: string[]) => Promise<void>;
+    forgetCatalogueImpression: (appId: string) => Promise<void>;
     getStoreFilterFacts: (
       appIds: string[]
     ) => Promise<Record<string, { tags: number[]; players: number[] }>>;

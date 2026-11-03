@@ -3,6 +3,8 @@ export interface FacetCounts {
   checkedAt: number;
   tags: Record<string, number>;
   genres: Record<string, number>;
+  /** Games in the whole catalogue; missing in counts stored before it was kept. */
+  total?: number;
   /** Values whose last request failed; the next run asks for these again. */
   pending: { tags: string[]; genres: string[] };
 }

@@ -1,6 +1,14 @@
 import type { SteamTagWeight } from "../similar-games.js";
+import { IDLE_TAG_IDS } from "../store-games.js";
 
-export type TuneBasis = "all-time" | "recent" | "picked";
+/**
+ * What the suggestions start from: the library in taste groups (all time or
+ * the last 90 days), chosen games (from the library or the catalogue), or
+ * chosen tags alone.
+ */
+export type TuneBasis = "groups" | "recent" | "games" | "tags";
+/** Mix all groups, or the id of one. */
+export type TuneGroup = "all" | string;
 /** How many of a game's first tags an avoided tag may be among. */
 export type TuneStrictness = 5 | 10 | 20;
 /** How far down a game's tags a "leans toward" tag may be. */
@@ -17,12 +25,14 @@ export interface TuneYears {
 /** Everything the Tune panel sets. */
 export interface TuneOptions {
   basedOn: TuneBasis;
-  /** Library keys (`shop:objectId`) used when `basedOn` is `picked`. */
+  /** Which group For you shows in Groups and Recent; `all` mixes them. */
+  group: TuneGroup;
+  /** Steam keys (`steam:<appId>`) used when `basedOn` is `games`; need not be owned. */
   pickedGames: string[];
+  /** Tags used when `basedOn` is `tags`. */
+  seedTags: number[];
   /** Library keys the person removed from Based on. */
   excludedSeeds: string[];
-  /** Count the playtime of idle games at 10 %. */
-  idleDiscount: boolean;
   avoidTags: number[];
   /** Avoiding a tag also avoids the tags that mean nearly the same. */
   avoidRelated: boolean;
@@ -46,11 +56,13 @@ export interface TuneOptions {
 }
 
 export const DEFAULT_TUNE_OPTIONS: TuneOptions = {
-  basedOn: "all-time",
+  basedOn: "groups",
+  group: "all",
   pickedGames: [],
+  seedTags: [],
   excludedSeeds: [],
-  idleDiscount: true,
-  avoidTags: [],
+  // Idle games run in the background; their playtime is not taste.
+  avoidTags: [...IDLE_TAG_IDS],
   avoidRelated: true,
   avoidStrictness: 5,
   leanTags: [],
@@ -95,10 +107,23 @@ export interface BrowsePreset {
   filters: Record<string, unknown>;
 }
 
+/** Settings from before groups: version 1 had `idleDiscount` and other `basedOn` names. */
+export const TUNE_SETTINGS_VERSION = 2;
+
 export interface TuneSettings {
+  version?: number;
   options: TuneOptions;
   presets: TunePreset[];
   browsePresets: BrowsePreset[];
+  /** Games played outside Hydra, by Steam app id, with the rating given. */
+  playedElsewhere?: Record<string, PlayedElsewhere>;
+}
+
+export interface PlayedElsewhere {
+  title: string;
+  /** Hydra's 1–10, or null when not rated. */
+  rating: number | null;
+  at: number;
 }
 
 export const DEFAULT_TUNE_SETTINGS: TuneSettings = {
@@ -120,16 +145,19 @@ export interface SeedInput {
   status: "playing" | "finished" | "dropped" | "backlog" | null;
   wishlisted: boolean;
   tags: SteamTagWeight[];
+  /** Not in the library: picked from the catalogue, or logged as played elsewhere. */
+  elsewhere?: boolean;
 }
 
 export type SeedNote =
-  | "idle"
   | "rated-high"
   | "rated-low"
   | "finished"
   | "dropped"
   | "intent"
-  | "capped";
+  | "capped"
+  /** Not in the library: chosen in Games mode or logged as played elsewhere. */
+  | "elsewhere";
 
 export interface ProfileSeed {
   key: string;
@@ -153,11 +181,33 @@ export interface ProfileFamily {
   seedHours: number;
 }
 
+/** One game in a taste group. */
+export interface GroupGame extends ProfileSeed {
+  /** Share of the group's weight, 0–1. */
+  groupShare: number;
+}
+
+/** A group of games with a taste in common, named by its three most telling tags. */
+export interface ProfileGroup {
+  /** Stable while the library is much the same: from the group's anchor tags. */
+  id: string;
+  /** The tags that name the group and that a suggestion must carry one of. */
+  tagIds: number[];
+  /** Every game in the group, heaviest first. */
+  games: GroupGame[];
+  hours: number;
+  /** Share of all the weight, 0–1. */
+  share: number;
+}
+
 /** What the recommender learned from the library, shown in Tune. */
 export interface TasteProfile {
   seeds: ProfileSeed[];
   tags: { tagId: number; share: number }[];
   dominantFamily: ProfileFamily | null;
+  groups: ProfileGroup[];
+  /** Library games played or rated that Steam has no tags for, so they can't be used. */
+  untaggedCount: number;
   /** How many library games had anything to learn from. */
   seedCount: number;
 }
@@ -194,22 +244,19 @@ export interface Recommendation {
   reviewLabel: string | null;
   criticScore: number | null;
   releaseYear: number | null;
+  /** The taste group it was found for. */
+  groupId: string | null;
   /** The played game that contributed most. */
   becauseOf: { key: string; appId: string; title: string } | null;
   /** The tags that contributed most to the match. */
   matchTagIds: number[];
 }
 
-export interface BecauseShelf {
-  seed: { key: string; appId: string; title: string };
-  results: Recommendation[];
-}
-
 export interface RecommendationResponse {
   profile: TasteProfile;
   results: Recommendation[];
-  /** For the top seeds: their own "More like this" lists, re-ranked. */
-  because: BecauseShelf[];
+  /** The group shown, or `all`. */
+  group: TuneGroup;
   /** Games dropped by a filter that could not be applied to them. */
   leftOut: {
     buildDateUnknown: number;

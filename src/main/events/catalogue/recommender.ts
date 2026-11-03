@@ -1,6 +1,7 @@
 import {
   DEFAULT_TUNE_OPTIONS,
-  DEFAULT_TUNE_SETTINGS,
+  migrateTuneSettings,
+  TUNE_SETTINGS_VERSION,
   type NotInterestedGame,
   type TuneOptions,
   type TuneSettings,
@@ -9,7 +10,11 @@ import {
   catalogueNotInterestedSublevel,
   catalogueTasteSublevel,
 } from "@main/level";
-import { getRecommendations } from "@main/services/recommender";
+import {
+  forgetImpressions,
+  getRecommendations,
+  recordImpressions,
+} from "@main/services/recommender";
 import { getStoreItems } from "@main/services/steam-store-items";
 import { registerEvent } from "../register-event";
 
@@ -24,12 +29,12 @@ registerEvent("getTuneSettings", async (): Promise<TuneSettings> => {
   const stored = await catalogueTasteSublevel
     .get(SETTINGS_KEY)
     .catch(() => undefined);
-
-  return {
-    options: { ...DEFAULT_TUNE_OPTIONS, ...stored?.options },
-    presets: stored?.presets ?? DEFAULT_TUNE_SETTINGS.presets,
-    browsePresets: stored?.browsePresets ?? [],
-  };
+  const settings = migrateTuneSettings(stored);
+  // Store the migrated shape once, so the idle tags are added only once.
+  if (stored && stored.version !== settings.version) {
+    await catalogueTasteSublevel.put(SETTINGS_KEY, settings).catch(() => {});
+  }
+  return settings;
 });
 
 registerEvent("setTuneSettings", async (_event, settings: TuneSettings) => {
@@ -37,6 +42,8 @@ registerEvent("setTuneSettings", async (_event, settings: TuneSettings) => {
     options: { ...DEFAULT_TUNE_OPTIONS, ...settings.options },
     presets: (settings.presets ?? []).slice(0, MAX_PRESETS),
     browsePresets: (settings.browsePresets ?? []).slice(0, MAX_PRESETS),
+    playedElsewhere: settings.playedElsewhere ?? {},
+    version: TUNE_SETTINGS_VERSION,
   });
 });
 
@@ -87,4 +94,12 @@ registerEvent(
     }
     return tags;
   }
+);
+
+registerEvent("recordCatalogueImpressions", (_event, appIds: string[]) =>
+  recordImpressions(Array.isArray(appIds) ? appIds.map(String) : [])
+);
+
+registerEvent("forgetCatalogueImpression", (_event, appId: string) =>
+  forgetImpressions(String(appId))
 );

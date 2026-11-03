@@ -72,3 +72,39 @@ export const dot = (a: TagVector, b: TagVector) => {
   for (const [tagid, value] of small) sum += value * (large.get(tagid) ?? 0);
   return sum;
 };
+
+/**
+ * Rarity from the whole catalogue: a tag few games carry (Flight) counts for
+ * more than one most games carry (Action). Tags with no count are treated as
+ * rare as the rarest known one, since they are rarely counted for a reason.
+ */
+export const buildCatalogueIdf = (
+  counts: Readonly<Record<string, number>>,
+  total: number
+): Map<number, number> => {
+  const idf = new Map<number, number>();
+  if (total <= 0) return idf;
+  for (const [id, count] of Object.entries(counts)) {
+    idf.set(Number(id), Math.log(1 + total / (1 + Math.max(0, count))));
+  }
+  return idf;
+};
+
+/** A vector scaled by rarity and set to length 1, keeping tags the rarity map doesn't know at the given weight. */
+export const toUnitVectorWithFallback = (
+  vector: TagVector,
+  idf: ReadonlyMap<number, number>,
+  fallback: number
+): TagVector => {
+  const scaled: TagVector = new Map();
+  let sum = 0;
+  for (const [tagid, value] of vector) {
+    const next = value * (idf.get(tagid) ?? fallback);
+    scaled.set(tagid, next);
+    sum += next * next;
+  }
+  const length = Math.sqrt(sum);
+  if (length === 0) return new Map();
+  for (const [tagid, value] of scaled) scaled.set(tagid, value / length);
+  return scaled;
+};

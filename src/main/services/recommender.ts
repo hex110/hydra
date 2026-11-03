@@ -1,18 +1,23 @@
 import { createHash } from "node:crypto";
 import {
+  buildCatalogueIdf,
   buildTasteProfile,
   DEFAULT_TUNE_OPTIONS,
   diversify,
+  expandTagFamilies,
   getDisplayedPlayTimeInMilliseconds,
+  groupFromTags,
+  groupPickedGames,
+  groupSeeds,
+  interleaveGroups,
   isFinishedGame,
-  pickRetrievalSeeds,
   rankCandidates,
   STEAM_GAME_TYPE,
   toPlayActivityDate,
+  toProfileGroup,
   toRecommendation,
-  type BecauseShelf,
+  type BuiltGroup,
   type LibraryFacets,
-  type BuiltProfile,
   type PoolCandidate,
   type RecommendationResponse,
   type ScoredCandidate,
@@ -23,7 +28,9 @@ import {
 } from "@shared";
 import type { Game } from "@types";
 import {
+  catalogueImpressionsSublevel,
   catalogueNotInterestedSublevel,
+  catalogueTasteSublevel,
   downloadSourcesSublevel,
   gamesSublevel,
 } from "@main/level";
@@ -36,30 +43,35 @@ import {
   getCatalogueSnapshot,
   setCatalogueSnapshot,
 } from "./catalogue-snapshots";
+import { getFacetCounts } from "./catalogue-facet-counts";
 import { getProtonDbTiers } from "./protondb";
 import { getStoreRankedCandidates } from "./catalogue-charts";
 import { getLastBuildUpdate } from "./steam-build-dates";
 import { getStoreItems } from "./steam-store-items";
 import { getSteamSimilarGames } from "./steam-similar";
+import { searchSteamStorePages } from "./steam-store-search";
 
 const CACHE_MS = 6 * 60 * 60 * 1000;
 const RECENT_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
-const MAX_LIBRARY_SEEDS = 400;
-const SEARCH_TAGS = 6;
+/** Every game played or rated counts, up to this many. */
+const MAX_LIBRARY_SEEDS = 1500;
 const SEARCH_TAKE = 40;
+/** A group's heaviest games whose "More like this" lists are fetched. */
+const SIMILAR_GAMES = 3;
 const SIMILAR_CONCURRENCY = 3;
+const STEAM_SEARCH_PAGES = 2;
 /** How many top candidates the filters that need a request look at. */
 const NETWORK_FILTER_DEPTH = 150;
 const RESULT_LIMIT = 120;
 /** The most games `getCatalogueRowDetails` takes at once. */
 const ROW_DETAILS_CHUNK = 60;
-const BECAUSE_SHELVES = 2;
-const BECAUSE_SIZE = 12;
 /** Finished games need a steamcmd.net request each, a second apart. */
 const FINISHED_WANTED = 24;
 const SEARCH_SORTS = ["hydraScore", "popularity"] as const;
+/** Elsewhere-played games count as this many hours, before their rating. */
+const ELSEWHERE_HOURS = 10;
 
 const PROTON_ORDER = ["borked", "bronze", "silver", "gold", "platinum"];
 const PROTON_MINIMUM_BADGES: Record<TuneProtonMinimum, string[]> = {
@@ -80,6 +92,8 @@ interface LibraryData {
   key: string;
   inputs: SeedInput[];
   ownedKeys: Set<string>;
+  /** Played or rated games Steam has no tags for. */
+  untaggedCount: number;
 }
 
 interface Pool {
@@ -94,6 +108,7 @@ interface Pool {
 let libraryCache: Promise<LibraryData> | null = null;
 let libraryCachedAt = 0;
 const poolCache = new Map<string, Promise<Pool>>();
+let idfCache: { checkedAt: number; idf: Map<number, number> } | null = null;
 
 const steamAppId = (game: Game) => {
   const identity = game.catalogueGame ?? game;
@@ -164,7 +179,7 @@ const loadLibrary = async (): Promise<LibraryData> => {
   const items = await getStoreItems(useful.map((entry) => entry.appId));
   const inputs: SeedInput[] = useful.flatMap((entry) => {
     const item = items.get(entry.appId);
-    return item && item.type === STEAM_GAME_TYPE
+    return item && item.type === STEAM_GAME_TYPE && item.tags.length > 0
       ? [{ ...entry, title: item.title || entry.title, tags: item.tags }]
       : [];
   });
@@ -183,6 +198,7 @@ const loadLibrary = async (): Promise<LibraryData> => {
     ),
     inputs,
     ownedKeys,
+    untaggedCount: useful.length - inputs.length,
   };
 };
 
@@ -243,12 +259,150 @@ const searchSteamIds = async (
   }
 };
 
+/** Tag rarity over the whole catalogue, from the daily facet counts; empty before the first run. */
+const getCatalogueIdf = async () => {
+  const counts = await getFacetCounts().catch(() => null);
+  if (!counts?.total) return new Map<number, number>();
+  if (idfCache?.checkedAt !== counts.checkedAt) {
+    idfCache = {
+      checkedAt: counts.checkedAt,
+      idf: buildCatalogueIdf(counts.tags, counts.total),
+    };
+  }
+  return idfCache.idf;
+};
+
+/** Games chosen in Games mode or logged as played elsewhere, which the library doesn't have. */
+const loadOutsideSeeds = async (
+  library: LibraryData,
+  options: TuneOptions
+): Promise<SeedInput[]> => {
+  const stored = await catalogueTasteSublevel
+    .get("settings")
+    .catch(() => undefined);
+  const elsewhere = stored?.playedElsewhere ?? {};
+  const inLibrary = new Set(library.inputs.map((input) => input.key));
+
+  const wanted = new Map<string, { rating: number | null }>();
+  for (const [appId, entry] of Object.entries(elsewhere)) {
+    wanted.set(`steam:${appId}`, { rating: entry.rating ?? null });
+  }
+  if (options.basedOn === "games") {
+    for (const key of options.pickedGames) {
+      if (!wanted.has(key)) wanted.set(key, { rating: null });
+    }
+  }
+
+  const keys = [...wanted.keys()].filter(
+    (key) => key.startsWith("steam:") && !inLibrary.has(key)
+  );
+  if (keys.length === 0) return [];
+
+  const items = await getStoreItems(keys.map((key) => key.slice(6)));
+  return keys.flatMap((key) => {
+    const item = items.get(key.slice(6));
+    if (!item || item.type !== STEAM_GAME_TYPE || item.tags.length === 0)
+      return [];
+    const isElsewhere = key.slice(6) in elsewhere;
+    return [
+      {
+        key,
+        appId: item.appId,
+        title: item.title,
+        hours: isElsewhere ? ELSEWHERE_HOURS : 0,
+        recentHours: 0,
+        rating: wanted.get(key)?.rating ?? null,
+        status: null,
+        wishlisted: false,
+        tags: item.tags,
+        elsewhere: true,
+      },
+    ];
+  });
+};
+
+/** Keys of everything that should not be suggested: owned and played elsewhere. */
+const getHiddenKeys = async (library: LibraryData) => {
+  const stored = await catalogueTasteSublevel
+    .get("settings")
+    .catch(() => undefined);
+  const hidden = new Set(library.ownedKeys);
+  for (const appId of Object.keys(stored?.playedElsewhere ?? {})) {
+    hidden.add(`steam:${appId}`);
+  }
+  return hidden;
+};
+
+const getImpressions = async () => {
+  const entries: [string, { count: number }][] =
+    await catalogueImpressionsSublevel
+      .iterator()
+      .all()
+      .catch(() => []);
+  return new Map<string, number>(
+    entries.map(([appId, value]) => [appId, value.count])
+  );
+};
+
+/** Notes that suggested games were on screen; opening a game page forgets them. */
+export const recordImpressions = async (appIds: string[]) => {
+  const unique = [...new Set(appIds)].slice(0, 200);
+  if (unique.length === 0) return;
+  const current = await catalogueImpressionsSublevel
+    .getMany(unique)
+    .catch(() => unique.map(() => undefined));
+  const batch = catalogueImpressionsSublevel.batch();
+  unique.forEach((appId, index) => {
+    batch.put(appId, {
+      count: (current[index]?.count ?? 0) + 1,
+      lastAt: Date.now(),
+    });
+  });
+  await batch.write().catch((error) => {
+    logger.warn("[Recommender] Could not record impressions", error);
+  });
+};
+
+export const forgetImpressions = async (appId: string) => {
+  await catalogueImpressionsSublevel.del(appId).catch(() => undefined);
+};
+
+const searchSteamStoreIds = async (group: BuiltGroup, options: TuneOptions) => {
+  const tags = group.id === "tags" ? group.anchors : group.anchors.slice(0, 2);
+  if (tags.length === 0) return [];
+  const untags = options.avoidRelated
+    ? expandTagFamilies(options.avoidTags)
+    : options.avoidTags;
+  // Two anchors together can be too narrow; the first alone backs them up.
+  const lists = await Promise.all([
+    searchSteamStorePages(
+      { tags, untags, sortBy: "Reviews_DESC" },
+      STEAM_SEARCH_PAGES
+    ),
+    tags.length > 1
+      ? searchSteamStorePages(
+          { tags: tags.slice(0, 1), untags, sortBy: "Reviews_DESC" },
+          1
+        )
+      : Promise.resolve([]),
+  ]);
+  return lists.flatMap((list) => list ?? []);
+};
+
+/**
+ * One group's candidates: Steam's "More like this" for its heaviest games
+ * (the behaviour signal), Hydra's search for each anchor tag, Steam's store
+ * search for its leading anchors with the avoid list left out, and the most
+ * reviewed games of the last year.
+ */
 const buildPool = async (
-  built: BuiltProfile,
+  group: BuiltGroup,
   options: TuneOptions,
-  library: LibraryData
+  hidden: Set<string>
 ): Promise<Pool> => {
-  const seeds = pickRetrievalSeeds(built.seeds, options);
+  const seeds = group.seeds
+    .filter((seed) => seed.weight > 0)
+    .slice(0, SIMILAR_GAMES);
 
   const behaviour = new Map<string, { seedKey: string; place: number }[]>();
   let next = 0;
@@ -287,13 +441,7 @@ const buildPool = async (
     };
   }
 
-  const searchTags = [
-    ...new Set([
-      ...options.leanTags,
-      ...built.profile.tags.map((tag) => tag.tagId),
-    ]),
-  ].slice(0, SEARCH_TAGS);
-
+  const searchTags = [...new Set([...options.leanTags, ...group.anchors])];
   const searched = new Set<string>();
   for (const tagId of searchTags) {
     for (const sortBy of SEARCH_SORTS) {
@@ -302,14 +450,22 @@ const buildPool = async (
     }
   }
 
-  const released = new Set(
-    (await getStoreRankedCandidates({ preset: "12m" })).appIds
-  );
+  const [steamSearched, released] = options.downloadableOnly
+    ? [[], { appIds: [] as string[] }]
+    : await Promise.all([
+        searchSteamStoreIds(group, options),
+        getStoreRankedCandidates({ preset: "12m" }),
+      ]);
 
   const wanted = options.downloadableOnly
     ? searched
-    : new Set([...behaviour.keys(), ...searched, ...released]);
-  const ids = [...wanted].filter((id) => !library.ownedKeys.has(`steam:${id}`));
+    : new Set([
+        ...behaviour.keys(),
+        ...searched,
+        ...steamSearched,
+        ...released.appIds,
+      ]);
+  const ids = [...wanted].filter((id) => !hidden.has(`steam:${id}`));
   const [items, critics] = await Promise.all([
     getStoreItems(ids),
     getCriticScores(ids),
@@ -353,18 +509,21 @@ const toCandidate = (item: StoreItem): PoolCandidate => ({
   behaviour: [],
 });
 
-/** What decides which games are fetched; sliders and filters are not part of it. */
+/** What decides which games are fetched for a group; sliders and most filters are not part of it. */
 const getPoolKey = (
-  built: BuiltProfile,
+  group: BuiltGroup,
   options: TuneOptions,
   library: LibraryData
 ) =>
   hash({
-    seeds: pickRetrievalSeeds(built.seeds, options).map((seed) => seed.key),
-    tags: [
-      ...options.leanTags,
-      ...built.profile.tags.map((tag) => tag.tagId),
-    ].slice(0, SEARCH_TAGS),
+    group: group.id,
+    anchors: group.anchors,
+    seeds: group.seeds
+      .filter((seed) => seed.weight > 0)
+      .slice(0, SIMILAR_GAMES)
+      .map((seed) => seed.key),
+    lean: options.leanTags,
+    avoid: options.avoidTags,
     years: options.years,
     proton: options.protonMinimum,
     downloadable: options.downloadableOnly,
@@ -394,11 +553,12 @@ const storePool = (key: string, pool: Pool) =>
   } satisfies StoredPool);
 
 const getPool = (
-  built: BuiltProfile,
+  group: BuiltGroup,
   options: TuneOptions,
-  library: LibraryData
+  library: LibraryData,
+  hidden: Set<string>
 ): Promise<Pool> => {
-  const key = getPoolKey(built, options, library);
+  const key = getPoolKey(group, options, library);
   const cached = poolCache.get(key);
   if (cached) return cached;
 
@@ -406,7 +566,7 @@ const getPool = (
     .then(
       (stored) =>
         stored ??
-        buildPool(built, options, library).then((built) => {
+        buildPool(group, options, hidden).then((built) => {
           if (built.candidates.length > 0) void storePool(key, built);
           return built;
         })
@@ -419,7 +579,7 @@ const getPool = (
   setTimeout(() => poolCache.delete(key), CACHE_MS).unref?.();
 
   // Older pools are of no use once the settings have moved on.
-  for (const old of [...poolCache.keys()].slice(0, -6)) poolCache.delete(old);
+  for (const old of [...poolCache.keys()].slice(0, -12)) poolCache.delete(old);
   return pool;
 };
 
@@ -513,30 +673,31 @@ const filterByFinished = async (
   return kept;
 };
 
-const toBecauseShelves = (
-  built: BuiltProfile,
-  ranked: ScoredCandidate[],
-  options: TuneOptions
-): BecauseShelf[] =>
-  pickRetrievalSeeds(built.seeds, options)
-    .slice(0, BECAUSE_SHELVES)
-    .map((seed) => ({
-      seed: { key: seed.key, appId: seed.appId, title: seed.title },
-      results: ranked
-        .filter((item) =>
-          item.candidate.behaviour.some((entry) => entry.seedKey === seed.key)
-        )
-        .slice(0, BECAUSE_SIZE)
-        .map(toRecommendation),
-    }))
-    .filter((shelf) => shelf.results.length > 0);
+const emptyResponse = (
+  extra: Partial<RecommendationResponse> = {}
+): RecommendationResponse => ({
+  profile: {
+    seeds: [],
+    tags: [],
+    dominantFamily: null,
+    seedCount: 0,
+    groups: [],
+    untaggedCount: 0,
+  },
+  results: [],
+  group: "all",
+  leftOut: { buildDateUnknown: 0, tierUnknown: 0, lengthUnknown: 0 },
+  noDownloadSources: false,
+  failed: false,
+  ...extra,
+});
 
 /**
- * Suggestions for the whole library: what the person likes is learned from
- * playtime, ratings and status (idle games discounted), candidates come from
- * Steam's "More like this" lists, tag searches and new releases, and are
- * ranked by tag similarity, those lists and review quality. The Tune options
- * re-rank and filter; only a change in which games to look for fetches again.
+ * Suggestions from the library's taste groups (or chosen games, or chosen
+ * tags): each group finds its own candidates and ranks them by how well they
+ * fit the group, with a rare anchor tag required near the top; Mix all
+ * interleaves the groups by their share. The Tune options re-rank and filter;
+ * only a change in which games to look for fetches again.
  */
 export const getRecommendations = async (
   partial: Partial<TuneOptions>
@@ -546,54 +707,68 @@ export const getRecommendations = async (
 
   try {
     const library = await getLibrary();
-    const built = buildTasteProfile(library.inputs, options);
+    const [outside, idf, hidden, notInterested, impressions] =
+      await Promise.all([
+        loadOutsideSeeds(library, options),
+        getCatalogueIdf(),
+        getHiddenKeys(library),
+        getNotInterestedKeys(),
+        getImpressions(),
+      ]);
+    const built = buildTasteProfile([...library.inputs, ...outside], options);
 
-    if (built.seeds.every((seed) => seed.weight <= 0)) {
-      return {
-        profile: built.profile,
-        results: [],
-        because: [],
-        leftOut,
-        noDownloadSources: false,
-        failed: false,
-      };
-    }
+    const groups =
+      options.basedOn === "tags"
+        ? groupFromTags(options.seedTags)
+        : options.basedOn === "games"
+          ? groupPickedGames(built.seeds, idf)
+          : groupSeeds(built.seeds, idf);
 
-    const [pool, notInterested] = await Promise.all([
-      getPool(built, options, library),
-      getNotInterestedKeys(),
-    ]);
+    const profile = {
+      ...built.profile,
+      groups: groups.map(toProfileGroup),
+      untaggedCount: library.untaggedCount,
+    };
+    if (groups.length === 0) return emptyResponse({ profile, leftOut });
 
-    if (pool.noSources) {
-      return {
-        profile: built.profile,
-        results: [],
-        because: [],
-        leftOut,
-        noDownloadSources: true,
-        failed: false,
-      };
-    }
+    const chosen = groups.find((group) => group.id === options.group);
+    const shown = chosen ? [chosen] : groups;
 
-    let candidates = pool.candidates.filter(
-      (candidate) => !notInterested.has(`steam:${candidate.appId}`)
-    );
-    if (pool.downloadable) {
-      const allowed = pool.downloadable;
-      candidates = candidates.filter((candidate) =>
-        allowed.has(candidate.appId)
+    const lists: { share: number; items: ScoredCandidate[] }[] = [];
+    let anyCandidates = false;
+    for (const group of shown) {
+      const pool = await getPool(group, options, library, hidden);
+      if (pool.noSources) {
+        return emptyResponse({ profile, leftOut, noDownloadSources: true });
+      }
+      anyCandidates ||= pool.candidates.length > 0;
+
+      let candidates = pool.candidates.filter(
+        (candidate) =>
+          !notInterested.has(`steam:${candidate.appId}`) &&
+          !hidden.has(`steam:${candidate.appId}`)
       );
+      if (pool.downloadable) {
+        const allowed = pool.downloadable;
+        candidates = candidates.filter((candidate) =>
+          allowed.has(candidate.appId)
+        );
+      }
+
+      const ranked = rankCandidates(candidates, group, options, {
+        idf,
+        impressions,
+      });
+      lists.push({
+        share: group.share,
+        items: diversify(ranked, NETWORK_FILTER_DEPTH),
+      });
     }
 
-    const ranked = rankCandidates(
-      candidates,
-      built.vector,
-      built.seeds,
-      options
-    );
-    const because = toBecauseShelves(built, ranked, options);
-
-    let shortlist = ranked.slice(0, NETWORK_FILTER_DEPTH);
+    let shortlist =
+      lists.length === 1
+        ? lists[0].items
+        : interleaveGroups(lists, NETWORK_FILTER_DEPTH);
     shortlist = await filterByProton(shortlist, options.protonMinimum, leftOut);
     if (options.length) {
       shortlist = await filterByLength(shortlist, options.length, leftOut);
@@ -603,23 +778,16 @@ export const getRecommendations = async (
     }
 
     return {
-      profile: built.profile,
-      results: diversify(shortlist, RESULT_LIMIT).map(toRecommendation),
-      because,
+      profile,
+      results: shortlist.slice(0, RESULT_LIMIT).map(toRecommendation),
+      group: chosen ? chosen.id : "all",
       leftOut,
       noDownloadSources: false,
-      failed: pool.candidates.length === 0,
+      failed: !anyCandidates,
     };
   } catch (error) {
     logger.error("[Recommender] Could not make suggestions", error);
-    return {
-      profile: { seeds: [], tags: [], dominantFamily: null, seedCount: 0 },
-      results: [],
-      because: [],
-      leftOut,
-      noDownloadSources: false,
-      failed: true,
-    };
+    return emptyResponse({ leftOut, failed: true });
   }
 };
 
