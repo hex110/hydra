@@ -1,9 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
+import { isEqual, omit } from "lodash-es";
+
 import type { CatalogueSearchPayload } from "@types";
 
 export type CatalogueMode = "modern" | "classics";
+export type CatalogueTab = "discover" | "charts" | "browse";
 
 export interface CatalogueSearchState {
   filters: CatalogueSearchPayload;
@@ -11,6 +14,7 @@ export interface CatalogueSearchState {
   steamUserTags: Record<string, Record<string, number>>;
   steamGenres: Record<string, string[]>;
   mode: CatalogueMode;
+  tab: CatalogueTab;
 }
 
 const initialState: CatalogueSearchState = {
@@ -31,7 +35,14 @@ const initialState: CatalogueSearchState = {
   steamGenres: {},
   page: 1,
   mode: "modern",
+  tab: "discover",
 };
+
+const SORT_KEYS = ["sortBy", "sortOrder"] as const;
+
+/** A search, a tag or a year: anything but the order is a request to see results. */
+const narrowsTheCatalogue = (filters: CatalogueSearchPayload) =>
+  !isEqual(omit(filters, SORT_KEYS), omit(initialState.filters, SORT_KEYS));
 
 export const catalogueSearchSlice = createSlice({
   name: "catalogueSearch",
@@ -43,6 +54,10 @@ export const catalogueSearchSlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
       state.page = initialState.page;
+      if (narrowsTheCatalogue(state.filters)) state.tab = "browse";
+    },
+    setCatalogueTab: (state, action: PayloadAction<CatalogueTab>) => {
+      state.tab = action.payload;
     },
     clearFilters: (state) => {
       state.filters = initialState.filters;
@@ -66,6 +81,7 @@ export const catalogueSearchSlice = createSlice({
     setMode: (state, action: PayloadAction<CatalogueMode>) => {
       state.mode = action.payload;
       state.page = initialState.page;
+      if (action.payload === "classics") state.tab = "browse";
       state.filters = {
         ...state.filters,
         tags: [],
@@ -90,4 +106,5 @@ export const {
   setTags,
   setGenres,
   setMode,
+  setCatalogueTab,
 } = catalogueSearchSlice.actions;

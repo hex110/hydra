@@ -70,6 +70,8 @@ interface FrontPageGame {
 interface CatalogueFrontPageProps {
   downloadSources: DownloadSource[];
   libraryStates: Map<string, CatalogueLibraryState>;
+  /** Leaves out games you own; the AnkerGames rows always show the site's list. */
+  hideOwned: boolean;
 }
 
 // Kept while Hydra runs, so returning to the catalogue doesn't reflow the page.
@@ -105,6 +107,7 @@ function FrontPageShelf({
   games,
   isLoading,
   isRefreshing,
+  onSeeAll,
   libraryStates,
   facts,
 }: Readonly<{
@@ -113,13 +116,19 @@ function FrontPageShelf({
   isLoading: boolean;
   /** Shows the games already known and says that newer ones are on the way. */
   isRefreshing?: boolean;
+  onSeeAll?: () => void;
   libraryStates: Map<string, CatalogueLibraryState>;
   facts: Map<string, StoreGameFacts>;
 }>) {
   if (!isLoading && games.length === 0) return null;
 
   return (
-    <StoreShelf title={title} isLoading={isLoading} isRefreshing={isRefreshing}>
+    <StoreShelf
+      title={title}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      onSeeAll={onSeeAll}
+    >
       {games.map((game) => {
         const key = catalogueKey(game);
         return (
@@ -222,13 +231,14 @@ function DiscoveryQueue({
 }
 
 /**
- * What the catalogue shows before a search: featured games, what is new and
+ * The Discover tab: featured games, what is new and
  * trending on AnkerGames, suggestions from your play history, new releases on
  * your sources, genres and a queue.
  */
 export function CatalogueFrontPage({
   downloadSources,
   libraryStates,
+  hideOwned,
 }: Readonly<CatalogueFrontPageProps>) {
   const { t } = useTranslation("catalogue");
   const dispatch = useAppDispatch();
@@ -371,10 +381,23 @@ export function CatalogueFrontPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourcesKey]);
 
-  const notOwned = (games: FrontPageGame[]) =>
-    games
-      .filter((game) => !ownedKeys.has(catalogueKey(game)))
-      .slice(0, SHELF_SIZE);
+  const shelfGames = (games: FrontPageGame[]) =>
+    (hideOwned
+      ? games.filter((game) => !ownedKeys.has(catalogueKey(game)))
+      : games
+    ).slice(0, SHELF_SIZE);
+
+  const seeAllNewReleases = () => {
+    dispatch(
+      setFilters({
+        sortBy: "releaseDate",
+        sortOrder: "desc",
+        downloadSourceFingerprints: downloadSources.flatMap((source) =>
+          source.fingerprint ? [source.fingerprint] : []
+        ),
+      })
+    );
+  };
 
   // The site's rows as they are: games you own stay, and nothing is cut.
   const ankerGamesRow = (games: AnkerGamesFeedGame[] = []) =>
@@ -436,11 +459,11 @@ export function CatalogueFrontPage({
     );
   }
 
-  const featuredGames = notOwned(featured);
+  const featuredGames = shelfGames(featured);
   const latestGames = ankerGamesRow(ankerGames?.latest);
   const trendingGames = ankerGamesRow(ankerGames?.trending);
-  const recommendedGames = notOwned(recommended);
-  const newGames = notOwned(newReleases);
+  const recommendedGames = shelfGames(recommended);
+  const newGames = shelfGames(newReleases);
   const facts = useCatalogueRowDetails([
     ...featuredGames,
     ...latestGames,
@@ -484,6 +507,7 @@ export function CatalogueFrontPage({
         title={t("new_releases")}
         games={newGames}
         isLoading={isLoading}
+        onSeeAll={seeAllNewReleases}
         {...shelfProps}
       />
       {tagList}

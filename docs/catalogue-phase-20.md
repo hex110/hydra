@@ -273,6 +273,16 @@ covers outside the catalogue (friends playing, similar games) until step 9.
   Browse; Discover and Charts keep theirs in the same module, keyed by tab).
 - Big Picture's catalogue (`BigPictureCatalogue`) is out of scope.
 
+**As built (step 2).** The page is `catalogue.tsx` (tab strip, Hide my
+games, library state, one scroll container), with `CatalogueBrowse`
+(`catalogue-browse.tsx`), `CatalogueFrontPage` (Discover) and
+`CatalogueCharts`. The tab strip is a new shared `TabStrip` in
+`components/tab-strip/`, which the library's `CategoryFilter` now uses.
+`SegmentedControl` options take an optional icon. Discover's and Charts'
+scroll positions live in `catalogue-tab-scroll.ts` and the restore retries
+while shelves load. Classics also selects Browse (in `setMode`). There is no
+page title row of its own: the app header already says "Catalogue".
+
 ### Step 3. Filter sidebar
 
 **Counts per filter value.** A main-process job, `src/main/services/catalogue-facet-counts.ts`,

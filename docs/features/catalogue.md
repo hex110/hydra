@@ -1,7 +1,25 @@
 # Catalogue
 
-The catalogue plays the part of Steam's store. Hydra Plus adds a front page,
+The catalogue plays the part of Steam's store. Hydra Plus adds three tabs,
 a grid view, more data per game and a list that keeps your place.
+
+## Tabs
+
+| Tab          | What it is                                                |
+| ------------ | --------------------------------------------------------- |
+| **Discover** | Shelves of games to look at ([below](#discover)).         |
+| **Charts**   | Lists of what is played and what is good (not built yet). |
+| **Browse**   | The whole catalogue with filters, search and sort.        |
+
+The strip is the shared `TabStrip` (the library's source tabs use it too) and
+stays visible while the page scrolls. **Hide my games** sits at its right end
+and applies to every tab. Discover and Charts remember how far you had
+scrolled; Browse keeps its own position with its results.
+
+A search, a tag or any filter other than the sort order switches to Browse,
+wherever it comes from: the header search, a tag on a game page, **See all**
+on a shelf. Choosing **Classics** does too. Clearing filters leaves the tab
+alone.
 
 ## One card, one row, one shelf
 
@@ -33,9 +51,9 @@ screenshots (see below).
 
 Skeletons use the dark token colours, not the skeleton library's light theme.
 
-## Front page
+## Discover
 
-With no search, no filters and the default sort, the catalogue opens with:
+The first tab shows:
 
 - **Featured**: Hydra's "Hot now" list.
 - **New on AnkerGames** and **Trending on AnkerGames**: the site's latest
@@ -53,11 +71,12 @@ With no search, no filters and the default sort, the catalogue opens with:
   Singleplayer, 2D and Early Access are left out; they are filters, not
   something to browse.
 
-Games already in your library are left out of every row except the two
-AnkerGames ones, which show the site's rows whole. The rows are kept
-for half an hour while Hydra runs (the AnkerGames rows come from a daily
-read instead). Searching, filtering or changing the sort
-hides the front page; the full list follows it under **All games**.
+With **Hide my games** on, games already in your library are left out of
+every row except the two AnkerGames ones, which show the site's rows whole
+(the discovery queue never offers a game you own). The rows are kept for half
+an hour while Hydra runs (the AnkerGames rows come from a daily read
+instead). **New releases on your sources** has **See all**, which opens
+Browse sorted by newest with your sources selected.
 
 ## Tag filter
 
@@ -72,7 +91,7 @@ catalogue filtered to it. The cards are links, so their tags are not clickable.
 
 Rows show **In library** or **Installed** next to the title for games you
 have (a copy counts for the catalogue game it is linked to), and the + button
-turns into a check. **Hide my games** in the header leaves them out. The
+turns into a check. **Hide my games** in the tab strip leaves them out. The
 search API can't exclude games, so a page with many owned games shows fewer
 rows.
 
@@ -84,7 +103,10 @@ record. **Hide my games** keeps them.
 
 ## Rows and grid
 
-**List** and **Grid** in the header switch between rows and a grid of cards
+The toolbar above the results (sticky under the tabs) holds the result
+count, **Modern Games / Classics**, the sort (Popularity, Highest rating,
+Most reviewed, Newest, Oldest, Title A–Z and Z–A) and **List / Grid**, which
+switch between rows and a grid of cards
 ([one card, one row](#one-card-one-row-one-shelf)); the choice is remembered.
 Classics keep their own layout.
 

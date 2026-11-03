@@ -1,8 +1,8 @@
 import { StackIcon, DeviceDesktopIcon } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
+import { TabStrip } from "@renderer/components/tab-strip/tab-strip";
 import { SourceIcon } from "./source-icon";
 import type { LibraryTab } from "./library-filters";
-import "./category-filter.scss";
 
 export type { LibraryCategory } from "./library-category";
 
@@ -81,20 +81,14 @@ export function CategoryFilter({
   const { t } = useTranslation("library");
 
   return (
-    <div className="library-category-filter__container" role="tablist">
-      {tabs.map((option) => (
-        <button
-          key={option}
-          type="button"
-          role="tab"
-          aria-selected={tab === option}
-          className={`library-category-filter__option ${tab === option ? "library-category-filter__option--active" : ""}`}
-          onClick={() => onTabChange(option)}
-        >
-          {TAB_ICONS[option]}
-          <span>{t(TAB_LABEL_KEYS[option])}</span>
-        </button>
-      ))}
-    </div>
+    <TabStrip
+      value={tab}
+      onChange={onTabChange}
+      options={tabs.map((option) => ({
+        value: option,
+        label: t(TAB_LABEL_KEYS[option]),
+        icon: TAB_ICONS[option],
+      }))}
+    />
   );
 }

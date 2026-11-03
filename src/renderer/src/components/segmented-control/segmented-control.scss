@@ -10,6 +10,10 @@
   border-radius: 6px;
 
   &__option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: globals.$spacing-unit;
     min-width: calc(globals.$spacing-unit * 6);
     padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
     border: none;

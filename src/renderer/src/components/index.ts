@@ -57,3 +57,4 @@ export * from "./store-game-row/store-game-row";
 export * from "./store-game-meta/store-game-meta";
 export * from "./store-game-actions/store-game-actions";
 export * from "./store-shelf/store-shelf";
+export * from "./tab-strip/tab-strip";

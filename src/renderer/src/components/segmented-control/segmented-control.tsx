@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import cn from "classnames";
 
 import "./segmented-control.scss";
@@ -5,6 +6,7 @@ import "./segmented-control.scss";
 export interface SegmentedControlOption<T extends string> {
   value: T;
   label: string;
+  icon?: ReactNode;
 }
 
 export interface SegmentedControlProps<T extends string> {
@@ -42,6 +44,7 @@ export function SegmentedControl<T extends string>({
               if (!selected) onChange(option.value);
             }}
           >
+            {option.icon}
             {option.label}
           </button>
         );

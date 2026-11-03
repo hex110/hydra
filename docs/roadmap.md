@@ -293,7 +293,7 @@ in the sections below.
     there; every step names its files and how to check it).
     1. [x] One store card, row and shelf for every store game; the white
            skeletons, shelf scrollbars and AnkerGames subtitles fixed
-    2. [ ] Discover, Charts and Browse tabs; Browse toolbar; one Hide my
+    2. [x] Discover, Charts and Browse tabs; Browse toolbar; one Hide my
            games switch for all tabs
     3. [ ] Filter sidebar: counts per tag and genre in grey, ordered by
            count, From your library, no software genres, searchable
