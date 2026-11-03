@@ -2,11 +2,9 @@ import axios from "axios";
 import {
   parseMostPlayed,
   parsePlayingNow,
-  parseTopReleases,
   toSnapshotDate,
   type MostPlayedChart,
   type PlayingNowChart,
-  type TopReleasesMonth,
 } from "@shared";
 import { recordChartSnapshot } from "./chart-snapshots";
 import { logger } from "./logger";
@@ -63,15 +61,4 @@ export const getPlayingNow = cached<PlayingNowChart>(
   "GetGamesByConcurrentPlayers",
   15 * 60 * 1000,
   parsePlayingNow
-);
-
-/** Steam's monthly top releases, newest first; kept a day. */
-export const getTopReleases = cached<TopReleasesMonth[]>(
-  "Top releases",
-  "GetTopReleasesPages",
-  24 * 60 * 60 * 1000,
-  (body) => {
-    const months = parseTopReleases(body);
-    return months.length > 0 ? months : null;
-  }
 );

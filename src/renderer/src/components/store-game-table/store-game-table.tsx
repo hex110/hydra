@@ -36,6 +36,8 @@ export interface StoreGameTableProps<Row> {
   getLibraryState?: (row: Row) => CatalogueLibraryState | undefined;
   /** Shown over the rows while the list is on its way. */
   isLoading?: boolean;
+  /** The rank cell's tooltip, e.g. the row's place on the source's own list. */
+  getRankHint?: (row: Row) => string | undefined;
 }
 
 const RANK_WIDTH = "32px";
@@ -53,6 +55,7 @@ export function StoreGameTable<Row>({
   getGame,
   getLibraryState,
   isLoading = false,
+  getRankHint,
 }: Readonly<StoreGameTableProps<Row>>) {
   const { t } = useTranslation("catalogue");
   const [sort, setSort] = useState<{
@@ -159,7 +162,11 @@ export function StoreGameTable<Row>({
             className="store-game store-game-table__row"
             role="row"
           >
-            <span className="store-game-table__rank" role="cell">
+            <span
+              className="store-game-table__rank"
+              role="cell"
+              title={getRankHint?.(row)}
+            >
               {rankOf.get(getKey(row))}
             </span>
             <div className="store-game-table__game" role="cell">

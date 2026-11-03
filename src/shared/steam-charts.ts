@@ -21,13 +21,6 @@ export interface PlayingNowChart {
   ranks: ChartRank[];
 }
 
-export interface TopReleasesMonth {
-  name: string;
-  /** Unix seconds. */
-  startOfMonth: number;
-  appIds: string[];
-}
-
 const asNumber = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
@@ -70,28 +63,6 @@ export const parsePlayingNow = (body: unknown): PlayingNowChart | null => {
   const ranks = parseRanks(response?.ranks);
 
   return updatedAt === null || ranks.length === 0 ? null : { updatedAt, ranks };
-};
-
-/** `ISteamChartsService/GetTopReleasesPages`, newest month first. */
-export const parseTopReleases = (body: unknown): TopReleasesMonth[] => {
-  const pages = (body as { response?: { pages?: unknown } })?.response?.pages;
-  if (!Array.isArray(pages)) return [];
-
-  return pages
-    .flatMap((page) => {
-      const startOfMonth = asNumber(page?.start_of_month);
-      if (startOfMonth === null || typeof page?.name !== "string") return [];
-
-      const appIds = Array.isArray(page.item_ids)
-        ? page.item_ids.flatMap((item: { appid?: unknown }) => {
-            const appId = asNumber(item?.appid);
-            return appId === null ? [] : [String(appId)];
-          })
-        : [];
-
-      return [{ name: page.name as string, startOfMonth, appIds }];
-    })
-    .sort((a, b) => b.startOfMonth - a.startOfMonth);
 };
 
 /** Places gained since last week that make a game "trending". */

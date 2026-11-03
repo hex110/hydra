@@ -37,7 +37,7 @@ import {
   setCatalogueSnapshot,
 } from "./catalogue-snapshots";
 import { getProtonDbTiers } from "./protondb";
-import { getTopReleases } from "./steam-charts";
+import { getStoreRankedCandidates } from "./catalogue-charts";
 import { getLastBuildUpdate } from "./steam-build-dates";
 import { getStoreItems } from "./steam-store-items";
 import { getSteamSimilarGames } from "./steam-similar";
@@ -50,7 +50,6 @@ const MAX_LIBRARY_SEEDS = 400;
 const SEARCH_TAGS = 6;
 const SEARCH_TAKE = 40;
 const SIMILAR_CONCURRENCY = 3;
-const RELEASE_MONTHS = 12;
 /** How many top candidates the filters that need a request look at. */
 const NETWORK_FILTER_DEPTH = 150;
 const RESULT_LIMIT = 120;
@@ -303,8 +302,9 @@ const buildPool = async (
     }
   }
 
-  const releases = (await getTopReleases())?.slice(0, RELEASE_MONTHS) ?? [];
-  const released = new Set(releases.flatMap((month) => month.appIds));
+  const released = new Set(
+    (await getStoreRankedCandidates({ preset: "12m" })).appIds
+  );
 
   const wanted = options.downloadableOnly
     ? searched

@@ -3,7 +3,12 @@ import { describe, it } from "node:test";
 // @ts-ignore The Node ESM test runner requires the source extension.
 import * as charts from "./catalogue-charts.ts";
 
-const { filterChartRows, DEFAULT_CHART_FILTERS } = charts;
+const {
+  filterChartRows,
+  DEFAULT_CHART_FILTERS,
+  getPeriodRange,
+  getPeriodYears,
+} = charts;
 
 const row = (appId: string, over: Record<string, unknown> = {}) => ({
   rank: 1,
@@ -15,6 +20,9 @@ const row = (appId: string, over: Record<string, unknown> = {}) => ({
   reviewCount: 5000,
   criticScore: null,
   releaseYear: 2020,
+  releaseDate: Date.UTC(2020, 5, 1),
+  releasePrecision: "day" as const,
+  leftEarlyAccessAt: null,
   isSingleplayer: true,
   isEarlyAccess: false,
   isFree: false,
@@ -100,6 +108,42 @@ describe("filterChartRows", () => {
   it("leaves out hidden games", () => {
     assert.ok(
       !apply(rows, {}, { hidden: new Set(["hades"]) }).includes("hades")
+    );
+  });
+});
+
+describe("chart periods", () => {
+  const now = Date.UTC(2026, 10, 3);
+
+  it("covers a month exactly", () => {
+    assert.deepEqual(
+      getPeriodRange({ preset: "month", year: 2026, month: 3 }, now),
+      { from: Date.UTC(2026, 2, 1), to: Date.UTC(2026, 3, 1) }
+    );
+  });
+
+  it("is null for any time", () => {
+    assert.equal(getPeriodRange({ preset: "any" }, now), null);
+  });
+
+  it("gives the years the last twelve months touch", () => {
+    assert.deepEqual(getPeriodYears({ preset: "12m" }, now), {
+      gte: 2025,
+      lte: 2026,
+    });
+  });
+
+  it("filters rows by release date and ignores it for upcoming games", () => {
+    const rows = [
+      row("old"),
+      row("new", { releaseDate: Date.UTC(2026, 2, 10) }),
+      row("undated", { releaseDate: null }),
+    ];
+    const period = { preset: "year", year: 2026 };
+    assert.deepEqual(apply(rows, { period }, { now }), ["new"]);
+    assert.equal(
+      apply(rows, { period }, { now, ignorePeriod: true }).length,
+      3
     );
   });
 });

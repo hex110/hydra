@@ -76,6 +76,11 @@ export interface StoreItem {
   reviewLabel: string | null;
   /** Unix milliseconds. */
   releaseDate: number | null;
+  /** When the game left Early Access (unix ms); missing in items cached before it was read. */
+  leftEarlyAccessAt?: number | null;
+  /** Not out yet; `releaseDate` is then Steam's announced date, as precise as `releasePrecision` says. */
+  isComingSoon?: boolean;
+  releasePrecision?: "day" | "month" | "quarter" | "year" | "unknown";
   isEarlyAccess: boolean;
   isFree: boolean;
   playerCategories: number[];
@@ -105,8 +110,23 @@ interface RawStoreItem {
     publishers?: { name?: string }[];
   };
   assets?: Record<string, string>;
-  release?: { steam_release_date?: number };
+  release?: {
+    steam_release_date?: number;
+    release_from_early_access_date?: number;
+    is_coming_soon?: boolean;
+    coming_soon_display?: string;
+  };
 }
+
+const RELEASE_PRECISION: Record<
+  string,
+  NonNullable<StoreItem["releasePrecision"]>
+> = {
+  date_full: "day",
+  date_month: "month",
+  date_quarter: "quarter",
+  date_year: "year",
+};
 
 const ASSETS_URL = "https://shared.steamstatic.com/store_item_assets/";
 /** Early Access shows among a game's first tags; further down it is a rumour. */
@@ -139,6 +159,15 @@ export const parseStoreItem = (raw: RawStoreItem): StoreItem | null => {
     reviewPercent: reviewCount ? (summary?.percent_positive ?? null) : null,
     reviewLabel: reviewCount ? (summary?.review_score_label ?? null) : null,
     releaseDate: release && release > 0 ? release * 1000 : null,
+    leftEarlyAccessAt:
+      raw.release?.release_from_early_access_date &&
+      raw.release.release_from_early_access_date > 0
+        ? raw.release.release_from_early_access_date * 1000
+        : null,
+    isComingSoon: raw.release?.is_coming_soon === true,
+    releasePrecision: raw.release?.is_coming_soon
+      ? (RELEASE_PRECISION[raw.release.coming_soon_display ?? ""] ?? "unknown")
+      : "day",
     isEarlyAccess: tags
       .slice(0, EARLY_ACCESS_TAG_DEPTH)
       .some((tag) => tag.tagid === STEAM_TAG.earlyAccess),

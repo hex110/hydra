@@ -6,7 +6,6 @@ import * as charts from "./steam-charts.ts";
 const {
   parseMostPlayed,
   parsePlayingNow,
-  parseTopReleases,
   getMovement,
   getTrending,
   rankSnapshots,
@@ -56,29 +55,6 @@ describe("parsePlayingNow", () => {
     });
     assert.equal(parsed?.ranks[0].concurrent, 9);
     assert.equal(parsed?.ranks[0].peak, 10);
-  });
-});
-
-describe("parseTopReleases", () => {
-  it("lists months newest first with their app ids", () => {
-    const months = parseTopReleases({
-      response: {
-        pages: [
-          {
-            name: "Top Releases of January 2025",
-            start_of_month: 100,
-            item_ids: [{ appid: 1 }],
-          },
-          {
-            name: "Top Releases of February 2025",
-            start_of_month: 200,
-            item_ids: [{ appid: 2 }, { appid: 3 }],
-          },
-        ],
-      },
-    });
-    assert.equal(months[0].name, "Top Releases of February 2025");
-    assert.deepEqual(months[0].appIds, ["2", "3"]);
   });
 });
 

@@ -4,15 +4,20 @@ import { TriangleDownIcon, TriangleUpIcon } from "@primer/octicons-react";
 import cn from "classnames";
 import { omit } from "lodash-es";
 import {
+  BEST_RATED_MIN_REVIEWS,
   CATALOGUE_CHART_IDS,
   CHART_PLAYERS_MEASURE,
   DEFAULT_CHART_FILTERS,
+  expandTagFamilies,
   filterChartRows,
+  getStoreRating,
+  STORE_RANKED_CHARTS,
   type CatalogueChartFilters,
   type CatalogueChartId,
+  type CatalogueChartRequest,
   type CatalogueChartResult,
   type CatalogueChartRow,
-  getStoreRating,
+  type ChartPeriod,
 } from "@shared";
 
 import {
@@ -37,19 +42,29 @@ import {
 } from "./catalogue-library-state";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
 import { useTuneSettings } from "./use-tune-settings";
+import {
+  hashKey,
+  readCatalogueSnapshot,
+  writeCatalogueSnapshot,
+} from "./catalogue-snapshots";
+import { ChartPeriodPicker, formatPeriod } from "./chart-period-picker";
 import "./catalogue-charts.scss";
 
 const CHART_STORAGE_KEY = "catalogue-chart";
 const FILTERS_STORAGE_KEY = "catalogue-chart-filters";
 const RESULT_CACHE_MS = 2 * 60 * 1000;
-const DEFAULT_BEST_RATED_MIN_REVIEWS = 1000;
+/** Days of Hydra's own record before the Days in top 100 column says much. */
+const DAYS_COLUMN_FROM = 7;
+/** Fewer rows than this on a players chart after the period filter, and the chart offers Best rated instead. */
+const FEW_ROWS = 10;
+const MIN_REVIEW_OPTIONS = [50, 200, 500, 1000, 5000];
 const TABLE_TAGS = 3;
 const AVOID_KEYS = ["avoidTags", "avoidRelated"];
 const SKELETON_ROWS = 12;
 
 const DEFAULT_FILTERS: CatalogueChartFilters = {
   ...DEFAULT_CHART_FILTERS,
-  minReviews: DEFAULT_BEST_RATED_MIN_REVIEWS,
+  minReviews: BEST_RATED_MIN_REVIEWS,
 };
 
 const resultCache = new Map<
@@ -97,12 +112,16 @@ export function CatalogueCharts({
   const isLinux = window.electron.platform === "linux";
 
   const [chart, setChart] = useState(readChart);
-  const [month, setMonth] = useState<number | undefined>();
   const [chartFilters, setChartFilters] = useState<CatalogueChartFilters>(
-    () => ({
-      ...DEFAULT_FILTERS,
-      ...readStored<Partial<CatalogueChartFilters>>(FILTERS_STORAGE_KEY, {}),
-    })
+    () => {
+      const stored = {
+        ...DEFAULT_FILTERS,
+        ...readStored<Partial<CatalogueChartFilters>>(FILTERS_STORAGE_KEY, {}),
+      };
+      return MIN_REVIEW_OPTIONS.includes(stored.minReviews)
+        ? stored
+        : { ...stored, minReviews: BEST_RATED_MIN_REVIEWS };
+    }
   );
   // The avoid list is one list for every surface that suggests games.
   const tune = useTuneSettings();
@@ -140,14 +159,27 @@ export function CatalogueCharts({
     // The old chart's rows would sit under the new chart's headings.
     setResult(null);
     setChart(next);
-    setMonth(undefined);
     writeStored(CHART_STORAGE_KEY, next);
   };
 
+  const isStoreRanked = STORE_RANKED_CHARTS.includes(chart);
+  const request = useMemo((): CatalogueChartRequest => {
+    if (!isStoreRanked) return { chart };
+    return {
+      chart,
+      period: filters.period,
+      tags: filters.includeTags,
+      untags: filters.avoidRelated
+        ? expandTagFamilies(filters.avoidTags)
+        : filters.avoidTags,
+      minReviews: chart === "best-rated" ? filters.minReviews : 0,
+    };
+  }, [chart, isStoreRanked, filters]);
+  const requestKey = JSON.stringify(request);
+
   const load = useCallback(
     async (force = false) => {
-      const cacheKey = `${chart}|${month ?? ""}`;
-      const cached = resultCache.get(cacheKey);
+      const cached = resultCache.get(requestKey);
       if (!force && cached && Date.now() - cached.at < RESULT_CACHE_MS) {
         setResult(cached.result);
         setIsLoading(false);
@@ -155,31 +187,55 @@ export function CatalogueCharts({
       }
 
       const requestId = ++requestRef.current;
+      const snapshotKey = `chart:${chart}:${hashKey(requestKey)}`;
       setIsLoading(true);
+
+      // What this chart showed last time, while the new list loads.
+      if (!cached) {
+        void readCatalogueSnapshot<CatalogueChartResult>(snapshotKey).then(
+          (snapshot) => {
+            if (snapshot && requestId === requestRef.current) {
+              setResult((current) => current ?? snapshot.data);
+            }
+          }
+        );
+      }
+
       try {
-        const next = await window.electron.getCatalogueChart({ chart, month });
+        const next = await window.electron.getCatalogueChart(request);
         if (requestId !== requestRef.current) return;
 
-        if (!next.failed) {
-          resultCache.set(cacheKey, { at: Date.now(), result: next });
+        if (!next.failed || next.rows.length > 0) {
+          resultCache.set(requestKey, { at: Date.now(), result: next });
+          writeCatalogueSnapshot(snapshotKey, next);
         }
-        setResult(next);
+        setResult((current) =>
+          next.rows.length === 0 && (current?.rows.length ?? 0) > 0
+            ? { ...(current as CatalogueChartResult), failed: next.failed }
+            : next
+        );
       } catch (error) {
         logger.error("Failed to load the chart", error);
         if (requestId === requestRef.current) {
-          setResult({
-            rows: [],
-            failed: "steam",
-            collecting: null,
-            months: [],
-            updatedAt: Date.now(),
-          });
+          setResult((current) =>
+            current
+              ? { ...current, failed: "steam" }
+              : {
+                  rows: [],
+                  failed: "steam",
+                  collecting: null,
+                  recordedDays: 0,
+                  updatedAt: Date.now(),
+                }
+          );
         }
       } finally {
         if (requestId === requestRef.current) setIsLoading(false);
       }
     },
-    [chart, month]
+    // The request is identified by `requestKey`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [requestKey]
   );
 
   useEffect(() => {
@@ -231,7 +287,7 @@ export function CatalogueCharts({
           ...filters,
           minReviews: chart === "best-rated" ? filters.minReviews : 0,
         },
-        { tiers, hidden }
+        { tiers, hidden, ignorePeriod: chart === "most-anticipated" }
       ),
     [result, filters, chart, tiers, hidden]
   );
@@ -255,7 +311,7 @@ export function CatalogueCharts({
     ];
 
     const measure = CHART_PLAYERS_MEASURE[chart];
-    if (chart === "playing-now" || chart === "singleplayer") {
+    if (chart === "playing-now") {
       list.push({
         id: "players",
         label: t(`chart_column_players_${measure}`),
@@ -290,6 +346,30 @@ export function CatalogueCharts({
         align: "end",
         sortValue: (row) => (row.isNew ? Infinity : row.places),
         render: (row) => <Movement row={row} />,
+      });
+      if ((result?.recordedDays ?? 0) >= DAYS_COLUMN_FROM) {
+        list.push({
+          id: "days",
+          label: t("chart_column_days_on_chart"),
+          hint: t("chart_column_days_on_chart_hint", {
+            days: result?.recordedDays,
+          }),
+          width: "80px",
+          align: "end",
+          optional: true,
+          sortValue: (row) => row.days,
+          render: (row) => number(row.days),
+        });
+      }
+    }
+    if (chart === "most-reviewed") {
+      list.push({
+        id: "review-count",
+        label: t("chart_column_review_count"),
+        width: "96px",
+        align: "end",
+        sortValue: (row) => row.reviewCount,
+        render: (row) => number(row.reviewCount),
       });
     }
     if (chart === "days-30" || chart === "days-90") {
@@ -359,15 +439,40 @@ export function CatalogueCharts({
           />
         ),
       },
-      {
-        id: "year",
-        label: t("chart_column_year"),
-        width: "56px",
-        align: "end",
-        optional: true,
-        sortValue: (row) => row.releaseYear,
-        render: (row) => row.releaseYear ?? "–",
-      }
+      chart === "most-anticipated"
+        ? {
+            id: "release",
+            label: t("chart_column_release"),
+            width: "110px",
+            align: "end",
+            sortValue: (row) => row.releaseDate,
+            render: (row) => formatRelease(row),
+          }
+        : {
+            id: "year",
+            label: t("chart_column_year"),
+            width: "72px",
+            align: "end",
+            optional: true,
+            sortValue: (row) => row.releaseDate,
+            render: (row) => (
+              <span className="catalogue-charts__year">
+                {row.releaseYear ?? "–"}
+                {row.leftEarlyAccessAt !== null && (
+                  <span
+                    className="catalogue-charts__full-release"
+                    title={t("chart_full_release_hint", {
+                      date: new Date(row.leftEarlyAccessAt).toLocaleDateString(
+                        i18n.language
+                      ),
+                    })}
+                  >
+                    {t("chart_full_release")}
+                  </span>
+                )}
+              </span>
+            ),
+          }
     );
 
     if (isLinux) {
@@ -380,7 +485,46 @@ export function CatalogueCharts({
     }
 
     return list;
-  }, [chart, formatNumber, isLinux, result, t, tagLabels, tiers]);
+    // formatRelease reads only the language.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    chart,
+    formatNumber,
+    isLinux,
+    result,
+    t,
+    tagLabels,
+    tiers,
+    i18n.language,
+  ]);
+
+  function formatRelease(row: CatalogueChartRow) {
+    if (row.releaseDate === null) return t("chart_coming_soon");
+    const date = new Date(row.releaseDate);
+    switch (row.releasePrecision) {
+      case "year":
+        return String(date.getUTCFullYear());
+      case "quarter":
+        return t("chart_quarter", {
+          quarter: Math.floor(date.getUTCMonth() / 3) + 1,
+          year: date.getUTCFullYear(),
+        });
+      case "month":
+        return date.toLocaleDateString(i18n.language, {
+          month: "short",
+          year: "numeric",
+          timeZone: "UTC",
+        });
+      case "unknown":
+        return t("chart_coming_soon");
+      default:
+        return date.toLocaleDateString(i18n.language, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+    }
+  }
 
   const getGame = useCallback(
     (row: CatalogueChartRow) => ({
@@ -413,6 +557,25 @@ export function CatalogueCharts({
         <p>{failure}</p>
         <Button theme="outline" onClick={() => void load(true)}>
           {t("chart_retry")}
+        </Button>
+      </div>
+    );
+  } else if (
+    !isStoreRanked &&
+    chart !== "most-anticipated" &&
+    filters.period.preset !== "any" &&
+    rows.length < FEW_ROWS
+  ) {
+    body = (
+      <div className="catalogue-charts__empty">
+        <p>
+          {t("chart_few_in_period", {
+            count: rows.length,
+            period: formatPeriod(filters.period, t, i18n.language),
+          })}
+        </p>
+        <Button theme="outline" onClick={() => selectChart("best-rated")}>
+          {t("chart_best_rated_in_period")}
         </Button>
       </div>
     );
@@ -450,9 +613,26 @@ export function CatalogueCharts({
           )
         }
         isLoading={isLoading}
+        getRankHint={(row) =>
+          row.rank !== rows.indexOf(row) + 1
+            ? t("chart_rank_on_source", { rank: row.rank })
+            : undefined
+        }
       />
     );
   }
+
+  const headingParts = [
+    chart !== "most-anticipated" && filters.period.preset !== "any"
+      ? formatPeriod(filters.period, t, i18n.language)
+      : null,
+    chart === "best-rated" && filters.minReviews > 0
+      ? t("chart_heading_min_reviews", {
+          count: filters.minReviews,
+          formattedCount: formatNumber(filters.minReviews),
+        })
+      : null,
+  ].filter(Boolean);
 
   const sinceLabel = result?.collecting?.since
     ? new Date(`${result.collecting.since}T00:00:00`).toLocaleDateString(
@@ -464,7 +644,15 @@ export function CatalogueCharts({
   return (
     <div className="catalogue__content">
       <div className="catalogue-charts__main">
-        <h2 className="catalogue-charts__title">{t(`chart_${chart}`)}</h2>
+        <h2 className="catalogue-charts__title">
+          {t(`chart_${chart}`)}
+          {headingParts.length > 0 && (
+            <span className="catalogue-charts__title-scope">
+              {" · "}
+              {headingParts.join(" · ")}
+            </span>
+          )}
+        </h2>
         <p className="catalogue-charts__description">
           {t(`chart_${chart}_description`)}
         </p>
@@ -498,24 +686,18 @@ export function CatalogueCharts({
                   onChange={() => selectChart(id)}
                 />
               ))}
-              {chart === "top-releases" && (result?.months.length ?? 0) > 0 && (
-                <SelectField
-                  theme="dark"
-                  label={t("chart_month")}
-                  value={String(month ?? result?.months[0]?.startOfMonth)}
-                  options={result?.months.map((entry) => ({
-                    key: String(entry.startOfMonth),
-                    value: String(entry.startOfMonth),
-                    label: entry.name.replace(/^Top Releases of /, ""),
-                  }))}
-                  onChange={(event) => setMonth(Number(event.target.value))}
-                />
-              )}
             </div>
           </SidebarSection>
 
           <SidebarSection title={t("chart_filters")}>
             <div className="catalogue-charts__section">
+              {chart !== "most-anticipated" && (
+                <ChartPeriodPicker
+                  value={filters.period}
+                  onChange={(period: ChartPeriod) => updateFilters({ period })}
+                />
+              )}
+
               <span className="catalogue-charts__label">{t("tags")}</span>
               <TagPicker
                 value={filters.includeTags}
@@ -607,10 +789,10 @@ export function CatalogueCharts({
                   theme="dark"
                   label={t("chart_min_reviews")}
                   value={String(filters.minReviews)}
-                  options={[0, 100, 1000, 10000].map((count) => ({
+                  options={MIN_REVIEW_OPTIONS.map((count) => ({
                     key: String(count),
                     value: String(count),
-                    label: count === 0 ? t("filter_any") : formatNumber(count),
+                    label: formatNumber(count),
                   }))}
                   onChange={(event) =>
                     updateFilters({ minReviews: Number(event.target.value) })
