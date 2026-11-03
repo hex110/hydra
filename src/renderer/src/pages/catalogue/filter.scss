@@ -1,6 +1,24 @@
 @use "../../scss/globals.scss";
 
+$filter-colors: (
+  genres: globals.$filter-genres,
+  tags: globals.$filter-tags,
+  downloadSourceFingerprints: globals.$filter-sources,
+  developers: globals.$filter-developers,
+  publishers: globals.$filter-publishers,
+  protondbSupportBadges: globals.$filter-compatibility,
+  deckCompatibility: globals.$filter-compatibility,
+  releaseYear: globals.$filter-year,
+  platforms: globals.$filter-platforms,
+);
+
 .filter-item {
+  @each $name, $color in $filter-colors {
+    &--#{$name} {
+      --filter-item-color: #{$color};
+    }
+  }
+
   display: flex;
   align-items: center;
   gap: 8px;
@@ -32,6 +50,7 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
+    background-color: var(--filter-item-color);
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.28);
     align-self: center;
   }
@@ -75,101 +94,19 @@
 }
 
 .filter-section {
-  background-color: globals.$background-color;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-
-  &__button {
-    padding: calc(globals.$spacing-unit * 2.5) calc(globals.$spacing-unit * 2);
+  &__body {
     display: flex;
-    align-items: center;
-    background-color: globals.$background-color;
-    color: globals.$muted-color;
-    width: 100%;
-    cursor: pointer;
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease;
+    flex-direction: column;
     gap: globals.$spacing-unit;
-    font-size: globals.$body-font-size;
-    font-weight: bold;
-    border: none;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    &:active {
-      opacity: globals.$active-opacity;
-    }
-  }
-
-  &__chevron {
-    transition: transform ease 0.2s;
-    flex-shrink: 0;
-
-    &--open {
-      transform: rotate(180deg);
-    }
-  }
-
-  &__header {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    min-width: 0;
-    flex: 1;
-  }
-
-  &__header-count {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.7);
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    min-width: 24px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-
-  &__orb {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-
-  &__title {
-    font-size: 16px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__content {
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
-    background-color: globals.$dark-background-color;
-    position: relative;
-  }
-
-  &__content-inner {
     padding: calc(globals.$spacing-unit * 2);
   }
 
-  &__count {
-    font-size: 12px;
-    margin-bottom: 12px;
-    display: block;
-  }
-
   &__clear-button {
-    font-size: 12px;
-    margin-bottom: 12px;
-    display: block;
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: globals.$small-font-size;
     color: globals.$body-color;
     cursor: pointer;
     text-decoration: underline;
@@ -180,18 +117,32 @@
     }
   }
 
-  &__search {
-    margin-bottom: 12px;
+  &__label {
+    margin-top: calc(globals.$spacing-unit / 2);
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  &__block {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__count-hint {
+    margin-left: calc(globals.$spacing-unit / 2);
+    color: globals.$body-color;
+    opacity: globals.$active-opacity;
   }
 
   &__group-tabs {
     display: flex;
-    gap: 4px;
-    padding: 4px;
-    margin-bottom: 12px;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: calc(globals.$spacing-unit / 2);
     overflow-x: auto;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: globals.$surface-hover-color;
   }
 
   &__group-tab {
@@ -199,23 +150,21 @@
     flex: 1;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: calc(globals.$spacing-unit * 0.75);
     min-width: max-content;
-    padding: 7px 10px;
+    padding: calc(globals.$spacing-unit * 0.9)
+      calc(globals.$spacing-unit * 1.25);
     border: 0;
     border-radius: 6px;
     color: globals.$muted-color;
     background-color: transparent;
-    font-size: 12px;
+    font-size: globals.$small-font-size;
     font-weight: 600;
     cursor: pointer;
-    transition:
-      color 0.15s ease,
-      background-color 0.15s ease;
 
     &:hover {
       color: globals.$body-color;
-      background-color: rgba(255, 255, 255, 0.05);
+      background-color: globals.$surface-hover-color;
     }
 
     &:focus-visible {
@@ -225,8 +174,7 @@
 
     &--active {
       color: globals.$body-color;
-      background-color: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      background-color: globals.$chip-background-color;
     }
   }
 
@@ -239,7 +187,7 @@
     padding: 0 5px;
     border-radius: 9px;
     color: globals.$body-color;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: globals.$chip-background-color;
     font-size: 10px;
     line-height: 1;
   }

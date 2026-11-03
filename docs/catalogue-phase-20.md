@@ -335,6 +335,18 @@ ProtonDB gets an explicit **Any** option first.
 **Narrow windows.** Below 1100 px the sidebar becomes a **Filters (n)**
 button in the Browse toolbar that opens it as a drawer over the results.
 
+**As built (step 3).** `catalogue-facet-counts.ts` (job, one IPC
+`getCatalogueFacetCounts` that also starts a stale run, and an updated event),
+`orderFacetItems` and `NON_GAME_STEAM_GENRES` in `src/shared/catalogue-facets.ts`
+(tested), `FilterSection` rebuilt on `SidebarSection`, `FacetSearchSection` for
+developers and publishers (also in Classics, from LaunchBox's lists),
+`getLibraryFacets` (tags from the recommender's profile, developers and
+publishers of the 60 most played games) and a drawer under 1100 px. Counts for
+developers and publishers were not added (the open question): there are
+thousands of them, and the library suggestions need none. Orbs, "N available"
+and the raw category colours are gone; the colours are `$filter-*` tokens.
+`usePopularSteamTags` now takes its empty tags from the counts.
+
 ### Step 4. Store data in the main process
 
 Shared services for steps 5–8. Pure parsing goes in `src/shared/` with

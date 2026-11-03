@@ -295,7 +295,7 @@ in the sections below.
            skeletons, shelf scrollbars and AnkerGames subtitles fixed
     2. [x] Discover, Charts and Browse tabs; Browse toolbar; one Hide my
            games switch for all tabs
-    3. [ ] Filter sidebar: counts per tag and genre in grey, ordered by
+    3. [x] Filter sidebar: counts per tag and genre in grey, ordered by
            count, From your library, no software genres, searchable
            developers, drawer on narrow windows
     4. [x] Store data in the main process: Steam store items, charts and

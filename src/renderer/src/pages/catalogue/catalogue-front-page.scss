@@ -124,6 +124,13 @@
     }
   }
 
+  &__tag-count {
+    margin-left: globals.$spacing-unit;
+    color: globals.$body-color;
+    opacity: globals.$active-opacity;
+    font-size: globals.$small-font-size;
+  }
+
   @media (max-width: 768px) {
     &__queue {
       flex-direction: column;

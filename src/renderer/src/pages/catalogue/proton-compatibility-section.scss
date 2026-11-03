@@ -4,24 +4,25 @@
   &__content-inner {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 2);
   }
 
   &__control {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: calc(globals.$spacing-unit * 1.25);
   }
 
   &__label {
-    font-size: 12px;
+    font-size: globals.$small-font-size;
     color: globals.$muted-color;
     line-height: 1.4;
 
     &--deck {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: calc(globals.$spacing-unit * 0.75);
     }
   }
 
@@ -35,7 +36,7 @@
   &__option-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: globals.$spacing-unit;
   }
 
   &__option-item {
@@ -44,7 +45,7 @@
     touch-action: manipulation;
 
     &.radio-field--selected .radio-field__label {
-      color: #ffffff;
+      color: globals.$muted-color;
     }
   }
 
@@ -52,14 +53,25 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--proton-option-color);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+    background-color: globals.$chip-background-color;
     flex-shrink: 0;
+
+    &--silver {
+      background-color: globals.$protondb-silver;
+    }
+
+    &--gold {
+      background-color: globals.$protondb-gold;
+    }
+
+    &--platinum {
+      background-color: globals.$protondb-platinum;
+    }
   }
 
   &__option-label {
-    color: rgba(255, 255, 255, 0.86);
-    font-size: 12px;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
     font-weight: 600;
     line-height: 1.2;
   }

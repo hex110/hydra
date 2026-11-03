@@ -42,11 +42,16 @@ import { useTranslation } from "react-i18next";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import cn from "classnames";
 import { getClassicsPlatformGroup } from "./classics-platform-group";
-import { FilterItem } from "./filter-item";
-import { FilterSection } from "./filter-section";
+import { NON_GAME_STEAM_GENRES, orderFacetItems } from "@shared";
+import { FilterItem, type FilterCategory } from "./filter-item";
+import { FacetSearchSection } from "./facet-search-section";
+import { useFacetCounts } from "./use-facet-counts";
+import { useMediaQuery } from "@renderer/hooks/use-media-query";
+import { FilterSection, type FilterSectionItem } from "./filter-section";
 import { GameItemClassics } from "./game-item-classics";
 import {
   DeviceDesktopIcon,
+  FilterIcon,
   ListUnorderedIcon,
   TableIcon,
 } from "@primer/octicons-react";
@@ -85,19 +90,7 @@ type CompatibilityThreshold<Value extends string> = {
   value: string;
   labelKey: string;
   values: Value[];
-  color?: string;
-};
-
-const filterCategoryColors = {
-  genres: "hsl(262deg 50% 47%)",
-  tags: "hsl(95deg 50% 20%)",
-  downloadSourceFingerprints: "hsl(27deg 50% 40%)",
-  developers: "hsl(340deg 50% 46%)",
-  publishers: "hsl(200deg 50% 30%)",
-  protondbSupportBadges: "#F50057",
-  deckCompatibility: "#F50057",
-  releaseYear: "hsl(38deg 50% 40%)",
-  platforms: "hsl(170deg 50% 36%)",
+  tier?: "silver" | "gold" | "platinum";
 };
 
 const classicsPlatformGroups = [
@@ -107,6 +100,8 @@ const classicsPlatformGroups = [
 ] as const;
 
 const PAGE_SIZE = CATALOGUE_PAGE_SIZE;
+/** Below this width the filters move into a drawer. */
+const NARROW_QUERY = "(max-width: 1100px)";
 
 const clearAllCategoryFilters = {
   genres: [],
@@ -139,19 +134,19 @@ const protonCompatibilityThresholds: CompatibilityThreshold<
     value: "silver_plus",
     labelKey: "protondb_silver_plus",
     values: ["silver", "gold", "platinum"],
-    color: "rgb(166, 166, 166)",
+    tier: "silver",
   },
   {
     value: "gold_plus",
     labelKey: "protondb_gold_plus",
     values: ["gold", "platinum"],
-    color: "rgb(207, 181, 59)",
+    tier: "gold",
   },
   {
     value: "platinum_only",
     labelKey: "protondb_platinum_only",
     values: ["platinum"],
-    color: "rgb(180, 199, 220)",
+    tier: "platinum",
   },
 ];
 
@@ -235,6 +230,22 @@ export function CatalogueBrowse({
 
   const { t, i18n } = useTranslation("catalogue");
   const shouldShowProtonFeatures = window.electron.platform === "linux";
+  const isNarrow = useMediaQuery(NARROW_QUERY);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // The drawer closes when the window is wide enough to show the filters.
+  useEffect(() => {
+    if (!isNarrow) setIsDrawerOpen(false);
+  }, [isNarrow]);
+
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsDrawerOpen(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [isDrawerOpen]);
 
   const queryKey = useMemo(
     () =>
@@ -434,41 +445,71 @@ export function CatalogueBrowse({
     }, {});
   }, [steamGenres, language]);
 
-  const steamGenresFilterItems = useMemo(() => {
-    return Object.entries(steamGenresMapping)
-      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-      .map(([key, value]) => ({
-        label: key,
-        value: value,
-        checked: filters.genres.includes(value),
-      }));
-  }, [steamGenresMapping, filters.genres]);
+  const { counts: facetCounts, library: libraryFacets } = useFacetCounts();
+
+  // Selected first, then what your library suggests, then by how many games
+  // have it. Software categories are not games and stay out of Genres.
+  const steamGenresFilterItems = useMemo<FilterSectionItem[]>(() => {
+    const counts = facetCounts
+      ? new Map<string | number, number>(Object.entries(facetCounts.genres))
+      : null;
+
+    return orderFacetItems(
+      Object.entries(steamGenresMapping)
+        .filter(([, value]) => !NON_GAME_STEAM_GENRES.has(value))
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([label, value]) => ({ label, value })),
+      counts,
+      new Set(filters.genres)
+    ).map((item) => ({
+      ...item,
+      checked: filters.genres.includes(String(item.value)),
+      facetGroup: item.group,
+    }));
+  }, [steamGenresMapping, filters.genres, facetCounts]);
 
   const popularTags = usePopularSteamTags();
 
-  // Most popular first, then the rest alphabetically; tags with no games are
-  // left out unless selected.
-  const steamUserTagsFilterItems = useMemo(() => {
+  const steamUserTagsFilterItems = useMemo<FilterSectionItem[]>(() => {
     if (!steamUserTags[language]) return [];
 
+    const counts = facetCounts
+      ? new Map<string | number, number>(
+          Object.entries(facetCounts.tags).map(([id, count]) => [
+            Number(id),
+            count,
+          ])
+        )
+      : null;
+    // Before the counts are in, Steam's own popularity order stands in.
     const rank = new Map(popularTags.tags.map((tag, index) => [tag.id, index]));
 
-    return Object.entries(steamUserTags[language])
-      .filter(
-        ([, value]) =>
-          !popularTags.empty.has(value) || filters.tags.includes(value)
-      )
-      .sort(
-        ([keyA, valueA], [keyB, valueB]) =>
-          (rank.get(valueA) ?? Infinity) - (rank.get(valueB) ?? Infinity) ||
-          keyA.localeCompare(keyB)
-      )
-      .map(([key, value]) => ({
-        label: key,
-        value: value,
-        checked: filters.tags.includes(value),
-      }));
-  }, [steamUserTags, filters.tags, language, popularTags]);
+    const ordered = orderFacetItems(
+      Object.entries(steamUserTags[language])
+        .map(([label, value]) => ({ label, value }))
+        .sort(
+          (a, b) =>
+            (rank.get(a.value) ?? Infinity) - (rank.get(b.value) ?? Infinity) ||
+            a.label.localeCompare(b.label)
+        ),
+      counts,
+      new Set(filters.tags),
+      libraryFacets?.tagIds ?? []
+    );
+
+    return ordered.map((item) => ({
+      ...item,
+      checked: filters.tags.includes(Number(item.value)),
+      facetGroup: item.group,
+    }));
+  }, [
+    steamUserTags,
+    filters.tags,
+    language,
+    popularTags,
+    facetCounts,
+    libraryFacets,
+  ]);
 
   const classicsPlatforms = useMemo(
     () => filters.platforms ?? [],
@@ -497,24 +538,6 @@ export function CatalogueBrowse({
         })),
       },
       {
-        title: t("developers"),
-        key: "developers" as const,
-        items: launchboxFilters.developers.map((developer) => ({
-          label: developer,
-          value: developer,
-          checked: filters.developers.includes(developer),
-        })),
-      },
-      {
-        title: t("publishers"),
-        key: "publishers" as const,
-        items: launchboxFilters.publishers.map((publisher) => ({
-          label: decodeHTML(publisher),
-          value: publisher,
-          checked: filters.publishers.includes(publisher),
-        })),
-      },
-      {
         title: t("download_sources"),
         key: "downloadSourceFingerprints" as const,
         items: downloadSources
@@ -531,8 +554,6 @@ export function CatalogueBrowse({
   }, [
     launchboxFilters,
     filters.genres,
-    filters.developers,
-    filters.publishers,
     filters.downloadSourceFingerprints,
     downloadSources,
     classicsPlatforms,
@@ -546,28 +567,28 @@ export function CatalogueBrowse({
           launchboxFilters.platforms.find((p) => p.key === platform)?.name ??
           platform,
         filterType: t("platforms"),
-        orbColor: filterCategoryColors.platforms,
+        category: "platforms" as FilterCategory,
         key: "platforms",
         value: platform,
       })),
       ...filters.genres.map((genre) => ({
         label: genre,
         filterType: t("genres"),
-        orbColor: filterCategoryColors.genres,
+        category: "genres" as FilterCategory,
         key: "genres",
         value: genre,
       })),
       ...filters.developers.map((developer) => ({
         label: developer,
         filterType: t("developers"),
-        orbColor: filterCategoryColors.developers,
+        category: "developers" as FilterCategory,
         key: "developers",
         value: developer,
       })),
       ...filters.publishers.map((publisher) => ({
         label: decodeHTML(publisher),
         filterType: t("publishers"),
-        orbColor: filterCategoryColors.publishers,
+        category: "publishers" as FilterCategory,
         key: "publishers",
         value: publisher,
       })),
@@ -576,7 +597,7 @@ export function CatalogueBrowse({
           (source) => source.fingerprint === fingerprint
         )?.name as string,
         filterType: t("download_sources"),
-        orbColor: filterCategoryColors.downloadSourceFingerprints,
+        category: "downloadSourceFingerprints" as FilterCategory,
         key: "downloadSourceFingerprints",
         value: fingerprint,
       })),
@@ -607,7 +628,7 @@ export function CatalogueBrowse({
           (key) => steamGenresMapping[key] === genre
         ) as string,
         filterType: t("genres"),
-        orbColor: filterCategoryColors.genres,
+        category: "genres" as FilterCategory,
         key: "genres",
         value: genre,
       })),
@@ -619,7 +640,7 @@ export function CatalogueBrowse({
             (key) => tagsForLanguage[key] === tag
           ),
           filterType: t("tags"),
-          orbColor: filterCategoryColors.tags,
+          category: "tags" as FilterCategory,
           key: "tags",
           value: tag,
         };
@@ -630,7 +651,7 @@ export function CatalogueBrowse({
           (source) => source.fingerprint === fingerprint
         )?.name as string,
         filterType: t("download_sources"),
-        orbColor: filterCategoryColors.downloadSourceFingerprints,
+        category: "downloadSourceFingerprints" as FilterCategory,
         key: "downloadSourceFingerprints",
         value: fingerprint,
       })),
@@ -638,7 +659,7 @@ export function CatalogueBrowse({
       ...filters.developers.map((developer) => ({
         label: developer,
         filterType: t("developers"),
-        orbColor: filterCategoryColors.developers,
+        category: "developers" as FilterCategory,
         key: "developers",
         value: developer,
       })),
@@ -646,7 +667,7 @@ export function CatalogueBrowse({
       ...filters.publishers.map((publisher) => ({
         label: decodeHTML(publisher),
         filterType: t("publishers"),
-        orbColor: filterCategoryColors.publishers,
+        category: "publishers" as FilterCategory,
         key: "publishers",
         value: publisher,
       })),
@@ -658,7 +679,7 @@ export function CatalogueBrowse({
             {
               label: t(protonThreshold.labelKey),
               filterType: t("protondb"),
-              orbColor: filterCategoryColors.protondbSupportBadges,
+              category: "protondbSupportBadges" as FilterCategory,
               key: "protondbSupportBadges",
               value: "threshold",
             },
@@ -670,7 +691,7 @@ export function CatalogueBrowse({
             {
               label: t("steam_deck_compatible"),
               filterType: t("steam_deck_minimum"),
-              orbColor: filterCategoryColors.deckCompatibility,
+              category: "deckCompatibility" as FilterCategory,
               key: "deckCompatibility",
               value: "threshold",
             },
@@ -682,7 +703,7 @@ export function CatalogueBrowse({
             {
               label: `${filters.releaseYear.gte ?? MIN_RELEASE_YEAR} – ${filters.releaseYear.lte ?? new Date().getFullYear()}`,
               filterType: t("release_year"),
-              orbColor: filterCategoryColors.releaseYear,
+              category: "releaseYear" as FilterCategory,
               key: "releaseYear",
               value: "range",
             },
@@ -724,33 +745,11 @@ export function CatalogueBrowse({
           })),
         key: "downloadSourceFingerprints",
       },
-      {
-        title: t("developers"),
-        items: steamDevelopers.map((developer) => ({
-          label: developer,
-          value: developer,
-          checked: filters.developers.includes(developer),
-        })),
-        key: "developers",
-      },
-      {
-        title: t("publishers"),
-        items: steamPublishers.map((publisher) => ({
-          label: decodeHTML(publisher),
-          value: publisher,
-          checked: filters.publishers.includes(publisher),
-        })),
-        key: "publishers",
-      },
     ];
   }, [
     downloadSources,
-    filters.developers,
     filters.downloadSourceFingerprints,
-    filters.publishers,
-    steamDevelopers,
     steamGenresFilterItems,
-    steamPublishers,
     steamUserTagsFilterItems,
     t,
   ]);
@@ -857,6 +856,18 @@ export function CatalogueBrowse({
           </span>
 
           <div className="catalogue__sort-inline">
+            {isNarrow && (
+              <Button
+                type="button"
+                theme="outline"
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                <FilterIcon size={14} />
+                {t("filters_button", {
+                  filterCount: formatNumber(selectedFiltersCount),
+                })}
+              </Button>
+            )}
             <SegmentedControl
               label={t("mode_modern_games") + " / " + t("mode_classics")}
               value={mode}
@@ -928,7 +939,7 @@ export function CatalogueBrowse({
                     <FilterItem
                       filter={filter.label ?? ""}
                       filterType={filter.filterType}
-                      orbColor={filter.orbColor}
+                      category={filter.category}
                       onRemove={() => {
                         if (filter.value === "range") {
                           dispatch(setFilters({ releaseYear: undefined }));
@@ -973,7 +984,11 @@ export function CatalogueBrowse({
         )}
       </div>
 
-      <div className="catalogue__content">
+      <div
+        className={cn("catalogue__content", {
+          "catalogue__content--single": isNarrow,
+        })}
+      >
         <div className="catalogue__main">
           <div
             className={cn("catalogue__games-container", {
@@ -1050,7 +1065,34 @@ export function CatalogueBrowse({
           </div>
         </div>
 
-        <div className="catalogue__filters-container">
+        {isNarrow && isDrawerOpen && (
+          <button
+            type="button"
+            className="catalogue__drawer-backdrop"
+            aria-label={t("filters_close")}
+            onClick={() => setIsDrawerOpen(false)}
+          />
+        )}
+        <div
+          className={cn("catalogue__filters-container", {
+            "catalogue__filters-container--drawer": isNarrow,
+            "catalogue__filters-container--open": isNarrow && isDrawerOpen,
+          })}
+          role={isNarrow ? "dialog" : undefined}
+          aria-label={isNarrow ? t("filters") : undefined}
+        >
+          {isNarrow && (
+            <div className="catalogue__drawer-header">
+              <h3>{t("filters")}</h3>
+              <Button
+                type="button"
+                theme="outline"
+                onClick={() => setIsDrawerOpen(false)}
+              >
+                {t("filters_close")}
+              </Button>
+            </div>
+          )}
           <div className="catalogue__filters-sections">
             {mode === "modern" && shouldShowProtonFeatures && (
               <Suspense fallback={null}>
@@ -1058,17 +1100,17 @@ export function CatalogueBrowse({
                   title={t("protondb")}
                   protonSliderLabel={t("protondb_minimum")}
                   deckSliderLabel={t("steam_deck_minimum")}
-                  protonOptions={protonCompatibilityThresholds.map(
-                    (threshold) => ({
+                  protonOptions={[
+                    { value: "", label: t("filter_any") },
+                    ...protonCompatibilityThresholds.map((threshold) => ({
                       value: threshold.value,
                       label: t(threshold.labelKey),
-                      color: threshold.color,
-                    })
-                  )}
+                      tier: threshold.tier,
+                    })),
+                  ]}
                   protonValue={protonThresholdValue}
                   deckChecked={isDeckCompatible}
                   deckLabel={t("steam_deck_compatible")}
-                  color={filterCategoryColors.protondbSupportBadges}
                   onProtonChange={(value) => {
                     const nextThreshold = protonCompatibilityThresholds.find(
                       (threshold) => threshold.value === value
@@ -1099,7 +1141,6 @@ export function CatalogueBrowse({
               <Suspense fallback={null}>
                 <ReleaseYearSection
                   title={t("release_year")}
-                  color={filterCategoryColors.releaseYear}
                   value={filters.releaseYear}
                   onChange={(value) =>
                     dispatch(setFilters({ releaseYear: value }))
@@ -1114,7 +1155,12 @@ export function CatalogueBrowse({
                   key={section.key}
                   title={section.title}
                   onClear={() => dispatch(setFilters({ [section.key]: [] }))}
-                  color={filterCategoryColors[section.key]}
+                  defaultOpen={section.key === "tags"}
+                  countHint={
+                    section.key === "tags" || section.key === "genres"
+                      ? t("facet_count_hint")
+                      : undefined
+                  }
                   onSelect={(value) => {
                     if (filters[section.key].includes(value)) {
                       dispatch(
@@ -1155,7 +1201,6 @@ export function CatalogueBrowse({
                     key={section.key}
                     title={section.title}
                     onClear={() => dispatch(setFilters({ [section.key]: [] }))}
-                    color={filterCategoryColors[section.key]}
                     onSelect={(value) => {
                       const stringValue = String(value);
                       const next = currentValues.includes(stringValue)
@@ -1173,6 +1218,44 @@ export function CatalogueBrowse({
                   />
                 );
               })}
+
+            {(mode === "modern" || mode === "classics") && (
+              <>
+                <FacetSearchSection
+                  title={t("developers")}
+                  placeholder={t("developers_search")}
+                  names={
+                    mode === "modern"
+                      ? steamDevelopers
+                      : launchboxFilters.developers
+                  }
+                  selected={filters.developers}
+                  fromLibrary={
+                    mode === "modern" ? (libraryFacets?.developers ?? []) : []
+                  }
+                  onChange={(developers) =>
+                    dispatch(setFilters({ developers }))
+                  }
+                />
+                <FacetSearchSection
+                  title={t("publishers")}
+                  placeholder={t("publishers_search")}
+                  names={
+                    mode === "modern"
+                      ? steamPublishers
+                      : launchboxFilters.publishers
+                  }
+                  selected={filters.publishers}
+                  fromLibrary={
+                    mode === "modern" ? (libraryFacets?.publishers ?? []) : []
+                  }
+                  format={decodeHTML}
+                  onChange={(publishers) =>
+                    dispatch(setFilters({ publishers }))
+                  }
+                />
+              </>
+            )}
           </div>
         </div>
       </div>

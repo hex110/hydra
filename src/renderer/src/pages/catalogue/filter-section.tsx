@@ -1,49 +1,65 @@
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import List from "rc-virtual-list";
+
 import { CheckboxField } from "@renderer/components/checkbox-field/checkbox-field";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import { TextField } from "@renderer/components/text-field/text-field";
 import { useFormat } from "@renderer/hooks";
-import { ChevronDownIcon } from "@primer/octicons-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./filter.scss";
-import List from "rc-virtual-list";
-import { useTranslation } from "react-i18next";
+
+/** The filter box shows once a list is longer than this. */
+const SEARCH_FROM = 10;
+const ROW_HEIGHT = 28;
+const VISIBLE_ROWS = 10;
+
+export interface FilterSectionItem {
+  label: string;
+  value: string | number;
+  checked: boolean;
+  group?: string;
+  /** Games in the catalogue with it; shown in grey after the label. */
+  count?: number | null;
+  /** Where it sits when the list is ordered by facet: selected, from your library, or the rest. */
+  facetGroup?: "selected" | "library" | "rest";
+}
 
 export interface FilterSectionProps {
   title: string;
-  items: {
-    label: string;
-    value: string | number;
-    checked: boolean;
-    group?: string;
-  }[];
+  items: FilterSectionItem[];
   groups?: readonly {
     label: string;
     value: string;
   }[];
   onSelect: (value: string | number) => void;
-  color: string;
   onClear: () => void;
+  /** Open when first shown; sections with a selection are open regardless. */
+  defaultOpen?: boolean;
+  /** Says what the grey counts are. */
+  countHint?: string;
 }
 
 export function FilterSection({
   title,
   items,
   groups,
-  color,
   onSelect,
   onClear,
+  defaultOpen = false,
+  countHint,
 }: FilterSectionProps) {
-  const content = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation("catalogue");
+  const { formatNumber } = useFormat();
   const [search, setSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [isOpen, setIsOpen] = useState(true);
-  const [height, setHeight] = useState(0);
-  const { t } = useTranslation("catalogue");
 
-  const availableGroups = useMemo(() => {
-    return (groups ?? []).filter((group) =>
-      items.some((item) => item.group === group.value)
-    );
-  }, [groups, items]);
+  const availableGroups = useMemo(
+    () =>
+      (groups ?? []).filter((group) =>
+        items.some((item) => item.group === group.value)
+      ),
+    [groups, items]
+  );
 
   const activeGroup = useMemo(() => {
     if (
@@ -62,145 +78,142 @@ export function FilterSection({
     );
   }, [availableGroups, items, selectedGroup]);
 
-  const visibleItems = useMemo(() => {
-    if (!activeGroup) return items;
-    return items.filter((item) => item.group === activeGroup);
-  }, [activeGroup, items]);
+  const visibleItems = useMemo(
+    () =>
+      activeGroup ? items.filter((item) => item.group === activeGroup) : items,
+    [activeGroup, items]
+  );
 
-  const filteredItems = useMemo(() => {
-    if (search.length > 0) {
-      return visibleItems.filter((item) =>
-        item.label.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+  const selectedItemsCount = items.filter((item) => item.checked).length;
 
-    return visibleItems;
+  const pinnedSelected = visibleItems.filter(
+    (item) => item.facetGroup === "selected"
+  );
+  const fromLibrary = visibleItems.filter(
+    (item) => item.facetGroup === "library"
+  );
+  const rest = useMemo(() => {
+    const others = visibleItems.filter(
+      (item) => item.facetGroup !== "selected" && item.facetGroup !== "library"
+    );
+    const needle = search.trim().toLowerCase();
+    return needle
+      ? others.filter((item) => item.label.toLowerCase().includes(needle))
+      : others;
   }, [visibleItems, search]);
+  const restCount = visibleItems.filter(
+    (item) => item.facetGroup !== "selected" && item.facetGroup !== "library"
+  ).length;
 
-  const selectedItemsCount = useMemo(() => {
-    return items.filter((item) => item.checked).length;
-  }, [items]);
+  if (!items.length) return null;
 
-  const onSearch = useCallback((value: string) => {
-    setSearch(value);
-  }, []);
-
-  const { formatNumber } = useFormat();
-
-  useEffect(() => {
-    if (content.current && content.current.scrollHeight !== height) {
-      setHeight(isOpen ? content.current.scrollHeight : 0);
-    } else if (!isOpen) {
-      setHeight(0);
-    }
-  }, [isOpen, filteredItems, height, search]);
-
-  if (!items.length) {
-    return null;
-  }
+  const renderItem = (item: FilterSectionItem) => (
+    <div key={item.value} className="filter-section__item">
+      <CheckboxField
+        label={
+          <>
+            {item.label}
+            {typeof item.count === "number" && (
+              <span className="filter-section__count-hint">
+                ({formatNumber(item.count)})
+              </span>
+            )}
+          </>
+        }
+        checked={item.checked}
+        onChange={() => onSelect(item.value)}
+      />
+    </div>
+  );
 
   return (
-    <div className="filter-section">
-      <button
-        type="button"
-        className="filter-section__button"
-        onClick={() => setIsOpen((open) => !open)}
-        aria-expanded={isOpen}
-      >
-        <ChevronDownIcon
-          className={`filter-section__chevron ${
-            isOpen ? "filter-section__chevron--open" : ""
-          }`}
-        />
-        <div className="filter-section__header">
+    <SidebarSection
+      title={title}
+      defaultOpen={defaultOpen || selectedItemsCount > 0}
+    >
+      <div className="filter-section__body" title={countHint}>
+        {selectedItemsCount > 0 && (
+          <button
+            type="button"
+            className="filter-section__clear-button"
+            onClick={onClear}
+          >
+            {t("clear_filters", {
+              filterCount: formatNumber(selectedItemsCount),
+            })}
+          </button>
+        )}
+
+        {availableGroups.length > 1 && (
           <div
-            className="filter-section__orb"
-            style={{ backgroundColor: color }}
-          />
-          <h3 className="filter-section__title">{title}</h3>
-          <span className="filter-section__header-count">
-            {formatNumber(selectedItemsCount || items.length)}
-          </span>
-        </div>
-      </button>
+            className="filter-section__group-tabs"
+            role="tablist"
+            aria-label={title}
+          >
+            {availableGroups.map((group) => {
+              const selectedInGroup = items.filter(
+                (item) => item.checked && item.group === group.value
+              ).length;
 
-      <div
-        ref={content}
-        className="filter-section__content"
-        style={{ maxHeight: `${height}px` }}
-      >
-        <div className="filter-section__content-inner">
-          {selectedItemsCount > 0 ? (
-            <button
-              type="button"
-              className="filter-section__clear-button"
-              onClick={onClear}
-            >
-              {t("clear_filters", {
-                filterCount: formatNumber(selectedItemsCount),
-              })}
-            </button>
-          ) : (
-            <span className="filter-section__count">
-              {t("filter_count", {
-                filterCount: formatNumber(items.length),
-              })}
+              return (
+                <button
+                  key={group.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeGroup === group.value}
+                  className={`filter-section__group-tab ${
+                    activeGroup === group.value
+                      ? "filter-section__group-tab--active"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedGroup(group.value);
+                    setSearch("");
+                  }}
+                >
+                  <span>{group.label}</span>
+                  {selectedInGroup > 0 && (
+                    <span className="filter-section__group-tab-count">
+                      {formatNumber(selectedInGroup)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {pinnedSelected.length > 0 && (
+          <div className="filter-section__block">
+            {pinnedSelected.map(renderItem)}
+          </div>
+        )}
+
+        {fromLibrary.length > 0 && (
+          <>
+            <span className="filter-section__label">
+              {t("from_your_library")}
             </span>
-          )}
-
-          {availableGroups.length > 1 && (
-            <div
-              className="filter-section__group-tabs"
-              role="tablist"
-              aria-label={title}
-            >
-              {availableGroups.map((group) => {
-                const selectedInGroup = items.filter(
-                  (item) => item.checked && item.group === group.value
-                ).length;
-
-                return (
-                  <button
-                    key={group.value}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeGroup === group.value}
-                    className={`filter-section__group-tab ${
-                      activeGroup === group.value
-                        ? "filter-section__group-tab--active"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedGroup(group.value);
-                      setSearch("");
-                    }}
-                  >
-                    <span>{group.label}</span>
-                    {selectedInGroup > 0 && (
-                      <span className="filter-section__group-tab-count">
-                        {formatNumber(selectedInGroup)}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            <div className="filter-section__block">
+              {fromLibrary.map(renderItem)}
             </div>
-          )}
+          </>
+        )}
 
+        {restCount > SEARCH_FROM && (
           <TextField
             placeholder={t("search")}
-            onChange={(e) => onSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             value={search}
-            containerProps={{ className: "filter-section__search" }}
             theme="dark"
           />
+        )}
 
+        {rest.length > 0 && (
           <List
-            data={filteredItems}
-            height={
-              28 * (filteredItems.length > 10 ? 10 : filteredItems.length)
-            }
-            itemHeight={28}
+            data={rest}
+            height={ROW_HEIGHT * Math.min(rest.length, VISIBLE_ROWS)}
+            itemHeight={ROW_HEIGHT}
             itemKey="value"
             styles={{
               verticalScrollBar: {
@@ -212,18 +225,10 @@ export function FilterSection({
               },
             }}
           >
-            {(item) => (
-              <div key={item.value} className="filter-section__item">
-                <CheckboxField
-                  label={item.label}
-                  checked={item.checked}
-                  onChange={() => onSelect(item.value)}
-                />
-              </div>
-            )}
+            {renderItem}
           </List>
-        </div>
+        )}
       </div>
-    </div>
+    </SidebarSection>
   );
 }

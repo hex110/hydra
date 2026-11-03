@@ -523,7 +523,15 @@
     "tune_idle_hint": "Their playtime counts at 10 % and they are not suggested. Turn it off, or lean toward an idle tag, to see them.",
     "tune_idle_note": "{{title}}: idle game, playtime counted at 10 %",
     "for_you_no_sources": "Downloadable only is on, but you have no download sources. Add one in the settings, or turn the filter off.",
-    "for_you_open_settings": "Open the settings"
+    "for_you_open_settings": "Open the settings",
+    "filters": "Filters",
+    "filters_button": "Filters ({{filterCount}})",
+    "filters_close": "Close filters",
+    "facet_count_hint": "Games in the catalogue with this tag or genre",
+    "from_your_library": "From your library",
+    "developers_search": "Search developers",
+    "publishers_search": "Search publishers",
+    "tag_count": "{{tag}} ({{count}})"
   },
   "game_details": {
     "reset_game_title": "Use the original title",

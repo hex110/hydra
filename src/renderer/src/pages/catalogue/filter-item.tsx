@@ -3,32 +3,39 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "react-tooltip";
 import "./filter.scss";
-import type { CSSProperties } from "react";
+
+/** The kind of filter, which sets the chip's colour. */
+export type FilterCategory =
+  | "genres"
+  | "tags"
+  | "downloadSourceFingerprints"
+  | "developers"
+  | "publishers"
+  | "protondbSupportBadges"
+  | "deckCompatibility"
+  | "releaseYear"
+  | "platforms";
 
 interface FilterItemProps {
   filter: string;
   filterType: string;
-  orbColor: string;
+  category: FilterCategory;
   onRemove: () => void;
 }
 
 export function FilterItem({
   filter,
   filterType,
-  orbColor,
+  category,
   onRemove,
 }: FilterItemProps) {
   const { t } = useTranslation("catalogue");
   const tooltipId = useId();
 
   return (
-    <div
-      className="filter-item"
-      style={{ "--filter-item-color": orbColor } as CSSProperties}
-    >
+    <div className={`filter-item filter-item--${category}`}>
       <div
         className="filter-item__orb"
-        style={{ backgroundColor: orbColor }}
         data-tooltip-id={tooltipId}
         data-tooltip-content={filterType}
         data-tooltip-place="top"

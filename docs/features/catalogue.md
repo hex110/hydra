@@ -243,14 +243,46 @@ second and its Singleplayer list is 17 MB, so Hydra keeps only the top 500
 games by players, for a day. ProtonDB tiers are fetched per game, six at a
 time, after the rows show, and kept for a day.
 
-## Tag filter
+## Filters
 
-The **Tags** filter lists Steam's tags with the most popular first (Steam's
-own ranking), then the rest alphabetically; the search box still finds any of
-them. The catalogue lists a few very common tags, such as Roguelike and
-Roguelite, with no games, so Hydra checks the 45 most popular ones once a day
-and hides those that return nothing. Clicking a tag on a game's page opens the
-catalogue filtered to it. The cards are links, so their tags are not clickable.
+The right-hand column of Browse is built from the shared `SidebarSection`.
+Sections start folded, except **Tags** and any section with a selection. The
+**active filters** row above the results keeps one colour per kind of filter
+(tokens in `globals.scss`).
+
+**Counts.** Next to each tag and genre, in grey, is how many games the
+catalogue has with it ("Games in the catalogue with this tag or genre" says the
+tooltip). The search API returns no facet counts, so a main-process job
+(`catalogue-facet-counts.ts`) asks once per value (`take: 5`, four at a time,
+about 500 requests), at most once a day, the first time the catalogue opens.
+It keeps the result in the database (`catalogueFacetCounts`) and tells the page
+when it is done; a value whose request failed keeps yesterday's count and is
+asked for again the next time. The counts are for the whole catalogue, not for
+the current filters: live counts would take a request per value on every
+change. A value with no games is hidden unless selected, which replaces the
+old check of the 45 most popular tags.
+
+**Order.** In Genres and Tags: selected values first, then **From your
+library** (Tags only: the eight tags that weigh most in your taste, with idle
+games discounted as for [suggestions](#how-it-chooses)), then every value by
+count, highest first. Until the counts are in, Tags use Steam's popularity
+order. The filter box shows above ten items. Clicking a tag on a game's page
+opens the catalogue filtered to it. **Genres** leaves out software and media
+categories (Utilities, Video Production, Education, Documentary, …;
+`NON_GAME_STEAM_GENRES`).
+
+**Developers and Publishers** are search fields instead of lists of
+thousands: nothing is listed until you type (the first 50 matches), except
+**From your library**, the five developers (or publishers) of your most played
+games that the filter knows. Chosen names show as chips. Counts are not shown
+for them.
+
+**ProtonDB** (Linux) has an explicit **Any** first, then Silver and up, Gold
+and up, Platinum only.
+
+**Narrow windows.** Below 1100 px the column becomes a **Filters (n)** button in
+the toolbar that opens it as a drawer over the results (Esc or **Close
+filters** shuts it).
 
 ## Library state
 

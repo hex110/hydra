@@ -25,9 +25,9 @@ import {
 import { buildGameDetailsPath, ensureArray } from "@renderer/helpers";
 import {
   useAppDispatch,
+  useFormat,
   useLibrary,
   usePopularSteamTags,
-  VERIFIED_POPULAR_TAGS,
 } from "@renderer/hooks";
 import {
   setCatalogueTab,
@@ -50,6 +50,7 @@ import {
 } from "./catalogue-library-state";
 import { getRecommendationReason, toCardGame } from "./recommendation-card";
 import { useAvoidFilter } from "./use-avoid-filter";
+import { useFacetCounts } from "./use-facet-counts";
 import { useCatalogueRowDetails } from "./use-catalogue-row-details";
 import { useNotInterested } from "./use-not-interested";
 import { useRecommendations } from "./use-recommendations";
@@ -389,7 +390,9 @@ export function CatalogueFrontPage({
   const dispatch = useAppDispatch();
   const { updateLibrary } = useLibrary();
   const tagLabels = useSteamTagLabels();
+  const { formatNumber } = useFormat();
   const popularTags = usePopularSteamTags();
+  const { counts: facetCounts } = useFacetCounts();
   const tune = useTuneSettings();
   const notInterested = useNotInterested();
 
@@ -683,13 +686,16 @@ export function CatalogueFrontPage({
 
   const tags = useMemo(() => {
     return popularTags.tags
-      .slice(0, VERIFIED_POPULAR_TAGS)
       .filter(
         (tag) => !FEATURE_TAG_IDS.has(tag.id) && !popularTags.empty.has(tag.id)
       )
       .slice(0, SHELF_TAGS)
-      .map((tag) => ({ id: tag.id, label: tagLabels.get(tag.id) ?? tag.name }));
-  }, [popularTags, tagLabels]);
+      .map((tag) => ({
+        id: tag.id,
+        label: tagLabels.get(tag.id) ?? tag.name,
+        count: facetCounts?.tags[tag.id] ?? null,
+      }));
+  }, [popularTags, tagLabels, facetCounts]);
 
   let tagList: ReactNode = null;
   if (tags.length > 0) {
@@ -705,6 +711,11 @@ export function CatalogueFrontPage({
               onClick={() => dispatch(setFilters({ tags: [tag.id] }))}
             >
               {tag.label}
+              {tag.count !== null && (
+                <span className="catalogue-front-page__tag-count">
+                  {formatNumber(tag.count)}
+                </span>
+              )}
             </button>
           ))}
         </div>

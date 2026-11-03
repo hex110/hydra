@@ -1,0 +1,86 @@
+@use "../../scss/globals.scss";
+
+.facet-search-section {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  padding: calc(globals.$spacing-unit * 2);
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__label {
+    margin-top: calc(globals.$spacing-unit / 2);
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  &__chosen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    max-width: 100%;
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__remove {
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: globals.$muted-color;
+    }
+  }
+
+  &__matches {
+    display: flex;
+    flex-direction: column;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+  }
+
+  &__match {
+    width: 100%;
+    padding: calc(globals.$spacing-unit * 0.75) globals.$spacing-unit;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background-color: globals.$surface-hover-color;
+      color: globals.$muted-color;
+    }
+  }
+}
