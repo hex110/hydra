@@ -2,11 +2,10 @@ import type { SteamTagWeight } from "../similar-games.js";
 import { IDLE_TAG_IDS } from "../store-games.js";
 
 /**
- * What the suggestions start from: the library in taste groups (all time or
- * the last 90 days), chosen games (from the library or the catalogue), or
- * chosen tags alone.
+ * What the suggestions start from: the library in taste groups, chosen games
+ * (from the library or the catalogue), or chosen tags alone.
  */
-export type TuneBasis = "groups" | "recent" | "games" | "tags";
+export type TuneBasis = "groups" | "games" | "tags";
 /** Mix all groups, or the id of one. */
 export type TuneGroup = "all" | string;
 /** How many of a game's first tags an avoided tag may be among. */
@@ -25,7 +24,7 @@ export interface TuneYears {
 /** Everything the Tune panel sets. */
 export interface TuneOptions {
   basedOn: TuneBasis;
-  /** Which group For you shows in Groups and Recent; `all` mixes them. */
+  /** Which group For you shows in Groups; `all` mixes them. */
   group: TuneGroup;
   /** Steam keys (`steam:<appId>`) used when `basedOn` is `games`; need not be owned. */
   pickedGames: string[];
@@ -33,6 +32,12 @@ export interface TuneOptions {
   seedTags: number[];
   /** Library keys the person removed from Based on. */
   excludedSeeds: string[];
+  /** Multiplayer-led games leave every group's taste, and suggestions must be singleplayer. */
+  leaveOutMultiplayer: boolean;
+  /** Per taste group, by id. */
+  groupSettings: Record<string, GroupSettings>;
+  /** Groups the person made, by refining one or building around games. */
+  customGroups: CustomGroup[];
   avoidTags: number[];
   /** Avoiding a tag also avoids the tags that mean nearly the same. */
   avoidRelated: boolean;
@@ -61,6 +66,9 @@ export const DEFAULT_TUNE_OPTIONS: TuneOptions = {
   pickedGames: [],
   seedTags: [],
   excludedSeeds: [],
+  leaveOutMultiplayer: false,
+  groupSettings: {},
+  customGroups: [],
   // Idle games run in the background; their playtime is not taste.
   avoidTags: [...IDLE_TAG_IDS],
   avoidRelated: true,
@@ -68,7 +76,8 @@ export const DEFAULT_TUNE_OPTIONS: TuneOptions = {
   leanTags: [],
   leanDepth: 5,
   popularity: 0,
-  recency: 0,
+  // Old games gathered their reviews over years; lean toward what's current.
+  recency: 0.6,
   minReviewPercent: 70,
   minReviews: 50,
   maxReviews: null,
@@ -108,7 +117,20 @@ export interface BrowsePreset {
 }
 
 /** Settings from before groups: version 1 had `idleDiscount` and other `basedOn` names. */
-export const TUNE_SETTINGS_VERSION = 2;
+export const TUNE_SETTINGS_VERSION = 3;
+
+export interface GroupSettings {
+  hidden?: boolean;
+  leaveOutMultiplayer?: boolean;
+}
+
+/** A group the person kept: its games, by library key. */
+export interface CustomGroup {
+  id: string;
+  gameKeys: string[];
+  /** The tags that named it when it was made, until its games say otherwise. */
+  tagIds: number[];
+}
 
 export interface TuneSettings {
   version?: number;
@@ -198,6 +220,21 @@ export interface ProfileGroup {
   hours: number;
   /** Share of all the weight, 0–1. */
   share: number;
+  /** Made by the person. */
+  isCustom?: boolean;
+  /** Hidden from Mix all and Discover. */
+  isHidden?: boolean;
+}
+
+/** A group Hydra offers when refining a group or building one around games. */
+export interface GroupProposal {
+  tagIds: number[];
+  gameKeys: string[];
+  /** The games that show it best, heaviest first. */
+  examples: { key: string; title: string; hours: number }[];
+  gameCount: number;
+  /** For Build around: how wide it reaches. */
+  size?: "tight" | "medium" | "broad";
 }
 
 /** What the recommender learned from the library, shown in Tune. */

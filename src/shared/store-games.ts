@@ -206,6 +206,22 @@ export const isSingleplayerGame = (
     .some((tag) => MULTIPLAYER_TAG_IDS.has(tag.tagid));
 };
 
+/**
+ * Played mostly with others, judged from tags alone (a library game's
+ * player categories aren't kept): a multiplayer tag ranks above
+ * Singleplayer, or there is no Singleplayer tag but a multiplayer one.
+ */
+export const isMultiplayerLed = (tags: readonly SteamTagWeight[]) => {
+  const singleplayerAt = tags.findIndex(
+    (tag) => tag.tagid === STEAM_TAG.singleplayer
+  );
+  const multiplayerAt = tags.findIndex((tag) =>
+    MULTIPLAYER_TAG_IDS.has(tag.tagid)
+  );
+  if (multiplayerAt === -1) return false;
+  return singleplayerAt === -1 || multiplayerAt < singleplayerAt;
+};
+
 const MONTH_MS = 30.44 * 24 * 60 * 60 * 1000;
 
 /**

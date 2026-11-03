@@ -12,6 +12,7 @@ import {
 } from "@main/level";
 import {
   forgetImpressions,
+  getGroupProposals,
   getRecommendations,
   recordImpressions,
 } from "@main/services/recommender";
@@ -102,4 +103,10 @@ registerEvent("recordCatalogueImpressions", (_event, appIds: string[]) =>
 
 registerEvent("forgetCatalogueImpression", (_event, appId: string) =>
   forgetImpressions(String(appId))
+);
+
+registerEvent(
+  "getGroupProposals",
+  (_event, request: Parameters<typeof getGroupProposals>[0]) =>
+    getGroupProposals(request)
 );

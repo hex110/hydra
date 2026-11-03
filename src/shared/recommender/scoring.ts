@@ -27,6 +27,13 @@ const SEEN_FREE = 3;
 const SEEN_DECAY = 0.95;
 const SEEN_FLOOR = 0.7;
 const SLIDER_STRENGTH = 0.25;
+const RECENCY_STRENGTH = 0.35;
+const OLD_GAME_PENALTY = 0.15;
+const OLD_AFTER_YEARS = 8;
+const OLD_SPAN_YEARS = 8;
+const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
+/** About 20,000 reviews a year is as popular as it gets. */
+const POPULAR_VELOCITY_LOG = 4.3;
 /** Below this many reviews Steam's percentage says little, so it is not a filter. */
 const PERCENT_FILTER_FROM = 50;
 const FIRST_YEAR = 2000;
@@ -102,6 +109,22 @@ export const passesFilters = (
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
+
+/**
+ * How popular a game is, 0–1, from its reviews per year since release: a
+ * game's reviews count for less the longer it has had to gather them, so a
+ * 2009 hit doesn't outrank this year's on a back catalogue of old reviews.
+ */
+export const popularity = (
+  candidate: Pick<PoolCandidate, "reviewCount" | "releaseDate">,
+  now = Date.now()
+) => {
+  const years = candidate.releaseDate
+    ? Math.max(1, (now - candidate.releaseDate) / YEAR_MS)
+    : 1;
+  const perYear = (candidate.reviewCount ?? 0) / years;
+  return Math.min(1, Math.log10(1 + perYear) / POPULAR_VELOCITY_LOG);
+};
 
 /** A number in [0, 1) from a string, the same every time. */
 const hashUnit = (value: string) => {
@@ -207,16 +230,21 @@ export const rankCandidates = (
       QUALITY_WEIGHT * quality +
       ANCHOR_BONUS * anchorBonus(candidate.tags, group, idf);
 
-    const popularity = Math.min(
-      1,
-      Math.log10(1 + (candidate.reviewCount ?? 0)) / 5
-    );
-    score += SLIDER_STRENGTH * options.popularity * (popularity - 0.5);
+    score +=
+      SLIDER_STRENGTH * options.popularity * (popularity(candidate, now) - 0.5);
 
     const year = releaseYear(candidate);
     if (year !== null) {
       const age = clamp((year - FIRST_YEAR) / (currentYear - FIRST_YEAR), 0, 1);
-      score += SLIDER_STRENGTH * options.recency * (age - 0.5);
+      score += RECENCY_STRENGTH * options.recency * (age - 0.5);
+      // Toward Newer, games over eight years old sink further.
+      if (options.recency > 0) {
+        const years = currentYear - year;
+        score -=
+          OLD_GAME_PENALTY *
+          options.recency *
+          clamp((years - OLD_AFTER_YEARS) / OLD_SPAN_YEARS, 0, 1);
+      }
     }
 
     score += WEEKLY_SPREAD * (hashUnit(`${candidate.appId}:${week}`) - 0.5);

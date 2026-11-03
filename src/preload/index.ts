@@ -139,6 +139,7 @@ import type {
   AuthPage,
   CatalogueChartRequest,
   SteamSearchQuery,
+  GroupProposal,
   NotInterestedGame,
   FacetCounts,
   LibraryFacets,
@@ -2890,6 +2891,14 @@ contextBridge.exposeInMainWorld("electron", {
       count: number;
       edges: CatalogueSearchResult[];
     } | null>,
+  getGroupProposals: (
+    request:
+      | { kind: "refine"; groupId: string; options: Partial<TuneOptions> }
+      | { kind: "around"; gameKeys: string[]; options: Partial<TuneOptions> }
+  ) =>
+    ipcRenderer.invoke("getGroupProposals", request) as Promise<
+      GroupProposal[]
+    >,
   recordCatalogueImpressions: (appIds: string[]) =>
     ipcRenderer.invoke("recordCatalogueImpressions", appIds) as Promise<void>,
   forgetCatalogueImpression: (appId: string) =>

@@ -13,6 +13,7 @@ import type {
   StoreGameFacts,
   CatalogueChartRequest,
   SteamSearchQuery,
+  GroupProposal,
   NotInterestedGame,
   FacetCounts,
   LibraryFacets,
@@ -2132,6 +2133,11 @@ declare global {
     searchSteamStoreGames: (
       query: SteamSearchQuery
     ) => Promise<{ count: number; edges: CatalogueSearchResult[] } | null>;
+    getGroupProposals: (
+      request:
+        | { kind: "refine"; groupId: string; options: Partial<TuneOptions> }
+        | { kind: "around"; gameKeys: string[]; options: Partial<TuneOptions> }
+    ) => Promise<GroupProposal[]>;
     recordCatalogueImpressions: (appIds: string[]) => Promise<void>;
     forgetCatalogueImpression: (appId: string) => Promise<void>;
     getStoreFilterFacts: (

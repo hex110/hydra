@@ -1,7 +1,7 @@
-import { expandTagFamilies } from "../store-games.js";
+import { expandTagFamilies, isMultiplayerLed } from "../store-games.js";
 import type { SteamTagWeight } from "../similar-games.js";
 import type { WeightedSeed } from "./profile.js";
-import type { GroupGame, ProfileGroup } from "./types.js";
+import type { GroupGame, GroupProposal, ProfileGroup } from "./types.js";
 import {
   dot,
   tagVector,
@@ -36,6 +36,10 @@ export interface BuiltGroup {
   share: number;
   /** Anchors must be the rarest of a single game's tags (By game) rather than any of the group's. */
   rarestAnchorOnly: boolean;
+  /** Its multiplayer-led games were taken out, and its suggestions must be singleplayer. */
+  leaveOutMultiplayer?: boolean;
+  isCustom?: boolean;
+  isHidden?: boolean;
 }
 
 const groupId = (anchors: number[]) => `g-${[...anchors].sort().join("-")}`;
@@ -157,38 +161,81 @@ export const groupCountFor = (games: number) =>
     Math.max(1, Math.round(Math.sqrt(games / GAMES_PER_GROUP_SQUARED)))
   );
 
+type Point = {
+  seed: WeightedSeed;
+  weight: number;
+  /** Tags and play mode, for grouping. */
+  vector: TagVector;
+  /** Tags alone, to judge how alike a group's games are. */
+  tags: TagVector;
+};
+type Cluster = { centre: TagVector; members: Point[] };
+
+/** Pseudo-tags for how a game is played; they split groups but never name them. */
+const MODE_SINGLE = -1;
+const MODE_MULTI = -2;
+/** A play-mode dimension weighs as much as a game's leading tag. */
+const MODE_WEIGHT = 1;
+/** A group this spread out, with at least this many games, is split in two. */
+const MIN_COHESION = 0.5;
+const SPLIT_FROM_GAMES = 10;
+
+/** A game's tags scaled by rarity, plus how it is played, as a unit vector for grouping. */
+const clusterVector = (
+  tags: readonly SteamTagWeight[],
+  idf: ReadonlyMap<number, number>,
+  fallback: number
+) => {
+  const vector = unit(tags, idf, fallback);
+  if (vector.size === 0) return vector;
+  const lead = Math.max(...vector.values());
+  vector.set(
+    isMultiplayerLed(tags) ? MODE_MULTI : MODE_SINGLE,
+    lead * MODE_WEIGHT
+  );
+  let length = 0;
+  for (const value of vector.values()) length += value * value;
+  length = Math.sqrt(length);
+  for (const [tag, value] of vector) vector.set(tag, value / length);
+  return vector;
+};
+
+const weightOf = (cluster: Cluster) =>
+  cluster.members.reduce((sum, point) => sum + point.weight, 0);
+
 /**
- * Splits the library into groups of games with a taste in common: weighted
- * spherical k-means over each game's tags scaled by catalogue rarity, started
- * from the heaviest game and then each time from the game least like the
- * centres so far, so the same library always gives the same groups. Small
- * groups join their nearest neighbour; dropped and low-rated games join the
- * group they are most like and pull its taste away from themselves.
+ * How close a group's games sit to its centre by their tags alone, by
+ * weight: 1 is identical. Play mode is left out, or every singleplayer game
+ * would look alike.
  */
-export const groupSeeds = (
-  seeds: readonly WeightedSeed[],
-  idf: ReadonlyMap<number, number>
-): BuiltGroup[] => {
-  const fallback = fallbackRarity(idf);
-  const points = seeds
-    .filter((seed) => seed.weight > 0)
-    .map((seed) => ({
-      seed,
-      weight: seed.weight,
-      vector: unit(seed.tags, idf, fallback),
+const cohesion = (cluster: Cluster) => {
+  const total = weightOf(cluster);
+  if (total === 0) return 1;
+  const centre = centroid(
+    cluster.members.map((point) => ({
+      vector: point.tags,
+      weight: point.weight,
     }))
-    .filter((point) => point.vector.size > 0);
+  );
+  return (
+    cluster.members.reduce(
+      (sum, point) => sum + point.weight * dot(centre, point.tags),
+      0
+    ) / total
+  );
+};
+
+/**
+ * Weighted spherical k-means, deterministic: started from the heaviest point,
+ * then each time from the point least like the centres so far.
+ */
+const kMeans = (points: Point[], k: number): Cluster[] => {
   if (points.length === 0) return [];
-
-  const allWeight = seeds.reduce((sum, seed) => sum + Math.abs(seed.weight), 0);
-  const k = Math.min(points.length, groupCountFor(points.length));
-
-  // Start: the heaviest game, then the game least like any centre, by weight.
   const heaviest = points.reduce((best, point) =>
     point.weight > best.weight ? point : best
   );
   let centres: TagVector[] = [heaviest.vector];
-  while (centres.length < k) {
+  while (centres.length < Math.min(k, points.length)) {
     let best = -1;
     let bestValue = -Infinity;
     points.forEach((point, index) => {
@@ -201,7 +248,7 @@ export const groupSeeds = (
         best = index;
       }
     });
-    if (best === -1 || bestValue <= 0) break;
+    if (best === -1 || bestValue <= 1e-9) break;
     centres.push(points[best].vector);
   }
 
@@ -228,19 +275,56 @@ export const groupSeeds = (
     if (!changed) break;
   }
 
-  // Small groups join the group whose centre is nearest.
-  let clusters = centres
+  return centres
     .map((centre, index) => ({
       centre,
       members: points.filter((_, point) => assignment[point] === index),
     }))
     .filter((cluster) => cluster.members.length > 0);
+};
+
+const toPoints = (
+  seeds: readonly WeightedSeed[],
+  idf: ReadonlyMap<number, number>,
+  fallback: number
+): Point[] =>
+  seeds
+    .filter((seed) => seed.weight > 0)
+    .map((seed) => ({
+      seed,
+      weight: seed.weight,
+      vector: clusterVector(seed.tags, idf, fallback),
+      tags: unit(seed.tags, idf, fallback),
+    }))
+    .filter((point) => point.vector.size > 0);
+
+/** Clusters ready to be groups: broad ones split, small ones merged into their nearest. */
+const clusterSeeds = (
+  points: Point[],
+  k: number,
+  maxGroups = MAX_GROUPS
+): Cluster[] => {
+  let clusters = kMeans(points, k);
+
+  // A group whose games sit far apart is two tastes; split the loosest first.
+  for (;;) {
+    if (clusters.length >= maxGroups) break;
+    const loose = clusters
+      .filter(
+        (cluster) =>
+          cluster.members.length >= SPLIT_FROM_GAMES &&
+          cohesion(cluster) < MIN_COHESION
+      )
+      .sort((a, b) => cohesion(a) - cohesion(b))[0];
+    if (!loose) break;
+    const halves = kMeans(loose.members, 2);
+    if (halves.length < 2) break;
+    clusters = [...clusters.filter((cluster) => cluster !== loose), ...halves];
+  }
 
   const positiveWeight = points.reduce((sum, point) => sum + point.weight, 0);
   for (;;) {
     if (clusters.length <= 1) break;
-    const weightOf = (cluster: (typeof clusters)[number]) =>
-      cluster.members.reduce((sum, point) => sum + point.weight, 0);
     const smallest = clusters.reduce((low, cluster) =>
       weightOf(cluster) < weightOf(low) ? cluster : low
     );
@@ -256,13 +340,33 @@ export const groupSeeds = (
     target.centre = centroid(target.members);
     clusters = others;
   }
+  return clusters;
+};
 
-  // Dropped and low-rated games join the group they are most like.
+/**
+ * Splits the library into groups of games with a taste in common: weighted
+ * spherical k-means over each game's tags scaled by catalogue rarity and how
+ * it is played (singleplayer or multiplayer), so the same library always
+ * gives the same groups. Spread-out groups split, small groups join their
+ * nearest neighbour; dropped and low-rated games join the group they are most
+ * like and pull its taste away from themselves.
+ */
+export const groupSeeds = (
+  seeds: readonly WeightedSeed[],
+  idf: ReadonlyMap<number, number>
+): BuiltGroup[] => {
+  const fallback = fallbackRarity(idf);
+  const points = toPoints(seeds, idf, fallback);
+  if (points.length === 0) return [];
+
+  const allWeight = seeds.reduce((sum, seed) => sum + Math.abs(seed.weight), 0);
+  const clusters = clusterSeeds(points, groupCountFor(points.length));
+
   const members = clusters.map((cluster) =>
     cluster.members.map((point) => point.seed)
   );
   for (const seed of seeds.filter((entry) => entry.weight < 0)) {
-    const vector = unit(seed.tags, idf, fallback);
+    const vector = clusterVector(seed.tags, idf, fallback);
     if (vector.size === 0) continue;
     let best = 0;
     clusters.forEach((cluster, index) => {
@@ -284,6 +388,129 @@ export const groupSeeds = (
     if (count > 0) group.id = `${group.id}-${count + 1}`;
   }
   return groups;
+};
+
+/** A group with its multiplayer-led games taken out of its taste; the id stays, so its settings follow. */
+export const withoutMultiplayer = (
+  group: BuiltGroup,
+  idf: ReadonlyMap<number, number>
+): BuiltGroup => {
+  const seeds = group.seeds.filter((seed) => !isMultiplayerLed(seed.tags));
+  if (seeds.length === group.seeds.length || seeds.length === 0) return group;
+  const rebuilt = toGroup(seeds, 0, idf, fallbackRarity(idf));
+  return {
+    ...rebuilt,
+    id: group.id,
+    share: group.share * (rebuilt.weight / Math.max(group.weight, 1e-9)),
+    leaveOutMultiplayer: true,
+  };
+};
+
+/** A group the person kept, from its games' keys; null when none of them is left in the library. */
+export const buildCustomGroup = (
+  custom: { id: string; gameKeys: string[]; tagIds: number[] },
+  seeds: readonly WeightedSeed[],
+  allWeight: number,
+  idf: ReadonlyMap<number, number>
+): BuiltGroup | null => {
+  const keys = new Set(custom.gameKeys);
+  const members = seeds.filter((seed) => keys.has(seed.key));
+  if (members.length === 0) return null;
+  const group = toGroup(members, allWeight, idf, fallbackRarity(idf));
+  return {
+    ...group,
+    id: custom.id,
+    anchors: group.anchors.length > 0 ? group.anchors : custom.tagIds,
+    isCustom: true,
+  };
+};
+
+const EXAMPLES = 5;
+
+const toProposal = (
+  members: Point[],
+  idf: ReadonlyMap<number, number>,
+  fallback: number,
+  size?: GroupProposal["size"]
+): GroupProposal => {
+  const centre = centroid(members);
+  const seeds = members.map((point) => point.seed);
+  const examples = [...members]
+    .sort(
+      (a, b) =>
+        b.weight * dot(centre, b.vector) - a.weight * dot(centre, a.vector)
+    )
+    .slice(0, EXAMPLES)
+    .map((point) => ({
+      key: point.seed.key,
+      title: point.seed.title,
+      hours: point.seed.hours,
+    }));
+  return {
+    tagIds: nameGroup(seeds, idf, fallback),
+    gameKeys: seeds.map((seed) => seed.key),
+    examples,
+    gameCount: seeds.length,
+    size,
+  };
+};
+
+/** Refine: a group's games as two or three sub-groups, each with the games that show it best. */
+export const proposeRefinements = (
+  group: Pick<BuiltGroup, "seeds">,
+  idf: ReadonlyMap<number, number>
+): GroupProposal[] => {
+  const fallback = fallbackRarity(idf);
+  const points = toPoints(group.seeds, idf, fallback);
+  if (points.length < 4) return [];
+  const k = points.length >= 30 ? 3 : 2;
+  return kMeans(points, k)
+    .sort((a, b) => weightOf(b) - weightOf(a))
+    .map((cluster) => toProposal(cluster.members, idf, fallback));
+};
+
+const AROUND_SIZES: {
+  size: NonNullable<GroupProposal["size"]>;
+  minCosine: number;
+  maxGames: number;
+}[] = [
+  { size: "tight", minCosine: 0.7, maxGames: 15 },
+  { size: "medium", minCosine: 0.5, maxGames: 40 },
+  { size: "broad", minCosine: 0.35, maxGames: 100 },
+];
+
+/** Build around games: a tight, a medium and a broad group of library games like the chosen ones. */
+export const proposeAround = (
+  seeds: readonly WeightedSeed[],
+  pickedKeys: readonly string[],
+  idf: ReadonlyMap<number, number>
+): GroupProposal[] => {
+  const fallback = fallbackRarity(idf);
+  const points = toPoints(seeds, idf, fallback);
+  const picked = points.filter((point) => pickedKeys.includes(point.seed.key));
+  if (picked.length === 0) return [];
+  const centre = centroid(picked.map((point) => ({ ...point, weight: 1 })));
+
+  const ranked = points
+    .map((point) => ({ point, similarity: dot(centre, point.vector) }))
+    .sort((a, b) => b.similarity - a.similarity);
+
+  const proposals: GroupProposal[] = [];
+  let previous = 0;
+  for (const { size, minCosine, maxGames } of AROUND_SIZES) {
+    const members = ranked
+      .filter(
+        ({ point, similarity }) =>
+          similarity >= minCosine || pickedKeys.includes(point.seed.key)
+      )
+      .slice(0, maxGames)
+      .map(({ point }) => point);
+    // A size that adds nothing over the smaller one isn't a choice.
+    if (members.length <= previous) continue;
+    previous = members.length;
+    proposals.push(toProposal(members, idf, fallback, size));
+  }
+  return proposals;
 };
 
 /** A seed's anchors for By game: its first three tags that are rarer than the median of its tags, rarest first. */
@@ -400,5 +627,7 @@ export const toProfileGroup = (group: BuiltGroup): ProfileGroup => {
     games,
     hours: group.hours,
     share: group.share,
+    isCustom: group.isCustom,
+    isHidden: group.isHidden,
   };
 };

@@ -188,18 +188,18 @@ describe("buildTasteProfile", () => {
     assert.ok(wished!.weight < 1);
   });
 
-  it("uses only recent play in Recent mode and only the chosen games in Games", () => {
+  it("counts recent play up to twice, and only the chosen games in Games", () => {
     const recent = buildTasteProfile(
       [
-        seed("Old", 500, [ACTION, INDIE]),
-        seed("New", 50, [PLATFORMER, INDIE], { recentHours: 40 }),
+        seed("Old", 50, [ACTION, INDIE]),
+        seed("New", 50, [PLATFORMER, INDIE], { recentHours: 50 }),
       ],
-      { ...DEFAULT_TUNE_OPTIONS, basedOn: "recent" }
+      DEFAULT_TUNE_OPTIONS
     );
-    assert.deepEqual(
-      recent.seeds.map((entry: { title: string }) => entry.title),
-      ["New"]
-    );
+    const weight = (title: string) =>
+      recent.seeds.find((entry: { title: string }) => entry.title === title)!
+        .weight;
+    assert.ok(weight("New") > weight("Old"));
 
     const picked = buildTasteProfile(library, {
       ...DEFAULT_TUNE_OPTIONS,
@@ -242,7 +242,7 @@ describe("migrateTuneSettings", () => {
       },
       presets: [],
     });
-    assert.equal(migrated.version, 2);
+    assert.equal(migrated.version, 3);
     assert.equal(migrated.options.basedOn, "groups");
     assert.ok(
       IDLE_TAG_IDS.every((id: number) =>
@@ -260,6 +260,21 @@ describe("migrateTuneSettings", () => {
     assert.deepEqual(again.options.avoidTags, [ROGUELIKE]);
   });
 
+  it("moves Last 90 days to Groups and leans newer once, in version 3", () => {
+    const migrated = migrateTuneSettings({
+      version: 2,
+      options: { basedOn: "recent", recency: 0, avoidTags: [] },
+      presets: [],
+    });
+    assert.equal(migrated.options.basedOn, "groups");
+    assert.equal(migrated.options.recency, 0.6);
+    const kept = migrateTuneSettings({
+      ...migrated,
+      options: { ...migrated.options, recency: -0.5 },
+    });
+    assert.equal(kept.options.recency, -0.5);
+  });
+
   it("leaves the avoid list alone when the idle rule was off", () => {
     const migrated = migrateTuneSettings({
       options: { basedOn: "picked", idleDiscount: false, avoidTags: [] },
@@ -267,5 +282,23 @@ describe("migrateTuneSettings", () => {
     });
     assert.deepEqual(migrated.options.avoidTags, []);
     assert.equal(migrated.options.basedOn, "games");
+  });
+});
+
+describe("leave out multiplayer", () => {
+  const SINGLEPLAYER = 4182;
+  const MULTIPLAYER = 3859;
+  it("drops multiplayer-led games from the taste when asked", () => {
+    const games = [
+      seed("CS2", 1000, [MULTIPLAYER, ACTION, SINGLEPLAYER]),
+      seed("Half-Life", 20, [SINGLEPLAYER, ACTION, MULTIPLAYER]),
+    ];
+    const titles = (options: object) =>
+      buildTasteProfile(games, {
+        ...DEFAULT_TUNE_OPTIONS,
+        ...options,
+      }).seeds.map((entry: { title: string }) => entry.title);
+    assert.deepEqual(titles({}).sort(), ["CS2", "Half-Life"]);
+    assert.deepEqual(titles({ leaveOutMultiplayer: true }), ["Half-Life"]);
   });
 });

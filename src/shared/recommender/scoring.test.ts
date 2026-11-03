@@ -17,6 +17,7 @@ const {
   interleaveGroups,
   seenFactor,
   isoWeek,
+  popularity,
 } = scoringModule;
 const { DEFAULT_TUNE_OPTIONS } = typesModule;
 const { groupSeeds } = groupsModule;
@@ -526,6 +527,122 @@ describe("freshness", () => {
     assert.notEqual(
       isoWeek(Date.UTC(2026, 10, 8)),
       isoWeek(Date.UTC(2026, 10, 9))
+    );
+  });
+});
+
+describe("newer games first", () => {
+  const now = Date.UTC(2026, 10, 3);
+
+  it("counts reviews per year, so a recent hit outranks an old one on Popular", () => {
+    const recent = popularity(
+      { reviewCount: 20000, releaseDate: Date.UTC(2024, 0, 1) },
+      now
+    );
+    const old = popularity(
+      { reviewCount: 60000, releaseDate: Date.UTC(2009, 0, 1) },
+      now
+    );
+    assert.ok(recent > old);
+  });
+
+  it("puts a 2009 game below a 2024 one of the same fit with the default slider", () => {
+    const group = wholeGroup(
+      buildTasteProfile([seed("Hades", [ROGUELIKE, ACTION, INDIE])], options)
+    );
+    const ranked = rankCandidates(
+      [
+        candidate("old", [ROGUELIKE, ACTION, INDIE], {
+          releaseDate: Date.UTC(2009, 0, 1),
+          reviewCount: 60000,
+          reviewPercent: 95,
+        }),
+        candidate("new", [ROGUELIKE, ACTION, INDIE], {
+          releaseDate: Date.UTC(2024, 0, 1),
+          reviewCount: 20000,
+          reviewPercent: 93,
+        }),
+      ],
+      group,
+      options,
+      { now }
+    );
+    assert.equal(ranked[0].candidate.appId, "new");
+  });
+});
+
+describe("shaping groups", () => {
+  const SINGLEPLAYER = 4182;
+  const MULTIPLAYER = 3859;
+  const PVP = 1775;
+  const idf = new Map([
+    [FPS, 2.5],
+    [ACTION, 0.5],
+    [WAR, 2],
+  ]);
+
+  it("splits story shooters from competitive ones", () => {
+    const story = Array.from({ length: 30 }, (_, index) =>
+      seed(`story ${index}`, [FPS, ACTION, SINGLEPLAYER, WAR], 30)
+    );
+    const competitive = Array.from({ length: 30 }, (_, index) =>
+      seed(`pvp ${index}`, [FPS, ACTION, MULTIPLAYER, PVP], 30)
+    );
+    const built = buildTasteProfile([...story, ...competitive], {
+      ...options,
+      avoidTags: [],
+    });
+    const groups = groupSeeds(built.seeds, idf);
+    const mixed = groups.some(
+      (group: { seeds: { title: string }[] }) =>
+        group.seeds.some((entry) => entry.title.startsWith("story")) &&
+        group.seeds.some((entry) => entry.title.startsWith("pvp"))
+    );
+    assert.equal(mixed, false);
+  });
+
+  it("offers a tight, a medium and a broad group around a game", () => {
+    const games = [
+      seed("pick", [FPS, ACTION, WAR], 50),
+      ...Array.from({ length: 10 }, (_, index) =>
+        seed(`near ${index}`, [FPS, ACTION, WAR], 20)
+      ),
+      ...Array.from({ length: 10 }, (_, index) =>
+        seed(`mid ${index}`, [FPS, PLATFORMER, DIFFICULT], 20)
+      ),
+      ...Array.from({ length: 10 }, (_, index) =>
+        seed(`far ${index}`, [PLATFORMER, DIFFICULT, INDIE], 20)
+      ),
+    ];
+    const built = buildTasteProfile(games, { ...options, avoidTags: [] });
+    const proposals = groupsModule.proposeAround(
+      built.seeds,
+      ["steam:pick"],
+      idf
+    );
+    assert.ok(proposals.length >= 2);
+    assert.equal(proposals[0].size, "tight");
+    assert.ok(proposals[0].gameKeys.includes("steam:pick"));
+    assert.ok(
+      proposals[proposals.length - 1].gameCount > proposals[0].gameCount
+    );
+  });
+
+  it("refines a group into sub-groups with five examples each", () => {
+    const games = [
+      ...Array.from({ length: 20 }, (_, index) =>
+        seed(`a ${index}`, [FPS, WAR, ACTION], 20)
+      ),
+      ...Array.from({ length: 20 }, (_, index) =>
+        seed(`b ${index}`, [PLATFORMER, DIFFICULT, INDIE], 20)
+      ),
+    ];
+    const built = buildTasteProfile(games, { ...options, avoidTags: [] });
+    const parts = groupsModule.proposeRefinements({ seeds: built.seeds }, idf);
+    // Two kinds of game make two parts, even when three are asked for.
+    assert.equal(parts.length, 2);
+    assert.ok(
+      parts.every((part: { examples: unknown[] }) => part.examples.length <= 5)
     );
   });
 });

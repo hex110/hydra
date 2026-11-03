@@ -10,6 +10,12 @@ import {
   groupFromTags,
   groupPickedGames,
   groupSeeds,
+  buildCustomGroup,
+  proposeAround,
+  proposeRefinements,
+  withoutMultiplayer,
+  type GroupProposal,
+  type WeightedSeed,
   interleaveGroups,
   isFinishedGame,
   rankCandidates,
@@ -674,6 +680,77 @@ const filterByFinished = async (
   return kept;
 };
 
+/**
+ * The library's taste groups as the person shaped them: the automatic ones
+ * (each with its multiplayer games left out when asked, hidden ones marked)
+ * and the ones they made, which replace nothing on their own.
+ */
+const buildLibraryGroups = (
+  seeds: WeightedSeed[],
+  options: TuneOptions,
+  idf: ReadonlyMap<number, number>
+): BuiltGroup[] => {
+  const allWeight = seeds.reduce((sum, seed) => sum + Math.abs(seed.weight), 0);
+  const settingsOf = (id: string) => options.groupSettings[id] ?? {};
+
+  const custom = options.customGroups.flatMap((entry) => {
+    const group = buildCustomGroup(entry, seeds, allWeight, idf);
+    return group ? [group] : [];
+  });
+  const groups = [...custom, ...groupSeeds(seeds, idf)].map((group) => {
+    const settings = settingsOf(group.id);
+    const shaped = settings.leaveOutMultiplayer
+      ? withoutMultiplayer(group, idf)
+      : group;
+    return { ...shaped, isHidden: settings.hidden === true };
+  });
+
+  // Shares among the groups that mix, so Mix all still adds up.
+  const mixing = groups.filter((group) => !group.isHidden);
+  const total = mixing.reduce((sum, group) => sum + group.weight, 0);
+  return groups.map((group) => ({
+    ...group,
+    share: total > 0 && !group.isHidden ? group.weight / total : group.share,
+  }));
+};
+
+/**
+ * Groups Hydra offers: a group's games split two or three ways (Refine), or a
+ * tight, medium and broad group around one to three library games.
+ */
+export const getGroupProposals = async (
+  request:
+    | { kind: "refine"; groupId: string; options: Partial<TuneOptions> }
+    | { kind: "around"; gameKeys: string[]; options: Partial<TuneOptions> }
+): Promise<GroupProposal[]> => {
+  try {
+    const options: TuneOptions = {
+      ...DEFAULT_TUNE_OPTIONS,
+      ...request.options,
+      basedOn: "groups",
+    };
+    const library = await getLibrary();
+    const outside = await loadOutsideSeeds(library, options);
+    const built = buildTasteProfile([...library.inputs, ...outside], options);
+    const catalogueIdf = await getCatalogueIdf();
+    const idf =
+      catalogueIdf.size > 0
+        ? catalogueIdf
+        : buildIdf([...library.inputs, ...outside].map((input) => input.tags));
+
+    if (request.kind === "around") {
+      return proposeAround(built.seeds, request.gameKeys.slice(0, 3), idf);
+    }
+    const group = buildLibraryGroups(built.seeds, options, idf).find(
+      (entry) => entry.id === request.groupId
+    );
+    return group ? proposeRefinements(group, idf) : [];
+  } catch (error) {
+    logger.warn("[Recommender] Could not propose groups", error);
+    return [];
+  }
+};
+
 const emptyResponse = (
   extra: Partial<RecommendationResponse> = {}
 ): RecommendationResponse => ({
@@ -728,7 +805,7 @@ export const getRecommendations = async (
         ? groupFromTags(options.seedTags)
         : options.basedOn === "games"
           ? groupPickedGames(built.seeds, rarity)
-          : groupSeeds(built.seeds, rarity);
+          : buildLibraryGroups(built.seeds, options, rarity);
 
     const profile = {
       ...built.profile,
@@ -738,7 +815,8 @@ export const getRecommendations = async (
     if (groups.length === 0) return emptyResponse({ profile, leftOut });
 
     const chosen = groups.find((group) => group.id === options.group);
-    const shown = chosen ? [chosen] : groups;
+    const shown = chosen ? [chosen] : groups.filter((group) => !group.isHidden);
+    if (shown.length === 0) return emptyResponse({ profile, leftOut });
 
     const lists: { share: number; items: ScoredCandidate[] }[] = [];
     let anyCandidates = false;
@@ -761,7 +839,12 @@ export const getRecommendations = async (
         );
       }
 
-      const ranked = rankCandidates(candidates, group, options, {
+      // Leaving out multiplayer also keeps multiplayer games out of the suggestions.
+      const groupOptions =
+        group.leaveOutMultiplayer || options.leaveOutMultiplayer
+          ? { ...options, singleplayerOnly: true }
+          : options;
+      const ranked = rankCandidates(candidates, group, groupOptions, {
         idf: idf.size > 0 ? idf : undefined,
         impressions,
       });

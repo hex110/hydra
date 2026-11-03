@@ -7,9 +7,10 @@ import {
   type TuneSettings,
 } from "./types.js";
 
-const BASES: readonly TuneBasis[] = ["groups", "recent", "games", "tags"];
+const BASES: readonly TuneBasis[] = ["groups", "games", "tags"];
 const OLD_BASES: Record<string, TuneBasis> = {
   "all-time": "groups",
+  recent: "groups",
   picked: "games",
 };
 
@@ -28,13 +29,19 @@ export const migrateTuneSettings = (stored: unknown): TuneSettings => {
   const { idleDiscount, ...rest } = raw;
   const options: TuneOptions = { ...DEFAULT_TUNE_OPTIONS, ...rest };
 
-  if (stored && (record.version ?? 1) < TUNE_SETTINGS_VERSION) {
+  const version = record.version ?? 1;
+  if (stored && version < 3 && options.recency === 0) {
+    // Version 3 leans toward newer games by default.
+    options.recency = DEFAULT_TUNE_OPTIONS.recency;
+  }
+  if (stored && version < 2) {
     if (idleDiscount !== false) {
       options.avoidTags = [...new Set([...options.avoidTags, ...IDLE_TAG_IDS])];
     }
     const basis = raw.basedOn as string | undefined;
     options.basedOn = OLD_BASES[basis ?? ""] ?? options.basedOn;
   }
+  options.basedOn = OLD_BASES[options.basedOn] ?? options.basedOn;
   if (!BASES.includes(options.basedOn)) options.basedOn = "groups";
 
   return {
@@ -49,6 +56,9 @@ export const migrateTuneSettings = (stored: unknown): TuneSettings => {
         options: {
           ...presetOptions,
           basedOn: OLD_BASES[basis] ?? presetOptions.basedOn,
+          ...(version < 3 && presetOptions.recency === 0
+            ? { recency: DEFAULT_TUNE_OPTIONS.recency }
+            : {}),
         },
       };
     }),

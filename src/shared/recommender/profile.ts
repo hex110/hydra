@@ -1,5 +1,9 @@
 import type { SteamTagWeight } from "../similar-games.js";
-import { expandTagFamilies, TAG_FAMILIES } from "../store-games.js";
+import {
+  expandTagFamilies,
+  isMultiplayerLed,
+  TAG_FAMILIES,
+} from "../store-games.js";
 import { tagVector, type TagVector } from "./vector.js";
 import type {
   ProfileFamily,
@@ -55,16 +59,14 @@ const ratingFactor = (rating: number): number => {
 
 /** One game's weight, positive for what to find more of; null when it says nothing. */
 const weighSeed = (
-  seed: SeedInput,
-  options: TuneOptions
+  seed: SeedInput
 ): { weight: number; notes: SeedNote[] } | null => {
   const notes: SeedNote[] = seed.elsewhere ? ["elsewhere"] : [];
 
+  // Recent play counts up to twice.
   const hours =
-    options.basedOn === "recent"
-      ? seed.recentHours
-      : seed.hours *
-        (1 + (seed.hours > 0 ? Math.min(1, seed.recentHours / seed.hours) : 0));
+    seed.hours *
+    (1 + (seed.hours > 0 ? Math.min(1, seed.recentHours / seed.hours) : 0));
 
   let weight = hours > 0 ? Math.log2(1 + hours) : 0;
 
@@ -194,13 +196,15 @@ export const buildTasteProfile = (
     if (options.basedOn === "tags") continue;
     if (!isGames && hasTagAmong(input.tags, avoided, SEED_AVOID_DEPTH))
       continue;
+    if (!isGames && options.leaveOutMultiplayer && isMultiplayerLed(input.tags))
+      continue;
 
     const result = isGames
       ? {
           weight: 1,
           notes: input.elsewhere ? (["elsewhere"] as SeedNote[]) : [],
         }
-      : weighSeed(input, options);
+      : weighSeed(input);
     if (!result) continue;
 
     const weight = result.weight;
