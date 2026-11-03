@@ -132,7 +132,12 @@ export default function Catalogue() {
             hideOwned={hideOwned}
           />
         )}
-        {tab === "charts" && <CatalogueCharts />}
+        {tab === "charts" && (
+          <CatalogueCharts
+            hideOwned={hideOwned}
+            libraryStates={libraryStates}
+          />
+        )}
         {tab === "browse" && (
           <CatalogueBrowse
             scrollRef={pageRef}

@@ -298,9 +298,10 @@ in the sections below.
     3. [ ] Filter sidebar: counts per tag and genre in grey, ordered by
            count, From your library, no software genres, searchable
            developers, drawer on narrow windows
-    4. [ ] Store data in the main process: Steam store items, charts and
-           daily snapshots, SteamSpy, steamcmd build dates, ProtonDB
-    5. [ ] Charts: playing now, most played, trending, singleplayer, 30 and
+    4. [x] Store data in the main process: Steam store items, charts and
+           daily snapshots, SteamSpy, ProtonDB (steamcmd build dates wait
+           for Finished games, with the recommender)
+    5. [x] Charts: playing now, most played, trending, singleplayer, 30 and
            90 days, top releases, best rated, as one sortable table
     6. [ ] Recommender: taste profile from the whole library (idle playtime
            at 10 %, ratings, status, cap per game), candidates from Steam's

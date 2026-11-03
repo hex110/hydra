@@ -1,0 +1,68 @@
+@use "../../scss/globals.scss";
+
+.tag-picker {
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__matches {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  &__match {
+    width: 100%;
+    padding: calc(globals.$spacing-unit * 0.75) globals.$spacing-unit;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background-color: globals.$surface-hover-color;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__chosen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__remove {
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    cursor: pointer;
+
+    &:hover {
+      color: globals.$muted-color;
+    }
+  }
+}

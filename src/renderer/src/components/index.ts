@@ -58,3 +58,6 @@ export * from "./store-game-meta/store-game-meta";
 export * from "./store-game-actions/store-game-actions";
 export * from "./store-shelf/store-shelf";
 export * from "./tab-strip/tab-strip";
+export * from "./sidebar-section/sidebar-section";
+export * from "./tag-picker/tag-picker";
+export * from "./store-game-table/store-game-table";

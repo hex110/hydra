@@ -29,6 +29,35 @@ export function StoreGameChip({
   );
 }
 
+/** Steam's share of positive reviews, toned as Steam tones it; nothing under ten reviews. */
+export function StoreGameReviewChip({
+  percent,
+  count,
+}: Readonly<{ percent?: number | null; count?: number | null }>) {
+  const { t } = useTranslation("catalogue");
+  const { formatNumber } = useFormat();
+
+  const tone = getReviewTone(percent, count);
+  const label = getReviewLabel(percent, count);
+  if (!tone || !label || percent == null) return null;
+
+  return (
+    <span
+      className={cn(
+        "store-game-meta__chip",
+        `store-game-meta__chip--review-${tone}`
+      )}
+      title={t("review_summary", {
+        label: t(`review_label_${label}`),
+        count: count ?? 0,
+        formattedCount: formatNumber(count ?? 0),
+      })}
+    >
+      {percent}%
+    </span>
+  );
+}
+
 export interface StoreGameMetaProps {
   facts?: StoreGameFacts;
   /** Facts are on their way; shows a skeleton until they arrive. */
@@ -54,7 +83,6 @@ export function StoreGameMeta({
   badge,
 }: Readonly<StoreGameMetaProps>) {
   const { t } = useTranslation("catalogue");
-  const { formatNumber } = useFormat();
   const tagLabels = useSteamTagLabels();
 
   const tags = useMemo(() => {
@@ -73,29 +101,16 @@ export function StoreGameMeta({
     );
   }
 
-  const reviewTone = getReviewTone(facts?.reviewPercent, facts?.reviewCount);
-  const reviewLabel = getReviewLabel(facts?.reviewPercent, facts?.reviewCount);
   const year = facts?.releaseYear ?? releaseYear ?? null;
 
   return (
     <div className="store-game-meta">
       <span className="store-game-meta__tags">{tags.join(", ")}</span>
       <span className="store-game-meta__chips">
-        {reviewTone && reviewLabel && facts?.reviewPercent != null && (
-          <span
-            className={cn(
-              "store-game-meta__chip",
-              `store-game-meta__chip--review-${reviewTone}`
-            )}
-            title={t("review_summary", {
-              label: t(`review_label_${reviewLabel}`),
-              count: facts.reviewCount ?? 0,
-              formattedCount: formatNumber(facts.reviewCount ?? 0),
-            })}
-          >
-            {facts.reviewPercent}%
-          </span>
-        )}
+        <StoreGameReviewChip
+          percent={facts?.reviewPercent}
+          count={facts?.reviewCount}
+        />
         {year !== null && <span className="store-game-meta__chip">{year}</span>}
         {facts?.howLongToBeatHours != null && (
           <span

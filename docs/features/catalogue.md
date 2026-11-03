@@ -5,11 +5,11 @@ a grid view, more data per game and a list that keeps your place.
 
 ## Tabs
 
-| Tab          | What it is                                                |
-| ------------ | --------------------------------------------------------- |
-| **Discover** | Shelves of games to look at ([below](#discover)).         |
-| **Charts**   | Lists of what is played and what is good (not built yet). |
-| **Browse**   | The whole catalogue with filters, search and sort.        |
+| Tab          | What it is                                                   |
+| ------------ | ------------------------------------------------------------ |
+| **Discover** | Shelves of games to look at ([below](#discover)).            |
+| **Charts**   | Lists of what is played and what is good ([below](#charts)). |
+| **Browse**   | The whole catalogue with filters, search and sort.           |
 
 The strip is the shared `TabStrip` (the library's source tabs use it too) and
 stays visible while the page scrolls. **Hide my games** sits at its right end
@@ -77,6 +77,61 @@ every row except the two AnkerGames ones, which show the site's rows whole
 an hour while Hydra runs (the AnkerGames rows come from a daily read
 instead). **New releases on your sources** has **See all**, which opens
 Browse sorted by newest with your sources selected.
+
+## Charts
+
+One table and a right-hand column with the chart picker and the chart's
+filters. The table shows rank, cover and title (with the library badge),
+tags, the chart's own numbers, Steam's review share (toned, the count in its
+tooltip), the release year and, on Linux, ProtonDB's tier. Clicking a heading
+sorts by it (larger first, then reversed, then back to the chart's order; **#**
+restores it). On a narrow table the tags and year columns drop out. A row opens
+the game's page, also for a Steam game the catalogue doesn't know. Hovering a
+row shows the + / wishlist / Download buttons.
+
+| Chart                         | Source and what it is                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Playing now**               | Steam's top 100 by players in game now (kept 15 minutes), with the day's peak.                                                                                                                                                                                                                                                                              |
+| **Most played today**         | Steam's top 100 by the day's peak (kept an hour), with places gained or lost since last week, or **New**.                                                                                                                                                                                                                                                   |
+| **Trending**                  | From the same list: games that gained five places or more, or are new, by places gained.                                                                                                                                                                                                                                                                    |
+| **Most played singleplayer**  | Candidates from SteamSpy's Singleplayer tag (top 500 by yesterday's peak) plus both Steam charts, kept when Steam lists the game as single-player ([rule](#singleplayer-rule)). Players now where the live chart has the game, otherwise SteamSpy's number from yesterday's peak. SteamSpy's playtime data no longer works, so there is no playtime column. |
+| **Most played, 30 / 90 days** | Steam publishes no history, so Hydra records the top 100 once a day while it runs (120 days kept) and ranks by the sum of `101 − rank` over the recorded days. Until 7 (or 30) days exist the list shows with a notice: "Collecting since 2 November: 1 of 30 days".                                                                                        |
+| **Top releases**              | Steam's monthly lists, with a month picker. Steam's newest page may lag the calendar.                                                                                                                                                                                                                                                                       |
+| **Best rated**                | Hydra's highest rated Steam games (`hydraScore`, 100 games) with Steam's facts; a minimum review count (default 1,000) drops tiny games with a perfect score.                                                                                                                                                                                               |
+
+Software and other non-games drop out of every chart. **Hide my games** and
+the filters apply to the loaded list, which is honest here: a chart is at most
+a few hundred games, all of them loaded.
+
+Filters: **Tags** (a game must carry all of them), **Avoid tags** (hides a game
+with one of them among its first five tags; **Also avoid related tags**, on by
+default, adds the tags that mean nearly the same: Idler, Incremental and
+Clicker; the multiplayer tags; the roguelike tags), **Minimum ProtonDB tier**
+(Linux; games with no reports are left out while it is on), **Singleplayer
+only**, **Hide Early Access** and **Free to play: Any / Only / Hide**. They are
+remembered. The avoid list is kept in the renderer for now; the Tune panel
+will share it ([phase 20](../catalogue-phase-20.md)).
+
+A source that fails says so on the chart, naming the service ("Steam's charts
+could not be reached", "SteamSpy could not be reached"), with **Try again**;
+the SteamSpy chart still shows the games from Steam's own charts then.
+
+### Singleplayer rule
+
+A game counts when Steam lists it as a game (not DLC or software) with the
+single-player category and without MMO, and the Singleplayer tag is among its
+tags ahead of every multiplayer tag. Rainbow Six Siege and Helldivers 2 carry
+the tag low in their lists and are left out; Baldur's Gate 3 lists it above
+Co-op and stays in.
+
+### Data
+
+Steam's store pages (`IStoreBrowseService/GetItems`: reviews, release, tags,
+player categories, developers, header image, 50 ids per request) are kept for
+seven days in memory and in the database. SteamSpy asks for about a request a
+second and its Singleplayer list is 17 MB, so Hydra keeps only the top 500
+games by players, for a day. ProtonDB tiers are fetched per game, six at a
+time, after the rows show, and kept for a day.
 
 ## Tag filter
 

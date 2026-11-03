@@ -1,0 +1,115 @@
+@use "../../scss/globals.scss";
+
+.catalogue-charts {
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__description,
+  &__notice {
+    margin: 0;
+    color: globals.$body-color;
+    font-size: globals.$hint-font-size;
+  }
+
+  &__notice {
+    padding: globals.$spacing-unit calc(globals.$spacing-unit * 1.5);
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+    background-color: globals.$dark-background-color;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 1.5);
+    padding: calc(globals.$spacing-unit * 2);
+  }
+
+  &__label {
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 6) 0;
+    color: globals.$body-color;
+    text-align: center;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  &__skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  &__skeleton-row {
+    height: calc(globals.$spacing-unit * 8);
+    background-color: globals.$skeleton-base-color;
+    border-radius: 4px;
+  }
+
+  &__movement {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+
+    &--up {
+      color: globals.$success-color;
+    }
+
+    &--down {
+      color: globals.$error-color;
+    }
+  }
+
+  &__new {
+    padding: 0 calc(globals.$spacing-unit * 0.75);
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    color: globals.$muted-color;
+    font-weight: 600;
+  }
+
+  &__tier {
+    padding: 0 calc(globals.$spacing-unit * 0.75);
+    border-radius: 4px;
+    background-color: globals.$protondb-platinum;
+    color: globals.$dark-background-color;
+    font-weight: 600;
+
+    &--gold {
+      background-color: globals.$protondb-gold;
+    }
+
+    &--silver {
+      background-color: globals.$protondb-silver;
+    }
+
+    &--bronze {
+      background-color: globals.$protondb-bronze;
+    }
+
+    &--borked {
+      background-color: globals.$protondb-borked;
+      color: globals.$muted-color;
+    }
+  }
+}

@@ -323,7 +323,7 @@ developers (or publishers) with the most playtime in your library, then
 matches as you type (first 50). Selected ones show as chips under the field.
 
 **Chrome.** Every section becomes a `SidebarSection`. It lives in
-`pages/game-details/sidebar-section/` today; move it to
+`pages/game-details/sidebar-section/` then (moved to `components/sidebar-section/` with step 5); move it to
 `components/sidebar-section/` first and update its 13 imports. Sections start
 collapsed, except Tags and any section with a selection. The "N available"
 line and the per-section coloured orbs go. The category colours in
@@ -390,6 +390,15 @@ Pure helpers in `src/shared/store-games.ts`, each with tests:
   tags only if they exist in the tag list. Look the ids up from
   `/catalogue/steam/tags` when writing the table; don't guess.
 
+**As built (step 4).** `getStoreItems`, the charts, snapshots, SteamSpy and
+ProtonDB services are as described, with `StoreItem` and the pure helpers
+(`isSingleplayerGame`, `isFinishedGame`, `wilsonLowerBound`, `TAG_FAMILIES`)
+in `src/shared/store-games.ts` and the chart parsers in
+`src/shared/steam-charts.ts`, all tested. Not built yet: **steamcmd build
+dates** (`steam-build-dates.ts`; only Finished games need them) and the
+Horror and Souls-like tag families (their ids are still to be looked up).
+`getProtonDbTiers` returns tiers for the Charts table, not candidates.
+
 ### Step 5. Charts
 
 A table, a chart picker and chart filters.
@@ -438,6 +447,17 @@ unknown games.
 A source that fails shows its chart's empty state with the reason ("Steam's
 charts could not be reached. Try again."), not a blank table. SteamSpy and
 steamcmd failures name the service.
+
+**As built (step 5).** The main process assembles each chart
+(`catalogue-charts.ts`, one IPC `getCatalogueChart`) and the renderer filters it
+(`filterChartRows` in `src/shared/catalogue-charts.ts`, tested). `StoreGameTable`
+takes columns from the caller; its optional columns drop out below 820 px.
+The chart filters, including Avoid tags, are saved in `localStorage` for now:
+step 7 moves the avoid list to the shared saved settings. `TagPicker`
+(`components/tag-picker/`) is the tag search with chips that Tune reuses.
+Singleplayer candidates are SteamSpy's top 500 plus both Steam charts, which
+is about 600 store requests' worth on first load (12 batches, then cached for
+a week). "Two weeks" has no chart of its own.
 
 ### Step 6. The recommender
 
