@@ -2843,6 +2843,10 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getTuneSettings") as Promise<TuneSettings>,
   setTuneSettings: (settings: TuneSettings) =>
     ipcRenderer.invoke("setTuneSettings", settings) as Promise<void>,
+  getStoreTagIds: (appIds: string[]) =>
+    ipcRenderer.invoke("getStoreTagIds", appIds) as Promise<
+      Record<string, number[]>
+    >,
   getNotInterested: () =>
     ipcRenderer.invoke("getNotInterested") as Promise<NotInterestedGame[]>,
   setNotInterested: (

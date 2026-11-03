@@ -5,6 +5,34 @@
   flex-direction: column;
   gap: calc(globals.$spacing-unit * 3);
 
+  &__group {
+    margin: 0;
+    padding-top: globals.$spacing-unit;
+    border-bottom: 1px solid globals.$border-color;
+    padding-bottom: globals.$spacing-unit;
+    color: globals.$body-color;
+    font-size: globals.$hint-font-size;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  &__explain {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: calc(globals.$spacing-unit * 1.5);
+    padding: calc(globals.$spacing-unit * 2);
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    background-color: globals.$dark-background-color;
+    color: globals.$body-color;
+
+    p {
+      margin: 0;
+    }
+  }
+
   &__shelf {
     display: flex;
     flex-direction: column;
@@ -26,6 +54,10 @@
     border-radius: 8px;
     border: 1px solid globals.$border-color;
     background-color: globals.$dark-background-color;
+  }
+
+  &__queue--hero &__queue-cover {
+    width: min(560px, 55%);
   }
 
   &__queue-cover {

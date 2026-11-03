@@ -591,6 +591,34 @@ with an idle tag in its first five. Also: a dropped game's tags pull down;
 the 20 % cap holds; diversity keeps at most three per seed; leans-toward
 depth 3 drops a game whose matching tag is sixth.
 
+**As built (step 6).** `src/shared/recommender/` holds the pure parts (profile
+weights, taste vector, scoring, filters, diversity; 25 tests with the Clicker
+Heroes fixture), `src/main/services/recommender.ts` the orchestration and one
+IPC, `getRecommendations`. Differences from the plan:
+
+- Idle games are not only discounted: with the idle rule on they also do not
+  seed the search for candidates and are filtered out of results (found when a
+  real run let one idle game through at place 42). Turning the rule off or
+  leaning toward an idle tag lets them in.
+- The cap of a fifth only applies from five games, since fewer cannot each
+  hold a fifth.
+- Retrieval seeds' lists come from `getSteamSimilarGames` (already re-ranked by
+  tags and popularity), not Steam's raw order.
+- The pool is cached for six hours by _what is fetched_ (leading games and tags,
+  years, ProtonDB, downloadable), not by every option, so avoiding a tag or
+  moving a slider re-ranks in about ten milliseconds without a request.
+- **Downloadable only** keeps what a search limited to your sources returns
+  rather than checking every candidate; the other candidate sources are
+  dropped while it is on.
+- Length, Finished and ProtonDB filters look at the top 150 only; Finished
+  stops after 24 qualifying games. Games they cannot judge are left out and
+  counted in `leftOut`.
+- The steamcmd.net build dates (`steam-build-dates.ts`) and the Horror tag
+  family (1667, 1721, 3978) are built. Souls-like (29482) has no neighbours in
+  Steam's list, so it is not a family. Developers only, no franchise.
+- "Because you played" shelves use the lists of the two leading non-idle
+  games.
+
 ### Step 7. For you and Tune
 
 **For you** is a view inside Discover: Discover's first shelf's **See all**
@@ -631,6 +659,16 @@ keyed `shop:objectId`, value `{ at }`): hidden from For you, every Discover
 shelf except AnkerGames' and the queue, and home suggestions; Browse and
 Charts still list the game. Marking a game shows a toast with **Undo**.
 
+**As built (step 7).** `catalogue-for-you.tsx` and `tune-panel.tsx`; the
+slice has `discoverView`. Settings, presets (without the avoid list) and Not
+interested live in main (`catalogueTaste`, `catalogueNotInterested`) and reach
+the renderer through `use-tune-settings.ts` and `use-not-interested.ts`, two
+small stores every surface shares. The Charts filter now reads and writes the
+same avoid list. `RangeSlider` is a new primitive; `SidebarSection` takes
+`defaultOpen`. Undo is a small bar (`not-interested-undo.tsx`), not a toast,
+since the toast has no action. The "Treat idle games as background play" label
+replaces "Count idle games' playtime at 10 %" because it now does more.
+
 ### Step 8. Discover, grouped by purpose
 
 Top to bottom, each group with a small heading:
@@ -660,6 +698,14 @@ Trending. Every shelf respects Hide my games, Not interested and Avoid tags,
 except AnkerGames'. Each shelf loads on its own; one slow source never holds
 up the page. Keep the half-hour shelf cache in `catalogue-front-page.tsx` for
 the shelves that use it.
+
+**As built (step 8).** `catalogue-front-page.tsx` is the four groups. The hero
+uses the game's header image (GetItems' `library_hero` is not fetched). Most
+played and Trending come from the chart service. Avoid tags on Featured and New
+releases uses `getStoreTagIds` (one cached Steam request); a game stays until
+its tags arrive. Browse by tag has no counts yet (step 3). Hidden gems and
+Finished and polished are the same recommender with filters set, so they share
+its fetched pool.
 
 ### Step 9. Home page on the same recommender and card
 

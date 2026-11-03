@@ -53,30 +53,141 @@ Skeletons use the dark token colours, not the skeleton library's light theme.
 
 ## Discover
 
-The first tab shows:
+The first tab is grouped by purpose, each group with a small heading and every
+shelf loading on its own, so one slow source never holds up the page.
 
-- **Featured**: Hydra's "Hot now" list.
-- **New on AnkerGames** and **Trending on AnkerGames**: the site's latest
-  additions and its trending games ([details](ankergames.md#catalogue-rows)).
-- **Recommended for you**: the home page's
-  [suggestions](home.md#suggested-for-you), each with the game it came from.
-- **Discovery queue**: one game at a time from the rows above and the new
-  releases, as a compact card with its facts and **Open**, **Add to
-  library** and **Next**. Games added leave the queue.
-- **New releases on your sources**: the newest games released up to this
-  year. Sorting the whole catalogue by date shows mostly games nobody has
-  uploaded, so this row only takes games your download sources have.
-- **Browse by tag**: a chip for each of Steam's 30 most popular tags
-  (Indie, Action, Atmospheric, …), which sets the tag filter. Features such as
-  Singleplayer, 2D and Early Access are left out; they are filters, not
-  something to browse.
+**For you.** The top suggestion large (a hero panel), then **Recommended for
+you**, then **Because you played X** for your two leading games (Steam's "More
+like this" list for the game, re-ranked by the same score). The first two have
+**See all**, which opens [For you](#for-you-and-tune); the Because shelf opens
+it based on that one game. With no games in the library the group is replaced
+by a short explanation and a link to the library.
 
-With **Hide my games** on, games already in your library are left out of
-every row except the two AnkerGames ones, which show the site's rows whole
-(the discovery queue never offers a game you own). The rows are kept for half
-an hour while Hydra runs (the AnkerGames rows come from a daily read
-instead). **New releases on your sources** has **See all**, which opens
-Browse sorted by newest with your sources selected.
+**Popular now.** **Most played today** and **Trending** from the
+[charts](#charts) (**See all** opens that chart), then **Featured**, Hydra's
+"Hot now" list.
+
+**New.** **New releases on your sources**: the newest games released up to
+this year. Sorting the whole catalogue by date shows mostly games nobody has
+uploaded, so this row only takes games your download sources have; **See all**
+opens Browse sorted by newest with your sources selected. Then **New on
+AnkerGames** and **Trending on AnkerGames**: the site's latest additions and
+its trending games ([details](ankergames.md#catalogue-rows)).
+
+**Explore.** The **discovery queue** (one game at a time from your suggestions
+after the shelf, then the trending chart, new releases and Featured, as a
+compact panel with its facts and **Open**, **Add to library**, **Not
+interested** and **Next**; added games leave the queue). **Hidden gems**:
+suggestions rated 90 % and up with 50 to 5,000 reviews, niche first.
+**Finished and polished**: suggestions rated 85 % and up that are not Early
+Access, were released over a year ago and whose public build has not changed
+for a year ([how Hydra knows](#finished-games)). Each has a **See all** that
+opens For you with those filters set. Last, **Browse by tag**: a chip for each
+of Steam's 30 most popular tags, which sets the tag filter. Features such as
+Singleplayer, 2D and Early Access are left out; they are filters, not
+something to browse.
+
+With **Hide my games** on, games already in your library are left out of every
+shelf except the two AnkerGames ones, which show the site's rows whole. Every
+other shelf also leaves out games marked **Not interested** and games with an
+[avoided tag](#avoid-tags). The Hydra-sourced rows are kept for half an hour
+while Hydra runs (the AnkerGames rows come from a daily read instead).
+
+## For you and Tune
+
+**For you** is Discover's suggestions as a page: results on the left, as the
+same list or grid as Browse, 60 at a time with **Load more**, and the **Tune**
+panel on the right. Changes re-rank at once (a dragged slider asks once, 300 ms
+after it stops) and show the last results dimmed with "Updating…" until the new
+ones are in. Games you own never appear.
+
+### How it chooses
+
+Hydra learns what you like from the whole library, signed out and without a
+Steam key, in four steps (`src/shared/recommender/`, run in the main process by
+`recommender.ts`):
+
+1. **A weight per game.** Playtime as `log2(1 + hours)` (**All time** counts
+   play in the last 90 days up to twice; **Last 90 days** counts only that),
+   times your rating (9–10 ×1.6, 7–8 ×1.25, 5–6 ×0.8, 3–4 ignored, 1–2
+   ×−0.5), a Finished game ×1.25 and at least ten hours' worth, a Dropped game
+   counted against, and Backlog or wishlisted games with no play as a small
+   intent. No single game supplies more than a fifth of the whole (with five
+   games or more). Copies of one game count once, by the larger playtime.
+2. **A taste vector**: each game's first fifteen tags, vote-weighted, summed by
+   those weights. Tags that only name the format (Singleplayer, 2D, Early
+   Access, Free to Play, Controller, Great Soundtrack) are left out.
+3. **Candidates** (about 800): Steam's "More like this" for your eight leading
+   games, a Hydra search for each of your six leading tags (best rated and
+   most popular), and the last year's top releases. Your games, games marked
+   Not interested and demos, prologues and soundtracks are removed.
+4. **A score** per candidate: 0.6 tag similarity to your taste (a tag many
+   candidates share counts for less), 0.25 its place in Steam's lists for your
+   games, 0.15 review quality (the lower bound of the 95 % confidence
+   interval, so 100 % from 12 reviews ranks below 95 % from 20,000). The
+   Tune sliders then nudge the order without changing what counts as similar.
+   Hard filters apply, then the list is picked one game at a time for score
+   and for being unlike what is already picked, with at most three per played
+   game (and two per developer) in the first dozen, more as the list grows.
+
+Each result says why: "Because you played Hades" (the game that contributed
+most), with the two tags it shares with your taste and Steam's review verdict
+on hover.
+
+### Idle games
+
+An idle or clicker game runs in the background, so its hours are not
+attention, and any recommender built on playtime would suggest idle games to
+whoever's most played game is one. So by default (**Treat idle games as
+background play**, on) a game with an Idler, Incremental or Clicker tag among
+its first five has its playtime counted at 10 %, does not seed the search for
+candidates, and idle games are not suggested at all. Turning it off treats them
+like any other game. Leaning toward an idle tag also lets them through.
+
+### Tune
+
+| Section                | What it does                                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Based on**           | All time, Last 90 days, or Picked games (search your library). Your leading games show as chips with their share; the ✕ leaves one out, and a note says which idle game is discounted.                                                                                                                                            |
+| **Avoid tags**         | See [below](#avoid-tags). Open by default.                                                                                                                                                                                                                                                                                        |
+| **Leans toward**       | Tags a result must have among its first 3, 5 or 10 tags: a game that is somewhat like that tag without it being the main one. A tag also stands for its related tags, and counts double in your taste (even if your library has none of it).                                                                                      |
+| **Order**              | Niche ↔ Popular and Older ↔ Newer. These move games up and down; they never remove any.                                                                                                                                                                                                                                         |
+| **Filters**            | Minimum review score (applied from 50 reviews) and minimum reviews, release years, length (How Long to Beat's main story, from the top 150 results), ProtonDB minimum (Linux), **Finished games only**, Singleplayer only, Hide Early Access, **Downloadable only**. Filters that need a lookup say how many games were left out. |
+| **Presets**            | Save the current settings under a name, switch, delete. **Reset** returns to the defaults and keeps your avoid list.                                                                                                                                                                                                              |
+| **Not interested (n)** | The games you hid, each with **Restore**.                                                                                                                                                                                                                                                                                         |
+
+The settings, presets and Not interested list are kept in Hydra's database
+(`catalogueTaste`, `catalogueNotInterested`).
+
+### Avoid tags
+
+A result is dropped when an avoided tag is among its first 5, 10 or 20 tags
+(**A tag counts when it is among a game's**). **Also avoid related tags**, on
+by default, adds the tags that mean nearly the same: Idler, Incremental and
+Clicker; the multiplayer tags; the roguelike tags; Horror, Psychological Horror
+and Survival Horror. Games with an avoided tag in their first five are also
+left out of what your taste is learned from, so an avoided Clicker Heroes does
+not leak Casual and 2D into the profile either. When one family holds over
+30 % of your profile, Tune offers it: "Your profile leans on Idler (Clicker
+Heroes, 3,200 h). Avoid it?"
+
+The list is one list: For you, Discover's shelves, the discovery queue and the
+Charts filter all use it.
+
+### Not interested
+
+The **✕** on a card (hover) hides a game from For you, every Discover shelf
+except the AnkerGames ones, and the queue; a bar offers **Undo** for a few
+seconds. Browse and Charts still list it.
+
+### Finished games
+
+**Finished games only** needs to know when a game's public build last changed;
+Steam's own API does not say, so Hydra asks steamcmd.net (a request a second,
+kept a week) for the games at the top of the list, as many as it takes to
+find 24. A game it cannot find a date for is left out and counted, never
+treated as finished. A game's DLC releases are not counted. The first time
+the shelf loads this can take half a minute.
 
 ## Charts
 
@@ -109,8 +220,7 @@ default, adds the tags that mean nearly the same: Idler, Incremental and
 Clicker; the multiplayer tags; the roguelike tags), **Minimum ProtonDB tier**
 (Linux; games with no reports are left out while it is on), **Singleplayer
 only**, **Hide Early Access** and **Free to play: Any / Only / Hide**. They are
-remembered. The avoid list is kept in the renderer for now; the Tune panel
-will share it ([phase 20](../catalogue-phase-20.md)).
+remembered, except the avoid list, which is the [shared one](#avoid-tags).
 
 A source that fails says so on the chart, naming the service ("Steam's charts
 could not be reached", "SteamSpy could not be reached"), with **Try again**;

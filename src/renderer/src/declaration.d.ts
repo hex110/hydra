@@ -2108,6 +2108,7 @@ declare global {
     ) => Promise<RecommendationResponse>;
     getTuneSettings: () => Promise<TuneSettings>;
     setTuneSettings: (settings: TuneSettings) => Promise<void>;
+    getStoreTagIds: (appIds: string[]) => Promise<Record<string, number[]>>;
     getNotInterested: () => Promise<NotInterestedGame[]>;
     setNotInterested: (
       game: { shop: string; objectId: string; title: string },

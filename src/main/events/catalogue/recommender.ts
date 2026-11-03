@@ -10,6 +10,7 @@ import {
   catalogueTasteSublevel,
 } from "@main/level";
 import { getRecommendations } from "@main/services/recommender";
+import { getStoreItems } from "@main/services/steam-store-items";
 import { registerEvent } from "../register-event";
 
 const SETTINGS_KEY = "settings";
@@ -67,5 +68,21 @@ registerEvent(
     } else {
       await catalogueNotInterestedSublevel.del(key);
     }
+  }
+);
+
+/** The tags Steam gives games, most voted first, for the shelves that need to honour Avoid tags. */
+registerEvent(
+  "getStoreTagIds",
+  async (_event, appIds: string[]): Promise<Record<string, number[]>> => {
+    const items = await getStoreItems(
+      Array.isArray(appIds) ? appIds.slice(0, 200) : []
+    );
+
+    const tags: Record<string, number[]> = {};
+    for (const [appId, item] of items) {
+      if (item) tags[appId] = item.tags.map((tag) => tag.tagid);
+    }
+    return tags;
   }
 );
