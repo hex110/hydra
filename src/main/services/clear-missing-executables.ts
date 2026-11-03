@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { Game } from "@types";
-import { levelKeys } from "@main/level";
+import { downloadsSublevel, levelKeys } from "@main/level";
 import { getSteamLibraryFolders } from "./steam";
 import { updateGameRecord } from "./game-record-updater";
 import { logger } from "./logger";
@@ -26,6 +26,18 @@ const isExecutableGone = (executablePath: string, libraryFolders: string[]) =>
     ? isStaleSteamLibraryExecutable(executablePath, libraryFolders)
     : isExecutableMissingFromAvailableStorage(executablePath);
 
+/**
+ * A game whose files are being extracted or replaced by an update is not
+ * uninstalled when its executable is briefly missing; the extraction (or its
+ * retry) brings the files back.
+ */
+const isBeingReplaced = async (game: Game) => {
+  const download = await downloadsSublevel
+    .get(levelKeys.game(game.shop, game.objectId))
+    .catch(() => null);
+  return Boolean(download?.extracting || download?.update);
+};
+
 export const clearMissingExecutables = async (
   games: Game[]
 ): Promise<Game[]> => {
@@ -44,6 +56,7 @@ export const clearMissingExecutables = async (
   for (const game of candidates) {
     const executablePath = game.executablePath!;
     if (!(await isExecutableGone(executablePath, libraryFolders))) continue;
+    if (await isBeingReplaced(game)) continue;
 
     let didClear = false;
     const updatedGame = await updateGameRecord(

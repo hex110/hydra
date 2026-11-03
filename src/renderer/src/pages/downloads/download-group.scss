@@ -452,6 +452,13 @@
     color: globals.$muted-color;
   }
 
+  &__simple-error {
+    margin: 0;
+    font-size: 13px;
+    color: globals.$error-color;
+    overflow-wrap: anywhere;
+  }
+
   &__simple-size {
     display: flex;
     align-items: center;

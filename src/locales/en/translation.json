@@ -2129,7 +2129,7 @@
     "ignore_game_update": "Ignore",
     "update_game": "Update",
     "extraction_not_enough_space_title": "Not enough space to extract",
-    "extraction_not_enough_space_description": "The archive unpacks to {{required}}, but only {{available}} is free on that drive. Free up space, then extract it again from the Downloads page."
+    "extraction_not_enough_space_description": "The files to unpack need {{required}}, but only {{available}} is free on that drive. Free up at least {{missing}} more, then extract again from the Downloads page."
   },
   "settings": {
     "rpcs3_config_title": "RPCS3 configuration folder",

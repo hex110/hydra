@@ -36,6 +36,7 @@ export const startGameExtraction = async (
     ...download,
     extracting: true,
     extractionFailed: false,
+    extractionFailure: null,
   });
 
   const gameFilesManager = new GameFilesManager(shop, objectId);

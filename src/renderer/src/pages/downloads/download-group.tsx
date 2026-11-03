@@ -58,6 +58,7 @@ import {
 import { MoreVertical } from "lucide-react";
 import { average } from "color.js";
 import { getEpicManagedError } from "@renderer/helpers/epic-managed-error";
+import { getExtractionFailureText } from "@renderer/helpers/extraction-failure";
 import {
   CompletedDownloadActions,
   type CompletedDownloadState,
@@ -1247,6 +1248,29 @@ export function DownloadGroup({
                                 .ns,
                             }
                           )}
+                        </p>
+                      )}
+                    {game.download?.extractionFailed &&
+                      !game.download.extracting && (
+                        <p
+                          role="alert"
+                          className="download-group__simple-error"
+                        >
+                          <strong>
+                            {
+                              getExtractionFailureText(
+                                t,
+                                game.download.extractionFailure
+                              ).title
+                            }
+                            .
+                          </strong>{" "}
+                          {
+                            getExtractionFailureText(
+                              t,
+                              game.download.extractionFailure
+                            ).description
+                          }
                         </p>
                       )}
                     <div className="download-group__simple-meta-row">

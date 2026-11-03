@@ -29,6 +29,8 @@ const adoptFolderExtractedOutside = async (
   await downloadsSublevel.put(gameKey, {
     ...download,
     folderName: path.relative(download.downloadPath, folder.folderPath),
+    extractionFailed: false,
+    extractionFailure: null,
   });
 
   await new GameFilesManager(shop, objectId).searchAndBindExecutable();

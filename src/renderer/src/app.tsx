@@ -45,7 +45,7 @@ import {
   updateRetroArchScanProgress,
 } from "@renderer/features";
 import { useTranslation } from "react-i18next";
-import { formatBytes } from "@shared";
+import { getExtractionFailureText } from "./helpers/extraction-failure";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSubscription } from "./hooks/use-subscription";
 import { ArchiveDeletionModal } from "./pages/downloads/archive-deletion-error-modal";
@@ -545,41 +545,8 @@ export function App() {
         dispatch(clearExtraction());
         updateLibrary();
 
-        if (failure?.reason === "unsupported-format") {
-          showErrorToast(
-            t("extraction_unsupported_format_title", { ns: "downloads" }),
-            t("extraction_unsupported_format_description", {
-              ns: "downloads",
-              format: failure.format,
-            })
-          );
-          return;
-        }
-
-        if (failure?.reason === "not-enough-space") {
-          showErrorToast(
-            t("extraction_not_enough_space_title", { ns: "downloads" }),
-            t("extraction_not_enough_space_description", {
-              ns: "downloads",
-              required: formatBytes(failure.required),
-              available: formatBytes(failure.available),
-            })
-          );
-          return;
-        }
-
-        if (failure?.reason === "file-not-found") {
-          showErrorToast(
-            t("extraction_file_not_found_title", { ns: "downloads" }),
-            t("extraction_file_not_found_description", { ns: "downloads" })
-          );
-          return;
-        }
-
-        showErrorToast(
-          t("extraction_failed_title", { ns: "downloads" }),
-          t("extraction_failed_description", { ns: "downloads" })
-        );
+        const { title, description } = getExtractionFailureText(t, failure);
+        showErrorToast(title, description);
       }),
       window.electron.onGameExecutableNotFound(() => {
         showErrorToast(
