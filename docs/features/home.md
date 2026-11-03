@@ -109,12 +109,12 @@ Continue playing, are left out.
 
 The same suggestions as the catalogue's [For you](catalogue.md#for-you-and-tune),
 made by the same recommender with the Tune settings you chose there: they
-learn from your whole library (playtime with idle games discounted, ratings,
-status, wishlist), skip what you own or marked **Not interested**, and honour
-your avoid list. The shelf shows the top 12 as store cards, each saying which
-game it came from; **See all** opens For you, and the ✕ on a card hides the
-game everywhere. The list is computed by the main process and kept for six
-hours.
+learn from your whole library in taste groups (playtime, ratings, status,
+wishlist, games played elsewhere), skip what you own, played elsewhere or
+marked **Not interested**, and honour your avoid list. The shelf shows the top
+12 as store cards, each naming the tags it shares with your taste; **See all**
+opens For you, and the ✕ on a card hides the game everywhere. What it showed
+last appears first on the next start while the new list loads.
 
 ### Other sources
 

@@ -116,6 +116,9 @@ game setup fills the sandbox with Wine prefixes (24 GB once).
   `scanLibraryOnStartup`: on start it scans the real library folders, creates
   prefixes and posts added games to the user's Hydra profile. Delete the
   `auth`/`user` keys and turn `scanLibraryOnStartup` off in the copy first.
+  It also inherits the `downloads` sublevel and resumes unfinished downloads
+  into the real download folder, alongside the installed app: delete the
+  `!downloads!` keys too.
 - Point `HOME` at a scratch folder when testing the Proton manager; it
   installs into `~/.local/share/Steam/compatibilitytools.d`.
 - A dev build writes app-launcher `.desktop` entries only when

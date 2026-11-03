@@ -209,6 +209,13 @@ for the separate figures (add the Hydra rating to the ownership table in
 keep the function for its tests or remove it if unused), Charts' rating
 column and sort, Browse's "Best rated" (step 4), Hidden gems.
 
+**As built (step 1).** As specified. `getRatingQuality` replaces
+`wilsonLowerBound`, which is gone. Metacritic comes from `getCriticScores`
+(`critic-scores.ts`); `catalogue-row-details.ts` feeds the same cache.
+`steam-reception.ts` still fetches its own. The card's chip is a star and the
+rating; there is no explanation popover, the tooltip carries the parts and a
+sentence on how they are combined.
+
 ### Step 2. Cache first
 
 A main-process store, `src/main/services/catalogue-snapshots.ts`, over a new
@@ -234,6 +241,13 @@ of filters that change the request>`, `recommendations:<hash of options>`,
 - Renderer: one hook, `useCachedCatalogueData(key, load)` in
   `pages/catalogue/`, returns `{ data, isRefreshing, updatedAt, failed }`,
   used by Discover, Charts, For you and the home suggestions.
+
+**As built (step 2).** No `cachedOnly` flags: two IPC calls,
+`getCatalogueSnapshot` and `setCatalogueSnapshot`, and the renderer reads the
+snapshot itself (`catalogue-snapshots.ts`, used by `useRecommendations`,
+Charts and Discover's shelves and charts). There is no
+`useCachedCatalogueData` hook. For you dims a snapshot while it refreshes, as
+it does after a Tune change.
 
 ### Step 3. Charts: metrics and filters
 
@@ -288,6 +302,12 @@ with the chart's own rank in the tooltip ("#14 on Steam's list").
 **Remember**: the chosen chart and its filters persist (localStorage is
 enough; the avoid list stays shared).
 
+**As built (step 3).** As specified, with `STORE_RANKED_CHARTS` (Best rated,
+Most reviewed) fetching by period through `getStoreRankedCandidates`, which the
+recommender also uses for its recent-releases candidates. SteamSpy and its
+service are gone. Stored item data now carries `leftEarlyAccessAt`,
+`isComingSoon` and `releasePrecision`.
+
 ### Step 4. Browse
 
 - **Two backends, one page.** Hydra search stays the default (it is the only
@@ -314,6 +334,12 @@ enough; the avoid list stays shared).
 - **Saved searches**: "Save this search" in the toolbar stores the filters
   and sort under a name; the saved ones are a menu next to it. Stored with
   the Tune presets in `catalogueTaste` (a `browsePresets` field).
+
+**As built (step 4).** Excluded tags are a section of their own (a tag search
+with chips), not a three-state click on the Tags list, and the avoid list is
+off by default in Browse ("Also leave out my avoid list"). Saved searches are
+a sidebar section. Category 24 (shared/split screen) stands for local
+multiplayer.
 
 ### Step 5. The recommender in groups
 
@@ -404,6 +430,16 @@ ranks Flight above Military; Mix all keeps the shares within one game per
 group; the weekly order is stable within a week and changes across weeks;
 the migration adds idle tags once.
 
+**As built (step 5).** As specified. Checked on the owner's library
+(2026-11-03): seven groups (Open World / Story Rich / Atmospheric, FPS /
+Shooter / First-Person, Open World Survival Craft / Sandbox / Survival,
+Difficult / Platformer / Metroidvania, Action Roguelike / Dungeon Crawler /
+Hack and Slash, Roguelike Deckbuilder / Deckbuilding / Card Game, Co-op /
+Funny / Comedy); Ace Combat 8 in Games mode gives flight games only. Before
+the first facet count has the catalogue size, rarity is measured within the
+library. Impressions are counted once per game per run of Hydra, a second
+after the list shows.
+
 ### Step 6. For you, rebuilt around groups
 
 **Layout**: results on the left; on the right, **Based on** at the top, then
@@ -429,6 +465,9 @@ Tune as today.
 
 The last chosen mode and group persist in the Tune settings.
 
+**As built (step 6).** As specified; the mode labels are Groups, Last 90
+days, Games and Tags.
+
 ### Step 7. Feedback from the cards
 
 - **Not interested, with a reason** (YouTube): the ✕ opens a small menu:
@@ -450,6 +489,9 @@ The last chosen mode and group persist in the Tune settings.
   40 h), _Hidden gems_ (niche, 90 %+, 50–5,000 reviews), _Finished and
   polished_, _New this year_, _Co-op night_ (leans toward Co-op family).
   They set filters only; Based on stays.
+
+**As built (step 7).** As specified, except the wishlist tooltip on
+suggestions, which was not added. Moods turn off again when clicked.
 
 ### Step 8. Discover
 
@@ -475,6 +517,10 @@ Top to bottom:
 
 Every shelf uses step 2's snapshots and keeps the rules of phase 20 (Hide my
 games, Not interested and Avoid tags everywhere but AnkerGames).
+
+**As built (step 8).** As specified. Group shelves show no reason line, since
+the shelf title names the group. Outside your usual uses Tags mode with four
+of the 20 most common catalogue tags and a review floor of 85 %.
 
 ### Step 9. Later, not in this phase's checklist
 

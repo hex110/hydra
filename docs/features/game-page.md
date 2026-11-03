@@ -5,19 +5,21 @@
 Each fact on the game page has one home. Anything else that mentions it is a
 summary that links there. Add a row here when a feature adds a new fact.
 
-| Fact                                                 | Lives in                                                                    |
-| ---------------------------------------------------- | --------------------------------------------------------------------------- |
-| Playtime, last played, launch state, update chip     | Hero bar                                                                    |
-| Play status, rating, favourite, pin, wishlist, notes | **Your game** sidebar section                                               |
-| Installed mods, their order and updates              | **Mods** page; the **Mods** sidebar section summarises and links to it      |
-| Copies and other versions in your library            | **Your game** sidebar section, only when there are any                      |
-| Achievements                                         | Sidebar summary (icon, name, description), details on the achievements page |
-| Outside ratings and player counts                    | **Reception** sidebar section (Steam games)                                 |
-| ProtonDB, How Long to Beat                           | Their own sidebar sections, each with its site link in the header           |
-| Other external links (Steam, SteamDB, PCGamingWiki)  | **Links** sidebar section                                                   |
-| RenoDX mod, ReShade version, HDR mod status          | **Options → Tools**, the RenoDX part below the tool list                    |
-| Which tools apply (OnlineFix, HDR, RenoDX, …), why   | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there   |
-| Past launches: outcome, exit code, tools, logs       | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))      |
+| Fact                                                   | Lives in                                                                                                                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Playtime, last played, launch state, update chip       | Hero bar                                                                                                                                                                          |
+| Play status, rating, favourite, pin, wishlist, notes   | **Your game** sidebar section                                                                                                                                                     |
+| Installed mods, their order and updates                | **Mods** page; the **Mods** sidebar section summarises and links to it                                                                                                            |
+| Copies and other versions in your library              | **Your game** sidebar section, only when there are any                                                                                                                            |
+| Achievements                                           | Sidebar summary (icon, name, description), details on the achievements page                                                                                                       |
+| Outside ratings and player counts                      | **Reception** sidebar section (Steam games)                                                                                                                                       |
+| Hydra rating (Steam reviews adjusted, with Metacritic) | Store cards, rows and chart tables, one chip with its parts in the tooltip ([Catalogue](catalogue.md#hydra-rating)); the game page shows the separate figures under **Reception** |
+| Games played outside Hydra (for suggestions)           | **Based on** in For you ([Catalogue](catalogue.md#feedback-from-cards))                                                                                                           |
+| ProtonDB, How Long to Beat                             | Their own sidebar sections, each with its site link in the header                                                                                                                 |
+| Other external links (Steam, SteamDB, PCGamingWiki)    | **Links** sidebar section                                                                                                                                                         |
+| RenoDX mod, ReShade version, HDR mod status            | **Options → Tools**, the RenoDX part below the tool list                                                                                                                          |
+| Which tools apply (OnlineFix, HDR, RenoDX, …), why     | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there                                                                                                         |
+| Past launches: outcome, exit code, tools, logs         | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))                                                                                                            |
 
 ## Patterns across pages
 
@@ -28,7 +30,7 @@ home are reworked once and stay one app.
 shown (library, home shelves of your games): your cover, playtime when there
 is some, the update dot, a dimmed cover when it isn't installed, Play on
 hover. A game from the store is a `StoreGameCard` (the wide header image with
-review score, year and tags under it) or, in a list, a `StoreGameRow`
+the Hydra rating, year and tags under it) or, in a list, a `StoreGameRow`
 (`components/`): the catalogue's shelves, grid and list use these. The
 portrait `VerticalCoverCard` stays for friends playing and similar games.
 Home's suggestions are `StoreGameCard`s too. Upstream's wide `GameCard` stays only in its Hot now shelf.

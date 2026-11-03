@@ -310,29 +310,29 @@ in the sections below.
     8. [x] Discover grouped by purpose (For you, Popular now, New, Explore),
            See all on every shelf
     9. [x] Home suggestions on the same recommender and card
-    10. [ ] Docs: catalogue, home, patterns table
+    10. [x] Docs: catalogue, home, patterns table
 21. **Catalogue: groups, one rating, cache first.** Added 2026-11-03 from
     the owner's use of phase 20. Spec and plan:
     [Catalogue, phase 21](catalogue-phase-21.md) (start there; it also
     records what other recommenders and stores do).
-    1. [ ] One Hydra rating: Steam reviews adjusted for their count, with
+    1. [x] One Hydra rating: Steam reviews adjusted for their count, with
            Metacritic, used by every sort, chip and chart
-    2. [ ] Cache first: Discover, Charts, For you and home suggestions open
+    2. [x] Cache first: Discover, Charts, For you and home suggestions open
            with what was known before and refresh in place
-    3. [ ] Charts as metrics, with a release period filter; Best rated and
+    3. [x] Charts as metrics, with a release period filter; Best rated and
            Most reviewed per period, Most anticipated; Steam's stale top
            releases dropped
-    4. [ ] Browse: Steam's store search for excluded tags and Best rated,
+    4. [x] Browse: Steam's store search for excluded tags and Best rated,
            include/exclude tags, players, decades, saved searches
-    5. [ ] Recommender in groups: catalogue-wide tag rarity, named taste
+    5. [x] Recommender in groups: catalogue-wide tag rarity, named taste
            groups, the anchor rule for rare tags, Mix all, weekly freshness,
            seen-and-skipped decay; idle tags in the default avoid list
-    6. [ ] For you around groups: every game in Based on, Games and Tags
+    6. [x] For you around groups: every game in Based on, Games and Tags
            modes, More like this from the game page
-    7. [ ] Feedback: Not interested with a reason, Already played, moods
-    8. [ ] Discover opens on the recommender; group shelves replace
+    7. [x] Feedback: Not interested with a reason, Already played, moods
+    8. [x] Discover opens on the recommender; group shelves replace
            Because you played; Outside your usual
-    9. [ ] Docs
+    9. [x] Docs
 
 Why this order:
 
