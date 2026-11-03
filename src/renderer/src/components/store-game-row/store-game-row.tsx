@@ -4,7 +4,10 @@ import type { StoreGameFacts } from "@shared";
 import { buildGameDetailsPath } from "@renderer/helpers";
 import { useHoverPreview } from "@renderer/hooks/use-hover-preview";
 import { Link } from "@renderer/components/link/link";
-import { StoreGameActions } from "@renderer/components/store-game-actions/store-game-actions";
+import {
+  StoreGameActions,
+  type StoreGameFeedback,
+} from "@renderer/components/store-game-actions/store-game-actions";
 import { StoreGameMeta } from "@renderer/components/store-game-meta/store-game-meta";
 import { StoreGameCover } from "@renderer/components/store-game-card/store-game-cover";
 import { SourceBadges } from "@renderer/components/store-game-card/source-badges";
@@ -23,6 +26,7 @@ export interface StoreGameRowProps {
   sources?: string[];
   canDownload?: boolean;
   onNotInterested?: () => void;
+  feedback?: StoreGameFeedback;
 }
 
 /** A store game as a row: the same content as the card, beside a smaller cover. */
@@ -36,6 +40,7 @@ export function StoreGameRow({
   sources,
   canDownload,
   onNotInterested,
+  feedback,
 }: Readonly<StoreGameRowProps>) {
   const { previewUrl, hoverProps } = useHoverPreview(facts?.screenshots ?? []);
 
@@ -52,6 +57,7 @@ export function StoreGameRow({
           libraryState={libraryState}
           canDownload={canDownload}
           onNotInterested={onNotInterested}
+          feedback={feedback}
         />
       </StoreGameCover>
       <div className="store-game-row__body">

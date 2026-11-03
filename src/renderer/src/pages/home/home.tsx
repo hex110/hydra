@@ -661,9 +661,7 @@ export default function Home() {
                   game={game}
                   facts={suggestionFacts.get(key)}
                   libraryState={stateOf(game)}
-                  {...getRecommendationReason(suggestion, tagLabels, (title) =>
-                    t("because_you_played", { title })
-                  )}
+                  {...getRecommendationReason(suggestion, tagLabels)}
                   onNotInterested={() => markNotInterested(game)}
                 />
               );

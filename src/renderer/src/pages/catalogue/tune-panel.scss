@@ -30,6 +30,33 @@
     font-size: globals.$small-font-size;
   }
 
+  &__moods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__mood {
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border: 1px solid globals.$border-color;
+    border-radius: 999px;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: globals.$muted-color;
+    }
+
+    &[aria-pressed="true"] {
+      border-color: globals.$muted-color;
+      background-color: globals.$chip-background-color;
+      color: globals.$muted-color;
+    }
+  }
+
   &__chips {
     display: flex;
     flex-wrap: wrap;

@@ -5,6 +5,7 @@ import {
   CheckIcon,
   DownloadIcon,
   PlusIcon,
+  SparkleFillIcon,
   StarFillIcon,
   StarIcon,
   XIcon,
@@ -14,6 +15,7 @@ import type { GameShop } from "@types";
 import { buildGameDetailsPath } from "@renderer/helpers";
 import { useLibrary } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
+import { DropdownMenu } from "@renderer/components/dropdown-menu/dropdown-menu";
 import {
   isOwnedLibraryState,
   type CatalogueLibraryState,
@@ -88,12 +90,23 @@ export function useStoreGameActions(
   };
 }
 
+/** What a suggested game's card can say back to the recommender. */
+export interface StoreGameFeedback {
+  /** The tag Not this kind offers to avoid: the rarest of the game's leading tags. */
+  kindTag?: { id: number; name: string };
+  onNotThisKind?: () => void;
+  onAlreadyPlayed?: () => void;
+  onMoreLikeThis?: () => void;
+}
+
 export interface StoreGameActionsProps {
   game: StoreGameIdentity;
   libraryState?: CatalogueLibraryState;
   /** A download option exists, from a source or AnkerGames. */
   canDownload?: boolean;
   onNotInterested?: () => void;
+  /** With it, Not interested asks why, and More like this appears. */
+  feedback?: StoreGameFeedback;
 }
 
 /**
@@ -105,6 +118,7 @@ export function StoreGameActions({
   libraryState,
   canDownload = false,
   onNotInterested,
+  feedback,
 }: Readonly<StoreGameActionsProps>) {
   const { t } = useTranslation("game_details");
   const navigate = useNavigate();
@@ -124,7 +138,7 @@ export function StoreGameActions({
 
   return (
     <div className="store-game-actions">
-      {onNotInterested && (
+      {onNotInterested && !feedback && (
         <button
           type="button"
           className="store-game-actions__button"
@@ -133,6 +147,51 @@ export function StoreGameActions({
           aria-label={t("not_interested", { ns: "catalogue" })}
         >
           <XIcon size={16} />
+        </button>
+      )}
+      {onNotInterested && feedback && (
+        <DropdownMenu
+          title={t("not_interested_why", { ns: "catalogue" })}
+          align="end"
+          items={[
+            {
+              label: t("not_this_game", { ns: "catalogue" }),
+              onClick: onNotInterested,
+            },
+            {
+              label: t("not_this_kind", {
+                ns: "catalogue",
+                tag: feedback.kindTag?.name ?? "",
+              }),
+              show: !!feedback.kindTag && !!feedback.onNotThisKind,
+              onClick: feedback.onNotThisKind,
+            },
+            {
+              label: t("already_played", { ns: "catalogue" }),
+              show: !!feedback.onAlreadyPlayed,
+              onClick: feedback.onAlreadyPlayed,
+            },
+          ]}
+        >
+          <button
+            type="button"
+            className="store-game-actions__button"
+            title={t("not_interested", { ns: "catalogue" })}
+            aria-label={t("not_interested", { ns: "catalogue" })}
+          >
+            <XIcon size={16} />
+          </button>
+        </DropdownMenu>
+      )}
+      {feedback?.onMoreLikeThis && (
+        <button
+          type="button"
+          className="store-game-actions__button"
+          onClick={feedback.onMoreLikeThis}
+          title={t("more_like_this", { ns: "catalogue" })}
+          aria-label={t("more_like_this", { ns: "catalogue" })}
+        >
+          <SparkleFillIcon size={16} />
         </button>
       )}
       {canDownload && (

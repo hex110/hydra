@@ -1,0 +1,189 @@
+@use "../../scss/globals.scss";
+
+.based-on {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 1.5);
+  padding: calc(globals.$spacing-unit * 2);
+
+  &__elsewhere {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__hint {
+    margin: 0;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__groups,
+  &__games,
+  &__hits,
+  &__chips {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__group-head {
+    display: flex;
+    align-items: stretch;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__group-pick {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: globals.$spacing-unit;
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+    background: transparent;
+    color: globals.$body-color;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background-color: globals.$dark-background-color;
+    }
+
+    &--active {
+      border-color: globals.$muted-color;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__group-name {
+    overflow: hidden;
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__group-facts {
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__details {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 globals.$spacing-unit;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: globals.$muted-color;
+    }
+  }
+
+  &__games {
+    max-height: calc(globals.$spacing-unit * 40);
+    padding: calc(globals.$spacing-unit / 2) 0 calc(globals.$spacing-unit / 2)
+      globals.$spacing-unit;
+    overflow-y: auto;
+  }
+
+  &__game {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+  }
+
+  &__game-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: globals.$muted-color;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__game-facts {
+    color: globals.$body-color;
+    white-space: nowrap;
+  }
+
+  &__remove {
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: globals.$muted-color;
+    }
+  }
+
+  &__pick {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+  }
+
+  &__hit {
+    display: flex;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+    width: 100%;
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background-color: globals.$dark-background-color;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__hit-source {
+    color: globals.$body-color;
+    opacity: 0.7;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+  }
+}

@@ -22,7 +22,13 @@ import {
   isOwnedLibraryState,
   type CatalogueLibraryState,
 } from "./catalogue-library-state";
-import { getRecommendationReason, toCardGame } from "./recommendation-card";
+import {
+  getGroupName,
+  getRecommendationReason,
+  toCardGame,
+} from "./recommendation-card";
+import { useRecordImpressions } from "./use-impressions";
+import { useSuggestionFeedback } from "./use-suggestion-feedback";
 import { TunePanel } from "./tune-panel";
 import { useCatalogueRowDetails } from "./use-catalogue-row-details";
 import { useCatalogueView } from "./use-catalogue-view";
@@ -48,8 +54,8 @@ export function CatalogueForYou({
   const { t } = useTranslation("catalogue");
   const { formatNumber } = useFormat();
   const tagLabels = useSteamTagLabels();
-  const { options, isLoaded, reset } = useTuneSettings();
-  const { response, isRefreshing, retry } = useRecommendations(
+  const { options, settings, isLoaded, reset } = useTuneSettings();
+  const { response, isRefreshing, staleAt, retry } = useRecommendations(
     isLoaded ? options : null
   );
   const notInterested = useNotInterested();
@@ -66,15 +72,40 @@ export function CatalogueForYou({
         const key = catalogueKey({ shop: "steam", objectId: game.appId });
         return (
           !notInterested.keys.has(key) &&
-          !isOwnedLibraryState(libraryStates.get(key))
+          !isOwnedLibraryState(libraryStates.get(key)) &&
+          !settings.playedElsewhere?.[game.appId]
         );
       }),
-    [response, notInterested.keys, libraryStates]
+    [response, notInterested.keys, libraryStates, settings.playedElsewhere]
   );
   const visible = results.slice(0, shown);
   const facts = useCatalogueRowDetails(visible.map(toCardGame));
+  useRecordImpressions(visible.slice(0, 24).map((game) => game.appId));
+  const suggestion = useSuggestionFeedback(facts);
 
   const profile = response?.profile ?? null;
+  const groups = profile?.groups ?? [];
+  const shownGroup = groups.find((group) => group.id === response?.group);
+  const describeGroup = (groupId: string) => {
+    const group = groups.find((entry) => entry.id === groupId);
+    return group
+      ? t("fits_group", { name: getGroupName(group, tagLabels) })
+      : undefined;
+  };
+
+  let scope: string | null = null;
+  if (options.basedOn === "games") {
+    scope = t("for_you_scope_games", { count: options.pickedGames.length });
+  } else if (options.basedOn === "tags") {
+    scope = options.seedTags
+      .map((id) => tagLabels.get(id))
+      .filter(Boolean)
+      .join(", ");
+  } else if (shownGroup) {
+    scope = getGroupName(shownGroup, tagLabels);
+  } else if (groups.length > 1) {
+    scope = t("for_you_scope_mixed", { count: groups.length });
+  }
   const leftOut = response?.leftOut;
   const isFirstLoad = !response && isRefreshing;
 
@@ -99,13 +130,18 @@ export function CatalogueForYou({
         <Link to="/settings">{t("for_you_open_settings")}</Link>
       </div>
     );
-  } else if (profile && profile.seedCount === 0) {
-    body = (
-      <div className="catalogue-for-you__empty">
-        <p>{t("for_you_no_library")}</p>
-        <Link to="/library">{t("for_you_open_library")}</Link>
-      </div>
-    );
+  } else if (profile && groups.length === 0) {
+    body =
+      options.basedOn === "games" || options.basedOn === "tags" ? (
+        <div className="catalogue-for-you__empty">
+          <p>{t(`for_you_empty_${options.basedOn}`)}</p>
+        </div>
+      ) : (
+        <div className="catalogue-for-you__empty">
+          <p>{t("for_you_no_library")}</p>
+          <Link to="/library">{t("for_you_open_library")}</Link>
+        </div>
+      );
   } else if (results.length === 0) {
     body = (
       <div className="catalogue-for-you__empty">
@@ -126,10 +162,9 @@ export function CatalogueForYou({
         },
         facts: facts.get(key),
         libraryState: libraryStates.get(key),
-        ...getRecommendationReason(recommendation, tagLabels, (title) =>
-          t("because_you_played", { ns: "home", title })
-        ),
+        ...getRecommendationReason(recommendation, tagLabels, describeGroup),
         onNotInterested: () => notInterested.markNotInterested(game),
+        feedback: suggestion.feedbackFor(game),
       };
 
       return view === "grid" ? (
@@ -154,6 +189,7 @@ export function CatalogueForYou({
 
   return (
     <div className="catalogue__content">
+      {suggestion.dialog}
       <div className="catalogue__main">
         <div className="catalogue-for-you__header">
           <button
@@ -164,9 +200,19 @@ export function CatalogueForYou({
             <ArrowLeftIcon size={14} />
             {t("for_you_back")}
           </button>
-          <h2 className="catalogue-for-you__title">{t("for_you")}</h2>
+          <h2 className="catalogue-for-you__title">
+            {t("for_you")}
+            {scope && (
+              <span className="catalogue-for-you__scope"> · {scope}</span>
+            )}
+          </h2>
           <span className="catalogue-for-you__status" aria-live="polite">
             {isRefreshing && response ? t("for_you_updating") : null}
+            {!isRefreshing && staleAt
+              ? t("for_you_stale", {
+                  time: new Date(staleAt).toLocaleString(),
+                })
+              : null}
           </span>
           <SegmentedControl
             label={t("view_list") + " / " + t("view_grid")}
@@ -187,9 +233,14 @@ export function CatalogueForYou({
           />
         </div>
 
-        {profile && profile.seedCount > 0 && (
+        {groups.length > 0 && (
           <p className="catalogue-for-you__description">
-            {t("for_you_description", { count: profile.seedCount })}
+            {options.basedOn === "groups" || options.basedOn === "recent"
+              ? t("for_you_description_groups", {
+                  count: profile?.seedCount ?? 0,
+                  groups: groups.length,
+                })
+              : t("for_you_description_chosen")}
           </p>
         )}
         {notes.map((note) => (

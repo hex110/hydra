@@ -14,7 +14,9 @@ import Skeleton from "react-loading-skeleton";
 import type { GameShop } from "@types";
 import { VerticalCoverCard } from "@renderer/components";
 import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
-import { useLibrary, useSimilarGames } from "@renderer/hooks";
+import { useAppDispatch, useLibrary, useSimilarGames } from "@renderer/hooks";
+import { setDiscoverView } from "@renderer/features";
+import { useTuneSettings } from "@renderer/pages/catalogue/use-tune-settings";
 import { GameLibraryBadge } from "@renderer/components";
 import {
   catalogueKey,
@@ -53,7 +55,16 @@ function SimilarGamesSkeleton() {
 
 export function SimilarGames({ objectId, shop }: Readonly<SimilarGamesProps>) {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const tune = useTuneSettings();
   const { t } = useTranslation("game_details");
+
+  // The recommender's own list from this game, with the Tune panel beside it.
+  const openMoreLikeThis = () => {
+    tune.setOptions({ basedOn: "games", pickedGames: [`steam:${objectId}`] });
+    dispatch(setDiscoverView("for-you"));
+    navigate("/catalogue");
+  };
   const {
     games: similarGames,
     isLoading,
@@ -117,7 +128,18 @@ export function SimilarGames({ objectId, shop }: Readonly<SimilarGamesProps>) {
 
   return (
     <section className="similar-games">
-      <h2 className="similar-games__title">{t("similar_games")}</h2>
+      <div className="similar-games__header">
+        <h2 className="similar-games__title">{t("similar_games")}</h2>
+        {shop === "steam" && (
+          <button
+            type="button"
+            className="similar-games__more"
+            onClick={openMoreLikeThis}
+          >
+            {t("more_like_this_in_for_you")}
+          </button>
+        )}
+      </div>
 
       {sectionState === "loading" ? <SimilarGamesSkeleton /> : null}
 

@@ -141,9 +141,30 @@ export function useTuneSettings() {
     });
   }, []);
 
+  const markPlayedElsewhere = useCallback(
+    (appId: string, title: string, rating: number | null) => {
+      save({
+        ...snapshot.settings,
+        playedElsewhere: {
+          ...snapshot.settings.playedElsewhere,
+          [appId]: { title, rating, at: Date.now() },
+        },
+      });
+    },
+    []
+  );
+
+  const removePlayedElsewhere = useCallback((appId: string) => {
+    const next = { ...snapshot.settings.playedElsewhere };
+    delete next[appId];
+    save({ ...snapshot.settings, playedElsewhere: next });
+  }, []);
+
   return {
     settings,
     options: settings.options,
+    markPlayedElsewhere,
+    removePlayedElsewhere,
     saveBrowsePreset,
     deleteBrowsePreset,
     isLoaded,

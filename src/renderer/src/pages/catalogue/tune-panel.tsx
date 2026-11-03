@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { XIcon } from "@primer/octicons-react";
 import {
@@ -17,21 +17,52 @@ import {
   TagPicker,
   TextField,
 } from "@renderer/components";
-import { useLibrary } from "@renderer/hooks";
 
+import { BasedOnSection } from "./based-on-section";
 import { useNotInterested } from "./use-not-interested";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
 import { useTuneSettings } from "./use-tune-settings";
 import "./tune-panel.scss";
 
-const SEEDS_SHOWN = 10;
-const PICK_MATCHES = 6;
 const REVIEW_PERCENTS = [0, 50, 60, 70, 80, 90];
 const REVIEW_COUNTS = [0, 10, 50, 100, 500, 1000];
 const MIN_YEAR = 1990;
 const LENGTHS = ["short", "medium", "long", "epic"] as const;
+const CO_OP_TAG = 1685;
 
-const percent = (share: number) => `${Math.round(share * 100)} %`;
+/** Built-in presets: each sets a few filters and leaves Based on alone. */
+const MOODS: { key: string; changes: () => Partial<TuneOptions> }[] = [
+  { key: "short", changes: () => ({ length: "short" }) },
+  { key: "long", changes: () => ({ length: "epic" }) },
+  {
+    key: "gems",
+    changes: () => ({
+      minReviewPercent: 90,
+      minReviews: 50,
+      maxReviews: 5000,
+      popularity: -1,
+    }),
+  },
+  {
+    key: "polished",
+    changes: () => ({ finishedOnly: true, minReviewPercent: 85 }),
+  },
+  {
+    key: "this_year",
+    changes: () => ({ years: { gte: new Date().getFullYear() } }),
+  },
+  {
+    key: "coop",
+    changes: () => ({ leanTags: [CO_OP_TAG], leanDepth: 10 }),
+  },
+];
+
+const isMoodOn = (options: TuneOptions, changes: Partial<TuneOptions>) =>
+  Object.entries(changes).every(
+    ([key, value]) =>
+      JSON.stringify(options[key as keyof TuneOptions]) ===
+      JSON.stringify(value)
+  );
 
 interface TunePanelProps {
   profile: TasteProfile | null;
@@ -60,14 +91,6 @@ export function TunePanel({ profile }: Readonly<TunePanelProps>) {
     ? options.avoidTags.includes(family.tagId)
     : false;
 
-  const seedChips =
-    options.basedOn === "picked"
-      ? []
-      : (profile?.seeds ?? []).slice(0, SEEDS_SHOWN);
-  const idleSeeds = (profile?.seeds ?? []).filter((seed) =>
-    seed.notes.includes("idle")
-  );
-
   const setNumber = (key: "gte" | "lte", value: string) => {
     const year = Number.parseInt(value, 10);
     const years = { ...options.years };
@@ -89,92 +112,7 @@ export function TunePanel({ profile }: Readonly<TunePanelProps>) {
 
   return (
     <div className="tune-panel">
-      <SidebarSection title={t("tune_based_on")}>
-        <div className="tune-panel__section">
-          <SelectField
-            theme="dark"
-            value={options.basedOn}
-            options={(["all-time", "recent", "picked"] as const).map(
-              (value) => ({
-                key: value,
-                value,
-                label: t(`tune_basis_${value.replace("-", "_")}`),
-              })
-            )}
-            onChange={(event) =>
-              setOptions({
-                basedOn: event.target.value as TuneOptions["basedOn"],
-              })
-            }
-          />
-
-          {options.basedOn === "picked" ? (
-            <PickedGames
-              picked={options.pickedGames}
-              onChange={(pickedGames) => setOptions({ pickedGames })}
-            />
-          ) : (
-            <>
-              {seedChips.length > 0 ? (
-                <ul className="tune-panel__chips">
-                  {seedChips.map((seed) => (
-                    <li key={seed.key} className="tune-panel__chip">
-                      <span
-                        title={
-                          seed.notes.includes("idle")
-                            ? t("tune_idle_note", { title: seed.title })
-                            : undefined
-                        }
-                      >
-                        {seed.title} {percent(seed.share)}
-                      </span>
-                      <button
-                        type="button"
-                        className="tune-panel__chip-remove"
-                        aria-label={t("tune_seed_remove", {
-                          title: seed.title,
-                        })}
-                        onClick={() =>
-                          setOptions({
-                            excludedSeeds: [...options.excludedSeeds, seed.key],
-                          })
-                        }
-                      >
-                        <XIcon size={12} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="tune-panel__hint">{t("tune_no_profile")}</p>
-              )}
-              {options.excludedSeeds.length > 0 && (
-                <Button
-                  theme="outline"
-                  onClick={() => setOptions({ excludedSeeds: [] })}
-                >
-                  {t("tune_seeds_restore", {
-                    count: options.excludedSeeds.length,
-                  })}
-                </Button>
-              )}
-            </>
-          )}
-
-          <CheckboxField
-            label={t("tune_idle_discount")}
-            checked={options.idleDiscount}
-            onChange={(event) =>
-              setOptions({ idleDiscount: event.target.checked })
-            }
-          />
-          <p className="tune-panel__hint">
-            {options.idleDiscount && idleSeeds.length > 0
-              ? t("tune_idle_note", { title: idleSeeds[0].title })
-              : t("tune_idle_hint")}
-          </p>
-        </div>
-      </SidebarSection>
+      <BasedOnSection profile={profile} />
 
       <SidebarSection title={t("avoid_tags")}>
         <div className="tune-panel__section">
@@ -408,6 +346,35 @@ export function TunePanel({ profile }: Readonly<TunePanelProps>) {
 
       <SidebarSection title={t("tune_presets")}>
         <div className="tune-panel__section">
+          <span className="tune-panel__hint">{t("tune_moods")}</span>
+          <div className="tune-panel__moods">
+            {MOODS.map((mood) => {
+              const changes = mood.changes();
+              const isOn = isMoodOn(options, changes);
+              return (
+                <button
+                  key={mood.key}
+                  type="button"
+                  aria-pressed={isOn}
+                  className="tune-panel__mood"
+                  onClick={() =>
+                    setOptions(
+                      isOn
+                        ? Object.fromEntries(
+                            Object.keys(changes).map((key) => [
+                              key,
+                              DEFAULT_TUNE_OPTIONS[key as keyof TuneOptions],
+                            ])
+                          )
+                        : changes
+                    )
+                  }
+                >
+                  {t(`tune_mood_${mood.key}`)}
+                </button>
+              );
+            })}
+          </div>
           {settings.presets.length > 0 && (
             <ul className="tune-panel__list">
               {settings.presets.map((preset) => (
@@ -493,88 +460,6 @@ export function TunePanel({ profile }: Readonly<TunePanelProps>) {
           )}
         </div>
       </SidebarSection>
-    </div>
-  );
-}
-
-function PickedGames({
-  picked,
-  onChange,
-}: Readonly<{ picked: string[]; onChange: (value: string[]) => void }>) {
-  const { t } = useTranslation("catalogue");
-  const { library } = useLibrary();
-  const [query, setQuery] = useState("");
-
-  const steamGames = useMemo(() => {
-    const byKey = new Map<string, string>();
-    for (const game of library) {
-      const identity = game.catalogueGame ?? game;
-      if (identity.shop === "steam") {
-        byKey.set(`steam:${identity.objectId}`, game.title);
-      }
-    }
-    return byKey;
-  }, [library]);
-
-  const matches = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return [];
-    return [...steamGames]
-      .filter(
-        ([key, title]) =>
-          !picked.includes(key) && title.toLowerCase().includes(needle)
-      )
-      .slice(0, PICK_MATCHES);
-  }, [picked, query, steamGames]);
-
-  return (
-    <div className="tune-panel__pick">
-      <TextField
-        theme="dark"
-        value={query}
-        placeholder={t("tune_pick_placeholder")}
-        aria-label={t("tune_pick_placeholder")}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-      {matches.length > 0 && (
-        <ul className="tune-panel__list">
-          {matches.map(([key, title]) => (
-            <li key={key}>
-              <button
-                type="button"
-                className="tune-panel__row-main"
-                onClick={() => {
-                  onChange([...picked, key]);
-                  setQuery("");
-                }}
-              >
-                {title}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {picked.length > 0 ? (
-        <ul className="tune-panel__chips">
-          {picked.map((key) => (
-            <li key={key} className="tune-panel__chip">
-              <span>{steamGames.get(key) ?? key}</span>
-              <button
-                type="button"
-                className="tune-panel__chip-remove"
-                aria-label={t("tune_seed_remove", {
-                  title: steamGames.get(key) ?? key,
-                })}
-                onClick={() => onChange(picked.filter((item) => item !== key))}
-              >
-                <XIcon size={12} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="tune-panel__hint">{t("tune_pick_empty")}</p>
-      )}
     </div>
   );
 }

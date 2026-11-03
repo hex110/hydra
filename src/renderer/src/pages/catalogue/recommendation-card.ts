@@ -1,4 +1,4 @@
-import type { Recommendation } from "@shared";
+import type { ProfileGroup, Recommendation } from "@shared";
 
 /** A recommendation as the store card shows it. */
 export const toCardGame = (recommendation: Recommendation) => ({
@@ -8,30 +8,36 @@ export const toCardGame = (recommendation: Recommendation) => ({
   libraryImageUrl: recommendation.headerImageUrl,
 });
 
+/** A taste group's name: its three tags, "Difficult / Fast-Paced / Platformer". */
+export const getGroupName = (
+  group: Pick<ProfileGroup, "tagIds">,
+  tagLabels: ReadonlyMap<number, string>
+) =>
+  group.tagIds
+    .map((id) => tagLabels.get(id))
+    .filter((name): name is string => Boolean(name))
+    .join(" / ");
+
 /**
- * Why a game is suggested: the played game that led to it, else the tags it
- * shares with your taste. The tags and Steam's verdict go in the tooltip.
+ * Why a game is suggested: the tags it shares with your taste. The tooltip
+ * names the group it was found for and Steam's verdict.
  */
 export const getRecommendationReason = (
   recommendation: Recommendation,
   tagLabels: ReadonlyMap<number, string>,
-  becauseYouPlayed: (title: string) => string
+  describeGroup?: (groupId: string) => string | undefined
 ) => {
   const tags = recommendation.matchTagIds
     .map((id) => tagLabels.get(id))
     .filter((name): name is string => Boolean(name))
     .join(", ");
 
-  const reason = recommendation.becauseOf
-    ? becauseYouPlayed(recommendation.becauseOf.title)
-    : tags;
-
   const tooltip = [
-    recommendation.becauseOf ? tags : "",
+    recommendation.groupId ? describeGroup?.(recommendation.groupId) : "",
     recommendation.reviewLabel ?? "",
   ]
     .filter(Boolean)
     .join(" · ");
 
-  return { reason: reason || undefined, reasonTitle: tooltip || undefined };
+  return { reason: tags || undefined, reasonTitle: tooltip || undefined };
 };

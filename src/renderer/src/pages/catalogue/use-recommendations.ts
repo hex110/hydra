@@ -15,6 +15,9 @@ const cache = new Map<
   { at: number; response: RecommendationResponse }
 >();
 
+/** Forgets the kept answers, e.g. after a game is logged as played elsewhere. */
+export const clearRecommendationsCache = () => cache.clear();
+
 const hasResults = (response: RecommendationResponse | null) =>
   !!response && response.results.length > 0;
 

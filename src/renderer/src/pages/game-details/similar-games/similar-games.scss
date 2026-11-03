@@ -19,9 +19,31 @@ $card-hover-transition-duration: 0.2s;
     width: 50%;
   }
 
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+  }
+
   &__title {
     font-size: 20px;
     font-weight: 600;
+  }
+
+  &__more {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: globals.$muted-color;
+    }
   }
 
   &__carousel {

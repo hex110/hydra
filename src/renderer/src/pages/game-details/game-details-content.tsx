@@ -140,6 +140,12 @@ export function GameDetailsContent() {
     useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
+  // An opened suggestion was not ignored: it stops sinking in For you.
+  useEffect(() => {
+    if (shop !== "steam" || !objectId) return;
+    window.electron.forgetCatalogueImpression(objectId).catch(() => {});
+  }, [shop, objectId]);
+
   // Check if the current game is in the user's library
   const isGameInLibrary = useMemo(() => {
     if (!library || !shop || !objectId) return false;
