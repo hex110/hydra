@@ -62,19 +62,26 @@ A notification is posted when a check finds new updates.
 installed game, so any release can be installed in place, and can be
 unticked to download the release next to the installed one instead.
 
-The download and extraction run as usual. Then, instead of looking for an
-executable:
+The download and extraction run as usual, except that Hydra compares the
+archive with the installed game first and extracts only the files that are new
+or different (size and CRC-32, see
+[Extracting over an existing copy](downloads.md#extracting-over-an-existing-copy)).
+Space is needed for those files only, not for a second copy of the game. When
+the archive can't be compared (no CRCs, encrypted, or the game's executable is
+not in it), everything is extracted and merged as before. Then, instead of
+looking for an executable:
 
 1. Hydra finds the folder inside the download that matches the installed
    game: the one holding the game's executable at the same relative path,
    searching a few levels deep since releases often wrap the game in an extra
    folder. Failing that, the first folder whose top-level files mostly match
-   the installed game's.
+   the installed game's. When only the changed files were extracted this is
+   known from the archive, since the executable may be unchanged and absent.
 2. The game's saves are backed up with Ludusavi into the game's
    [backups](save-import.md#backups). Games Ludusavi does not know are updated
    without a backup; nothing below touches their saves anyway.
-3. Every file of the update is moved into the installed folder, replacing the
-   file at the same path. Files only the installed copy has stay: saves and
+3. Every file of the update (the changed ones, with a delta extraction) is
+   moved into the installed folder, replacing the file at the same path. Files only the installed copy has stay: saves and
    configs kept in the game folder, mods, OptiScaler and its manifest.
 4. The extracted folder is deleted, and the download now points at the
    installed folder.
@@ -96,3 +103,8 @@ The update is not installed, and the download is left where it was, when:
 | The game's folder is gone     | Pick the new executable in the game's options.                            |
 
 A notification explains which one happened.
+
+A game whose download is being extracted, or whose update is waiting to be
+installed, keeps its executable on record when a library scan finds the files
+missing for a moment; the scan used to clear it, and the game then looked
+uninstalled until a later scan found it again.

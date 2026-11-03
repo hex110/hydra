@@ -135,6 +135,57 @@ export const ensureInstalledVersion = async (gameKey: string) => {
 };
 
 /**
+ * A download extracted into the folder the game is installed in replaced its
+ * files, so its release is the installed one now. This covers an update
+ * downloaded as a plain download that happens to unpack into the install
+ * folder; an update installed in place records its release itself.
+ */
+export const recordDownloadedRelease = async (gameKey: string) => {
+  const [game, download] = await Promise.all([
+    gamesSublevel.get(gameKey),
+    downloadsSublevel.get(gameKey),
+  ]);
+  const recorded = game?.installedVersion;
+  if (!game || !recorded?.directory || !download?.release || download.update) {
+    return;
+  }
+  if (recorded.title === download.release.title) return;
+
+  const directory = await resolveInstallDirectory(game, download);
+  if (!directory) return;
+
+  const downloadFolder = download.folderName
+    ? path.resolve(download.downloadPath, download.folderName)
+    : null;
+  if (downloadFolder !== directory) return;
+
+  // The recorded folder is the one just replaced, or a folder inside it.
+  if (
+    path.resolve(recorded.directory) !== directory &&
+    !isInside(path.resolve(recorded.directory), directory)
+  ) {
+    return;
+  }
+
+  const installedVersion = toInstalledVersion(
+    download.release,
+    directory,
+    "download"
+  );
+  await updateGameRecord(gameKey, {
+    installedVersion,
+    availableUpdate:
+      game.availableUpdate?.release.title === installedVersion.title
+        ? null
+        : (game.availableUpdate ?? null),
+  });
+  logger.info("[GameUpdates] Recorded the downloaded release as installed", {
+    gameKey,
+    title: installedVersion.title,
+  });
+};
+
+/**
  * The release and update target to store on a new download. The current
  * download record is read before the new one replaces it, since it is what
  * locates the installed folder.

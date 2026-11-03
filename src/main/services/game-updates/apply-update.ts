@@ -123,13 +123,21 @@ export class GameUpdater {
       throw new UpdateFailure("layout-mismatch");
     }
 
+    // Only the changed files were extracted, so the executable may be absent
+    // from the folder and the extraction already said where the game's root is.
+    const stagedRoot = download.update!.stagedRoot;
     const updateRoot = sameFolder
       ? installDirectory
-      : await locateUpdateRoot(
-          extractedDirectory,
-          installDirectory,
-          executablePath
-        );
+      : stagedRoot === undefined
+        ? await locateUpdateRoot(
+            extractedDirectory,
+            installDirectory,
+            executablePath
+          )
+        : path.join(
+            extractedDirectory,
+            ...stagedRoot.split("/").filter(Boolean)
+          );
 
     if (!updateRoot) {
       throw new UpdateFailure(

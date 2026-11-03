@@ -37,7 +37,41 @@ Before extracting an archive, Hydra lists its contents with 7-Zip and stops
 with **Not enough space to extract** when the unpacked size (plus a 512 MB
 margin) does not fit. Nothing is written in that case; free up space and
 extract again from the Downloads page. Archives whose file list is encrypted
-cannot be listed and are extracted without the check.
+cannot be listed and are extracted without the check. When the files go over
+an existing copy, only the files that differ count (see
+[Extracting over an existing copy](#extracting-over-an-existing-copy)).
+
+The failure is kept with the download, not just shown in a toast: the row on
+the Downloads page says why it failed, with the numbers for a lack of space
+("needs 48.4 GB, only 43.7 GB is free, free up at least 5.1 GB more"), until
+the next extraction starts. **Extract files** tries again.
+
+## Extracting over an existing copy
+
+When an archive is extracted into a folder that already holds files, Hydra
+first compares the archive with them and extracts only what differs. A file
+counts as unchanged when its size and CRC-32 match what the archive records;
+files the archive does not have (saves, mods, OptiScaler) are not looked at.
+This happens when:
+
+- a new release of an installed game is downloaded as a plain download into
+  the folder the game is installed in (the archive and the game folder share
+  a name, as AnkerGames releases do), or
+- a half-extracted folder from an interrupted or failed extraction is there:
+  what was already unpacked is kept and only the rest is written.
+
+The space needed is the size of the changed files, not of the whole game, so a
+40 GB update that changes 3 GB needs 3 GB (plus the margin) on top of the
+archive. A retry after a failure picks up where it stopped. The check reads
+the files that have the same size as their archive entry, which takes a
+moment on a large game. Archives that store no CRC for their files, encrypted
+ones, and archives consumed in place go through the usual full extraction.
+A release that is downloaded into a folder of its own is extracted in full.
+
+When the extraction ends in the game's installed folder, the release that was
+downloaded becomes the installed version and a pending update for it is
+cleared, as an update installed in place does. Updates installed in place
+compare against the installed game too; see [Game updates](updates.md).
 
 ## Finished downloads
 

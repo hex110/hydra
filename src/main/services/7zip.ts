@@ -2,6 +2,7 @@ import { app } from "electron";
 import Seven, { CommandLineSwitches } from "node-7z";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { logger } from "./logger";
 import { listArchiveEntries, readArchiveEntry } from "./archive-entry";
@@ -71,11 +72,14 @@ export class SevenZip {
       outputPath,
       cwd,
       passwords = [],
+      include,
     }: {
       filePath: string;
       outputPath?: string;
       cwd?: string;
       passwords?: string[];
+      /** Archive paths to extract; everything else is left in the archive. */
+      include?: string[];
     },
     onProgress?: (progress: ExtractionProgress) => void
   ): Promise<ExtractionResult> {
@@ -83,7 +87,16 @@ export class SevenZip {
 
     await fs.promises.mkdir(destination, { recursive: true });
 
-    return new Promise((resolve, reject) => {
+    // A list file, since thousands of names do not fit on a command line.
+    const listDirectory = include
+      ? await fs.promises.mkdtemp(path.join(os.tmpdir(), "hydra-7z-"))
+      : null;
+    const listFile = listDirectory
+      ? path.join(listDirectory, "list.txt")
+      : null;
+    if (listFile) await fs.promises.writeFile(listFile, include!.join("\n"));
+
+    return new Promise<ExtractionResult>((resolve, reject) => {
       let settled = false;
       let activeAttempt = 0;
 
@@ -104,6 +117,9 @@ export class SevenZip {
           yes: true,
           noWildcards: true,
           password: password || undefined,
+          ...(listFile
+            ? { listFileCharset: "UTF-8", $raw: [`-i@${listFile}`] }
+            : {}),
         };
 
         const stream = Seven.extractFull(filePath, ".", options);
@@ -174,6 +190,10 @@ export class SevenZip {
       };
 
       tryPassword(0);
+    }).finally(() => {
+      if (listDirectory) {
+        void fs.promises.rm(listDirectory, { recursive: true, force: true });
+      }
     });
   }
 

@@ -37,7 +37,17 @@ import path from "node:path";
 import pngToIco from "png-to-ico";
 import sharp from "sharp";
 import { ExtractionProgress, SevenZip } from "./7zip";
-import { type ArchiveExtractors, extractArchive } from "./archive-extraction";
+import {
+  ARCHIVE_PASSWORDS,
+  type ArchiveExtractors,
+  extractArchive,
+} from "./archive-extraction";
+import {
+  canPlanDelta,
+  findArchiveRoot,
+  planDeltaExtraction,
+  type DeltaPlan,
+} from "./delta-extraction";
 import { NativeAddon } from "./native-addon";
 import { HydraApi } from "./hydra-api";
 import * as emulators from "./emulators";
@@ -55,7 +65,7 @@ import { SystemPath } from "./system-path";
 import { WindowManager } from "./window-manager";
 import { runAutomaticCloudSaveSync } from "./cloud-save";
 import { GameSetup } from "./game-setup";
-import { GameUpdater } from "./game-updates";
+import { GameUpdater, recordDownloadedRelease } from "./game-updates";
 import { updateGameRecord } from "./game-record-updater";
 
 const PROGRESS_THROTTLE_MS = 1000;
@@ -63,6 +73,29 @@ const PROGRESS_THROTTLE_MS = 1000;
 const MAX_ARCHIVE_EXTRACTION_PASSES = 2;
 
 const INSTALLED_EXECUTABLE_MAX_DEPTH = 4;
+
+// Comparing the archive with the files already on disk is the first part of a
+// delta extraction; the rest of the progress bar is the extraction itself.
+const DELTA_COMPARE_PROGRESS_SHARE = 0.2;
+
+const hasFiles = async (directory: string) =>
+  (await fs.promises.readdir(directory).catch(() => [])).length > 0;
+
+const isArchiveAtTopLevel = (entryName: string) => {
+  const segments = entryName.split(/[\\/]+/).filter(Boolean);
+  return (
+    segments.length === 1 &&
+    FILE_EXTENSIONS_TO_EXTRACT.some((ext) =>
+      segments[0].toLowerCase().endsWith(ext)
+    )
+  );
+};
+
+interface DeltaExtraction {
+  plan: DeltaPlan;
+  /** Set when the changed files are staged next to an installed game. */
+  stagedRoot?: string;
+}
 
 const IN_PLACE_EXTRACTION_FEATURE = "IN_PLACE_ARCHIVE_EXTRACTION";
 const FEATURES_REQUEST_TIMEOUT_MS = 10_000;
@@ -142,7 +175,10 @@ export class GameFilesManager {
     );
   }
 
-  private async resetExtractingState(failed = false) {
+  private async resetExtractingState(
+    failed = false,
+    failure: ExtractionFailure | null = null
+  ) {
     const download = await downloadsSublevel.get(this.gameKey);
 
     if (!download) return;
@@ -162,6 +198,7 @@ export class GameFilesManager {
       queued: false,
       extracting: false,
       extractionFailed: failed,
+      extractionFailure: failed ? failure : null,
       hasInstaller,
     });
     WindowManager.sendDownloadsUpdated();
@@ -177,7 +214,7 @@ export class GameFilesManager {
       error
     );
 
-    await this.resetExtractingState(true);
+    await this.resetExtractingState(true, failure);
 
     WindowManager.sendToAppWindows(
       "on-extraction-failed",
@@ -238,12 +275,16 @@ export class GameFilesManager {
    */
   private async ensureSpaceForExtraction(
     archivePath: string,
-    targetPath: string
+    targetPath: string,
+    requiredBytes?: number
   ): Promise<boolean> {
-    const entries = await SevenZip.listEntries(archivePath).catch(() => null);
-    if (!entries || entries.length === 0) return true;
+    let required = requiredBytes;
+    if (required === undefined) {
+      const entries = await SevenZip.listEntries(archivePath).catch(() => null);
+      if (!entries || entries.length === 0) return true;
+      required = entries.reduce((sum, entry) => sum + entry.size, 0);
+    }
 
-    const required = entries.reduce((sum, entry) => sum + entry.size, 0);
     const usage = await getDiskUsage(targetPath);
     if (!usage || usage.free >= required + MINIMUM_FREE_DISK_SPACE_BYTES) {
       return true;
@@ -257,6 +298,104 @@ export class GameFilesManager {
       { reason: "not-enough-space", required, available: usage.free }
     );
     return false;
+  }
+
+  /**
+   * An archive extracted over files that are already there (an update
+   * unpacked over the installed game, or a new release downloaded into the
+   * folder the game is installed in) only needs the files that differ. This
+   * compares the two and returns the difference; `null` means extract
+   * everything as usual.
+   *
+   * An update installed in place stages the extraction in a folder of its
+   * own, so the archive is compared with the installed game instead, and only
+   * the changed files are staged.
+   */
+  private async planDeltaExtraction(
+    download: Download,
+    archivePath: string,
+    extractionPath: string
+  ): Promise<DeltaExtraction | null> {
+    try {
+      const update = download.update;
+      const stagesElsewhere =
+        !!update &&
+        path.resolve(update.installDirectory) !== path.resolve(extractionPath);
+      const referenceDirectory =
+        update && stagesElsewhere ? update.installDirectory : extractionPath;
+
+      if (!(await hasFiles(referenceDirectory))) return null;
+
+      const entries = await SevenZip.listEntries(archivePath);
+      if (!canPlanDelta(entries)) return null;
+
+      let root = "";
+      if (update && stagesElsewhere) {
+        const relativeExecutable = path
+          .relative(update.installDirectory, update.executablePath)
+          .split(path.sep)
+          .filter(Boolean);
+        if (relativeExecutable[0] === "..") return null;
+
+        const found = findArchiveRoot(entries, relativeExecutable);
+        if (found === null) return null;
+        root = found;
+      }
+
+      this.updateExtractionProgress(0, true);
+      const plan = await planDeltaExtraction(entries, referenceDirectory, {
+        root,
+        onProgress: (fraction) =>
+          this.updateExtractionProgress(
+            fraction * DELTA_COMPARE_PROGRESS_SHARE
+          ),
+      });
+
+      logger.info(
+        `[GameFilesManager] ${this.objectId}: ${plan.changed.length} of ${plan.changed.length + plan.unchangedCount} files differ from ${referenceDirectory} (${plan.changedBytes} bytes to extract, ${plan.unchangedBytes} unchanged)`
+      );
+
+      return { plan, ...(stagesElsewhere ? { stagedRoot: root } : {}) };
+    } catch (error) {
+      logger.warn(
+        `[GameFilesManager] Could not compare ${archivePath} with the files on disk, extracting everything`,
+        error
+      );
+      return null;
+    }
+  }
+
+  private async extractChangedFiles(
+    archivePath: string,
+    extractionPath: string,
+    { plan, stagedRoot }: DeltaExtraction
+  ) {
+    if (stagedRoot !== undefined) {
+      // An update with nothing to stage still has a folder to merge.
+      await fs.promises.mkdir(
+        path.join(extractionPath, ...stagedRoot.split("/").filter(Boolean)),
+        { recursive: true }
+      );
+    }
+
+    if (plan.changed.length === 0) {
+      this.updateExtractionProgress(1, true);
+      return { success: true };
+    }
+
+    return SevenZip.extractFile(
+      {
+        filePath: archivePath,
+        outputPath: extractionPath,
+        passwords: ARCHIVE_PASSWORDS,
+        include: plan.changed.map((entry) => entry.name),
+      },
+      (progress) =>
+        this.updateExtractionProgress(
+          DELTA_COMPARE_PROGRESS_SHARE +
+            ((1 - DELTA_COMPARE_PROGRESS_SHARE) * progress.percent) / 100
+        )
+    );
   }
 
   private async shouldDeleteArchives(download?: Download | null) {
@@ -518,9 +657,18 @@ export class GameFilesManager {
     await downloadsSublevel.put(this.gameKey, {
       ...download,
       extracting: false,
+      extractionFailed: false,
+      extractionFailure: null,
       hasInstaller,
     });
     WindowManager.sendDownloadsUpdated();
+
+    await recordDownloadedRelease(this.gameKey).catch((error) => {
+      logger.error(
+        `[GameFilesManager] Could not record the downloaded release for ${this.objectId}`,
+        error
+      );
+    });
 
     // Calculate and store the installed size
     if (game && download.folderName) {
@@ -1151,35 +1299,46 @@ export class GameFilesManager {
       return false;
     }
 
+    this.updateExtractionProgress(0, true);
+
+    const delta = resume
+      ? null
+      : await this.planDeltaExtraction(download, filePath, extractionPath);
+
     if (
       !resume &&
-      !(await this.ensureSpaceForExtraction(filePath, download.downloadPath))
+      !(await this.ensureSpaceForExtraction(
+        filePath,
+        download.downloadPath,
+        delta?.plan.changedBytes
+      ))
     ) {
       return false;
     }
 
-    this.updateExtractionProgress(0, true);
-
     try {
       const shouldDelete = await this.shouldDeleteArchives(download);
-      const result = await extractArchive(
-        this.extractors,
-        {
-          filePath,
-          outputPath: extractionPath,
-          inPlace: shouldDelete,
-          resume,
-          recordInPlaceStart: () => this.recordInPlaceStart(filePath),
-          forgetInPlaceStart: () => this.forgetInPlaceStart(filePath),
-        },
-        this.handleProgress
-      );
+      const result = delta
+        ? await this.extractChangedFiles(filePath, extractionPath, delta)
+        : await extractArchive(
+            this.extractors,
+            {
+              filePath,
+              outputPath: extractionPath,
+              inPlace: shouldDelete,
+              resume,
+              recordInPlaceStart: () => this.recordInPlaceStart(filePath),
+              forgetInPlaceStart: () => this.forgetInPlaceStart(filePath),
+            },
+            this.handleProgress
+          );
 
       if (result.success) {
-        const extractedNestedArchives = await this.extractFilesInDirectory(
-          extractionPath,
-          filePath
-        );
+        // Archives already in a folder that was only updated are not new.
+        const extractedNestedArchives =
+          delta && !delta.plan.changed.some((e) => isArchiveAtTopLevel(e.name))
+            ? true
+            : await this.extractFilesInDirectory(extractionPath, filePath);
 
         if (!extractedNestedArchives) {
           return false;
@@ -1201,6 +1360,9 @@ export class GameFilesManager {
           folderName: extractedFolderName,
           sourceArchiveName: download.folderName,
           inPlaceArchives: undefined,
+          ...(download.update && delta?.stagedRoot !== undefined
+            ? { update: { ...download.update, stagedRoot: delta.stagedRoot } }
+            : {}),
         });
 
         await this.setExtractionComplete();

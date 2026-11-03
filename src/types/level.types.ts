@@ -25,7 +25,7 @@ import type {
   ScreenshotGamepadButton,
   ScreenshotHotkeyBinding,
 } from "./screenshot.types";
-import type { ProfileVisibility } from "./index";
+import type { ExtractionFailure, ProfileVisibility } from "./index";
 import type {
   EpicDownloadMetadata,
   EpicInstallation,
@@ -95,6 +95,13 @@ export interface GameAvailableUpdate {
 export interface DownloadUpdateTarget {
   installDirectory: string;
   executablePath: string;
+  /**
+   * Set when only the files that differ from the installed game were
+   * extracted: the folder inside the extracted download that lines up with
+   * `installDirectory` (empty for the download's top level). The executable
+   * may be unchanged and so absent, which is why it can't be searched for.
+   */
+  stagedRoot?: string;
 }
 
 export interface GameOnlineFix {
@@ -290,6 +297,8 @@ export interface Download {
   extracting: boolean;
   /** The last extraction failed, so a folder next to the archive may be half unpacked. */
   extractionFailed?: boolean;
+  /** Why the last extraction failed, when Hydra knows; shown on the Downloads page. */
+  extractionFailure?: ExtractionFailure | null;
   extractionProgress?: number;
   installerLaunched?: boolean;
   installerRunning?: boolean;

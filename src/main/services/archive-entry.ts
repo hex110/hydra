@@ -9,6 +9,8 @@ const ARCHIVE_OPERATION_TIMEOUT_MS = 30_000;
 export interface ArchiveEntry {
   name: string;
   size: number;
+  /** CRC-32 of the unpacked file, when the archive format stores one. */
+  crc?: number;
   encrypted?: boolean;
 }
 
@@ -62,10 +64,16 @@ export const listArchiveEntries = async (
       size < 0
     )
       return [];
+    const crcText = fields.get("CRC");
+    const crc =
+      crcText && /^[0-9a-f]{1,8}$/i.test(crcText)
+        ? parseInt(crcText, 16)
+        : undefined;
     return [
       {
         name,
         size,
+        ...(crc === undefined ? {} : { crc }),
         ...(fields.get("Encrypted") === "+" ? { encrypted: true } : {}),
       },
     ];
