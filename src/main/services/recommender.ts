@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   buildCatalogueIdf,
+  buildIdf,
   buildTasteProfile,
   DEFAULT_TUNE_OPTIONS,
   diversify,
@@ -716,13 +717,18 @@ export const getRecommendations = async (
         getImpressions(),
       ]);
     const built = buildTasteProfile([...library.inputs, ...outside], options);
+    // Before the first catalogue count, rarity within the library still beats none.
+    const rarity =
+      idf.size > 0
+        ? idf
+        : buildIdf([...library.inputs, ...outside].map((input) => input.tags));
 
     const groups =
       options.basedOn === "tags"
         ? groupFromTags(options.seedTags)
         : options.basedOn === "games"
-          ? groupPickedGames(built.seeds, idf)
-          : groupSeeds(built.seeds, idf);
+          ? groupPickedGames(built.seeds, rarity)
+          : groupSeeds(built.seeds, rarity);
 
     const profile = {
       ...built.profile,
@@ -756,7 +762,7 @@ export const getRecommendations = async (
       }
 
       const ranked = rankCandidates(candidates, group, options, {
-        idf,
+        idf: idf.size > 0 ? idf : undefined,
         impressions,
       });
       lists.push({

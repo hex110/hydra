@@ -693,9 +693,11 @@ export function CatalogueFrontPage({
     group: groups[index],
     isLoading: !list.response && list.isRefreshing,
     isRefreshing: list.isRefreshing && !!list.response,
+    // The shelf's title already names the group's tags.
     games: toRecommendationGames(list.response?.results ?? [])
       .filter((game) => game.objectId !== hero?.objectId)
-      .slice(0, SHELF_SIZE),
+      .slice(0, SHELF_SIZE)
+      .map((game) => ({ ...game, reason: undefined })),
   }));
   const outsideGames = toRecommendationGames(
     outside.response?.results ?? []
