@@ -333,6 +333,14 @@ in the sections below.
     8. [x] Discover opens on the recommender; group shelves replace
            Because you played; Outside your usual
     9. [x] Docs
+22. **Catalogue: groups you can shape, newer games first.** Added 2026-11-03
+    from the owner's use of phase 21. Spec: [Catalogue, phase 22](catalogue-phase-22.md).
+    1. [x] Last 90 days removed; recent play still counts up to twice
+    2. [x] Newer games first: popularity per year since release, a stronger
+           Older ↔ Newer slider leaning newer by default
+    3. [x] Groups split by how games are played, and when too spread out
+    4. [x] Leave out multiplayer games, for all groups and per group
+    5. [x] Hide a group, refine a group, build a group around games
 
 Why this order:
 

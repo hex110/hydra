@@ -118,14 +118,17 @@ Steam key (`src/shared/recommender/`, run in the main process by
 `recommender.ts`). Nodal (nodal.gg) was the owner's reference: groups of games
 and tags, not "because you played X".
 
-1. **A weight per game.** Playtime as `log2(1 + hours)` (**Groups** counts
-   play in the last 90 days up to twice; **Recent** counts only that), times
+1. **A weight per game.** Playtime as `log2(1 + hours)`, with play in the
+   last 90 days counting up to twice, times
    your rating (9–10 ×1.6, 7–8 ×1.25, 5–6 ×0.8, 3–4 ignored, 1–2 ×−0.5), a
    Finished game ×1.25 and at least ten hours' worth, a Dropped game counted
    against, and Backlog or wishlisted games with no play as a small intent.
    No single game supplies more than a fifth of the whole (with five games or
    more). Copies of one game count once, by the larger playtime. Games with an
-   avoided tag among their first five are left out. Every game played, rated
+   avoided tag among their first five are left out, and so are
+   multiplayer-led games with **Leave out multiplayer games** on (a
+   multiplayer tag ranks above Singleplayer, or there is no Singleplayer
+   tag). Every game played, rated
    or wishlisted counts (up to 1,500); games Steam has no tags for can't, and
    Based on says how many.
 2. **Tag rarity from the catalogue.** A tag few games carry (Flight) counts
@@ -133,10 +136,15 @@ and tags, not "because you played X".
 (1 + games with the tag))`, from the daily [counts](#filters). Before the
    first count, rarity within your library stands in.
 3. **Taste groups.** Each game's first fifteen tags, vote-weighted and scaled
-   by rarity, are grouped by weighted spherical k-means into
+   by rarity, plus one dimension for how it is played (singleplayer-led or
+   multiplayer-led, as heavy as its leading tag), are grouped by weighted
+   spherical k-means into
    `round(√(games / 12))` groups (460 games make six, at most eight), started from your
    heaviest game and then each time from the game least like the groups so
-   far, so the same library gives the same groups. A group with under 4 % of
+   far, so the same library gives the same groups. The play-mode dimension is
+   what keeps Half-Life 2 and CS2 apart. A group of ten games or more whose
+   games sit far apart by their tags (weighted mean cosine to its centre under
+   0.5) is split in two, up to eight groups. A group with under 4 % of
    the weight joins its nearest group; dropped and low-rated games join the
    group they are most like and pull its taste away from themselves. Each
    group is named by its three tags with the most **lift** (common in the
@@ -177,6 +185,30 @@ Each result names the two tags it shares with your taste; the tooltip names
 the group it fits and Steam's verdict. On a group's own shelf the title already
 says it.
 
+### Shaping groups
+
+Each group's **…** menu:
+
+- **Refine…** splits the group's games into two or three sub-groups, each
+  named and shown with its five most representative games (the heaviest near
+  its centre). Keep the ones that feel like the group: each becomes a group
+  of your own (**Yours**) and the original is hidden.
+- **Leave out multiplayer games** for that group alone: its multiplayer-led
+  games leave its taste and its suggestions must be singleplayer. The switch
+  above the list does the same for every group; turning it on changes the
+  groups themselves, so For you goes back to Mix all.
+- **Hide from Mix all and Discover**; a hidden group stays in the list,
+  dimmed, with **Show again**.
+- **Delete this group**, for your own groups.
+
+**Build a group around games** takes one to three library games and offers a
+tight, a medium and a broad group of your games like them (cosine 0.7, 0.5
+and 0.35 or more to the games' centre, at most 15, 40 and 100 games). Keep the
+one that fits. Your groups keep the games they were made with, as far as the
+library still has them, and take part in Mix all by their weight. Group
+settings and your groups are part of the Tune settings (version 3, which also
+moved Last 90 days, removed, to Groups and set Newer to 0.6 where it was 0).
+
 ### Idle games
 
 An idle or clicker game runs in the background, so its hours are not
@@ -189,15 +221,15 @@ with it on (the default), the idle tags are added to the avoid list once.
 
 ### Tune
 
-| Section                | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Based on**           | **Groups** (all time), **Last 90 days**, **Games** or **Tags**. In the first two: **Mix all groups**, then each group with its games, hours and share; **Details** lists every game in it with its hours, share of the group and notes (rated high, finished, dropped, played outside Hydra), each with ✕ to leave it out. Games played elsewhere are listed under them. **Games** searches your library and the whole catalogue; **Tags** starts from tags alone. |
-| **Avoid tags**         | See [below](#avoid-tags). Open by default.                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **Leans toward**       | Tags a result must have among its first 3, 5 or 10 tags: a game that is somewhat like that tag without it being the main one. A tag also stands for its related tags, and counts double in your taste (even if your library has none of it).                                                                                                                                                                                                                       |
-| **Order**              | Niche ↔ Popular and Older ↔ Newer. These move games up and down; they never remove any.                                                                                                                                                                                                                                                                                                                                                                          |
-| **Filters**            | Minimum review score (applied from 50 reviews) and minimum reviews, release years, length (How Long to Beat's main story, from the top 150 results), ProtonDB minimum (Linux), **Finished games only**, Singleplayer only, Hide Early Access, **Downloadable only**. Filters that need a lookup say how many games were left out.                                                                                                                                  |
-| **Presets**            | **Moods** first: Something short, A long one, Hidden gems, Finished and polished, New this year, Co-op night (each sets a few filters, leaves Based on alone, and turns off again when clicked). Then your own: save the current settings under a name, switch, delete. **Reset** returns to the defaults and keeps your avoid list.                                                                                                                               |
-| **Not interested (n)** | The games you hid, each with **Restore**.                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Section                | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Based on**           | **Groups**, **Games** or **Tags**. In Groups: **Leave out multiplayer games**, **Mix all groups**, then each group with its games, hours and share; **Details** lists every game in it with its hours, share of the group and notes (rated high, finished, dropped, played outside Hydra), each with ✕ to leave it out of all suggestions; **…** has the group's own settings ([Shaping groups](#shaping-groups)); **Build a group around games** is under the list. Games played elsewhere are listed under it. **Games** searches your library and the whole catalogue; **Tags** starts from tags alone. |
+| **Avoid tags**         | See [below](#avoid-tags). Open by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Leans toward**       | Tags a result must have among its first 3, 5 or 10 tags: a game that is somewhat like that tag without it being the main one. A tag also stands for its related tags, and counts double in your taste (even if your library has none of it).                                                                                                                                                                                                                                                                                                                                                               |
+| **Order**              | Niche ↔ Popular (reviews per year since release, so old games' back catalogue of reviews doesn't count as popularity) and Older ↔ Newer (by default clearly toward newer; toward Newer, games over eight years old also sink further, the most from sixteen). These move games up and down; they never remove any.                                                                                                                                                                                                                                                                                       |
+| **Filters**            | Minimum review score (applied from 50 reviews) and minimum reviews, release years, length (How Long to Beat's main story, from the top 150 results), ProtonDB minimum (Linux), **Finished games only**, Singleplayer only, Hide Early Access, **Downloadable only**. Filters that need a lookup say how many games were left out.                                                                                                                                                                                                                                                                          |
+| **Presets**            | **Moods** first: Something short, A long one, Hidden gems, Finished and polished, New this year, Co-op night (each sets a few filters, leaves Based on alone, and turns off again when clicked). Then your own: save the current settings under a name, switch, delete. **Reset** returns to the defaults and keeps your avoid list.                                                                                                                                                                                                                                                                       |
+| **Not interested (n)** | The games you hid, each with **Restore**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 The settings, presets, games played elsewhere and Browse's saved searches are
 one record in Hydra's database (`catalogueTaste`, version 2); Not interested
