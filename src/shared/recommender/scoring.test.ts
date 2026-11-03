@@ -74,15 +74,33 @@ describe("passesFilters", () => {
     assert.equal(passesFilters(deep, { ...avoid, avoidStrictness: 10 }), false);
   });
 
+  it("leaves idle games out while the idle rule is on, unless the person leans toward one", () => {
+    const idle = candidate("idle", [ACTION, 560542, INDIE]);
+    assert.equal(passesFilters(idle, options), false);
+    assert.equal(
+      passesFilters(idle, { ...options, idleDiscount: false }),
+      true
+    );
+    assert.equal(
+      passesFilters(idle, { ...options, leanTags: [IDLER], leanDepth: 5 }),
+      true
+    );
+  });
+
   it("takes the related tags with an avoided one unless told not to", () => {
     const related = candidate("a", [560542, ACTION]);
     assert.equal(
-      passesFilters(related, { ...options, avoidTags: [IDLER] }),
+      passesFilters(related, {
+        ...options,
+        idleDiscount: false,
+        avoidTags: [IDLER],
+      }),
       false
     );
     assert.equal(
       passesFilters(related, {
         ...options,
+        idleDiscount: false,
         avoidTags: [IDLER],
         avoidRelated: false,
       }),

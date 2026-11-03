@@ -79,6 +79,8 @@ interface LibraryData {
 
 interface Pool {
   at: number;
+  /** Downloadable only was asked for and there is no download source to ask. */
+  noSources: boolean;
   candidates: PoolCandidate[];
   /** Steam ids that came from a search limited to the person's download sources. */
   downloadable: Set<string> | null;
@@ -271,6 +273,15 @@ const buildPool = async (
     ),
   };
 
+  if (options.downloadableOnly && sourceFilter.fingerprints.length === 0) {
+    return {
+      at: Date.now(),
+      noSources: true,
+      candidates: [],
+      downloadable: null,
+    };
+  }
+
   const searchTags = [
     ...new Set([
       ...options.leanTags,
@@ -304,6 +315,7 @@ const buildPool = async (
 
   return {
     at: Date.now(),
+    noSources: false,
     candidates,
     downloadable: options.downloadableOnly ? searched : null,
   };
@@ -496,6 +508,7 @@ export const getRecommendations = async (
         results: [],
         because: [],
         leftOut,
+        noDownloadSources: false,
         failed: false,
       };
     }
@@ -504,6 +517,17 @@ export const getRecommendations = async (
       getPool(built, options, library),
       getNotInterestedKeys(),
     ]);
+
+    if (pool.noSources) {
+      return {
+        profile: built.profile,
+        results: [],
+        because: [],
+        leftOut,
+        noDownloadSources: true,
+        failed: false,
+      };
+    }
 
     let candidates = pool.candidates.filter(
       (candidate) => !notInterested.has(`steam:${candidate.appId}`)
@@ -537,6 +561,7 @@ export const getRecommendations = async (
       results: diversify(shortlist, RESULT_LIMIT).map(toRecommendation),
       because,
       leftOut,
+      noDownloadSources: false,
       failed: pool.candidates.length === 0,
     };
   } catch (error) {
@@ -546,6 +571,7 @@ export const getRecommendations = async (
       results: [],
       because: [],
       leftOut,
+      noDownloadSources: false,
       failed: true,
     };
   }

@@ -204,6 +204,8 @@ export interface RecommendationResponse {
     tierUnknown: number;
     lengthUnknown: number;
   };
+  /** Downloadable only is on but no download source is set up. */
+  noDownloadSources: boolean;
   /** Set when the library or Steam could not be read. */
   failed: boolean;
 }

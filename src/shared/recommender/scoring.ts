@@ -1,6 +1,7 @@
 import { isSecondaryRelease } from "../similar-games.js";
 import {
   expandTagFamilies,
+  IDLE_TAG_IDS,
   isSingleplayerGame,
   STEAM_GAME_TYPE,
   wilsonLowerBound,
@@ -15,6 +16,9 @@ import {
 } from "./vector.js";
 import type { PoolCandidate, Recommendation, TuneOptions } from "./types.js";
 
+const IDLE_TAGS: ReadonlySet<number> = new Set(IDLE_TAG_IDS);
+/** A game counts as idle when an idle tag is among its first five. */
+const IDLE_DEPTH = 5;
 const SIMILARITY_WEIGHT = 0.6;
 const BEHAVIOUR_WEIGHT = 0.25;
 const QUALITY_WEIGHT = 0.15;
@@ -69,6 +73,15 @@ export const passesFilters = (
       getAvoidedTags(options),
       options.avoidStrictness
     )
+  )
+    return false;
+
+  // Idle games are background play: while the rule is on they are not
+  // suggested, unless the person asked for them by leaning toward one.
+  if (
+    options.idleDiscount &&
+    !options.leanTags.some((id) => IDLE_TAGS.has(id)) &&
+    hasTagAmong(candidate.tags, IDLE_TAGS, IDLE_DEPTH)
   )
     return false;
 
