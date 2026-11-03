@@ -10,6 +10,7 @@ import {
   StoreGameChip,
   StoreGameMeta,
   StoreShelf,
+  type StoreGameFeedback,
 } from "@renderer/components";
 import { StoreGameCover } from "@renderer/components/store-game-card/store-game-cover";
 import { Link } from "@renderer/components/link/link";
@@ -48,7 +49,17 @@ import {
   isOwnedLibraryState,
   type CatalogueLibraryState,
 } from "./catalogue-library-state";
-import { getRecommendationReason, toCardGame } from "./recommendation-card";
+import {
+  getGroupName,
+  getRecommendationReason,
+  toCardGame,
+} from "./recommendation-card";
+import {
+  readCatalogueSnapshot,
+  writeCatalogueSnapshot,
+} from "./catalogue-snapshots";
+import { useRecordImpressions } from "./use-impressions";
+import { useSuggestionFeedback } from "./use-suggestion-feedback";
 import { useAvoidFilter } from "./use-avoid-filter";
 import { useFacetCounts } from "./use-facet-counts";
 import { useCatalogueRowDetails } from "./use-catalogue-row-details";
@@ -59,6 +70,11 @@ import { useTuneSettings } from "./use-tune-settings";
 import "./catalogue-front-page.scss";
 
 const SHELF_SIZE = 12;
+/** Taste groups that get a shelf of their own on Discover. */
+const GROUP_SHELVES = 3;
+/** Common catalogue tags that make Outside your usual. */
+const OUTSIDE_TAGS = 4;
+const OUTSIDE_COMMON_TAGS = 20;
 const SHELF_TAGS = 30;
 const CACHE_MS = 30 * 60 * 1000;
 const CHART_CACHE_MS = 5 * 60 * 1000;
@@ -71,7 +87,7 @@ interface FrontPageGame {
   objectId: string;
   title: string;
   libraryImageUrl: string | null;
-  /** Why the game is shown, e.g. "Because you played …". */
+  /** Why the game is shown: the tags it shares with your taste. */
   reason?: string;
   reasonTitle?: string;
   releaseYear?: number | null;
@@ -142,13 +158,25 @@ function useChartRows(chart: CatalogueChartId) {
     }
 
     let current = true;
+    const snapshotKey = `discover-chart:${chart}`;
+    if (!cached) {
+      void readCatalogueSnapshot<CatalogueChartRow[]>(snapshotKey).then(
+        (snapshot) => {
+          if (current && snapshot) setRows((rows) => rows ?? snapshot.data);
+        }
+      );
+    }
     window.electron
       .getCatalogueChart({ chart })
       .then((result) => {
-        if (!result.failed) {
+        if (!result.failed && result.rows.length > 0) {
           chartCache.set(chart, { at: Date.now(), rows: result.rows });
+          writeCatalogueSnapshot(snapshotKey, result.rows.slice(0, CANDIDATES));
         }
-        if (current) setRows(result.rows);
+        if (!current) return;
+        setRows((rows) =>
+          result.rows.length === 0 && rows?.length ? rows : result.rows
+        );
       })
       .catch((error) => {
         logger.error(`Failed to load the ${chart} chart`, error);
@@ -185,6 +213,7 @@ function FrontPageShelf({
   onNotInterested,
   libraryStates,
   facts,
+  feedbackFor,
 }: Readonly<{
   title: string;
   games: FrontPageGame[];
@@ -196,6 +225,8 @@ function FrontPageShelf({
   onNotInterested?: (game: FrontPageGame) => void;
   libraryStates: Map<string, CatalogueLibraryState>;
   facts: Map<string, StoreGameFacts>;
+  /** For suggestions: Not interested asks why, and More like this appears. */
+  feedbackFor?: (game: FrontPageGame) => StoreGameFeedback | undefined;
 }>) {
   if (!isLoading && games.length === 0) return null;
 
@@ -225,6 +256,7 @@ function FrontPageShelf({
             onNotInterested={
               onNotInterested ? () => onNotInterested(game) : undefined
             }
+            feedback={feedbackFor?.(game)}
           />
         );
       })}
@@ -448,6 +480,22 @@ export function CatalogueFrontPage({
     }
 
     let current = true;
+    const snapshotKey = `discover:${sourcesKey}`;
+    if (!cached) {
+      void readCatalogueSnapshot<{
+        featured: FrontPageGame[];
+        newReleases: FrontPageGame[];
+      }>(snapshotKey).then((snapshot) => {
+        if (!current || !snapshot) return;
+        setFeatured((games) =>
+          games.length > 0 ? games : snapshot.data.featured
+        );
+        setNewReleases((games) =>
+          games.length > 0 ? games : snapshot.data.newReleases
+        );
+        setIsLoading(false);
+      });
+    }
     const sources = orderBy(downloadSources, "createdAt", "desc");
     const downloadSourceIds = sources.map((source) => source.id);
     const fingerprints = sources.flatMap((source) =>
@@ -496,14 +544,20 @@ export function CatalogueFrontPage({
 
     Promise.all([loadFeatured.catch(() => []), loadNewReleases.catch(() => [])])
       .then(([featuredGames, newGames]) => {
-        if (featuredGames.length > 0 || newGames.length > 0) {
+        const found = featuredGames.length > 0 || newGames.length > 0;
+        if (found) {
           shelvesCache.set(sourcesKey, {
             at: Date.now(),
             featured: featuredGames,
             newReleases: newGames,
           });
+          writeCatalogueSnapshot(snapshotKey, {
+            featured: featuredGames,
+            newReleases: newGames,
+          });
         }
-        if (!current) return;
+        // A failed refresh keeps what was shown.
+        if (!current || !found) return;
         setFeatured(featuredGames);
         setNewReleases(newGames);
       })
@@ -523,7 +577,14 @@ export function CatalogueFrontPage({
 
   // Suggestions, and the two shelves that are the same suggestions seen through
   // a filter. They share what Hydra fetched, so only the re-ranking differs.
-  const options = tune.isLoaded ? tune.options : null;
+  // Discover always shows the library's groups mixed; For you keeps its own choice.
+  const options = useMemo<TuneOptions | null>(
+    () =>
+      tune.isLoaded
+        ? { ...tune.options, basedOn: "groups", group: "all" }
+        : null,
+    [tune.isLoaded, tune.options]
+  );
   const gemsOptions = useMemo<TuneOptions | null>(
     () =>
       options && {
@@ -543,12 +604,62 @@ export function CatalogueFrontPage({
   const gems = useRecommendations(gemsOptions, { debounce: false });
   const polished = useRecommendations(polishedOptions, { debounce: false });
 
+  const groups = useMemo(
+    () => forYou.response?.profile.groups ?? [],
+    [forYou.response]
+  );
+  const groupOptions = (index: number) =>
+    options && groups[index] ? { ...options, group: groups[index].id } : null;
+  const firstGroup = useRecommendations(
+    useMemo(() => groupOptions(0), [options, groups]), // eslint-disable-line react-hooks/exhaustive-deps
+    { debounce: false }
+  );
+  const secondGroup = useRecommendations(
+    useMemo(() => groupOptions(1), [options, groups]), // eslint-disable-line react-hooks/exhaustive-deps
+    { debounce: false }
+  );
+  const thirdGroup = useRecommendations(
+    useMemo(() => groupOptions(2), [options, groups]), // eslint-disable-line react-hooks/exhaustive-deps
+    { debounce: false }
+  );
+  const groupLists = [firstGroup, secondGroup, thirdGroup].slice(
+    0,
+    Math.min(GROUP_SHELVES, groups.length)
+  );
+
+  // Outside your usual: the catalogue's most common tags that none of your groups is about.
+  const outsideOptions = useMemo<TuneOptions | null>(() => {
+    if (!options || !facetCounts || groups.length === 0) return null;
+    const yours = new Set([
+      ...groups.flatMap((group) => group.tagIds),
+      ...(forYou.response?.profile.tags ?? []).map((tag) => tag.tagId),
+    ]);
+    const seedTags = Object.entries(facetCounts.tags)
+      .map(([id, count]) => ({ id: Number(id), count }))
+      .filter((tag) => !FEATURE_TAG_IDS.has(tag.id))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, OUTSIDE_COMMON_TAGS)
+      .filter((tag) => !yours.has(tag.id))
+      .slice(0, OUTSIDE_TAGS)
+      .map((tag) => tag.id);
+    return seedTags.length > 0
+      ? { ...options, basedOn: "tags", seedTags, minReviewPercent: 85 }
+      : null;
+  }, [options, facetCounts, groups, forYou.response]);
+  const outside = useRecommendations(outsideOptions, { debounce: false });
+
   const chartMostPlayed = useChartRows("most-played");
   const chartTrending = useChartRows("trending");
+  const chartAnticipated = useChartRows("most-anticipated");
 
+  const playedElsewhere = tune.settings.playedElsewhere;
   const isShown = (game: FrontPageGame) => {
     const key = catalogueKey(game);
-    return !notInterested.keys.has(key) && !ownedKeys.has(key);
+    return (
+      !notInterested.keys.has(key) &&
+      !ownedKeys.has(key) &&
+      !(game.shop === "steam" && playedElsewhere?.[game.objectId])
+    );
   };
 
   const recommendations = useMemo(
@@ -557,33 +668,44 @@ export function CatalogueFrontPage({
         isShown(toCardGame(recommendation))
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [forYou.response, notInterested.keys, ownedKeys]
+    [forYou.response, notInterested.keys, ownedKeys, playedElsewhere]
   );
+  const groupNames = new Map(
+    groups.map((group) => [group.id, getGroupName(group, tagLabels)])
+  );
+  const describeGroup = (groupId: string) => {
+    const name = groupNames.get(groupId);
+    return name ? t("fits_group", { name }) : undefined;
+  };
   const toRecommendationGames = (list: Recommendation[]) =>
     list
       .filter((recommendation) => isShown(toCardGame(recommendation)))
       .map((recommendation) =>
         fromRecommendation(
           recommendation,
-          getRecommendationReason(recommendation, tagLabels, (title) =>
-            t("because_you_played", { ns: "home", title })
-          )
+          getRecommendationReason(recommendation, tagLabels, describeGroup)
         )
       );
 
   const [hero, ...rest] = toRecommendationGames(recommendations);
-  const recommendedGames = rest.slice(0, SHELF_SIZE);
   const queueFromYou = rest.slice(SHELF_SIZE);
-  const becauseShelves = (forYou.response?.because ?? []).map((shelf) => ({
-    seed: shelf.seed,
-    games: toRecommendationGames(shelf.results)
-      .filter(
-        (game) =>
-          !recommendedGames.some((item) => item.objectId === game.objectId) &&
-          game.objectId !== hero?.objectId
-      )
+  const groupShelves = groupLists.map((list, index) => ({
+    group: groups[index],
+    isLoading: !list.response && list.isRefreshing,
+    isRefreshing: list.isRefreshing && !!list.response,
+    games: toRecommendationGames(list.response?.results ?? [])
+      .filter((game) => game.objectId !== hero?.objectId)
       .slice(0, SHELF_SIZE),
   }));
+  const outsideGames = toRecommendationGames(
+    outside.response?.results ?? []
+  ).slice(0, SHELF_SIZE);
+  useRecordImpressions([
+    ...(hero ? [hero.objectId] : []),
+    ...groupShelves.flatMap((shelf) =>
+      shelf.games.map((game) => game.objectId)
+    ),
+  ]);
   const gemsGames = toRecommendationGames(gems.response?.results ?? []).slice(
     0,
     SHELF_SIZE
@@ -595,7 +717,7 @@ export function CatalogueFrontPage({
   const hasNoLibrary =
     !!forYou.response &&
     !forYou.response.failed &&
-    forYou.response.profile.seedCount === 0;
+    forYou.response.profile.groups.length === 0;
 
   const { filter: hideAvoided, isAvoided } = useAvoidFilter([
     ...featured,
@@ -624,6 +746,10 @@ export function CatalogueFrontPage({
     });
 
   const openForYou = () => dispatch(setDiscoverView("for-you"));
+  const openGroup = (groupId: string) => {
+    tune.setOptions({ basedOn: "groups", group: groupId });
+    openForYou();
+  };
   const openForYouWith = (changes: Partial<TuneOptions>) => {
     tune.setOptions(changes);
     openForYou();
@@ -729,11 +855,13 @@ export function CatalogueFrontPage({
   const latestGames = ankerGamesRow(ankerGames?.latest);
   const ankerTrendingGames = ankerGamesRow(ankerGames?.trending);
   const newGames = shelfGames(newReleases);
+  const anticipatedGames = chartGames(chartAnticipated);
 
   const facts = useCatalogueRowDetails([
     ...(hero ? [hero] : []),
-    ...recommendedGames,
-    ...becauseShelves.flatMap((shelf) => shelf.games),
+    ...groupShelves.flatMap((shelf) => shelf.games),
+    ...anticipatedGames,
+    ...outsideGames,
     ...mostPlayedGames,
     ...trendingGames,
     ...featuredGames,
@@ -744,7 +872,12 @@ export function CatalogueFrontPage({
     ...polishedGames,
   ]);
 
+  const suggestion = useSuggestionFeedback(facts);
   const shelfProps = { libraryStates, facts };
+  const suggestionProps = {
+    ...shelfProps,
+    feedbackFor: suggestion.feedbackFor,
+  };
   const isLoadingForYou = !forYou.response && forYou.isRefreshing;
 
   let forYouGroup: ReactNode;
@@ -765,8 +898,45 @@ export function CatalogueFrontPage({
       </div>
     );
   } else {
+    const gameCount = groups.reduce(
+      (sum, group) => sum + group.games.length,
+      0
+    );
     forYouGroup = (
       <>
+        <section className="catalogue-front-page__recommender">
+          <div className="catalogue-front-page__recommender-text">
+            <h2>{t("recommended_for_you")}</h2>
+            <p>
+              {groups.length > 0
+                ? t("recommender_summary", {
+                    count: gameCount,
+                    formattedCount: formatNumber(gameCount),
+                    groups: groups.length,
+                  })
+                : t("recommender_loading")}
+            </p>
+            {groups.length > 0 && (
+              <ul className="catalogue-front-page__group-chips">
+                {groups.map((group) => (
+                  <li key={group.id}>
+                    <button
+                      type="button"
+                      className="catalogue-front-page__group-chip"
+                      onClick={() => openGroup(group.id)}
+                    >
+                      {groupNames.get(group.id)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <Button theme="primary" onClick={openForYou}>
+            {t("open_recommendations")}
+            <ChevronRightIcon size={16} />
+          </Button>
+        </section>
         {hero && (
           <FeaturePanel
             key={catalogueKey(hero)}
@@ -777,29 +947,24 @@ export function CatalogueFrontPage({
             onNotInterested={() => hide(hero)}
           />
         )}
-        <FrontPageShelf
-          title={t("recommended_for_you")}
-          games={recommendedGames}
-          isLoading={isLoadingForYou}
-          isRefreshing={forYou.isRefreshing && !isLoadingForYou}
-          onSeeAll={openForYou}
-          onNotInterested={hide}
-          {...shelfProps}
-        />
-        {becauseShelves.map((shelf) => (
+        {isLoadingForYou && (
           <FrontPageShelf
-            key={shelf.seed.key}
-            title={t("because_you_played_shelf", { title: shelf.seed.title })}
-            games={shelf.games}
-            isLoading={false}
-            onSeeAll={() =>
-              openForYouWith({
-                basedOn: "picked",
-                pickedGames: [shelf.seed.key],
-              })
-            }
-            onNotInterested={hide}
+            title={t("recommended_for_you")}
+            games={[]}
+            isLoading
             {...shelfProps}
+          />
+        )}
+        {groupShelves.map((shelf) => (
+          <FrontPageShelf
+            key={shelf.group.id}
+            title={groupNames.get(shelf.group.id) ?? t("recommended_for_you")}
+            games={shelf.games}
+            isLoading={shelf.isLoading}
+            isRefreshing={shelf.isRefreshing}
+            onSeeAll={() => openGroup(shelf.group.id)}
+            onNotInterested={hide}
+            {...suggestionProps}
           />
         ))}
       </>
@@ -808,6 +973,7 @@ export function CatalogueFrontPage({
 
   return (
     <div className="catalogue-front-page">
+      {suggestion.dialog}
       <GroupHeading>{t("group_for_you")}</GroupHeading>
       {forYouGroup}
 
@@ -846,6 +1012,14 @@ export function CatalogueFrontPage({
         {...shelfProps}
       />
       <FrontPageShelf
+        title={t("chart_most-anticipated")}
+        games={anticipatedGames}
+        isLoading={chartAnticipated === null}
+        onSeeAll={() => openChart("most-anticipated")}
+        onNotInterested={hide}
+        {...shelfProps}
+      />
+      <FrontPageShelf
         title={t("ankergames_new")}
         games={latestGames}
         isLoading={ankerGamesLoading(ankerGames?.latest)}
@@ -861,11 +1035,6 @@ export function CatalogueFrontPage({
       />
 
       <GroupHeading>{t("group_explore")}</GroupHeading>
-      <DiscoveryQueue
-        queue={queue}
-        onAdded={updateLibrary}
-        onNotInterested={hide}
-      />
       {!hasNoLibrary && (
         <>
           <FrontPageShelf
@@ -881,7 +1050,7 @@ export function CatalogueFrontPage({
               })
             }
             onNotInterested={hide}
-            {...shelfProps}
+            {...suggestionProps}
           />
           <FrontPageShelf
             title={t("finished_polished")}
@@ -891,10 +1060,31 @@ export function CatalogueFrontPage({
               openForYouWith({ finishedOnly: true, minReviewPercent: 85 })
             }
             onNotInterested={hide}
-            {...shelfProps}
+            {...suggestionProps}
           />
+          {outsideOptions && (
+            <FrontPageShelf
+              title={t("outside_your_usual")}
+              games={outsideGames}
+              isLoading={!outside.response && outside.isRefreshing}
+              onSeeAll={() =>
+                openForYouWith({
+                  basedOn: "tags",
+                  seedTags: outsideOptions.seedTags,
+                  minReviewPercent: 85,
+                })
+              }
+              onNotInterested={hide}
+              {...suggestionProps}
+            />
+          )}
         </>
       )}
+      <DiscoveryQueue
+        queue={queue}
+        onAdded={updateLibrary}
+        onNotInterested={hide}
+      />
       {tagList}
     </div>
   );
