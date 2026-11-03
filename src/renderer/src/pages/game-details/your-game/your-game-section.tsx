@@ -22,7 +22,7 @@ import { gameDetailsContext } from "@renderer/context";
 import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
 import { useDate, useGameCard, useLibrary, useToast } from "@renderer/hooks";
 import { PlayStatusMenu } from "../hero/play-status-menu";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import { useGameToggles } from "../use-game-toggles";
 import { GameNotesField } from "@renderer/pages/library/game-notes-field";
 import { libraryTabIncludes } from "@renderer/pages/library/library-filters";

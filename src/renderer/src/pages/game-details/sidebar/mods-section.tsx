@@ -7,7 +7,7 @@ import { buildGameModsPath } from "@renderer/helpers";
 import { logger } from "@renderer/logger";
 import type { GameMods } from "@types";
 
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 
 /** A summary of the game's mods; the list itself lives on the Mods page. */
 export function ModsSection() {

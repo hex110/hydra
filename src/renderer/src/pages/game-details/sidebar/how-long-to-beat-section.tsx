@@ -1,7 +1,7 @@
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import { useTranslation } from "react-i18next";
 import type { HowLongToBeatCategory } from "@types";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import "./sidebar.scss";
 
 const durationTranslation: Record<string, string> = {

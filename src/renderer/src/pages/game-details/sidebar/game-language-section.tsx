@@ -2,7 +2,7 @@ import { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckIcon, XIcon } from "@primer/octicons-react";
 import { gameDetailsContext } from "@renderer/context/game-details/game-details.context";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import "./game-language-section.scss";
 
 export function GameLanguageSection() {

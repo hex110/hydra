@@ -8,7 +8,7 @@ import {
 } from "@shared";
 
 import { gameDetailsContext } from "@renderer/context";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import XboxLogo from "@renderer/assets/Xbox Logo.svg?react";
 import PlayStationLogo from "@renderer/assets/PlayStation Logo Wordmark.svg?react";
 

@@ -8,7 +8,7 @@ import { ScreenshotLightbox } from "@renderer/components/screenshots";
 import { useFeature } from "@renderer/hooks";
 import { createScreenshotWriteBus } from "@shared";
 
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import { GameScreenshotThumbnail } from "./game-screenshot-thumbnail";
 import { GameScreenshotsHotkeyTip } from "./game-screenshots-hotkey-tip";
 import {

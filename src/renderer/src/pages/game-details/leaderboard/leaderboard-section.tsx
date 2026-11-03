@@ -13,7 +13,7 @@ import { Button } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
 import { useFeature } from "@renderer/hooks";
 import { AuthPage } from "@shared";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import {
   buildMetricsRequest,
   normalizeMetricDefinitions,

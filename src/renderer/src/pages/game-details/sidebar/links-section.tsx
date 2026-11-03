@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { LinkExternalIcon } from "@primer/octicons-react";
 import { Link } from "@renderer/components/link/link";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import "./links-section.scss";
 
 export interface LinksSectionProps {

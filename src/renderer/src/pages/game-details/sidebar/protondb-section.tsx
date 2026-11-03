@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import type { ProtonDBData } from "@types";
 import ProtonDBLogo from "@renderer/assets/protondb-logo.svg?url";
 import SteamDeckLogo from "@renderer/assets/steam-deck-logo.svg?url";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import "./sidebar.scss";
 
 const protonTierTranslation: Record<string, string> = {

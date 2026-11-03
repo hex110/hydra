@@ -5,7 +5,7 @@ import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import type { GameReception } from "@shared";
 import { Link } from "@renderer/components/link/link";
 import { useFormat } from "@renderer/hooks";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import "./reception-section.scss";
 
 export interface ReceptionSectionProps {

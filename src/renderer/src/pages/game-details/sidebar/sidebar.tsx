@@ -18,7 +18,7 @@ import { ReceptionSection } from "./reception-section";
 import { ModsSection } from "./mods-section";
 import { YourGameSection } from "../your-game/your-game-section";
 import { getGenreNames, getOfficialStoreMembers } from "@shared";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import { buildGameAchievementPath } from "@renderer/helpers";
 import { RetroAchievementsConnectBanner } from "@renderer/components/retro-achievements-connect-banner/retro-achievements-connect-banner";
 import "./sidebar.scss";

@@ -7,7 +7,7 @@ import {
   EMPTY_LIBRARY_FILTERS,
   LIBRARY_FILTERS_STORAGE_KEY,
 } from "@renderer/pages/library/library-filters";
-import { SidebarSection } from "../sidebar-section/sidebar-section";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
 import "./genres-section.scss";
 
 interface GenresSectionProps {
