@@ -1,4 +1,9 @@
-import type { StoreItem, SteamChartsApp, SteamChartsTopRow } from "@shared";
+import type {
+  StoreItem,
+  SteamChartsApp,
+  SteamChartsTopRow,
+  TuneSettings,
+} from "@shared";
 
 import { db } from "../level";
 import { levelKeys } from "./keys";
@@ -35,3 +40,21 @@ export const steamChartsCacheSublevel = db.sublevel<
   string,
   { at: number; data: SteamChartsTopRow[] | SteamChartsApp }
 >(levelKeys.steamChartsCache, { valueEncoding: "json" });
+
+/** When the public build of a game last changed (unix ms), keyed by app id; null when Steam has no build for it. */
+export const steamBuildDatesSublevel = db.sublevel<
+  string,
+  { at: number; builtAt: number | null }
+>(levelKeys.steamBuildDates, { valueEncoding: "json" });
+
+/** The recommender's Tune settings and presets, in one record under `settings`. */
+export const catalogueTasteSublevel = db.sublevel<string, TuneSettings>(
+  levelKeys.catalogueTaste,
+  { valueEncoding: "json" }
+);
+
+/** Games the person does not want suggested, keyed by `shop:objectId`. */
+export const catalogueNotInterestedSublevel = db.sublevel<
+  string,
+  { at: number; title: string }
+>(levelKeys.catalogueNotInterested, { valueEncoding: "json" });

@@ -137,6 +137,10 @@ import type {
 import type {
   AuthPage,
   CatalogueChartRequest,
+  NotInterestedGame,
+  RecommendationResponse,
+  TuneOptions,
+  TuneSettings,
   CatalogueChartResult,
   Downloader,
 } from "@shared";
@@ -2830,6 +2834,26 @@ contextBridge.exposeInMainWorld("electron", {
       "getCatalogueChart",
       request
     ) as Promise<CatalogueChartResult>,
+  getRecommendations: (options: Partial<TuneOptions>) =>
+    ipcRenderer.invoke(
+      "getRecommendations",
+      options
+    ) as Promise<RecommendationResponse>,
+  getTuneSettings: () =>
+    ipcRenderer.invoke("getTuneSettings") as Promise<TuneSettings>,
+  setTuneSettings: (settings: TuneSettings) =>
+    ipcRenderer.invoke("setTuneSettings", settings) as Promise<void>,
+  getNotInterested: () =>
+    ipcRenderer.invoke("getNotInterested") as Promise<NotInterestedGame[]>,
+  setNotInterested: (
+    game: { shop: string; objectId: string; title: string },
+    notInterested: boolean
+  ) =>
+    ipcRenderer.invoke(
+      "setNotInterested",
+      game,
+      notInterested
+    ) as Promise<void>,
   getProtonDbTiers: (appIds: string[]) =>
     ipcRenderer.invoke("getProtonDbTiers", appIds) as Promise<
       Record<string, string | null>

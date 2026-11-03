@@ -21,6 +21,9 @@ export const levelKeys = {
   chartSnapshots: "chartSnapshots",
   steamSpyCache: "steamSpyCache",
   steamChartsCache: "steamChartsCache",
+  steamBuildDates: "steamBuildDates",
+  catalogueTaste: "catalogueTaste",
+  catalogueNotInterested: "catalogueNotInterested",
   gameShopCacheItem: (shop: GameShop, objectId: string, language: string) =>
     `${shop}:${objectId}:${language}`,
   downloads: "downloads",

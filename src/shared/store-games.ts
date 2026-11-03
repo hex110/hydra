@@ -31,14 +31,26 @@ export const MULTIPLAYER_TAG_IDS = new Set([
 
 /**
  * Tags that mean nearly the same thing, so avoiding or leaning on one takes
- * the others with it. Ids come from Steam's tag list (`populartags`); Horror
- * and Souls-like families still need their ids looked up.
+ * the others with it. Ids come from Steam's tag list (`populartags`). Souls-like
+ * has no near neighbours there, so it is not a family.
  */
+export const IDLE_TAG_IDS: readonly number[] = [615955, 560542, 379975]; // Idler, Incremental, Clicker
+
 export const TAG_FAMILIES: readonly (readonly number[])[] = [
-  [615955, 560542, 379975], // Idler, Incremental, Clicker
+  IDLE_TAG_IDS,
   [...MULTIPLAYER_TAG_IDS],
   [1716, 3959, 42804, 454187, 1091588], // Roguelike, Roguelite, Action, Traditional, Deckbuilder
+  [1667, 1721, 3978], // Horror, Psychological Horror, Survival Horror
 ];
+
+/**
+ * Tags that describe the format of a game, not what it is like, so they say
+ * nothing about taste: Singleplayer, Multiplayer, 2D, 3D, Early Access, Free
+ * to Play, Controller, Great Soundtrack.
+ */
+export const FEATURE_TAG_IDS: ReadonlySet<number> = new Set([
+  4182, 3859, 3871, 4191, 493, 113, 7481, 1756,
+]);
 
 /** The tags and every tag of the families they belong to. */
 export const expandTagFamilies = (tagIds: number[]): number[] => {

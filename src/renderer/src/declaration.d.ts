@@ -12,6 +12,10 @@ import type {
   AuthPage,
   StoreGameFacts,
   CatalogueChartRequest,
+  NotInterestedGame,
+  RecommendationResponse,
+  TuneOptions,
+  TuneSettings,
   CatalogueChartResult,
   Downloader,
   GameNewsItem,
@@ -2099,6 +2103,16 @@ declare global {
     getCatalogueChart: (
       request: CatalogueChartRequest
     ) => Promise<CatalogueChartResult>;
+    getRecommendations: (
+      options: Partial<TuneOptions>
+    ) => Promise<RecommendationResponse>;
+    getTuneSettings: () => Promise<TuneSettings>;
+    setTuneSettings: (settings: TuneSettings) => Promise<void>;
+    getNotInterested: () => Promise<NotInterestedGame[]>;
+    setNotInterested: (
+      game: { shop: string; objectId: string; title: string },
+      notInterested: boolean
+    ) => Promise<void>;
     getProtonDbTiers: (
       appIds: string[]
     ) => Promise<Record<string, string | null>>;
