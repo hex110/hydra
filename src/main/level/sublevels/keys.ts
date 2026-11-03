@@ -17,6 +17,9 @@ export const levelKeys = {
   steamWishlist: "steamWishlist",
   integrationSyncTimes: "integrationSyncTimes",
   localCollections: "localCollections",
+  steamStoreItems: "steamStoreItems",
+  chartSnapshots: "chartSnapshots",
+  steamSpyCache: "steamSpyCache",
   gameShopCacheItem: (shop: GameShop, objectId: string, language: string) =>
     `${shop}:${objectId}:${language}`,
   downloads: "downloads",

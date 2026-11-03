@@ -33,3 +33,4 @@ export * from "./cloud-save-retroarch-bindings";
 export * from "./cloud-save-pending-deletions";
 export * from "./cloud-save-pending-uploads";
 export * from "./save-sync-status";
+export * from "./catalogue-data-caches";

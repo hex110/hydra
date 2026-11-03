@@ -11,6 +11,8 @@ import type {
   NexusModSort,
   AuthPage,
   StoreGameFacts,
+  CatalogueChartRequest,
+  CatalogueChartResult,
   Downloader,
   GameNewsItem,
   GameReception,
@@ -2094,6 +2096,12 @@ declare global {
         releaseYear?: number | null;
       }[]
     ) => Promise<Record<string, StoreGameFacts>>;
+    getCatalogueChart: (
+      request: CatalogueChartRequest
+    ) => Promise<CatalogueChartResult>;
+    getProtonDbTiers: (
+      appIds: string[]
+    ) => Promise<Record<string, string | null>>;
     openFriendProfileInMainWindow: (userId: string) => Promise<void>;
     openAddFriendModalInMainWindow: () => Promise<void>;
     showToastInMainWindow: (toast: MainWindowToast) => Promise<boolean>;

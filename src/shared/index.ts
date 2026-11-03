@@ -434,3 +434,6 @@ export * from "./in-game-notices";
 export * from "./play-dates";
 export * from "./save-sync-summary";
 export * from "./fomod";
+export * from "./store-games";
+export * from "./steam-charts";
+export * from "./catalogue-charts";

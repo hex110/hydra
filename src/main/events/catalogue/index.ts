@@ -11,3 +11,4 @@ import "./get-steam-similar-games";
 import "./get-game-steam-tags";
 import "./get-steam-popular-tags";
 import "./get-catalogue-row-details";
+import "./get-catalogue-chart";

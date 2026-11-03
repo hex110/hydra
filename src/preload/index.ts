@@ -134,7 +134,12 @@ import type {
   LocalScreenshotUploadOptions,
   ScreenshotUploadProgress,
 } from "@types";
-import type { AuthPage, Downloader } from "@shared";
+import type {
+  AuthPage,
+  CatalogueChartRequest,
+  CatalogueChartResult,
+  Downloader,
+} from "@shared";
 import type { AxiosProgressEvent } from "axios";
 
 const fileExplorerApi = {
@@ -2820,6 +2825,15 @@ contextBridge.exposeInMainWorld("electron", {
       releaseYear?: number | null;
     }[]
   ) => ipcRenderer.invoke("getCatalogueRowDetails", games),
+  getCatalogueChart: (request: CatalogueChartRequest) =>
+    ipcRenderer.invoke(
+      "getCatalogueChart",
+      request
+    ) as Promise<CatalogueChartResult>,
+  getProtonDbTiers: (appIds: string[]) =>
+    ipcRenderer.invoke("getProtonDbTiers", appIds) as Promise<
+      Record<string, string | null>
+    >,
   getFriendsSnapshot: () =>
     ipcRenderer.invoke("getFriendsSnapshot") as Promise<FriendsSnapshot | null>,
   openFriendProfileInMainWindow: (userId: string) =>
