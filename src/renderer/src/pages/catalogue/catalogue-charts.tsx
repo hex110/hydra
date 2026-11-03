@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TriangleDownIcon, TriangleUpIcon } from "@primer/octicons-react";
 import cn from "classnames";
+import { omit } from "lodash-es";
 import {
   CATALOGUE_CHART_IDS,
   CHART_PLAYERS_MEASURE,
@@ -34,6 +35,7 @@ import {
   type CatalogueLibraryState,
 } from "./catalogue-library-state";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
+import { useTuneSettings } from "./use-tune-settings";
 import "./catalogue-charts.scss";
 
 const CHART_STORAGE_KEY = "catalogue-chart";
@@ -41,6 +43,7 @@ const FILTERS_STORAGE_KEY = "catalogue-chart-filters";
 const RESULT_CACHE_MS = 2 * 60 * 1000;
 const DEFAULT_BEST_RATED_MIN_REVIEWS = 1000;
 const TABLE_TAGS = 3;
+const AVOID_KEYS = ["avoidTags", "avoidRelated"];
 const SKELETON_ROWS = 12;
 
 const DEFAULT_FILTERS: CatalogueChartFilters = {
@@ -94,21 +97,43 @@ export function CatalogueCharts({
 
   const [chart, setChart] = useState(readChart);
   const [month, setMonth] = useState<number | undefined>();
-  const [filters, setFilters] = useState<CatalogueChartFilters>(() => ({
-    ...DEFAULT_FILTERS,
-    ...readStored<Partial<CatalogueChartFilters>>(FILTERS_STORAGE_KEY, {}),
-  }));
+  const [chartFilters, setChartFilters] = useState<CatalogueChartFilters>(
+    () => ({
+      ...DEFAULT_FILTERS,
+      ...readStored<Partial<CatalogueChartFilters>>(FILTERS_STORAGE_KEY, {}),
+    })
+  );
+  // The avoid list is one list for every surface that suggests games.
+  const tune = useTuneSettings();
+  const filters = useMemo(
+    () => ({
+      ...chartFilters,
+      avoidTags: tune.options.avoidTags,
+      avoidRelated: tune.options.avoidRelated,
+    }),
+    [chartFilters, tune.options.avoidTags, tune.options.avoidRelated]
+  );
   const [result, setResult] = useState<CatalogueChartResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tiers, setTiers] = useState<Record<string, string | null>>({});
   const requestRef = useRef(0);
 
-  const updateFilters = (changes: Partial<CatalogueChartFilters>) =>
-    setFilters((current) => {
-      const next = { ...current, ...changes };
+  const updateFilters = (changes: Partial<CatalogueChartFilters>) => {
+    const { avoidTags, avoidRelated, ...own } = changes;
+    if (avoidTags !== undefined || avoidRelated !== undefined) {
+      tune.setOptions({
+        ...(avoidTags !== undefined && { avoidTags }),
+        ...(avoidRelated !== undefined && { avoidRelated }),
+      });
+    }
+    if (Object.keys(own).length === 0) return;
+
+    setChartFilters((current) => {
+      const next = { ...current, ...own };
       writeStored(FILTERS_STORAGE_KEY, next);
       return next;
     });
+  };
 
   const selectChart = (next: CatalogueChartId) => {
     // The old chart's rows would sit under the new chart's headings.
@@ -361,8 +386,8 @@ export function CatalogueCharts({
   );
 
   const filtersChanged =
-    JSON.stringify({ ...filters, minReviews: 0 }) !==
-    JSON.stringify({ ...DEFAULT_FILTERS, minReviews: 0 });
+    JSON.stringify(omit(filters, ["minReviews", ...AVOID_KEYS])) !==
+    JSON.stringify(omit(DEFAULT_FILTERS, ["minReviews", ...AVOID_KEYS]));
 
   const failure = result?.failed ? t(`chart_failed_${result.failed}`) : null;
 

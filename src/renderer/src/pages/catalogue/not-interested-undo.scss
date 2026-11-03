@@ -1,0 +1,26 @@
+@use "../../scss/globals.scss";
+
+.not-interested-undo {
+  position: fixed;
+  bottom: calc(globals.$spacing-unit * 3);
+  left: 50%;
+  z-index: globals.$toast-z-index;
+  display: flex;
+  align-items: center;
+  gap: calc(globals.$spacing-unit * 2);
+  max-width: min(520px, 90vw);
+  padding: globals.$spacing-unit calc(globals.$spacing-unit * 2);
+  border: 1px solid globals.$border-color;
+  border-radius: 8px;
+  background-color: globals.$dark-background-color;
+  color: globals.$muted-color;
+  font-size: globals.$hint-font-size;
+  transform: translateX(-50%);
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

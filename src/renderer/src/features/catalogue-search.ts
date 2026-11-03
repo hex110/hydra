@@ -7,6 +7,8 @@ import type { CatalogueSearchPayload } from "@types";
 
 export type CatalogueMode = "modern" | "classics";
 export type CatalogueTab = "discover" | "charts" | "browse";
+/** Discover shows its shelves, or opens a shelf as a page of its own. */
+export type DiscoverView = "shelves" | "for-you";
 
 export interface CatalogueSearchState {
   filters: CatalogueSearchPayload;
@@ -15,6 +17,7 @@ export interface CatalogueSearchState {
   steamGenres: Record<string, string[]>;
   mode: CatalogueMode;
   tab: CatalogueTab;
+  discoverView: DiscoverView;
 }
 
 const initialState: CatalogueSearchState = {
@@ -36,6 +39,7 @@ const initialState: CatalogueSearchState = {
   page: 1,
   mode: "modern",
   tab: "discover",
+  discoverView: "shelves",
 };
 
 const SORT_KEYS = ["sortBy", "sortOrder"] as const;
@@ -58,6 +62,10 @@ export const catalogueSearchSlice = createSlice({
     },
     setCatalogueTab: (state, action: PayloadAction<CatalogueTab>) => {
       state.tab = action.payload;
+    },
+    setDiscoverView: (state, action: PayloadAction<DiscoverView>) => {
+      state.discoverView = action.payload;
+      if (action.payload === "for-you") state.tab = "discover";
     },
     clearFilters: (state) => {
       state.filters = initialState.filters;
@@ -107,4 +115,5 @@ export const {
   setGenres,
   setMode,
   setCatalogueTab,
+  setDiscoverView,
 } = catalogueSearchSlice.actions;

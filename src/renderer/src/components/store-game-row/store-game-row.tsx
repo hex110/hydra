@@ -17,6 +17,8 @@ export interface StoreGameRowProps {
   facts?: StoreGameFacts;
   libraryState?: CatalogueLibraryState;
   reason?: string;
+  /** Longer words for the reason, shown on hover. */
+  reasonTitle?: string;
   badge?: ReactNode;
   sources?: string[];
   canDownload?: boolean;
@@ -29,6 +31,7 @@ export function StoreGameRow({
   facts,
   libraryState,
   reason,
+  reasonTitle,
   badge,
   sources,
   canDownload,
@@ -59,7 +62,11 @@ export function StoreGameRow({
         >
           {game.title}
         </Link>
-        {reason && <span className="store-game-row__reason">{reason}</span>}
+        {reason && (
+          <span className="store-game-row__reason" title={reasonTitle}>
+            {reason}
+          </span>
+        )}
         <StoreGameMeta
           facts={facts}
           pending={!facts && game.shop !== "custom"}

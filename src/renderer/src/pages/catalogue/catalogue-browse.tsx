@@ -54,11 +54,10 @@ import { ClassicsIcon } from "@renderer/pages/library/category-filter";
 import {
   appendCatalogueResults,
   CATALOGUE_PAGE_SIZE,
-  CATALOGUE_VIEW_STORAGE_KEY,
   catalogueResultsCache,
   getCatalogueQueryKey,
-  type CatalogueView,
 } from "./catalogue-results-cache";
+import { useCatalogueView } from "./use-catalogue-view";
 import { useCatalogueRowDetails } from "./use-catalogue-row-details";
 import {
   catalogueKey,
@@ -202,23 +201,7 @@ export function CatalogueBrowse({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const pendingScrollRef = useRef<number | null>(null);
 
-  const [view, setView] = useState<CatalogueView>(() => {
-    try {
-      return localStorage.getItem(CATALOGUE_VIEW_STORAGE_KEY) === "grid"
-        ? "grid"
-        : "list";
-    } catch {
-      return "list";
-    }
-  });
-  const handleViewChange = (next: CatalogueView) => {
-    setView(next);
-    try {
-      localStorage.setItem(CATALOGUE_VIEW_STORAGE_KEY, next);
-    } catch {
-      /* not persisted */
-    }
-  };
+  const [view, handleViewChange] = useCatalogueView();
 
   // The search API can't exclude games, so owned ones drop out of the page.
   const visibleResults = useMemo(

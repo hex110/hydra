@@ -61,3 +61,4 @@ export * from "./tab-strip/tab-strip";
 export * from "./sidebar-section/sidebar-section";
 export * from "./tag-picker/tag-picker";
 export * from "./store-game-table/store-game-table";
+export * from "./range-slider/range-slider";

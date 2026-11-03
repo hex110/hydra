@@ -6,6 +6,8 @@ export interface SidebarSectionProps {
   title: string;
   subtitle?: string;
   subtitleHref?: string;
+  /** Starts folded away when false; open by default. */
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }
 
@@ -13,10 +15,11 @@ export function SidebarSection({
   title,
   subtitle,
   subtitleHref,
+  defaultOpen = true,
   children,
 }: SidebarSectionProps) {
   const inner = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [contentHeight, setContentHeight] = useState(0);
 
   // Follows the content as it reflows (window resize, wrapping text, async data).

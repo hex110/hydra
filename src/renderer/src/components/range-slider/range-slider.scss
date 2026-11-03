@@ -1,0 +1,48 @@
+@use "../../scss/globals.scss";
+
+.range-slider {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit / 2);
+
+  &__input {
+    width: 100%;
+    height: calc(globals.$spacing-unit * 2);
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+
+    &::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(
+        to right,
+        globals.$brand-teal var(--range-slider-fill),
+        globals.$chip-background-color var(--range-slider-fill)
+      );
+    }
+
+    &::-webkit-slider-thumb {
+      width: calc(globals.$spacing-unit * 2);
+      height: calc(globals.$spacing-unit * 2);
+      margin-top: calc(globals.$spacing-unit * -0.75);
+      border: 0;
+      border-radius: 50%;
+      background-color: globals.$muted-color;
+      appearance: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid globals.$brand-teal;
+      outline-offset: 2px;
+    }
+  }
+
+  &__ends {
+    display: flex;
+    justify-content: space-between;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+}

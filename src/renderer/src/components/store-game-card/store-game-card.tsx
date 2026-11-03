@@ -26,6 +26,8 @@ export interface StoreGameCardProps {
   libraryState?: CatalogueLibraryState;
   /** Why the game is shown, e.g. "Because you played Hades". */
   reason?: string;
+  /** Longer words for the reason, shown on hover. */
+  reasonTitle?: string;
   /** A chip of its own, e.g. an AnkerGames version or a chart rank. */
   badge?: ReactNode;
   /** Names of the download sources that have it. */
@@ -41,6 +43,7 @@ export function StoreGameCard({
   facts,
   libraryState,
   reason,
+  reasonTitle,
   badge,
   sources,
   canDownload,
@@ -79,7 +82,11 @@ export function StoreGameCard({
         >
           {game.title}
         </Link>
-        {reason && <span className="store-game-card__reason">{reason}</span>}
+        {reason && (
+          <span className="store-game-card__reason" title={reasonTitle}>
+            {reason}
+          </span>
+        )}
         <StoreGameMeta
           facts={facts}
           pending={!facts && game.shop !== "custom"}

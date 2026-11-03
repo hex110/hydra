@@ -9,7 +9,11 @@ import {
 
 import { CheckboxField } from "@renderer/components/checkbox-field/checkbox-field";
 import { TabStrip } from "@renderer/components/tab-strip/tab-strip";
-import { setCatalogueTab, type CatalogueTab } from "@renderer/features";
+import {
+  setCatalogueTab,
+  setDiscoverView,
+  type CatalogueTab,
+} from "@renderer/features";
 import { useAppDispatch, useAppSelector, useLibrary } from "@renderer/hooks";
 import { useCatalogue } from "@renderer/hooks/use-catalogue";
 import { isGameReadyToPlay } from "@renderer/helpers";
@@ -21,7 +25,9 @@ import {
 } from "./catalogue-library-state";
 import { CatalogueBrowse } from "./catalogue-browse";
 import { CatalogueCharts } from "./catalogue-charts";
+import { CatalogueForYou } from "./catalogue-for-you";
 import { CatalogueFrontPage } from "./catalogue-front-page";
+import { NotInterestedUndo } from "./not-interested-undo";
 import { catalogueTabScroll } from "./catalogue-tab-scroll";
 import "./catalogue.scss";
 
@@ -46,6 +52,9 @@ export default function Catalogue() {
   const { t } = useTranslation("catalogue");
   const dispatch = useAppDispatch();
   const tab = useAppSelector((state) => state.catalogueSearch.tab);
+  const discoverView = useAppSelector(
+    (state) => state.catalogueSearch.discoverView
+  );
   const { downloadSources } = useCatalogue();
   const { library } = useLibrary();
   const pageRef = useRef<HTMLDivElement>(null);
@@ -125,7 +134,13 @@ export default function Catalogue() {
       </div>
 
       <div className="catalogue__panel">
-        {tab === "discover" && (
+        {tab === "discover" && discoverView === "for-you" && (
+          <CatalogueForYou
+            libraryStates={libraryStates}
+            onBack={() => dispatch(setDiscoverView("shelves"))}
+          />
+        )}
+        {tab === "discover" && discoverView === "shelves" && (
           <CatalogueFrontPage
             downloadSources={downloadSources}
             libraryStates={libraryStates}
@@ -146,6 +161,7 @@ export default function Catalogue() {
           />
         )}
       </div>
+      <NotInterestedUndo />
     </div>
   );
 }
