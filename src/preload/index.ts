@@ -2876,6 +2876,13 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getProtonDbTiers", appIds) as Promise<
       Record<string, string | null>
     >,
+  getCatalogueSnapshot: (key: string) =>
+    ipcRenderer.invoke("getCatalogueSnapshot", key) as Promise<{
+      at: number;
+      data: unknown;
+    } | null>,
+  setCatalogueSnapshot: (key: string, data: unknown) =>
+    ipcRenderer.invoke("setCatalogueSnapshot", key, data) as Promise<void>,
   getFriendsSnapshot: () =>
     ipcRenderer.invoke("getFriendsSnapshot") as Promise<FriendsSnapshot | null>,
   openFriendProfileInMainWindow: (userId: string) =>

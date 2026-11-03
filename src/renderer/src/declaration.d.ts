@@ -2124,6 +2124,10 @@ declare global {
     getProtonDbTiers: (
       appIds: string[]
     ) => Promise<Record<string, string | null>>;
+    getCatalogueSnapshot: (
+      key: string
+    ) => Promise<{ at: number; data: unknown } | null>;
+    setCatalogueSnapshot: (key: string, data: unknown) => Promise<void>;
     openFriendProfileInMainWindow: (userId: string) => Promise<void>;
     openAddFriendModalInMainWindow: () => Promise<void>;
     showToastInMainWindow: (toast: MainWindowToast) => Promise<boolean>;

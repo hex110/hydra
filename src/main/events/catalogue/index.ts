@@ -14,3 +14,4 @@ import "./get-catalogue-row-details";
 import "./get-catalogue-chart";
 import "./recommender";
 import "./get-catalogue-facet-counts";
+import "./catalogue-snapshots";

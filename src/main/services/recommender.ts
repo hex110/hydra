@@ -32,6 +32,10 @@ import { logger } from "./logger";
 import { getPlayActivity } from "./play-activity";
 import { getCatalogueRowDetails } from "./catalogue-row-details";
 import { getCriticScores } from "./critic-scores";
+import {
+  getCatalogueSnapshot,
+  setCatalogueSnapshot,
+} from "./catalogue-snapshots";
 import { getProtonDbTiers } from "./protondb";
 import { getTopReleases } from "./steam-charts";
 import { getLastBuildUpdate } from "./steam-build-dates";
@@ -367,6 +371,28 @@ const getPoolKey = (
     library: library.key,
   });
 
+interface StoredPool extends Omit<Pool, "downloadable"> {
+  downloadable: string[] | null;
+}
+
+/** A pool fetched in the last six hours survives a restart, so the first suggestions need no requests. */
+const loadStoredPool = async (key: string): Promise<Pool | null> => {
+  const stored = await getCatalogueSnapshot<StoredPool>(`pool:${key}`);
+  if (!stored || Date.now() - stored.data.at > CACHE_MS) return null;
+  return {
+    ...stored.data,
+    downloadable: stored.data.downloadable
+      ? new Set(stored.data.downloadable)
+      : null,
+  };
+};
+
+const storePool = (key: string, pool: Pool) =>
+  setCatalogueSnapshot(`pool:${key}`, {
+    ...pool,
+    downloadable: pool.downloadable ? [...pool.downloadable] : null,
+  } satisfies StoredPool);
+
 const getPool = (
   built: BuiltProfile,
   options: TuneOptions,
@@ -376,10 +402,19 @@ const getPool = (
   const cached = poolCache.get(key);
   if (cached) return cached;
 
-  const pool = buildPool(built, options, library).catch((error) => {
-    poolCache.delete(key);
-    throw error;
-  });
+  const pool = loadStoredPool(key)
+    .then(
+      (stored) =>
+        stored ??
+        buildPool(built, options, library).then((built) => {
+          if (built.candidates.length > 0) void storePool(key, built);
+          return built;
+        })
+    )
+    .catch((error) => {
+      poolCache.delete(key);
+      throw error;
+    });
   poolCache.set(key, pool);
   setTimeout(() => poolCache.delete(key), CACHE_MS).unref?.();
 
