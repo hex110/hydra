@@ -10,6 +10,8 @@ $filter-colors: (
   deckCompatibility: globals.$filter-compatibility,
   releaseYear: globals.$filter-year,
   platforms: globals.$filter-platforms,
+  excludeTags: globals.$filter-excluded,
+  players: globals.$filter-players,
 );
 
 .filter-item {

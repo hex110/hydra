@@ -115,9 +115,37 @@ export function useTuneSettings() {
     });
   }, []);
 
+  const saveBrowsePreset = useCallback(
+    (name: string, filters: Record<string, unknown>) => {
+      save({
+        ...snapshot.settings,
+        browsePresets: [
+          ...(snapshot.settings.browsePresets ?? []),
+          {
+            id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+            name,
+            filters,
+          },
+        ],
+      });
+    },
+    []
+  );
+
+  const deleteBrowsePreset = useCallback((id: string) => {
+    save({
+      ...snapshot.settings,
+      browsePresets: (snapshot.settings.browsePresets ?? []).filter(
+        (item) => item.id !== id
+      ),
+    });
+  }, []);
+
   return {
     settings,
     options: settings.options,
+    saveBrowsePreset,
+    deleteBrowsePreset,
     isLoaded,
     setOptions,
     reset,

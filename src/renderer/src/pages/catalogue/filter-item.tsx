@@ -14,7 +14,9 @@ export type FilterCategory =
   | "protondbSupportBadges"
   | "deckCompatibility"
   | "releaseYear"
-  | "platforms";
+  | "platforms"
+  | "excludeTags"
+  | "players";
 
 interface FilterItemProps {
   filter: string;

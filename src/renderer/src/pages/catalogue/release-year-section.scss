@@ -116,3 +116,29 @@
     }
   }
 }
+
+.release-year-section__decades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(globals.$spacing-unit / 2);
+}
+
+.release-year-section__decade {
+  padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+  border: 1px solid globals.$border-color;
+  border-radius: 4px;
+  background: none;
+  color: globals.$body-color;
+  font-size: globals.$small-font-size;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: globals.$muted-color;
+  }
+
+  &[aria-pressed="true"] {
+    border-color: globals.$muted-color;
+    color: globals.$muted-color;
+  }
+}

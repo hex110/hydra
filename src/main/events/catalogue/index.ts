@@ -15,3 +15,4 @@ import "./get-catalogue-chart";
 import "./recommender";
 import "./get-catalogue-facet-counts";
 import "./catalogue-snapshots";
+import "./steam-store-search";

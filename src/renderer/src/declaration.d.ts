@@ -12,6 +12,7 @@ import type {
   AuthPage,
   StoreGameFacts,
   CatalogueChartRequest,
+  SteamSearchQuery,
   NotInterestedGame,
   FacetCounts,
   LibraryFacets,
@@ -2128,6 +2129,12 @@ declare global {
       key: string
     ) => Promise<{ at: number; data: unknown } | null>;
     setCatalogueSnapshot: (key: string, data: unknown) => Promise<void>;
+    searchSteamStoreGames: (
+      query: SteamSearchQuery
+    ) => Promise<{ count: number; edges: CatalogueSearchResult[] } | null>;
+    getStoreFilterFacts: (
+      appIds: string[]
+    ) => Promise<Record<string, { tags: number[]; players: number[] }>>;
     openFriendProfileInMainWindow: (userId: string) => Promise<void>;
     openAddFriendModalInMainWindow: () => Promise<void>;
     showToastInMainWindow: (toast: MainWindowToast) => Promise<boolean>;

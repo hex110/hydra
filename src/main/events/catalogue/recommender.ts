@@ -28,6 +28,7 @@ registerEvent("getTuneSettings", async (): Promise<TuneSettings> => {
   return {
     options: { ...DEFAULT_TUNE_OPTIONS, ...stored?.options },
     presets: stored?.presets ?? DEFAULT_TUNE_SETTINGS.presets,
+    browsePresets: stored?.browsePresets ?? [],
   };
 });
 
@@ -35,6 +36,7 @@ registerEvent("setTuneSettings", async (_event, settings: TuneSettings) => {
   await catalogueTasteSublevel.put(SETTINGS_KEY, {
     options: { ...DEFAULT_TUNE_OPTIONS, ...settings.options },
     presets: (settings.presets ?? []).slice(0, MAX_PRESETS),
+    browsePresets: (settings.browsePresets ?? []).slice(0, MAX_PRESETS),
   });
 });
 

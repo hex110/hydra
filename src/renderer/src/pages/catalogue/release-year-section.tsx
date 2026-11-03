@@ -4,6 +4,13 @@ import "./release-year-section.scss";
 
 const MIN_YEAR = 1970;
 const MAX_YEAR = new Date().getFullYear();
+/** Quick ranges above the slider: this decade back to "before 2000". */
+const DECADES = [
+  { key: "2020s", gte: 2020, lte: MAX_YEAR },
+  { key: "2010s", gte: 2010, lte: 2019 },
+  { key: "2000s", gte: 2000, lte: 2009 },
+  { key: "older", gte: MIN_YEAR, lte: 1999 },
+];
 
 interface ReleaseYearSectionProps {
   title: string;
@@ -61,6 +68,25 @@ export function ReleaseYearSection({
             {t("filter_by_release_year")}
           </span>
         )}
+
+        <div className="release-year-section__decades">
+          {DECADES.map((decade) => {
+            const selected = gte === decade.gte && lte === decade.lte;
+            return (
+              <button
+                key={decade.key}
+                type="button"
+                aria-pressed={selected}
+                className="release-year-section__decade"
+                onClick={() =>
+                  selected ? onChange(undefined) : emit(decade.gte, decade.lte)
+                }
+              >
+                {t(`decade_${decade.key}`)}
+              </button>
+            );
+          })}
+        </div>
 
         <div className="release-year-section__labels">
           <span>{gte}</span>

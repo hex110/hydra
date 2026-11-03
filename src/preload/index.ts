@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 
 import type {
   ModInstallProgress,
+  CatalogueSearchResult,
   NexusGameMatch,
   NexusModSort,
   SavedLibraryFilter,
@@ -137,6 +138,7 @@ import type {
 import type {
   AuthPage,
   CatalogueChartRequest,
+  SteamSearchQuery,
   NotInterestedGame,
   FacetCounts,
   LibraryFacets,
@@ -2883,6 +2885,15 @@ contextBridge.exposeInMainWorld("electron", {
     } | null>,
   setCatalogueSnapshot: (key: string, data: unknown) =>
     ipcRenderer.invoke("setCatalogueSnapshot", key, data) as Promise<void>,
+  searchSteamStoreGames: (query: SteamSearchQuery) =>
+    ipcRenderer.invoke("searchSteamStoreGames", query) as Promise<{
+      count: number;
+      edges: CatalogueSearchResult[];
+    } | null>,
+  getStoreFilterFacts: (appIds: string[]) =>
+    ipcRenderer.invoke("getStoreFilterFacts", appIds) as Promise<
+      Record<string, { tags: number[]; players: number[] }>
+    >,
   getFriendsSnapshot: () =>
     ipcRenderer.invoke("getFriendsSnapshot") as Promise<FriendsSnapshot | null>,
   openFriendProfileInMainWindow: (userId: string) =>

@@ -42,7 +42,22 @@ import { useTranslation } from "react-i18next";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import cn from "classnames";
 import { getClassicsPlatformGroup } from "./classics-platform-group";
-import { NON_GAME_STEAM_GENRES, orderFacetItems } from "@shared";
+import {
+  chooseBrowseBackend,
+  NON_GAME_STEAM_GENRES,
+  orderFacetItems,
+  passesBrowseExtras,
+  toHydraSearchPayload,
+  toSteamSearchQuery,
+  type BrowseBackend,
+  type BrowsePlayer,
+} from "@shared";
+import { CheckboxField } from "@renderer/components/checkbox-field/checkbox-field";
+import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
+import { TagPicker } from "@renderer/components/tag-picker/tag-picker";
+import { useTuneSettings } from "./use-tune-settings";
+import { useSteamTagLabels } from "./use-steam-tag-labels";
+import { SavedSearches } from "./saved-searches";
 import { FilterItem, type FilterCategory } from "./filter-item";
 import { FacetSearchSection } from "./facet-search-section";
 import { useFacetCounts } from "./use-facet-counts";
@@ -113,7 +128,12 @@ const clearAllCategoryFilters = {
   deckCompatibility: [],
   releaseYear: undefined,
   platforms: [],
+  excludeTags: [],
+  players: [],
+  useAvoidList: false,
 };
+
+const BROWSE_PLAYERS: BrowsePlayer[] = ["single", "coop", "pvp", "local"];
 
 const sortValues = [
   "popularity:desc",
@@ -123,6 +143,7 @@ const sortValues = [
   "alphabetical:desc",
   "hydraScore:desc",
   "reviewScore:desc",
+  "bestRated:desc",
 ] as const;
 
 type CatalogueSortValue = (typeof sortValues)[number];
@@ -198,6 +219,13 @@ export function CatalogueBrowse({
 
   const [view, handleViewChange] = useCatalogueView();
 
+  const tune = useTuneSettings();
+  const tagLabels = useSteamTagLabels();
+  const avoidTags = tune.options.avoidTags;
+  const avoidTagsRef = useRef(avoidTags);
+  avoidTagsRef.current = avoidTags;
+  const [backend, setBackend] = useState<BrowseBackend>("hydra");
+
   // The search API can't exclude games, so owned ones drop out of the page.
   const visibleResults = useMemo(
     () =>
@@ -253,8 +281,9 @@ export function CatalogueBrowse({
         effectiveFilters,
         mode,
         downloadSources.map((source) => source.id)
-      ),
-    [effectiveFilters, mode, downloadSources]
+      ) +
+      (effectiveFilters.useAvoidList ? `|avoid:${avoidTags.join(",")}` : ""),
+    [effectiveFilters, mode, downloadSources, avoidTags]
   );
   // The search the shown results belong to; lags queryKey while one loads.
   const resultsKeyRef = useRef<string | null>(null);
@@ -265,8 +294,30 @@ export function CatalogueBrowse({
       downloadSources: DownloadSource[],
       offset: number,
       mode: "modern" | "classics"
-    ) => {
-      const { platforms, ...restFilters } = filters;
+    ): Promise<{
+      edges: CatalogueSearchResult[];
+      count: number;
+      backend: BrowseBackend;
+    } | null> => {
+      const avoid = avoidTagsRef.current;
+      const backend =
+        mode === "classics" ? "hydra" : chooseBrowseBackend(filters, avoid);
+
+      if (backend === "steam") {
+        const page = await window.electron
+          .searchSteamStoreGames({
+            ...toSteamSearchQuery(filters, avoid),
+            start: offset,
+            count: PAGE_SIZE,
+          })
+          .catch((error: unknown) => {
+            logger.error("Steam store search failed", error);
+            return null;
+          });
+        return page ? { ...page, backend } : null;
+      }
+
+      const { platforms, ...restFilters } = toHydraSearchPayload(filters);
       const baseRequest = {
         ...restFilters,
         take: PAGE_SIZE,
@@ -285,7 +336,7 @@ export function CatalogueBrowse({
             }
           : baseRequest;
 
-      return window.electron.hydraApi
+      const response = await window.electron.hydraApi
         .post<{
           edges: CatalogueSearchResult[];
           count: number;
@@ -297,6 +348,29 @@ export function CatalogueBrowse({
           logger.error("Catalogue search failed", error);
           return null;
         });
+      if (!response) return null;
+      if (backend === "hydra") return { ...response, backend };
+
+      // Hydra's search can't leave tags out or ask for players: drop what
+      // doesn't pass from each page, so the count is only approximate.
+      const facts = await window.electron
+        .getStoreFilterFacts(
+          response.edges
+            .filter((game) => game.shop === "steam")
+            .map((game) => game.objectId)
+        )
+        .catch(
+          () => ({}) as Record<string, { tags: number[]; players: number[] }>
+        );
+      return {
+        count: response.count,
+        backend,
+        edges: response.edges.filter(
+          (game) =>
+            game.shop !== "steam" ||
+            passesBrowseExtras(facts[game.objectId], filters, avoid)
+        ),
+      };
     },
     []
   );
@@ -316,6 +390,7 @@ export function CatalogueBrowse({
 
         resultsKeyRef.current = key;
         setResults(response?.edges ?? []);
+        setBackend(response?.backend ?? "hydra");
         setResultsMode(mode);
         setItemsCount(response?.count ?? 0);
         setPagesLoaded(1);
@@ -646,6 +721,34 @@ export function CatalogueBrowse({
         };
       }),
 
+      ...(filters.excludeTags ?? []).map((tag) => ({
+        label: tagLabels.get(tag) ?? String(tag),
+        filterType: t("exclude_tags"),
+        category: "excludeTags" as FilterCategory,
+        key: "excludeTags",
+        value: tag,
+      })),
+
+      ...(filters.useAvoidList && avoidTags.length > 0
+        ? [
+            {
+              label: t("use_avoid_list_chip", { count: avoidTags.length }),
+              filterType: t("exclude_tags"),
+              category: "excludeTags" as FilterCategory,
+              key: "useAvoidList",
+              value: "toggle",
+            },
+          ]
+        : []),
+
+      ...(filters.players ?? []).map((player) => ({
+        label: t(`players_${player}`),
+        filterType: t("players"),
+        category: "players" as FilterCategory,
+        key: "players",
+        value: player,
+      })),
+
       ...filters.downloadSourceFingerprints.map((fingerprint) => ({
         label: downloadSources.find(
           (source) => source.fingerprint === fingerprint
@@ -718,6 +821,8 @@ export function CatalogueBrowse({
     language,
     shouldShowProtonFeatures,
     t,
+    tagLabels,
+    avoidTags,
   ]);
 
   const filterSections = useMemo(() => {
@@ -786,9 +891,14 @@ export function CatalogueBrowse({
         label: t("sort_title_desc"),
       },
       {
+        key: "bestRated:desc",
+        value: "bestRated:desc",
+        label: t("sort_best_rated"),
+      },
+      {
         key: "hydraScore:desc",
         value: "hydraScore:desc",
-        label: t("sort_highest_rating"),
+        label: t("sort_popular_on_hydra"),
       },
       {
         key: "reviewScore:desc",
@@ -850,9 +960,20 @@ export function CatalogueBrowse({
       <div className="catalogue__toolbar">
         <div className="catalogue__header-row">
           <span className="catalogue__result-count">
-            {t("result_count", {
-              resultCount: formatNumber(itemsCount),
-            })}
+            {t(
+              backend === "hydra-filtered"
+                ? "result_count_about"
+                : "result_count",
+              { resultCount: formatNumber(itemsCount) }
+            )}
+            {backend !== "hydra" && mode === "modern" && (
+              <span
+                className="catalogue__result-source"
+                title={t(`browse_backend_${backend}_hint`)}
+              >
+                {t(`browse_backend_${backend}`)}
+              </span>
+            )}
           </span>
 
           <div className="catalogue__sort-inline">
@@ -948,6 +1069,11 @@ export function CatalogueBrowse({
 
                         if (filter.value === "threshold") {
                           dispatch(setFilters({ [filter.key]: [] }));
+                          return;
+                        }
+
+                        if (filter.value === "toggle") {
+                          dispatch(setFilters({ [filter.key]: false }));
                           return;
                         }
 
@@ -1147,6 +1273,72 @@ export function CatalogueBrowse({
                   }
                 />
               </Suspense>
+            )}
+
+            {mode === "modern" && (
+              <SavedSearches
+                filters={filters}
+                onApply={(saved) => dispatch(setFilters(saved))}
+              />
+            )}
+
+            {mode === "modern" && (
+              <SidebarSection
+                title={t("exclude_tags")}
+                defaultOpen={
+                  (filters.excludeTags?.length ?? 0) > 0 ||
+                  !!filters.useAvoidList
+                }
+              >
+                <div className="catalogue__extra-section">
+                  <TagPicker
+                    value={filters.excludeTags ?? []}
+                    onChange={(excludeTags) =>
+                      dispatch(setFilters({ excludeTags }))
+                    }
+                    labels={tagLabels}
+                    placeholder={t("exclude_tags_placeholder")}
+                    label={t("exclude_tags")}
+                  />
+                  <CheckboxField
+                    label={t("use_avoid_list", { count: avoidTags.length })}
+                    checked={!!filters.useAvoidList}
+                    disabled={avoidTags.length === 0}
+                    onChange={(event) =>
+                      dispatch(
+                        setFilters({ useAvoidList: event.target.checked })
+                      )
+                    }
+                  />
+                </div>
+              </SidebarSection>
+            )}
+
+            {mode === "modern" && (
+              <SidebarSection
+                title={t("players")}
+                defaultOpen={(filters.players?.length ?? 0) > 0}
+              >
+                <div className="catalogue__extra-section">
+                  {BROWSE_PLAYERS.map((player) => (
+                    <CheckboxField
+                      key={player}
+                      label={t(`players_${player}`)}
+                      checked={(filters.players ?? []).includes(player)}
+                      onChange={(event) => {
+                        const current = filters.players ?? [];
+                        dispatch(
+                          setFilters({
+                            players: event.target.checked
+                              ? [...current, player]
+                              : current.filter((entry) => entry !== player),
+                          })
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+              </SidebarSection>
             )}
 
             {mode === "modern" &&

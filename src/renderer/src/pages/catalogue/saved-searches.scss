@@ -1,0 +1,59 @@
+@use "../../scss/globals.scss";
+
+.saved-searches {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 1.5);
+  padding: calc(globals.$spacing-unit * 2);
+
+  &__hint {
+    margin: 0;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+  }
+
+  &__apply,
+  &__delete {
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: globals.$body-color;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background-color: globals.$dark-background-color;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__apply {
+    flex: 1;
+    min-width: 0;
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__delete {
+    display: inline-flex;
+    padding: calc(globals.$spacing-unit / 2);
+  }
+}

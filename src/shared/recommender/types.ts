@@ -88,14 +88,23 @@ export interface NotInterestedGame {
   at: number;
 }
 
+/** A Browse search saved under a name: its filters and sort. */
+export interface BrowsePreset {
+  id: string;
+  name: string;
+  filters: Record<string, unknown>;
+}
+
 export interface TuneSettings {
   options: TuneOptions;
   presets: TunePreset[];
+  browsePresets: BrowsePreset[];
 }
 
 export const DEFAULT_TUNE_SETTINGS: TuneSettings = {
   options: DEFAULT_TUNE_OPTIONS,
   presets: [],
+  browsePresets: [],
 };
 
 /** A library game as the recommender sees it, one per Steam app. */

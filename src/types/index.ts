@@ -924,12 +924,14 @@ export interface ComparedAchievements {
 
 export interface CatalogueSearchPayload {
   title: string;
+  /** `bestRated` is Steam's own sort by reviews; Hydra's search can't do it. */
   sortBy:
     | "popularity"
     | "reviewScore"
     | "alphabetical"
     | "hydraScore"
-    | "releaseDate";
+    | "releaseDate"
+    | "bestRated";
   sortOrder: "asc" | "desc";
   downloadSourceFingerprints: string[];
   tags: number[];
@@ -947,6 +949,12 @@ export interface CatalogueSearchPayload {
   releaseYear?: { gte?: number; lte?: number };
   shops?: string[];
   platforms?: string[];
+  /** Games with any of these tags are left out (Browse only, not sent to Hydra). */
+  excludeTags?: number[];
+  /** Kinds of play a game must offer (Browse only, not sent to Hydra). */
+  players?: ("single" | "coop" | "pvp" | "local")[];
+  /** Leave out games with a tag from the shared avoid list (Browse only). */
+  useAvoidList?: boolean;
 }
 
 export interface ProtonDBData {

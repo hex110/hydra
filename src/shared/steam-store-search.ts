@@ -7,6 +7,8 @@ export type SteamSearchSort =
   | "Name_DESC";
 
 export interface SteamSearchQuery {
+  /** Words in the title. */
+  term?: string;
   /** A game must carry all of these tags. */
   tags?: number[];
   /** A game must carry none of these tags. */
@@ -39,6 +41,7 @@ export const buildSteamSearchParams = (
       Math.min(STEAM_SEARCH_PAGE, Math.max(1, query.count ?? STEAM_SEARCH_PAGE))
     ),
   };
+  if (query.term?.trim()) params.term = query.term.trim();
   if (query.tags?.length) params.tags = query.tags.join(",");
   if (query.untags?.length) params.untags = query.untags.join(",");
   if (query.sortBy) params.sort_by = query.sortBy;
