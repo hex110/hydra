@@ -14,6 +14,7 @@ import {
   type StoreItem,
 } from "@shared";
 import { HydraApi } from "./hydra-api";
+import { getCriticScores } from "./critic-scores";
 import { getSnapshotRanking } from "./chart-snapshots";
 import { logger } from "./logger";
 import { getMostPlayed, getPlayingNow, getTopReleases } from "./steam-charts";
@@ -39,7 +40,8 @@ interface Entry {
 const toRow = (
   rank: number,
   entry: Entry,
-  item: StoreItem
+  item: StoreItem,
+  criticScore: number | null
 ): CatalogueChartRow => ({
   rank,
   appId: entry.appId,
@@ -48,6 +50,7 @@ const toRow = (
   tagIds: item.tags.slice(0, ROW_TAGS).map((tag) => tag.tagid),
   reviewPercent: item.reviewPercent,
   reviewCount: item.reviewCount,
+  criticScore,
   releaseYear: item.releaseDate
     ? new Date(item.releaseDate).getUTCFullYear()
     : null,
@@ -64,13 +67,19 @@ const toRow = (
 
 /** Joins a ranked list with Steam's store facts; software and other non-games drop out. */
 const toRows = async (entries: Entry[]) => {
-  const items = await getStoreItems(entries.map((entry) => entry.appId));
+  const appIds = entries.map((entry) => entry.appId);
+  const [items, critics] = await Promise.all([
+    getStoreItems(appIds),
+    getCriticScores(appIds),
+  ]);
   const rows: CatalogueChartRow[] = [];
 
   for (const entry of entries) {
     const item = items.get(entry.appId);
     if (item && item.type === STEAM_GAME_TYPE) {
-      rows.push(toRow(rows.length + 1, entry, item));
+      rows.push(
+        toRow(rows.length + 1, entry, item, critics.get(entry.appId) ?? null)
+      );
     }
   }
   return rows;

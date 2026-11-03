@@ -29,6 +29,8 @@ export interface CatalogueChartRow {
   tagIds: number[];
   reviewPercent: number | null;
   reviewCount: number | null;
+  /** Metacritic, part of the Hydra rating. */
+  criticScore: number | null;
   releaseYear: number | null;
   isSingleplayer: boolean;
   isEarlyAccess: boolean;

@@ -65,3 +65,21 @@ export const catalogueFacetCountsSublevel = db.sublevel<string, FacetCounts>(
   levelKeys.catalogueFacetCounts,
   { valueEncoding: "json" }
 );
+
+/** Metacritic per Steam app id; `score` is null for a game Metacritic has not rated. */
+export const criticScoresSublevel = db.sublevel<
+  string,
+  { at: number; score: number | null }
+>(levelKeys.criticScores, { valueEncoding: "json" });
+
+/** What each catalogue surface showed last, keyed by surface, so it can show it again at once. */
+export const catalogueSnapshotsSublevel = db.sublevel<
+  string,
+  { at: number; data: unknown }
+>(levelKeys.catalogueSnapshots, { valueEncoding: "json" });
+
+/** How often a suggested game was shown without being opened, keyed by Steam app id. */
+export const catalogueImpressionsSublevel = db.sublevel<
+  string,
+  { count: number; lastAt: number }
+>(levelKeys.catalogueImpressions, { valueEncoding: "json" });

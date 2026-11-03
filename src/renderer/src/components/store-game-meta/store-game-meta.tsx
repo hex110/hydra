@@ -1,13 +1,13 @@
 import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import Skeleton from "react-loading-skeleton";
-import { ClockIcon, DownloadIcon } from "@primer/octicons-react";
+import { ClockIcon, DownloadIcon, StarFillIcon } from "@primer/octicons-react";
 import cn from "classnames";
 import {
   formatBytes,
-  getCriticScoreTone,
+  getRatingTone,
   getReviewLabel,
-  getReviewTone,
+  getStoreRating,
   type StoreGameFacts,
 } from "@shared";
 import { useFormat } from "@renderer/hooks/use-format";
@@ -29,31 +29,54 @@ export function StoreGameChip({
   );
 }
 
-/** Steam's share of positive reviews, toned as Steam tones it; nothing under ten reviews. */
-export function StoreGameReviewChip({
+/**
+ * The Hydra rating: Steam's reviews adjusted for how many there are, with
+ * Metacritic blended in when known. The tooltip lists the parts.
+ */
+export function StoreGameRatingChip({
   percent,
   count,
-}: Readonly<{ percent?: number | null; count?: number | null }>) {
+  criticScore,
+}: Readonly<{
+  percent?: number | null;
+  count?: number | null;
+  criticScore?: number | null;
+}>) {
   const { t } = useTranslation("catalogue");
   const { formatNumber } = useFormat();
 
-  const tone = getReviewTone(percent, count);
-  const label = getReviewLabel(percent, count);
-  if (!tone || !label || percent == null) return null;
+  const rating = getStoreRating({
+    reviewPercent: percent,
+    reviewCount: count,
+    criticScore,
+  });
+  if (!rating) return null;
+
+  const label = getReviewLabel(rating.reviewPercent, rating.reviewCount);
+  const lines = [
+    t("rating_tooltip_title", { value: Math.round(rating.value) }),
+    rating.reviewPercent !== null &&
+      t("rating_tooltip_steam", {
+        percent: rating.reviewPercent,
+        count: rating.reviewCount,
+        formattedCount: formatNumber(rating.reviewCount),
+        label: label ? t(`review_label_${label}`) : "",
+      }),
+    rating.critic !== null &&
+      t("rating_tooltip_critic", { score: rating.critic }),
+    t("rating_tooltip_explain"),
+  ].filter(Boolean);
 
   return (
     <span
       className={cn(
         "store-game-meta__chip",
-        `store-game-meta__chip--review-${tone}`
+        `store-game-meta__chip--review-${getRatingTone(rating.value)}`
       )}
-      title={t("review_summary", {
-        label: t(`review_label_${label}`),
-        count: count ?? 0,
-        formattedCount: formatNumber(count ?? 0),
-      })}
+      title={lines.join("\n")}
     >
-      {percent}%
+      <StarFillIcon size={10} />
+      {Math.round(rating.value)}
     </span>
   );
 }
@@ -71,7 +94,7 @@ export interface StoreGameMetaProps {
 }
 
 /**
- * Tags, then review score, year, length, size and Metacritic. The two lines
+ * Tags, then the Hydra rating, year, length and size. The two lines
  * keep their height whether or not there is anything to show, so cards don't
  * jump when the facts arrive.
  */
@@ -107,9 +130,10 @@ export function StoreGameMeta({
     <div className="store-game-meta">
       <span className="store-game-meta__tags">{tags.join(", ")}</span>
       <span className="store-game-meta__chips">
-        <StoreGameReviewChip
+        <StoreGameRatingChip
           percent={facts?.reviewPercent}
           count={facts?.reviewCount}
+          criticScore={facts?.criticScore}
         />
         {year !== null && <span className="store-game-meta__chip">{year}</span>}
         {facts?.howLongToBeatHours != null && (
@@ -125,18 +149,6 @@ export function StoreGameMeta({
           <span className="store-game-meta__chip" title={t("download_size")}>
             <DownloadIcon size={12} />
             {formatBytes(facts.downloadSize)}
-          </span>
-        )}
-        {facts?.criticScore != null && (
-          <span
-            className={cn(
-              "store-game-meta__chip",
-              "store-game-meta__chip--critic",
-              `store-game-meta__chip--critic-${getCriticScoreTone(facts.criticScore)}`
-            )}
-            title={t("metacritic_score")}
-          >
-            {facts.criticScore}
           </span>
         )}
         {badge}

@@ -435,6 +435,7 @@ export * from "./play-dates";
 export * from "./save-sync-summary";
 export * from "./fomod";
 export * from "./store-games";
+export * from "./store-rating";
 export * from "./recommender/index";
 export * from "./steam-charts";
 export * from "./catalogue-charts";

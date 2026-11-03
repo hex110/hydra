@@ -31,6 +31,7 @@ import { HydraApi } from "./hydra-api";
 import { logger } from "./logger";
 import { getPlayActivity } from "./play-activity";
 import { getCatalogueRowDetails } from "./catalogue-row-details";
+import { getCriticScores } from "./critic-scores";
 import { getProtonDbTiers } from "./protondb";
 import { getTopReleases } from "./steam-charts";
 import { getLastBuildUpdate } from "./steam-build-dates";
@@ -305,12 +306,21 @@ const buildPool = async (
     ? searched
     : new Set([...behaviour.keys(), ...searched, ...released]);
   const ids = [...wanted].filter((id) => !library.ownedKeys.has(`steam:${id}`));
-  const items = await getStoreItems(ids);
+  const [items, critics] = await Promise.all([
+    getStoreItems(ids),
+    getCriticScores(ids),
+  ]);
 
   const candidates = ids.flatMap((id) => {
     const item: StoreItem | null | undefined = items.get(id);
     return item && item.type === STEAM_GAME_TYPE
-      ? [{ ...toCandidate(item), behaviour: behaviour.get(id) ?? [] }]
+      ? [
+          {
+            ...toCandidate(item),
+            criticScore: critics.get(id) ?? null,
+            behaviour: behaviour.get(id) ?? [],
+          },
+        ]
       : [];
   });
 

@@ -13,6 +13,7 @@ const row = (appId: string, over: Record<string, unknown> = {}) => ({
   tagIds: [4182, 122],
   reviewPercent: 90,
   reviewCount: 5000,
+  criticScore: null,
   releaseYear: 2020,
   isSingleplayer: true,
   isEarlyAccess: false,

@@ -12,6 +12,7 @@ import {
   type CatalogueChartId,
   type CatalogueChartResult,
   type CatalogueChartRow,
+  getStoreRating,
 } from "@shared";
 
 import {
@@ -25,7 +26,7 @@ import {
   TagPicker,
   type StoreGameTableColumn,
 } from "@renderer/components";
-import { StoreGameReviewChip } from "@renderer/components/store-game-meta/store-game-meta";
+import { StoreGameRatingChip } from "@renderer/components/store-game-meta/store-game-meta";
 import { useFormat } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
 
@@ -344,11 +345,17 @@ export function CatalogueCharts({
         label: t("chart_column_reviews"),
         width: "64px",
         align: "end",
-        sortValue: (row) => row.reviewPercent,
+        sortValue: (row) =>
+          getStoreRating({
+            reviewPercent: row.reviewPercent,
+            reviewCount: row.reviewCount,
+            criticScore: row.criticScore,
+          })?.value ?? null,
         render: (row) => (
-          <StoreGameReviewChip
+          <StoreGameRatingChip
             percent={row.reviewPercent}
             count={row.reviewCount}
+            criticScore={row.criticScore}
           />
         ),
       },

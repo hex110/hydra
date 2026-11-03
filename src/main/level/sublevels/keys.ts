@@ -25,6 +25,9 @@ export const levelKeys = {
   catalogueFacetCounts: "catalogueFacetCounts",
   catalogueTaste: "catalogueTaste",
   catalogueNotInterested: "catalogueNotInterested",
+  criticScores: "criticScores",
+  catalogueSnapshots: "catalogueSnapshots",
+  catalogueImpressions: "catalogueImpressions",
   gameShopCacheItem: (shop: GameShop, objectId: string, language: string) =>
     `${shop}:${objectId}:${language}`,
   downloads: "downloads",

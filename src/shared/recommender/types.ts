@@ -161,6 +161,8 @@ export interface PoolCandidate {
   reviewCount: number | null;
   reviewPercent: number | null;
   reviewLabel: string | null;
+  /** Metacritic, part of the Hydra rating. */
+  criticScore?: number | null;
   releaseDate: number | null;
   isEarlyAccess: boolean;
   type: number;
@@ -181,6 +183,7 @@ export interface Recommendation {
   reviewPercent: number | null;
   reviewCount: number | null;
   reviewLabel: string | null;
+  criticScore: number | null;
   releaseYear: number | null;
   /** The played game that contributed most. */
   becauseOf: { key: string; appId: string; title: string } | null;

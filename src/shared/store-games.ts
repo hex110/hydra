@@ -196,28 +196,3 @@ export const isFinishedGame = (
   const window = months * MONTH_MS;
   return now - item.releaseDate >= window && now - lastBuildUpdate >= window;
 };
-
-const WILSON_Z = 1.96;
-const MIN_REVIEWS_FOR_QUALITY = 10;
-
-/**
- * The lower bound of the 95 % confidence interval for the share of positive
- * reviews, so 100 % from 12 reviews ranks below 95 % from 20,000. Under 10
- * reviews there is nothing to go on and the score is neutral.
- */
-export const wilsonLowerBound = (
-  percentPositive: number | null,
-  count: number | null
-) => {
-  if (percentPositive === null || count === null) return 0.5;
-  if (count < MIN_REVIEWS_FOR_QUALITY) return 0.5;
-
-  const p = percentPositive / 100;
-  const z2 = WILSON_Z * WILSON_Z;
-  return (
-    (p +
-      z2 / (2 * count) -
-      WILSON_Z * Math.sqrt((p * (1 - p) + z2 / (4 * count)) / count)) /
-    (1 + z2 / count)
-  );
-};

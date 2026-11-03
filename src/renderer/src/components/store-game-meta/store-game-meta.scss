@@ -58,22 +58,5 @@
     &--review-negative {
       color: globals.$review-negative;
     }
-
-    &--critic {
-      color: globals.$muted-color;
-    }
-
-    &--critic-good {
-      background-color: globals.$critic-good;
-    }
-
-    &--critic-mixed {
-      background-color: globals.$critic-mixed;
-      color: globals.$critic-dark-text;
-    }
-
-    &--critic-bad {
-      background-color: globals.$critic-bad;
-    }
   }
 }

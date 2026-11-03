@@ -10,6 +10,7 @@ import {
 } from "@shared";
 import { HydraApi } from "./hydra-api";
 import { getSteamStoreFacts } from "./steam-tags";
+import { rememberCriticScores } from "./critic-scores";
 
 const CACHE_MS = 60 * 60 * 1000;
 const MAX_GAMES = 60;
@@ -132,6 +133,14 @@ export const getCatalogueRowDetails = async (
       .catch(() => []),
   ]);
   const sourceIds = sources.map((source) => source.id);
+  void rememberCriticScores(
+    new Map(
+      [...steamDetails].map(([objectId, data]) => [
+        objectId,
+        data?.metacritic?.score,
+      ])
+    )
+  );
 
   const queue = [...missing];
   const worker = async () => {

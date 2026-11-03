@@ -3,8 +3,7 @@ import { describe, it } from "node:test";
 // @ts-ignore The Node ESM test runner requires the source extension.
 import * as storeGames from "./store-games.ts";
 
-const { isSingleplayerGame, isFinishedGame, wilsonLowerBound, parseStoreItem } =
-  storeGames;
+const { isSingleplayerGame, isFinishedGame, parseStoreItem } = storeGames;
 
 const tags = (...ids: number[]) =>
   ids.map((tagid, index) => ({ tagid, weight: 1000 - index }));
@@ -90,22 +89,6 @@ describe("isFinishedGame", () => {
       isFinishedGame({ ...old, isEarlyAccess: true }, now - 2 * year, now),
       false
     );
-  });
-});
-
-describe("wilsonLowerBound", () => {
-  it("ranks a big good score above a small perfect one", () => {
-    assert.ok(wilsonLowerBound(95, 20_000) > wilsonLowerBound(100, 12));
-  });
-
-  it("is neutral under ten reviews or without a score", () => {
-    assert.equal(wilsonLowerBound(100, 9), 0.5);
-    assert.equal(wilsonLowerBound(null, null), 0.5);
-  });
-
-  it("stays between zero and one", () => {
-    const score = wilsonLowerBound(90, 500);
-    assert.ok(score > 0 && score < 0.9);
   });
 });
 

@@ -4,8 +4,8 @@ import {
   IDLE_TAG_IDS,
   isSingleplayerGame,
   STEAM_GAME_TYPE,
-  wilsonLowerBound,
 } from "../store-games.js";
+import { getRatingQuality } from "../store-rating.js";
 import { getAvoidedTags, hasTagAmong, type WeightedSeed } from "./profile.js";
 import {
   buildIdf,
@@ -153,10 +153,11 @@ export const rankCandidates = (
         Math.max(best, (weightByKey.get(seedKey) ?? 0) * place),
       0
     );
-    const quality = wilsonLowerBound(
-      candidate.reviewPercent,
-      candidate.reviewCount
-    );
+    const quality = getRatingQuality({
+      reviewPercent: candidate.reviewPercent,
+      reviewCount: candidate.reviewCount,
+      criticScore: candidate.criticScore,
+    });
 
     let score =
       SIMILARITY_WEIGHT * similarity +
@@ -297,6 +298,7 @@ export const toRecommendation = (item: ScoredCandidate): Recommendation => {
     reviewPercent: candidate.reviewPercent,
     reviewCount: candidate.reviewCount,
     reviewLabel: candidate.reviewLabel,
+    criticScore: candidate.criticScore ?? null,
     releaseYear: releaseYear(candidate),
     becauseOf: item.becauseOf,
     matchTagIds: item.matchTagIds,
