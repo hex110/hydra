@@ -311,6 +311,28 @@ in the sections below.
            See all on every shelf
     9. [x] Home suggestions on the same recommender and card
     10. [ ] Docs: catalogue, home, patterns table
+21. **Catalogue: groups, one rating, cache first.** Added 2026-11-03 from
+    the owner's use of phase 20. Spec and plan:
+    [Catalogue, phase 21](catalogue-phase-21.md) (start there; it also
+    records what other recommenders and stores do).
+    1. [ ] One Hydra rating: Steam reviews adjusted for their count, with
+           Metacritic, used by every sort, chip and chart
+    2. [ ] Cache first: Discover, Charts, For you and home suggestions open
+           with what was known before and refresh in place
+    3. [ ] Charts as metrics, with a release period filter; Best rated and
+           Most reviewed per period, Most anticipated; Steam's stale top
+           releases dropped
+    4. [ ] Browse: Steam's store search for excluded tags and Best rated,
+           include/exclude tags, players, decades, saved searches
+    5. [ ] Recommender in groups: catalogue-wide tag rarity, named taste
+           groups, the anchor rule for rare tags, Mix all, weekly freshness,
+           seen-and-skipped decay; idle tags in the default avoid list
+    6. [ ] For you around groups: every game in Based on, Games and Tags
+           modes, More like this from the game page
+    7. [ ] Feedback: Not interested with a reason, Already played, moods
+    8. [ ] Discover opens on the recommender; group shelves replace
+           Because you played; Outside your usual
+    9. [ ] Docs
 
 Why this order:
 
@@ -366,6 +388,10 @@ Why this order:
   step builds on it, the data layer comes before the charts and the
   recommender that read it, and Discover is regrouped last, once the shelves
   it needs exist.
+- Phase 21 follows phase 20 directly: it fixes what using it showed. The
+  rating and the cache come first because every later step shows ratings and
+  every surface reads the cache; the charts go before the recommender since
+  they are smaller and fix a stale data source the recommender also uses.
 
 ## One app, easy for everyone
 
