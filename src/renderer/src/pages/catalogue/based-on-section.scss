@@ -41,10 +41,27 @@
     gap: calc(globals.$spacing-unit / 2);
   }
 
+  &__group--hidden &__group-pick {
+    opacity: 0.6;
+  }
+
+  &__badge {
+    margin-right: calc(globals.$spacing-unit / 2);
+    padding: 0 calc(globals.$spacing-unit / 2);
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+    font-weight: 400;
+  }
+
   &__group-head {
     display: flex;
     align-items: stretch;
     gap: calc(globals.$spacing-unit / 2);
+
+    // The menu's trigger wrapper, so its button lines up with Details.
+    > div {
+      display: flex;
+    }
   }
 
   &__group-pick {

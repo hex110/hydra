@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
+  KebabHorizontalIcon,
   XIcon,
 } from "@primer/octicons-react";
 import cn from "classnames";
@@ -10,6 +11,7 @@ import type { ProfileGroup, SeedNote, TasteProfile, TuneBasis } from "@shared";
 
 import {
   Button,
+  CheckboxField,
   SegmentedControl,
   SidebarSection,
   TagPicker,
@@ -19,6 +21,8 @@ import { useFormat, useLibrary } from "@renderer/hooks";
 import { logger } from "@renderer/logger";
 
 import { getGroupName } from "./recommendation-card";
+import { GroupProposalsModal } from "./group-proposals-modal";
+import { DropdownMenu } from "@renderer/components/dropdown-menu/dropdown-menu";
 import { clearRecommendationsCache } from "./use-recommendations";
 import { useSteamTagLabels } from "./use-steam-tag-labels";
 import { useTuneSettings } from "./use-tune-settings";
@@ -26,7 +30,7 @@ import "./based-on-section.scss";
 
 const PICK_MATCHES = 6;
 const SEARCH_DEBOUNCE_MS = 300;
-const BASES: TuneBasis[] = ["groups", "recent", "games", "tags"];
+const BASES: TuneBasis[] = ["groups", "games", "tags"];
 
 const percent = (share: number) =>
   share > 0 && share < 0.01 ? "<1 %" : `${Math.round(share * 100)} %`;
@@ -46,9 +50,25 @@ export function BasedOnSection({ profile }: Readonly<BasedOnSectionProps>) {
     (a, b) => b[1].at - a[1].at
   );
   const groups = profile?.groups ?? [];
-  const isLibraryBasis =
-    options.basedOn === "groups" || options.basedOn === "recent";
+  const isLibraryBasis = options.basedOn === "groups";
   const gameCount = groups.reduce((sum, group) => sum + group.games.length, 0);
+  const [proposing, setProposing] = useState<
+    { kind: "refine"; groupId: string } | { kind: "around" } | null
+  >(null);
+
+  const groupSettings = (id: string) => options.groupSettings[id] ?? {};
+  const setGroupSetting = (
+    id: string,
+    changes: Partial<(typeof options.groupSettings)[string]>
+  ) =>
+    setOptions({
+      groupSettings: {
+        ...options.groupSettings,
+        [id]: { ...groupSettings(id), ...changes },
+      },
+      // A hidden group can't be the one shown.
+      ...(changes.hidden && options.group === id ? { group: "all" } : {}),
+    });
 
   return (
     <SidebarSection title={t("tune_based_on")}>
@@ -78,6 +98,13 @@ export function BasedOnSection({ profile }: Readonly<BasedOnSectionProps>) {
                       count: profile?.untaggedCount ?? 0,
                     })}`}
                 </p>
+                <CheckboxField
+                  label={t("tune_leave_out_multiplayer")}
+                  checked={options.leaveOutMultiplayer}
+                  onChange={(event) =>
+                    setOptions({ leaveOutMultiplayer: event.target.checked })
+                  }
+                />
                 <ul className="based-on__groups">
                   <li>
                     <button
@@ -108,9 +135,44 @@ export function BasedOnSection({ profile }: Readonly<BasedOnSectionProps>) {
                           excludedSeeds: [...options.excludedSeeds, key],
                         })
                       }
+                      leaveOutMultiplayer={
+                        !!groupSettings(group.id).leaveOutMultiplayer
+                      }
+                      onRefine={() =>
+                        setProposing({ kind: "refine", groupId: group.id })
+                      }
+                      onToggleMultiplayer={() =>
+                        setGroupSetting(group.id, {
+                          leaveOutMultiplayer: !groupSettings(group.id)
+                            .leaveOutMultiplayer,
+                        })
+                      }
+                      onToggleHidden={() =>
+                        setGroupSetting(group.id, { hidden: !group.isHidden })
+                      }
+                      onDelete={
+                        group.isCustom
+                          ? () =>
+                              setOptions({
+                                customGroups: options.customGroups.filter(
+                                  (entry) => entry.id !== group.id
+                                ),
+                                group:
+                                  options.group === group.id
+                                    ? "all"
+                                    : options.group,
+                              })
+                          : undefined
+                      }
                     />
                   ))}
                 </ul>
+                <Button
+                  theme="outline"
+                  onClick={() => setProposing({ kind: "around" })}
+                >
+                  {t("tune_build_around")}
+                </Button>
               </>
             ) : (
               <p className="based-on__hint">{t("tune_no_profile")}</p>
@@ -164,6 +226,24 @@ export function BasedOnSection({ profile }: Readonly<BasedOnSectionProps>) {
           </>
         )}
 
+        {proposing && (
+          <GroupProposalsModal
+            request={proposing}
+            groupName={
+              proposing.kind === "refine"
+                ? getGroupName(
+                    groups.find((group) => group.id === proposing.groupId) ?? {
+                      tagIds: [],
+                    },
+                    tagLabels
+                  )
+                : undefined
+            }
+            libraryGames={groups.flatMap((group) => group.games)}
+            onClose={() => setProposing(null)}
+          />
+        )}
+
         {options.basedOn === "games" && (
           <PickedGames
             picked={options.pickedGames}
@@ -205,19 +285,33 @@ function GroupRow({
   isActive,
   onSelect,
   onExclude,
+  leaveOutMultiplayer,
+  onRefine,
+  onToggleMultiplayer,
+  onToggleHidden,
+  onDelete,
 }: Readonly<{
   group: ProfileGroup;
   name: string;
   isActive: boolean;
   onSelect: () => void;
   onExclude: (key: string) => void;
+  leaveOutMultiplayer: boolean;
+  onRefine: () => void;
+  onToggleMultiplayer: () => void;
+  onToggleHidden: () => void;
+  onDelete?: () => void;
 }>) {
   const { t } = useTranslation("catalogue");
   const { formatNumber } = useFormat();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <li className="based-on__group">
+    <li
+      className={cn("based-on__group", {
+        "based-on__group--hidden": group.isHidden,
+      })}
+    >
       <div className="based-on__group-head">
         <button
           type="button"
@@ -227,7 +321,15 @@ function GroupRow({
           })}
           onClick={onSelect}
         >
-          <span className="based-on__group-name">{name}</span>
+          <span className="based-on__group-name">
+            {group.isCustom && (
+              <span className="based-on__badge">{t("tune_group_yours")}</span>
+            )}
+            {group.isHidden && (
+              <span className="based-on__badge">{t("tune_group_hidden")}</span>
+            )}
+            {name}
+          </span>
           <span className="based-on__group-facts">
             {t("tune_group_facts", {
               count: group.games.length,
@@ -250,6 +352,41 @@ function GroupRow({
           )}
           {t(isOpen ? "tune_group_hide" : "tune_group_details")}
         </button>
+        <DropdownMenu
+          title={name}
+          align="end"
+          items={[
+            { label: t("tune_group_refine"), onClick: onRefine },
+            {
+              label: t(
+                leaveOutMultiplayer
+                  ? "tune_group_keep_multiplayer"
+                  : "tune_group_leave_out_multiplayer"
+              ),
+              onClick: onToggleMultiplayer,
+            },
+            {
+              label: t(
+                group.isHidden ? "tune_group_show" : "tune_group_hide_group"
+              ),
+              onClick: onToggleHidden,
+            },
+            {
+              label: t("tune_group_delete"),
+              show: !!onDelete,
+              onClick: onDelete,
+            },
+          ]}
+        >
+          <button
+            type="button"
+            className="based-on__details"
+            aria-label={t("tune_group_actions", { name })}
+            title={t("tune_group_actions", { name })}
+          >
+            <KebabHorizontalIcon size={14} />
+          </button>
+        </DropdownMenu>
       </div>
 
       {isOpen && (

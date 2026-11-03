@@ -235,7 +235,7 @@ export function CatalogueForYou({
 
         {groups.length > 0 && (
           <p className="catalogue-for-you__description">
-            {options.basedOn === "groups" || options.basedOn === "recent"
+            {options.basedOn === "groups"
               ? t("for_you_description_groups", {
                   count: profile?.seedCount ?? 0,
                   groups: groups.length,

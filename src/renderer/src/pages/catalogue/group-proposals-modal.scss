@@ -1,0 +1,141 @@
+@use "../../scss/globals.scss";
+
+.group-proposals {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 2);
+
+  &__hint {
+    margin: 0;
+    color: globals.$body-color;
+  }
+
+  &__pick {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+  }
+
+  &__matches,
+  &__chips,
+  &__list,
+  &__examples {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+
+    button {
+      display: inline-flex;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: globals.$body-color;
+      cursor: pointer;
+    }
+  }
+
+  &__match {
+    width: 100%;
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: globals.$body-color;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background-color: globals.$dark-background-color;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: globals.$spacing-unit;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    width: 100%;
+    height: 100%;
+    padding: calc(globals.$spacing-unit * 1.5);
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    background-color: globals.$dark-background-color;
+    color: globals.$body-color;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      border-color: globals.$body-color;
+    }
+
+    &--selected {
+      border-color: globals.$muted-color;
+      background-color: globals.$chip-background-color;
+    }
+  }
+
+  &__name {
+    color: globals.$muted-color;
+    font-weight: 600;
+  }
+
+  &__size {
+    margin-right: globals.$spacing-unit;
+    color: globals.$body-color;
+    font-weight: 400;
+    text-transform: uppercase;
+    font-size: globals.$small-font-size;
+  }
+
+  &__count {
+    font-size: globals.$small-font-size;
+  }
+
+  &__examples {
+    font-size: globals.$small-font-size;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: globals.$spacing-unit;
+    }
+  }
+
+  &__hours {
+    color: globals.$body-color;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    gap: globals.$spacing-unit;
+  }
+}
