@@ -67,6 +67,7 @@ import {
   checkOptiScalerBeforeLaunch,
   fixOptiScalerProxyDllBeforeLaunch,
 } from "@main/services/game-setup/optiscaler-step";
+import { relinkReShadeBeforeLaunch } from "@main/services/game-setup/renodx-step";
 
 import { GameRuns } from "@main/services/game-runs/game-runs";
 import { ModStore } from "@main/services/mods/mod-store";
@@ -755,7 +756,9 @@ const launchGameWithCloudSaveChecks = async (
   const gameKey = levelKeys.game(shop, objectId);
   const storedGame = await gamesSublevel.get(gameKey);
   const game = storedGame
-    ? await fixOptiScalerProxyDllBeforeLaunch(storedGame)
+    ? await fixOptiScalerProxyDllBeforeLaunch(
+        await relinkReShadeBeforeLaunch(storedGame)
+      )
     : storedGame;
   // A known publisher launcher stays the game's executable; its game runs.
   const parsedPath = getLaunchExecutable(game, recordedPath);

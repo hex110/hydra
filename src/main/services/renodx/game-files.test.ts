@@ -139,6 +139,17 @@ describe("installRenoDx", () => {
     assert.strictEqual(manifest.reShadeFile, "ReShade64.dll");
   });
 
+  it("turns LoadReshade off when OptiScaler moved to another name", async () => {
+    write(path.join(game, "winmm.dll"), "optiscaler");
+    write(path.join(game, "OptiScaler.ini"), "[Plugins]\nLoadReshade=true\n");
+
+    const manifest = await install();
+
+    assert.strictEqual(read("dxgi.dll"), "reshade64");
+    assert.ok(read("OptiScaler.ini").includes("LoadReshade=false"));
+    assert.strictEqual(manifest.loadedByOptiScaler, false);
+  });
+
   it("undoes a failed install", async () => {
     write(path.join(game, "dxgi.dll"), "original");
 

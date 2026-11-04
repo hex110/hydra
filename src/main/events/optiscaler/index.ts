@@ -2,6 +2,7 @@ import { isOptiScalerProxyDll } from "@shared";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { levelKeys } from "@main/level";
 import { getLaunchPreview } from "@main/helpers/launch-preview";
+import { RenoDx } from "@main/services/renodx/renodx";
 import {
   OptiScaler,
   OptiScalerError,
@@ -52,6 +53,7 @@ const installGameOptiScaler = async (
 ) => {
   try {
     const installation = await OptiScaler.install(shop, objectId, version);
+    await RenoDx.relinkReShade(shop, objectId);
     return { ok: true as const, installation };
   } catch (error) {
     return {
@@ -62,11 +64,15 @@ const installGameOptiScaler = async (
   }
 };
 
-const uninstallGameOptiScaler = (
+const uninstallGameOptiScaler = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
   objectId: string
-) => OptiScaler.uninstall(shop, objectId);
+) => {
+  await OptiScaler.uninstall(shop, objectId);
+  // ReShade it loaded needs a name of its own now.
+  await RenoDx.relinkReShade(shop, objectId);
+};
 
 const setGameOptiScalerAutoInstallDisabled = (
   _event: Electron.IpcMainInvokeEvent,

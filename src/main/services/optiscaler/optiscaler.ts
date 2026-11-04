@@ -71,6 +71,14 @@ export class OptiScalerError extends Error {
   }
 }
 
+/**
+ * The name Hydra's ReShade takes in a Direct3D 10–12 game. OptiScaler keeps
+ * off it, so each loads under its own name: ReShade loaded by OptiScaler
+ * hooks OpenGL after OptiScaler has loaded it, and under Wine its
+ * wglCreateContext hook calls itself until the game freezes (Mixtape).
+ */
+const RESHADE_PROXY_DLL = "dxgi.dll";
+
 const loadSettings = async (): Promise<OptiScalerSettings> =>
   resolveOptiScalerSettings(
     await db
@@ -141,7 +149,8 @@ export class OptiScaler {
     game: Game,
     settings: OptiScalerSettings,
     executablePath: string,
-    installDirectory: string
+    installDirectory: string,
+    keepFreeForReShade = !!game.renoDx
   ): Promise<OptiScalerProxyDllChoice> {
     if (settings.proxyDll) {
       return { proxyDll: settings.proxyDll, source: "settings" };
@@ -158,6 +167,8 @@ export class OptiScaler {
       detectGraphicsApis(executablePath).catch(() => null),
       findOccupiedFileNames(installDirectory, manifest),
     ]);
+
+    if (keepFreeForReShade) occupied.add(RESHADE_PROXY_DLL);
 
     return chooseOptiScalerProxyDll({
       wikiDlls,
@@ -282,7 +293,8 @@ export class OptiScaler {
     shop: GameShop,
     objectId: string,
     version?: string,
-    channel?: OptiScalerChannel
+    channel?: OptiScalerChannel,
+    options: { keepFreeForReShade?: boolean } = {}
   ): Promise<GameOptiScalerInstallation> {
     const game = await this.getGame(shop, objectId);
     const executablePath = getWindowsExecutable(game);
@@ -327,7 +339,8 @@ export class OptiScaler {
             game,
             settings,
             executablePath,
-            installDirectory
+            installDirectory,
+            options.keepFreeForReShade || !!game.renoDx
           )
         ).proxyDll;
 
@@ -339,8 +352,10 @@ export class OptiScaler {
         proxyDll,
         iniOverrides: [
           ...settings.iniOverrides,
-          // RenoDX's ReShade loads through OptiScaler when it holds dxgi.dll.
-          ...(game.renoDx && game.renoDx.proxyDll === null
+          // ReShade loads through OptiScaler when it holds ReShade's name.
+          ...(proxyDll === RESHADE_PROXY_DLL &&
+          game.renoDx &&
+          game.renoDx.proxyDll === null
             ? [{ section: "Plugins", key: "LoadReshade", value: "true" }]
             : []),
         ],
@@ -423,6 +438,48 @@ export class OptiScaler {
       });
       return { repaired: false, missingFiles, reason: "failed" };
     }
+  }
+
+  /** OptiScaler's name was chosen by the user, for the game or in settings. */
+  public static async isProxyDllPinned(game: Game) {
+    if (game.optiScalerProxyDll) return true;
+    return !!(await loadSettings()).proxyDll;
+  }
+
+  /**
+   * Reinstalls the same release under another name so ReShade can have
+   * dxgi.dll. Returns the new installation, or null when OptiScaler doesn't
+   * hold dxgi.dll, its name was chosen by the user or the release is no
+   * longer downloaded.
+   */
+  public static async moveOffReShadeProxyDll(
+    shop: GameShop,
+    objectId: string
+  ): Promise<GameOptiScalerInstallation | null> {
+    const game = await this.getGame(shop, objectId);
+    const installation = game.optiScaler;
+    if (installation?.proxyDll !== RESHADE_PROXY_DLL) return null;
+    if (await this.isProxyDllPinned(game)) return null;
+
+    const manifest = await readOptiScalerManifest(installation.directory);
+    if (!manifest) return null;
+    const cached = await OptiScalerAssets.getCachedVersions(manifest.channel);
+    if (!cached.includes(manifest.version)) return null;
+
+    const updated = await this.install(
+      shop,
+      objectId,
+      manifest.version,
+      manifest.channel,
+      { keepFreeForReShade: true }
+    );
+    if (updated.proxyDll === RESHADE_PROXY_DLL) return null;
+
+    logger.info("[OptiScaler] Moved off dxgi.dll so ReShade can load as it", {
+      gameKey: levelKeys.game(shop, objectId),
+      to: updated.proxyDll,
+    });
+    return updated;
   }
 
   /** Removes OptiScaler and stops it from being installed again automatically. */

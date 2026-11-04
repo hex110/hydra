@@ -42,6 +42,7 @@ import {
   resolveGameRootForDetection,
   resolveOptiScalerInstallDirectory,
 } from "../optiscaler/game-files";
+import { OptiScaler } from "../optiscaler/optiscaler";
 import { OptiScalerAssets } from "../optiscaler/optiscaler-assets";
 import { findExistingProxyDlls } from "../reshade/foreign-dll";
 import { ReShadeAssets } from "../reshade/reshade-assets";
@@ -143,6 +144,8 @@ interface Plan {
   proxyDll: GameRenoDxInstallation["proxyDll"];
   conflict: RenoDxProxyConflict | null;
   architecture: "x64" | "x86";
+  /** OptiScaler holds `proxyDll` and moves to another name before ReShade goes in. */
+  movesOptiScaler?: boolean;
 }
 
 /**
@@ -240,9 +243,17 @@ export class RenoDx {
       new Set(manifest?.files ?? [])
     );
 
-    // OptiScaler holding the name is not a conflict: it can load ReShade.
+    // OptiScaler holding the name is not a conflict: it moves to another
+    // name, or loads ReShade itself when the user chose its name.
     if (existing?.kind === "optiscaler") {
-      return { ...base, proxyDll: null, conflict: null };
+      return (await OptiScaler.isProxyDllPinned(game))
+        ? { ...base, proxyDll: null, conflict: null }
+        : {
+            ...base,
+            proxyDll: apiProxy,
+            conflict: null,
+            movesOptiScaler: true,
+          };
     }
     return {
       ...base,
@@ -345,6 +356,69 @@ export class RenoDx {
     return !!remote && remote !== installation.addonVersion;
   }
 
+  /**
+   * Moves OptiScaler off the name ReShade needs. Returns the name ReShade
+   * installs under: the plan's, or null (OptiScaler loads it) when OptiScaler
+   * couldn't move.
+   */
+  private static async freeProxyDll(game: Game, plan: Plan) {
+    if (!plan.movesOptiScaler) return plan.proxyDll;
+    try {
+      const moved = await OptiScaler.moveOffReShadeProxyDll(
+        game.shop,
+        game.objectId
+      );
+      if (moved) return plan.proxyDll;
+    } catch (error) {
+      logger.warn("[RenoDX] Could not move OptiScaler off ReShade's DLL", {
+        gameKey: levelKeys.game(game.shop, game.objectId),
+        error,
+      });
+    }
+    return null;
+  }
+
+  /**
+   * Gives ReShade its own DLL name again when it was installed for OptiScaler
+   * to load and OptiScaler no longer holds that name (removed, or moved to
+   * another one). Without this nothing loads ReShade. Returns the new
+   * installation, or null when nothing needed changing or it couldn't.
+   */
+  public static async relinkReShade(
+    shop: GameShop,
+    objectId: string
+  ): Promise<GameRenoDxInstallation | null> {
+    try {
+      const game = await this.getGame(shop, objectId);
+      if (!game.renoDx || game.renoDx.proxyDll !== null) return null;
+      if (!(await readRenoDxManifest(game.renoDx.directory))) return null;
+
+      const plan = await this.plan(
+        game,
+        resolveRenoDxSettings(await loadPreferences())
+      );
+      if (!("installDirectory" in plan) || !plan.proxyDll || plan.conflict) {
+        return null;
+      }
+
+      const installation = game.renoDx.reShadeOnly
+        ? await this.installReShade(shop, objectId)
+        : await this.install(shop, objectId);
+      if (!installation.proxyDll) return null;
+      logger.info("[RenoDX] ReShade loads as its own DLL again", {
+        gameKey: levelKeys.game(shop, objectId),
+        proxyDll: installation.proxyDll,
+      });
+      return installation;
+    } catch (error) {
+      logger.warn("[RenoDX] Could not give ReShade its own DLL", {
+        gameKey: levelKeys.game(shop, objectId),
+        error,
+      });
+      return null;
+    }
+  }
+
   /** Installs the newest ReShade and the game's add-on over whatever Hydra installed before. */
   public static async install(
     shop: GameShop,
@@ -391,13 +465,14 @@ export class RenoDx {
     try {
       const reShade = await ReShadeAssets.ensure();
       const addon = await RenoDxAssets.ensureAddOn(choice.artifact);
+      const proxyDll = await this.freeProxyDll(game, plan);
 
       const manifest = await installRenoDx({
         installDirectory: plan.installDirectory,
         reShadeDirectory: reShade.directory,
         reShadeVersion: reShade.version,
         architecture: plan.architecture,
-        proxyDll: plan.proxyDll,
+        proxyDll,
         addon: {
           file: addon.file,
           name: choice.artifact.name,
@@ -413,7 +488,7 @@ export class RenoDx {
         modTitle: choice.mod.title,
         reShadeVersion: manifest.reShadeVersion,
         addonVersion: manifest.addonVersion,
-        proxyDll: plan.proxyDll,
+        proxyDll,
         installedAt: manifest.installedAt,
       };
 
@@ -473,12 +548,13 @@ export class RenoDx {
       );
     try {
       const reShade = await ReShadeAssets.ensure();
+      const proxyDll = await this.freeProxyDll(game, plan);
       const manifest = await installRenoDx({
         installDirectory: plan.installDirectory,
         reShadeDirectory: reShade.directory,
         reShadeVersion: reShade.version,
         architecture: plan.architecture,
-        proxyDll: plan.proxyDll,
+        proxyDll,
         addon: null,
         modId: "",
         iniOverrides: resolveReShadeIniOverrides(preferences),
@@ -489,7 +565,7 @@ export class RenoDx {
         modTitle: "ReShade",
         reShadeVersion: manifest.reShadeVersion,
         addonVersion: "",
-        proxyDll: plan.proxyDll,
+        proxyDll,
         installedAt: manifest.installedAt,
         reShadeOnly: true,
       };

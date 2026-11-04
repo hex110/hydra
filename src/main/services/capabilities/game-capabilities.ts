@@ -197,7 +197,11 @@ const setInstallCapability = async (
     // Removing also opts the game out of automatic installs.
     if (installed) {
       if (isRenoDx) await RenoDx.uninstall(game.shop, game.objectId);
-      else await OptiScaler.uninstall(game.shop, game.objectId);
+      else {
+        await OptiScaler.uninstall(game.shop, game.objectId);
+        // ReShade it loaded needs a name of its own now.
+        await RenoDx.relinkReShade(game.shop, game.objectId);
+      }
     }
     await updateGameRecord(
       levelKeys.game(game.shop, game.objectId),
@@ -225,12 +229,18 @@ const setInstallCapability = async (
   const current = updated ?? (await loadGame(game.shop, game.objectId));
   if (mode === "on") {
     if (isRenoDx) await RenoDx.install(game.shop, game.objectId);
-    else await OptiScaler.install(game.shop, game.objectId);
+    else {
+      await OptiScaler.install(game.shop, game.objectId);
+      await RenoDx.relinkReShade(game.shop, game.objectId);
+    }
     return;
   }
   // Auto: install now if Hydra would have installed it during setup.
   if (isRenoDx) await RenoDx.installIfSupported(current);
-  else await OptiScaler.installIfEligible(current);
+  else {
+    await OptiScaler.installIfEligible(current);
+    await RenoDx.relinkReShade(game.shop, game.objectId);
+  }
 };
 
 export const setGameCapabilityMode = async (

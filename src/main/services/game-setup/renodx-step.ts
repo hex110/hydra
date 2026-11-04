@@ -1,4 +1,5 @@
-import { gamesSublevel } from "@main/level";
+import { gamesSublevel, levelKeys } from "@main/level";
+import type { Game } from "@types";
 import { RenoDx } from "@main/services/renodx/renodx";
 import { done, skipped, type GameSetupStep } from "./game-setup";
 
@@ -19,4 +20,17 @@ export const renoDxStep: GameSetupStep = {
     const installed = await gamesSublevel.get(context.gameKey);
     return done("installed", { mod: installed?.renoDx?.modTitle ?? "" });
   },
+};
+
+/**
+ * Gives ReShade its own DLL name before the launch command is built when
+ * OptiScaler, which loaded it, was removed or moved (by an update, or
+ * outside the game page). Returns the game to launch with.
+ */
+export const relinkReShadeBeforeLaunch = async (game: Game): Promise<Game> => {
+  const installation = await RenoDx.relinkReShade(game.shop, game.objectId);
+  if (!installation) return game;
+  return (
+    (await gamesSublevel.get(levelKeys.game(game.shop, game.objectId))) ?? game
+  );
 };

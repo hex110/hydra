@@ -77,11 +77,22 @@ needs a layer there, which is not tried under Wine yet.
 Hydra never replaces a file it did not write without backing it up, and
 refuses when a tool it recognises owns the name:
 
-- **OptiScaler** holds `dxgi.dll`: ReShade is installed as `ReShade64.dll`
-  (`ReShade32.dll`) beside it and `LoadReshade=true` is set in `OptiScaler.ini`,
-  which is how OptiScaler is meant to load ReShade. Reinstalling OptiScaler
-  keeps that setting. Tested with Sekiro: OptiScaler loads ReShade and the mod
-  gets HDR10.
+- **OptiScaler** holds `dxgi.dll`: OptiScaler is reinstalled from the same
+  release under another name (the next free one, as if `dxgi.dll` were taken)
+  and ReShade gets `dxgi.dll`. Each loads as its own DLL, so OptiScaler no longer
+  loads ReShade: loaded that way, ReShade hooked OpenGL after OptiScaler had
+  loaded it, and under Wine its `wglCreateContext` hook called itself until
+  Mixtape froze on its start screen. `LoadReshade=false` is set in
+  `OptiScaler.ini` so it isn't loaded twice.
+- Only when the user chose OptiScaler's name (on the game or in settings) and it
+  is `dxgi.dll` does ReShade go in as `ReShade64.dll` (`ReShade32.dll`) beside
+  it, with `LoadReshade=true` in `OptiScaler.ini`. Tested with Sekiro.
+- That arrangement depends on OptiScaler. When OptiScaler is removed or moves to
+  another name, Hydra reinstalls ReShade under its own name right away, and
+  checks again before every launch (an install from an older version, or a
+  change outside the game page). Before this, removing OptiScaler left
+  `ReShade64.dll` with nothing to load it, and a ReShade add-on mod never
+  loaded.
 - **DXVK, Special K, ENB** or an unknown DLL holds the name: nothing is
   installed and the game's page names the file. A ReShade that Hydra did not
   install is treated the same way; remove it to let Hydra manage ReShade.

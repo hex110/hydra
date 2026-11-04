@@ -92,6 +92,12 @@ replace that file. Many cracks, for example, load through their own
 `winmm.dll`. If every name is taken, the first choice is installed over the
 file as before, and the original is backed up.
 
+`dxgi.dll` also counts as taken when the game has Hydra's ReShade (or RenoDX),
+so ReShade keeps it and both load as their own DLL. An OptiScaler that already
+holds `dxgi.dll` when ReShade is installed is reinstalled under another name
+first. A name the user chose is kept; then OptiScaler loads ReShade. See
+`renodx.md`.
+
 Installations made before this rule are fixed at launch: when a game that
 uses Vulkan has an automatic installation under a name other than those in
 step 2, and Automatic now picks a different name, Hydra reinstalls the same

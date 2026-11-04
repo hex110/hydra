@@ -158,9 +158,7 @@ export const installRenoDx = async (
     );
     if (existingIni === null) manifest.files.push(RESHADE_INI_FILE);
 
-    if (loadedByOptiScaler) {
-      await enableOptiScalerReShade(installDirectory);
-    }
+    await setOptiScalerLoadsReShade(installDirectory, loadedByOptiScaler);
   } catch (error) {
     await writeManifest().catch(() => undefined);
     await uninstallRenoDx(installDirectory).catch(() => undefined);
@@ -171,15 +169,26 @@ export const installRenoDx = async (
   return manifest;
 };
 
-/** Tells OptiScaler to load the ReShade DLL beside it. Does nothing without OptiScaler.ini. */
-const enableOptiScalerReShade = async (installDirectory: string) => {
+/**
+ * Tells OptiScaler whether to load the ReShade DLL beside it; off when
+ * ReShade loads under its own name, so it isn't loaded twice. Does nothing
+ * without OptiScaler.ini.
+ */
+const setOptiScalerLoadsReShade = async (
+  installDirectory: string,
+  loads: boolean
+) => {
   const iniPath = path.join(installDirectory, OPTISCALER_INI_FILE);
   const ini = await fs.promises.readFile(iniPath, "utf8").catch(() => null);
   if (ini === null) return;
   await fs.promises.writeFile(
     iniPath,
     applyIniOverrides(ini, [
-      { section: "Plugins", key: "LoadReshade", value: "true" },
+      {
+        section: "Plugins",
+        key: "LoadReshade",
+        value: loads ? "true" : "false",
+      },
     ])
   );
 };
