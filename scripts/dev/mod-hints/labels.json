@@ -1,0 +1,154 @@
+{
+  "_about": "Where each mod's Nexus description says its files go, relative to the game folder: \"\" is the game folder, null means the description gives no usable place (or only a mod manager's). Labelled by reading the descriptions on 2026-11-04; the descriptions themselves are not stored here. _gameFolders stands in for the game folder Hydra would see: folders each game ships, written from its file layout.",
+  "castlevaniabelmontscurse": {
+    "2": null,
+    "3": "",
+    "7": "BepInEx/plugins",
+    "10": "",
+    "13": "",
+    "17": "",
+    "20": "",
+    "21": "",
+    "34": "",
+    "37": "",
+    "41": "",
+    "42": "",
+    "49": "",
+    "54": "",
+    "55": "BepInEx/plugins",
+    "62": "",
+    "92": "",
+    "113": ""
+  },
+  "monsterhunterwilds": {
+    "26": null,
+    "29": null,
+    "30": null,
+    "38": null,
+    "65": "",
+    "81": "",
+    "91": "",
+    "93": "",
+    "102": "",
+    "114": "",
+    "127": "",
+    "133": "",
+    "141": "reframework/autorun",
+    "170": "",
+    "196": "",
+    "221": "",
+    "367": null,
+    "589": null,
+    "3067": ""
+  },
+  "palworld": {
+    "1": "Pal/Content/Paks/~mods",
+    "11": "Pal/Binaries/Win64/Mods",
+    "55": "Pal/Content/Paks",
+    "183": "Pal/Content/Paks/~mods",
+    "524": "Pal/Content/Paks",
+    "550": "Pal/Content/Paks/~mods",
+    "703": "Pal/Content/Paks/~mods",
+    "104": null
+  },
+  "cyberpunk2077": {
+    "1511": "",
+    "2380": "",
+    "2675": "",
+    "2987": "r6/scripts",
+    "3518": "",
+    "4197": "",
+    "4198": "",
+    "4508": "",
+    "4575": "",
+    "4626": "",
+    "4885": "",
+    "6072": "archive/pc/mod",
+    "6945": "",
+    "7780": "",
+    "10038": ""
+  },
+  "stardewvalley": {
+    "963": "Mods",
+    "1839": "Content/Portraits",
+    "1726": null,
+    "3213": null
+  },
+  "hollowknightsilksong": {
+    "26": "",
+    "30": null
+  },
+  "_gameFolders": {
+    "castlevaniabelmontscurse": [
+      "Castlevania Belmont's Curse_Data",
+      "Castlevania Belmont's Curse_Data/StreamingAssets"
+    ],
+    "monsterhunterwilds": ["natives", "reframework"],
+    "palworld": [
+      "Pal",
+      "Pal/Content",
+      "Pal/Content/Paks",
+      "Pal/Binaries",
+      "Pal/Binaries/Win64",
+      "Engine"
+    ],
+    "cyberpunk2077": [
+      "bin",
+      "bin/x64",
+      "archive",
+      "archive/pc",
+      "archive/pc/mod",
+      "archive/pc/content",
+      "r6",
+      "r6/scripts",
+      "r6/config",
+      "red4ext",
+      "engine",
+      "mods"
+    ],
+    "stardewvalley": [
+      "Content",
+      "Content/Portraits",
+      "Content/Characters",
+      "Mods"
+    ],
+    "hollowknightsilksong": ["Hollow Knight Silksong_Data"],
+    "eldenring": ["mods"],
+    "baldursgate3": ["Data", "bin", "bin/NativeMods"]
+  },
+  "eldenring": {
+    "48": "",
+    "54": null,
+    "90": "",
+    "117": "",
+    "129": null,
+    "134": null,
+    "146": "",
+    "216": "",
+    "421": "",
+    "2431": null,
+    "3596": null
+  },
+  "baldursgate3": {
+    "141": null,
+    "205": null,
+    "327": "Data",
+    "353": null,
+    "366": null,
+    "377": null,
+    "899": null,
+    "945": "bin/NativeMods",
+    "2172": "bin"
+  },
+  "_gameNames": {
+    "eldenring": ["ELDEN RING", "Game"],
+    "baldursgate3": ["Baldurs Gate 3", "Baldur's Gate 3"],
+    "cyberpunk2077": ["Cyberpunk 2077"],
+    "palworld": ["Palworld"],
+    "monsterhunterwilds": ["MonsterHunterWilds", "Monster Hunter Wilds"],
+    "stardewvalley": ["Stardew Valley"],
+    "castlevaniabelmontscurse": ["Castlevania Belmont's Curse"],
+    "hollowknightsilksong": ["Hollow Knight Silksong"]
+  },
+  "_heldOut": ["eldenring", "baldursgate3"]
+}

@@ -155,6 +155,10 @@ export const nexusDescriptionToText = (description: string) =>
       /&(amp|lt|gt|quot|#39|apos|nbsp);/g,
       (entity) => ENTITIES[entity]
     )
+    .replaceAll(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replaceAll(/&#x([\da-f]+);/gi, (_, code) =>
+      String.fromCodePoint(Number.parseInt(code, 16))
+    )
     .replaceAll(/[ \t]+\n/g, "\n")
     .replaceAll(/\n{3,}/g, "\n\n")
     .trim();
