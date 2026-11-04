@@ -155,6 +155,15 @@ interface GameSupport {
   without a definition, not a second system.
 - First game: **Valheim** (BepInEx, Thunderstore, no account needed).
 
+**As built (2026-11-04).** Definitions are data in
+`src/shared/mod-games.ts` (types in `mods.types.ts`), resolved by
+`services/mods/games/`: Hydra's own list, then Thunderstore's (cached,
+weekly; 376 games), then `MOD_FOLDERS`, then a Unity game detected from its
+files (BepInEx 6 IL2CPP or 5 Mono). The first hand-written game is
+Castlevania: Belmont's Curse, the owner's test game, instead of Valheim,
+which comes from Thunderstore. `enableList`, `loadOrder` and `logs` are not
+in the type yet: they arrive with steps 5 and 7. Details: [Mods](features/mods.md).
+
 ### Step 4. Loaders, automatic
 
 A loader is installed as a mod flagged as the game's loader, so deploy,
@@ -180,6 +189,17 @@ installing a mod that needs it installs it too.
   check exists today.
 - Loader sources: Thunderstore packages directly; SMAPI and script extenders
   from their GitHub releases where published, else Nexus like any mod.
+
+**As built (2026-11-04), BepInEx and MelonLoader only.** A loader is
+recognised by its files in any mod (`InstalledMod.loader`, with the proxy
+DLLs it ships), installed from the definition's package (builds.bepinex.dev,
+BepInEx's GitHub releases, or the Thunderstore community's most downloaded
+loader package) through the Downloads queue, and started with
+`WINEDLLOVERRIDES` by Play (modded) only. The clash check covers OptiScaler,
+RenoDX's ReShade and OnlineFix. Still to do in this step: SMAPI (its
+`install.dat` and `deps.json`), script extenders and other exe loaders (a
+launch-time exe override), REFramework, and 32-bit Unity games. Checked with
+Belmont's Curse under Proton: [Mods](features/mods.md#how-steps-3-and-4-were-checked).
 
 ### Step 5. Load order and the game's own list
 
@@ -246,6 +266,9 @@ mod that failed shows it on its row with the log line.
   Mods; default `xdg-user-dir DOWNLOAD`). A file whose name matches the
   expected name (GraphQL `modFiles.uri`) and size is moved into the mod's
   download folder and installed. Files that don't match are left alone.
+  **Check first:** on 2026-11-04 `modFiles.uri` was a storage path
+  (`b1/83/e3/<uuid>`), not the file name, and the content preview URL built
+  from it answered 404; find the file name and preview another way.
 - `nxm://` links (already handled) feed the same queue.
 
 ### Step 9. Install knowledge in layers

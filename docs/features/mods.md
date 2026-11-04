@@ -16,11 +16,85 @@ Vortex's deployment. The reasoning is in the [design](../mods-design.md).
   Hydra handles Nexus's Mod Manager Download buttons, and how much disk the
   mod store uses, with **Open folder**.
 
-The Mods page says what Hydra knows about the game in one line: without a
-support definition, "Hydra places files in `<folder>`; it doesn't know this
-game's loader or mod list yet", naming whether the folder came from the mod
-folder table or is the game folder. While the game runs the list is read-only
-and says why. Every part has a loading and an error state.
+The Mods page says what Hydra knows about the game in one line, with where
+the facts came from on hover: its support definition ("Castlevania: Belmont's
+Curse, from Hydra's own game list: loose mod files go into `BepInEx/plugins`
+and load through BepInEx 6 (IL2CPP)"), or without one, "Hydra places files in
+`<folder>`; it doesn't know this game's loader or mod list yet", naming
+whether the folder came from the mod folder table or is the game folder.
+While the game runs the list is read-only and says why. Every part has a
+loading and an error state.
+
+## Game support definitions
+
+A definition says how a game is modded: which games it matches (Steam app
+id, Nexus domain, exe name), its mod types (a folder in the game, the file
+extensions that go there, which is the default, and whether a mod's loose
+files get a folder of their own), its loader and where its facts came from.
+Hydra picks the most specific one (`services/mods/games/`):
+
+1. **Hydra's own list**, `HYDRA_GAME_SUPPORT` in `src/shared/mod-games.ts`,
+   written by hand with a source per game. First entry: Castlevania:
+   Belmont's Curse (BepInEx 6.0.0-be.788, the build its Nexus mods are made
+   for).
+2. **Thunderstore's game list**: the ecosystem schema
+   (`thunderstore.io/api/experimental/schema/dev/latest/`), fetched on first
+   use, turned into definitions and cached in
+   `<userData>/mods/thunderstore-games.json`, refreshed weekly. No copy is
+   bundled (the schema has no licence). 376 games on 2026-11-04, Valheim
+   among them; a game whose loader Hydra can't install yet (Shimloader,
+   GDWeave, …) says so.
+3. The **mod folder table** (`MOD_FOLDERS`, the fallback that existed
+   before): Stardew Valley, Bethesda games and the rest keep their folder.
+4. **Its game files**: a Unity game (`UnityPlayer.dll` or `<exe>_Data`) takes
+   BepInEx, 6 (IL2CPP, when `GameAssembly.dll` is there) or 5 (Mono).
+
+With a definition, an archive is placed by `planModPlacement`: an archive
+that ships the loader is laid out like the game folder, from inside the
+folder around it (a Thunderstore pack's `BepInExPack_Valheim/`; the
+manifest, icon and readme beside it are left out); an archive with a folder
+the game or a mod type has (`BepInEx/…`), or a file that replaces one of the
+game's own, is laid out like the game folder; anything else is routed, a top
+folder named like a mod type's (`plugins/`, `config/`) going there, a file
+with a mod type's extension (`.dll`) going there, the rest to the default
+type, in a folder named after the mod (`BepInEx/plugins/<mod>/`), as
+r2modman does. The activity log's install plan names the definition and its
+source. Games without a definition are placed as before.
+
+## Loaders
+
+A loader is a mod: installing it deploys, backs up and undoes like any other,
+it goes first in the list so the mods after it win the files they share, and
+its row says **Loader**. Hydra recognises one by its files wherever it comes
+from (its own download, a Nexus "BepInEx included" file, an archive from
+disk): BepInEx by `BepInEx/core/BepInEx*.dll`, MelonLoader by
+`MelonLoader/…/MelonLoader.dll`, with the proxy DLL it ships at the top
+(`winhttp.dll`, `version.dll`).
+
+- **Where it comes from:** the definition's loader package. BepInEx 6
+  bleeding-edge builds from `builds.bepinex.dev`, BepInEx 5 from its GitHub
+  releases, and for Thunderstore games the community's most downloaded
+  loader package from Thunderstore (no account). Loader downloads are in the
+  Downloads queue like Nexus files.
+- **When:** installing a mod whose files go into the loader's folders
+  (`BepInEx/…`) queues the loader too, unless one is installed (an installed
+  loader turned off counts: the user turned it off). A game whose definition
+  has a loader that isn't on shows one row above the list, "<Loader> is
+  needed for mods to load", with **Install**, or **Turn on** when it is only
+  off.
+- **Starting it:** Play (modded) adds the loader's proxy DLLs to
+  `WINEDLLOVERRIDES` (`winhttp=n,b`) next to OptiScaler's and RenoDX's;
+  Play leaves them out, so Wine loads its own `winhttp.dll` and BepInEx
+  doesn't start. The game's stored executable never changes. The run record
+  and the mods report name the loader and its version.
+- **Proxy DLL clash:** a loader whose proxy DLL OptiScaler, ReShade (RenoDX)
+  or OnlineFix already uses in the game is refused before it is deployed,
+  installed or turned on, and the activity log says which tool and DLL. The
+  other way round, OptiScaler already skips DLL names the game folder holds.
+
+Not yet: loaders that start through their own exe (SMAPI, script extenders)
+or `dinput8.dll` (REFramework), and 32-bit Unity games (Hydra installs the
+x64 BepInEx).
 
 ## Play (modded)
 
@@ -55,6 +129,8 @@ matched whatever their case (`data/` from a Windows archive lands in `Data/`).
   newest main file; **Update to …** installs it in the mod's place.
 - **Install from file** takes an archive (zip, 7z, rar) or a single file the
   user downloaded.
+- Each row says where the mod came from: **Nexus Mods**, **File**, or
+  **Web** (a loader Hydra downloaded from where it is published).
 - Changes are refused while the game runs.
 
 Where a mod goes: `MOD_FOLDERS` in `src/shared/mods.ts` maps Nexus game
@@ -161,8 +237,9 @@ the game's `mods.json`.
 
 ## Not yet
 
-Loaders, load order, the game's own mod list, files in the Wine prefix, more
-sources and modpacks: roadmap phase 19, planned in
+Exe and `dinput8` loaders, load order, the game's own mod list, files in the
+Wine prefix, reading the loader's log, more sources and modpacks: roadmap
+phase 19, planned in
 [Mods, phase 19](../mods-phase-19.md). Settings → Mods has no download size
 threshold, watched Downloads folder, LOOT or AI provider yet: each comes with
 the step that uses it (8, 5, 9), so no setting is shown that does nothing.
@@ -180,3 +257,30 @@ failed run offers Copy mods report); a Nexus install with a fake TorBox token
 (a failed row in Downloads with TorBox's message and Retry, no token in the
 log); Settings → Mods; the report text. Not checked: a real TorBox download,
 the save backup offer with save sync set up, a Windows game under Proton.
+
+## How steps 3 and 4 were checked
+
+2026-11-04, in a signed-out sandbox with a reflinked copy of the owner's
+Castlevania: Belmont's Curse (AnkerGames build, Unity IL2CPP) added as Steam
+4231820:
+
+- The definition matched (Hydra's list); installing the ultrawide fix's
+  plugin-only zip (ollieatkinson v2.0.3) placed `BepInEx/plugins/…` as packed
+  and queued BepInEx 6.0.0-be.788 from builds.bepinex.dev in Downloads, which
+  installed first in the list (228 files, recognised as the loader through
+  `winhttp.dll`); 231 hard links deployed.
+- The launch preview had `winhttp=n,b` for Play (modded) and not for Play.
+- **Play (modded) under Proton** (umu): BepInEx generated its interop
+  assemblies, `LogOutput.log` said "Loading [Belmont's Curse Ultrawide
+  2.0.3]" and the plugin "Ultrawide fixes loaded for 3440x1440; 12/12
+  features enabled". The run's `summary.md` named the loader and both mods.
+- With the loader turned off the "is needed" row offered **Turn on**, which
+  turned it on without downloading it again.
+- A fake Valheim folder (Steam 892970) matched Thunderstore's definition;
+  **Install** fetched `denikson-BepInExPack_Valheim` 5.4.2360 from
+  Thunderstore and left the pack's manifest and icon out.
+- The Mods page at 900 and 1600 px wide.
+
+Not checked: the proxy DLL clash with a real OptiScaler install (covered by
+unit tests), MelonLoader, a Mono game, Nexus files through TorBox for these
+games.
