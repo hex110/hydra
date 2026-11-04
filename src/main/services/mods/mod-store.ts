@@ -319,6 +319,17 @@ const checkProxyDlls = (game: Game, loader: InstalledModLoader) => {
 /** Folders the placement dialog offers from the game folder. */
 const MAX_PLACEMENT_TARGETS = 80;
 
+/** A ReShade add-on: ReShade loads these from its own folder. */
+const RESHADE_ADDON = /\.addon(64|32)?$/i;
+
+/** The one folder every file of an archive sits in, if there is one. */
+const singleWrapperFolder = (files: string[]) => {
+  const tops = new Set(files.map((file) => file.split("/")[0]));
+  if (tops.size !== 1) return null;
+  const [top] = tops;
+  return files.every((file) => file.startsWith(`${top}/`)) ? top : null;
+};
+
 const EVIDENCE_REFRESH_MS = 14 * 24 * 60 * 60_000;
 const EVIDENCE_WAIT_MS = 10_000;
 
@@ -377,6 +388,10 @@ export class ModStore {
         ? { name: loaderMod.name, version: loaderMod.version }
         : null,
       deployed: await this.isDeployed(folder),
+      reShade: {
+        needed: mods.some((mod) => mod.enabled && mod.needsReShade),
+        installed: !!game.renoDx,
+      },
       loaderMissing: mods.some(
         (mod) =>
           mod.enabled &&
@@ -792,6 +807,63 @@ export class ModStore {
 
       const { nexusGame } = await this.readMods(folder);
       const gameRootEntries = await readRootEntries(gameFolder);
+
+      // ReShade add-ons load from ReShade's folder, next to the game's real
+      // executable (an Unreal game's Binaries/Win64, not its launcher stub).
+      if (extracted.some((file) => RESHADE_ADDON.test(file))) {
+        const reShadeFolder = await this.reShadeFolder(game, gameFolder);
+        const wrapper = singleWrapperFolder(extracted);
+        const placed = extracted.map((file) => ({
+          archive: file,
+          target: [
+            reShadeFolder,
+            wrapper ? file.slice(wrapper.length + 1) : file,
+          ]
+            .filter(Boolean)
+            .join("/"),
+        }));
+        await ModActivity.append(shop, objectId, {
+          kind: "install-plan",
+          modId: id,
+          modName: details.name,
+          message: `Placing ${count(placed.length, "file")} as a ReShade add-on mod into ${reShadeFolder || "the game folder"}, where ReShade loads add-ons from.`,
+          details: {
+            rule: "reshade-addon",
+            files: placed
+              .slice(0, MAX_PLAN_FILES)
+              .map((file) => `${file.archive} -> ${file.target}`),
+          },
+        });
+        const prepared = path.join(folder, "staging", `${id}.prepared`);
+        await fs.promises.rm(prepared, { recursive: true, force: true });
+        try {
+          for (const file of placed) {
+            const destination = path.join(prepared, file.target);
+            await fs.promises.mkdir(path.dirname(destination), {
+              recursive: true,
+            });
+            await fs.promises.rename(
+              path.join(partial, file.archive),
+              destination
+            );
+          }
+          return await this.recordInstall(
+            shop,
+            objectId,
+            folder,
+            id,
+            prepared,
+            {
+              details,
+              deployRoot: "",
+              game,
+              needsReShade: true,
+            }
+          );
+        } finally {
+          await fs.promises.rm(prepared, { recursive: true, force: true });
+        }
+      }
       const definition = await this.resolveDefinition(
         game,
         gameFolder,
@@ -945,6 +1017,14 @@ export class ModStore {
     }
   }
 
+  /** ReShade's folder relative to the mod game folder; "" when it is the same. */
+  private static async reShadeFolder(game: Game, gameFolder: string) {
+    const directory = await RenoDx.getReShadeDirectory(game).catch(() => null);
+    if (!directory) return "";
+    const relative = path.relative(gameFolder, directory).replaceAll("\\", "/");
+    return relative.startsWith("..") ? "" : relative;
+  }
+
   /** Keeps an unpacked archive until the user says where its files go. */
   private static async holdForPlacement(
     shop: GameShop,
@@ -1042,9 +1122,13 @@ export class ModStore {
       rootFolders.push(top, ...(await listFolders(top)));
       if (rootFolders.length >= MAX_PLACEMENT_TARGETS) break;
     }
+    const reShadeTarget = gameFolder
+      ? await this.reShadeFolder(game, gameFolder)
+      : "";
     const targets = [
       ...new Set([
         "",
+        reShadeTarget,
         ...(definition?.modTypes.map(modTypePath) ?? []),
         getModFolder(nexusGame?.domainName),
         ...pending.guess.map((choice) => choice.target),
@@ -1202,6 +1286,7 @@ export class ModStore {
           game,
           loader: detectModLoader(targets),
           needsLoader: findNeededLoader(targets, definition?.loader?.kind),
+          needsReShade: targets.some((target) => RESHADE_ADDON.test(target)),
         }
       );
       await this.cancelPlacement(shop, objectId, pendingId);
@@ -1398,6 +1483,7 @@ export class ModStore {
       game: Game;
       loader?: InstalledModLoader | null;
       needsLoader?: InstalledMod["needsLoader"] | null;
+      needsReShade?: boolean;
     }
   ): Promise<InstalledMod> {
     const { details } = options;
@@ -1422,6 +1508,7 @@ export class ModStore {
         : undefined,
       loader: options.loader ?? undefined,
       needsLoader: (!options.loader && options.needsLoader) || undefined,
+      needsReShade: options.needsReShade || undefined,
     };
 
     let replaced: InstalledMod | undefined;

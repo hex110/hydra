@@ -36,6 +36,23 @@ const installGameRenoDx = async (
   }
 };
 
+const installGameReShade = async (
+  _event: Electron.IpcMainInvokeEvent,
+  shop: GameShop,
+  objectId: string
+) => {
+  try {
+    const installation = await RenoDx.installReShade(shop, objectId);
+    return { ok: true as const, installation };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof RenoDxError ? error.code : "failed",
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
 const uninstallGameRenoDx = (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
@@ -55,6 +72,7 @@ registerEvent("clearRenoDxCache", clearRenoDxCache);
 registerEvent("runRenoDxBulk", runRenoDxBulk);
 registerEvent("getGameRenoDxStatus", getGameRenoDxStatus);
 registerEvent("installGameRenoDx", installGameRenoDx);
+registerEvent("installGameReShade", installGameReShade);
 registerEvent("uninstallGameRenoDx", uninstallGameRenoDx);
 registerEvent(
   "setGameRenoDxAutoInstallDisabled",

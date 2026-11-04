@@ -42,7 +42,8 @@ export const withDependencyRuleOverrides = (
   options: { enableHdrRules: boolean; canSwitchMonitor: boolean }
 ): Record<string, boolean> => {
   const overrides = { ...game?.launchRuleOverrides };
-  if (!game?.renoDx || !options.enableHdrRules) return overrides;
+  if (!game?.renoDx || game.renoDx.reShadeOnly || !options.enableHdrRules)
+    return overrides;
   overrides[HDR_LAUNCH_RULE_ID] ??= true;
   if (options.canSwitchMonitor) overrides[HYPRLAND_HDR_LAUNCH_RULE_ID] ??= true;
   return overrides;

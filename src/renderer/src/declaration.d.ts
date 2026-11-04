@@ -904,6 +904,23 @@ declare global {
           message: string;
         }
     >;
+    installGameReShade: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<
+      | { ok: true; installation: GameRenoDxInstallation }
+      | {
+          ok: false;
+          error:
+            | "not-found"
+            | "not-windows-game"
+            | "external-install"
+            | "conflict"
+            | "failed"
+            | RenoDxUnavailableReason;
+          message: string;
+        }
+    >;
     uninstallGameRenoDx: (shop: GameShop, objectId: string) => Promise<void>;
     setGameRenoDxAutoInstallDisabled: (
       shop: GameShop,

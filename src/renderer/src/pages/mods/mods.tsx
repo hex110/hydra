@@ -192,6 +192,21 @@ export default function Mods() {
         )
       : undefined;
 
+  const installReShade = async () => {
+    setBusy(true);
+    try {
+      const result = await window.electron.installGameReShade(shop, objectId);
+      if (result.ok) showSuccessToast(t("reshade_installed"));
+      else
+        showErrorToast(
+          t("reshade_install_failed", { message: result.message })
+        );
+    } finally {
+      setBusy(false);
+      await refresh();
+    }
+  };
+
   const placeAgain = async (mod: InstalledMod) => {
     try {
       const id = await window.electron.placeModAgain(shop, objectId, mod.id);
@@ -477,6 +492,24 @@ export default function Mods() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {gameMods?.reShade.needed && !gameMods.reShade.installed && (
+              <div className="mods__row mods__row--loader">
+                <span className="mods__file-name">{t("reshade_needed")}</span>
+                <div className="mods__row-meta">
+                  <span>{t("reshade_needed_hint")}</span>
+                </div>
+                <div className="mods__row-actions">
+                  <Button
+                    theme="primary"
+                    disabled={busy || !canInstall}
+                    onClick={() => void installReShade()}
+                  >
+                    {t("install")}
+                  </Button>
+                </div>
+              </div>
             )}
 
             {neededLoader && !downloadsByKey[`loader:${neededLoader.kind}`] && (

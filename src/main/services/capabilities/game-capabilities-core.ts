@@ -112,15 +112,16 @@ export const resolveLaunchRuleCapability = (
     });
 
   const override = getCapabilityOverride(game, id);
+  const hasRenoDxMod = !!game.renoDx && !game.renoDx.reShadeOnly;
   const wanted = isLaunchRuleApplied(
     rule,
     options.effectiveOverrides ?? game.launchRuleOverrides
   );
   const neededByTool =
-    override === null && wanted && !!game.renoDx && !rule.enabled;
+    override === null && wanted && hasRenoDxMod && !rule.enabled;
   const why =
     override === true
-      ? reason(game.renoDx ? "set_on_for_game_renodx" : "set_on_for_game")
+      ? reason(hasRenoDxMod ? "set_on_for_game_renodx" : "set_on_for_game")
       : override === false
         ? reason("set_off_for_game")
         : neededByTool

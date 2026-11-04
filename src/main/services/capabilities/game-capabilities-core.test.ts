@@ -17,6 +17,8 @@ const renoDxStatus = (
 ): GameRenoDxStatus => ({
   installDirectory: "/games/x",
   installation: null,
+  reShade: null,
+  canInstallReShade: true,
   mod: {
     title: "FromSoft",
     variant: null,

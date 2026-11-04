@@ -267,6 +267,8 @@ export class RenoDx {
       return {
         installDirectory: null,
         installation: null,
+        reShade: null,
+        canInstallReShade: false,
         mod: null,
         unavailable: plan.unavailable,
         proxyDll: null,
@@ -285,11 +287,19 @@ export class RenoDx {
     if (game.renoDx && !manifest) {
       await this.updateGame(shop, objectId, { renoDx: null });
     }
-    const installation = manifest ? (game.renoDx ?? null) : null;
+    const stored = manifest ? (game.renoDx ?? null) : null;
+    const installation = stored && !stored.reShadeOnly ? stored : null;
 
     return {
       installDirectory: plan.installDirectory,
       installation,
+      reShade: stored?.reShadeOnly
+        ? { version: stored.reShadeVersion, proxyDll: stored.proxyDll }
+        : null,
+      canInstallReShade:
+        plan.unavailable !== "unsupported-api" &&
+        !plan.conflict &&
+        !(await hasExternalRenoDx(plan.installDirectory)),
       mod: plan.choice
         ? {
             title: plan.choice.mod.title,
@@ -309,8 +319,12 @@ export class RenoDx {
       autoInstallDisabled: game.renoDxAutoInstallDisabled === true,
       antiCheat: await detectAntiCheat(plan.installDirectory),
       updateAvailable:
-        !!installation &&
-        (await this.hasUpdate(installation, plan.choice, latestReShade)),
+        !!stored &&
+        (await this.hasUpdate(
+          stored,
+          stored.reShadeOnly ? null : plan.choice,
+          latestReShade
+        )),
       latestReShadeVersion: latestReShade,
     };
   }
@@ -421,6 +435,87 @@ export class RenoDx {
         error instanceof Error ? error.message : String(error)
       );
     }
+  }
+
+  /**
+   * Installs ReShade's add-on build alone, for games without a RenoDX mod
+   * whose mods are ReShade add-ons (`.addon64`) or that want its effects. Same
+   * files, backups and OptiScaler handling as a RenoDX install; it doesn't
+   * turn the HDR rules on.
+   */
+  public static async installReShade(
+    shop: GameShop,
+    objectId: string
+  ): Promise<GameRenoDxInstallation> {
+    const game = await this.getGame(shop, objectId);
+    const preferences = await loadPreferences();
+    const plan = await this.plan(game, resolveRenoDxSettings(preferences));
+    if (!("installDirectory" in plan))
+      throw new RenoDxError(
+        "not-windows-game",
+        "ReShade only works with Windows games"
+      );
+    if (plan.unavailable === "unsupported-api")
+      throw new RenoDxError(
+        "unsupported-api",
+        "The game only renders through Vulkan"
+      );
+    if (await hasExternalRenoDx(plan.installDirectory))
+      throw new RenoDxError(
+        "external-install",
+        "ReShade was installed in this game by another tool"
+      );
+    if (plan.conflict)
+      throw new RenoDxError(
+        plan.conflict.kind === "reshade" ? "external-install" : "conflict",
+        `${plan.conflict.fileName} is already in the game folder`,
+        plan.conflict
+      );
+    try {
+      const reShade = await ReShadeAssets.ensure();
+      const manifest = await installRenoDx({
+        installDirectory: plan.installDirectory,
+        reShadeDirectory: reShade.directory,
+        reShadeVersion: reShade.version,
+        architecture: plan.architecture,
+        proxyDll: plan.proxyDll,
+        addon: null,
+        modId: "",
+        iniOverrides: resolveReShadeIniOverrides(preferences),
+      });
+      const installation: GameRenoDxInstallation = {
+        directory: plan.installDirectory,
+        modId: "",
+        modTitle: "ReShade",
+        reShadeVersion: manifest.reShadeVersion,
+        addonVersion: "",
+        proxyDll: plan.proxyDll,
+        installedAt: manifest.installedAt,
+        reShadeOnly: true,
+      };
+      await this.updateGame(shop, objectId, { renoDx: installation });
+      logger.info("[RenoDX] Installed ReShade alone", {
+        gameKey: levelKeys.game(shop, objectId),
+        ...installation,
+      });
+      return installation;
+    } catch (error) {
+      if (error instanceof RenoDxError) throw error;
+      throw new RenoDxError(
+        "failed",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /** The folder ReShade goes into (next to the game's real executable). */
+  public static async getReShadeDirectory(game: Game) {
+    const executablePath = getWindowsExecutable(game);
+    if (!executablePath) return null;
+    return (
+      game.renoDx?.directory ??
+      (await resolveOptiScalerInstallDirectory(executablePath))
+    );
   }
 
   /** Removes the files and stops them from being installed again automatically. */

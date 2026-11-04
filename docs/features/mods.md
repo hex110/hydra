@@ -78,6 +78,33 @@ type, in a folder named after the mod (`BepInEx/plugins/<mod>/`), as
 r2modman does. The activity log's install plan names the definition and its
 source. Games without a definition are placed as before.
 
+## ReShade add-on mods
+
+An archive with ReShade add-ons (`.addon64`, `.addon32`) is a ReShade add-on
+mod. ReShade loads add-ons from its own folder, next to the game's real
+executable. For an Unreal game started from a launcher stub (Mixtape's
+`Mixtape.exe`), that is `<Project>/Binaries/Win64`, not the folder with the
+stub. The mod's files go there (a single folder around them is taken off),
+without asking, and the mod is marked as needing ReShade.
+
+Hydra then installs ReShade's add-on build alone if the game has no ReShade
+([RenoDX → ReShade alone](renodx.md#reshade-alone)). It won't do this for a
+game with anti-cheat, or where another tool's ReShade or a conflicting DLL is
+in the way. In those cases the activity log says why, and the Mods page shows
+**ReShade with add-on support is needed for its add-ons** with **Install**.
+ReShade itself is a tool, not a mod: Play takes the add-on out with the other
+mods and leaves ReShade in.
+
+Checked 2026-11-04 in the sandbox with a Mixtape-shaped folder (the stub plus
+the real `Mixtape-Win64-Shipping.exe`) and the Mixtape ultrawide fix's files:
+
+- the files landed in `NewMoon/Binaries/Win64`;
+- ReShade 6.8.0 was installed there as `dxgi.dll`;
+- the RenoDX status said "ReShade alone".
+
+Not checked: the Tools part on screen; the game under Proton; OptiScaler
+loading ReShade in the real Mixtape folder.
+
 ## When Hydra isn't sure
 
 Some archives can't be placed by layout alone. Hydra then waits for you

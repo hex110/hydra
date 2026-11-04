@@ -17,6 +17,7 @@ import { SystemPath } from "../system-path";
 import { WindowManager } from "../window-manager";
 import { ModActivity } from "./activity";
 import { resolveThunderstoreLoader } from "./games";
+import { ensureReShadeForMods } from "./reshade-for-mods";
 import { ModError, ModStore } from "./mod-store";
 import { getNexusModRequirements } from "./nexus";
 import { requestNexusFileThroughTorBox } from "./torbox-nexus";
@@ -376,6 +377,8 @@ const run = async (job: Job): Promise<ModActionResult> => {
     );
     if (installed?.needsLoader)
       void ModDownloads.ensureLoader(shop, objectId, installed.name);
+    if (installed?.needsReShade)
+      void ensureReShadeForMods(shop, objectId, installed.name);
     return finish(job, installed === null);
   } catch (error) {
     if (!(error instanceof ModError))

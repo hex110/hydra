@@ -1489,6 +1489,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getGameRenoDxStatus", shop, objectId),
   installGameRenoDx: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("installGameRenoDx", shop, objectId),
+  installGameReShade: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("installGameReShade", shop, objectId),
   uninstallGameRenoDx: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("uninstallGameRenoDx", shop, objectId),
   setGameRenoDxAutoInstallDisabled: (

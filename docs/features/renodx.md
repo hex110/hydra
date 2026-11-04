@@ -110,6 +110,29 @@ keyboards have no `Home` key. The value is `virtual key, ctrl, shift, alt`. An
 empty field applies nothing. A key changed in the overlay is replaced the next
 time the settings are applied.
 
+## ReShade alone
+
+A game with no RenoDX mod can still get ReShade's add-on build:
+**Install ReShade alone** in the same Tools part. It's for mods that are
+ReShade add-ons (an `.addon64` file, such as the Mixtape ultrawide fix) and
+for ReShade's own effects. It is installed exactly like ReShade with a RenoDX
+mod:
+
+- next to the game's real executable, so an Unreal game's
+  `Binaries/Win64` and not its launcher stub;
+- with the same proxy DLL choice, or loaded by OptiScaler when OptiScaler
+  holds `dxgi.dll`;
+- with the same `ReShade.ini` settings (F10 overlay), backups and manifest.
+
+The game record marks it `reShadeOnly`, which means:
+
+- the status reports it as `reShade`, not as a RenoDX installation;
+- the HDR launch rules don't follow it, since ReShade alone makes nothing HDR;
+- **Remove** takes it out.
+
+When a mod is a ReShade add-on, the Mods page installs ReShade alone by itself
+(see [Mods](mods.md#reshade-add-on-mods)).
+
 ## Automatic installation
 
 Off by default. With RenoDX set to **Auto** in **Settings → Tool defaults**, the

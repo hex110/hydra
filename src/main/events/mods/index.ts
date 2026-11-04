@@ -37,6 +37,7 @@ import {
   searchNexusMods,
 } from "@main/services/mods/nexus";
 import { WindowManager } from "@main/services/window-manager";
+import { ensureReShadeForMods } from "@main/services/mods/reshade-for-mods";
 import { isNxmHandler, registerNxmHandler } from "@main/services/mods/nxm";
 import { registerEvent } from "../register-event";
 
@@ -234,6 +235,8 @@ registerEvent(
       );
       if (mod.needsLoader)
         await ModDownloads.ensureLoader(shop, objectId, mod.name);
+      if (mod.needsReShade)
+        await ensureReShadeForMods(shop, objectId, mod.name);
     });
     return result;
   }

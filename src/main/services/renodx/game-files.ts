@@ -72,7 +72,8 @@ export interface InstallRenoDxOptions {
   architecture: RenoDxArchitecture;
   /** The name ReShade loads as, or null when OptiScaler loads it. */
   proxyDll: ReShadeProxyDll | null;
-  addon: { file: string; name: string; version: string };
+  /** The RenoDX add-on; null installs ReShade alone, for other add-ons and effects. */
+  addon: { file: string; name: string; version: string } | null;
   modId: string;
   iniOverrides: IniOverride[];
 }
@@ -100,8 +101,8 @@ export const installRenoDx = async (
     reShadeFile,
     loadedByOptiScaler,
     modId: options.modId,
-    addonFile: options.addon.name,
-    addonVersion: options.addon.version,
+    addonFile: options.addon?.name ?? "",
+    addonVersion: options.addon?.version ?? "",
     installedAt: new Date().toISOString(),
     files: [],
     directories: [],
@@ -143,7 +144,7 @@ export const installRenoDx = async (
       ),
       reShadeFile
     );
-    await placeFile(options.addon.file, options.addon.name);
+    if (options.addon) await placeFile(options.addon.file, options.addon.name);
 
     // An existing ReShade.ini is the user's: change it in place and leave it
     // when RenoDX is removed. A new one is Hydra's and goes with the rest.

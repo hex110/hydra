@@ -65,6 +65,11 @@ export interface GameRenoDxInstallation {
   /** The DLL Wine must load natively, or null when OptiScaler loads ReShade. */
   proxyDll: ReShadeProxyDll | null;
   installedAt: string;
+  /**
+   * ReShade without a RenoDX mod, for other add-ons (a mod's `.addon64`) and
+   * effects. It doesn't make the game HDR, so the HDR rules don't follow it.
+   */
+  reShadeOnly?: boolean;
 }
 
 export type RenoDxUnavailableReason =
@@ -103,7 +108,12 @@ export interface RenoDxProxyConflict {
 
 export interface GameRenoDxStatus {
   installDirectory: string | null;
+  /** A RenoDX mod Hydra installed; null for ReShade alone (see `reShade`). */
   installation: GameRenoDxInstallation | null;
+  /** ReShade installed alone, for a mod's add-ons or effects. */
+  reShade: { version: string; proxyDll: ReShadeProxyDll | null } | null;
+  /** ReShade alone can be installed: a Windows game with a graphics API ReShade supports. */
+  canInstallReShade: boolean;
   /** The mod Hydra would install, or null with the reason in `unavailable`. */
   mod: {
     title: string;

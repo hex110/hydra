@@ -12,6 +12,7 @@ import type {
 
 import { logger } from "../logger";
 import { ModActivity } from "./activity";
+import { ensureReShadeForMods } from "./reshade-for-mods";
 import { ModDownloads, type NexusFileRequest } from "./mod-downloads";
 import { ModError, ModStore } from "./mod-store";
 import { findNexusGame, getNexusModFiles } from "./nexus";
@@ -100,6 +101,8 @@ export const installModFromArchive = async (
     });
     if (installed?.needsLoader)
       await ModDownloads.ensureLoader(shop, objectId, installed.name);
+    if (installed?.needsReShade)
+      await ensureReShadeForMods(shop, objectId, installed.name);
   });
   if (!result.ok)
     await ModActivity.append(shop, objectId, {

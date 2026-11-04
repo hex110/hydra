@@ -40,6 +40,8 @@ export interface InstalledMod {
   loader?: InstalledModLoader;
   /** Its files go into the loader's folders: it does nothing without the loader. */
   needsLoader?: ModLoaderKind;
+  /** It ships ReShade add-ons (`.addon64`/`.addon32`): it needs ReShade's add-on build. */
+  needsReShade?: boolean;
 }
 
 export type ModLoaderKind = "bepinex" | "melonloader";
@@ -166,6 +168,8 @@ export interface GameMods {
   loader: { name: string; version: string | null } | null;
   /** Enabled mods need a loader that isn't installed. */
   loaderMissing: boolean;
+  /** ReShade for mods that are ReShade add-ons; managed in Options → Tools. */
+  reShade: { needed: boolean; installed: boolean };
   /** The mods are in the game folder; Play takes them out until Play (modded). */
   deployed: boolean;
   mods: InstalledMod[];

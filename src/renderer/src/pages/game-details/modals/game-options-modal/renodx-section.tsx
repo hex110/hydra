@@ -17,7 +17,9 @@ export function RenoDxSettingsSection({
   const { showSuccessToast, showErrorToast } = useToast();
 
   const [status, setStatus] = useState<GameRenoDxStatus | null>(null);
-  const [busy, setBusy] = useState<"install" | "uninstall" | null>(null);
+  const [busy, setBusy] = useState<
+    "install" | "install-reshade" | "uninstall" | null
+  >(null);
 
   const refresh = useCallback(() => {
     window.electron
@@ -30,17 +32,18 @@ export function RenoDxSettingsSection({
     refresh();
   }, [refresh, game.executablePath]);
 
-  const install = async () => {
-    setBusy("install");
-    const result = await window.electron.installGameRenoDx(
-      game.shop,
-      game.objectId
-    );
+  const install = async (reShadeOnly = false) => {
+    setBusy(reShadeOnly ? "install-reshade" : "install");
+    const result = reShadeOnly
+      ? await window.electron.installGameReShade(game.shop, game.objectId)
+      : await window.electron.installGameRenoDx(game.shop, game.objectId);
     setBusy(null);
 
     if (result.ok) {
       showSuccessToast(
-        t("renodx_installed_toast", { mod: result.installation.modTitle })
+        reShadeOnly
+          ? t("reshade_installed_toast")
+          : t("renodx_installed_toast", { mod: result.installation.modTitle })
       );
     } else {
       showErrorToast(
@@ -87,7 +90,11 @@ export function RenoDxSettingsSection({
     );
   }
 
-  const { installation, mod, unavailable } = status;
+  const { installation, mod, unavailable, reShade } = status;
+  // ReShade alone: for a mod's ReShade add-ons or effects, when there is no
+  // RenoDX mod to install with it.
+  const canInstallReShadeAlone =
+    !installation && !reShade && !mod && status.canInstallReShade;
   const canInstall =
     !!mod &&
     unavailable === null &&
@@ -101,7 +108,9 @@ export function RenoDxSettingsSection({
           mod: installation.modTitle,
           reShade: installation.reShadeVersion,
         })
-      : t("renodx_status_not_installed");
+      : reShade
+        ? t("reshade_status_installed_alone", { reShade: reShade.version })
+        : t("renodx_status_not_installed");
 
   return (
     <>
@@ -142,6 +151,20 @@ export function RenoDxSettingsSection({
           </p>
         )}
 
+        {canInstallReShadeAlone && (
+          <p className="game-options-modal__optiscaler-hint">
+            {t("reshade_install_alone_hint")}
+          </p>
+        )}
+        {reShade && (
+          <p className="game-options-modal__optiscaler-hint">
+            {reShade.proxyDll
+              ? t("renodx_loaded_as", { proxyDll: reShade.proxyDll })
+              : t("renodx_loaded_by_optiscaler")}{" "}
+            {t("reshade_alone_hint")}
+          </p>
+        )}
+
         <TextField
           label={t("renodx_install_directory")}
           value={status.installDirectory}
@@ -168,7 +191,7 @@ export function RenoDxSettingsSection({
               type="button"
               theme="outline"
               disabled={busy !== null}
-              onClick={install}
+              onClick={() => void install()}
             >
               {busy === "install"
                 ? t("renodx_installing")
@@ -179,7 +202,21 @@ export function RenoDxSettingsSection({
                   : t("renodx_install")}
             </Button>
           )}
-          {installation && (
+          {(canInstallReShadeAlone || (reShade && status.updateAvailable)) && (
+            <Button
+              type="button"
+              theme="outline"
+              disabled={busy !== null}
+              onClick={() => void install(true)}
+            >
+              {busy === "install-reshade"
+                ? t("renodx_installing")
+                : reShade
+                  ? t("renodx_update")
+                  : t("reshade_install_alone")}
+            </Button>
+          )}
+          {(installation || reShade) && (
             <Button
               type="button"
               theme="outline"
