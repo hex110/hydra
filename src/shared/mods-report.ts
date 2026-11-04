@@ -36,12 +36,16 @@ export const formatRunModsSection = (mods: GameRunMods | null | undefined) => {
     "",
     "## Mods",
     "",
-    `- Started: ${mods.modded ? "Play (modded)" : "Play (without the loader)"}`,
+    `- Started: ${mods.modded ? "Play (modded)" : "Play (unmodded: mods taken out of the game folder)"}`,
     `- Loader: ${mods.loader ? `${mods.loader.name}${mods.loader.version ? ` ${mods.loader.version}` : ""}` : "none"}`,
   ];
   if (mods.mods.length === 0) lines.push("- Mods on: none");
   else {
-    lines.push(`- Mods on (${mods.mods.length}, in load order):`);
+    lines.push(
+      mods.modded
+        ? `- Mods on (${mods.mods.length}, in load order):`
+        : `- Mods on in the list, taken out for this run (${mods.mods.length}):`
+    );
     for (const mod of mods.mods)
       lines.push(
         `  - ${mod.name}${mod.version ? ` ${mod.version}` : ""} (${mod.source})`
@@ -151,7 +155,7 @@ export const formatModReport = (input: ModReportInput) => {
     "",
     "## Launch",
     "",
-    `- Play starts: ${input.playMode === "modded" ? "Play (modded)" : "Play (without the loader)"}`,
+    `- Play starts: ${input.playMode === "modded" ? "Play (modded)" : "Play (unmodded: Hydra takes the mods out of the game folder first)"}`,
     `- Loader: ${input.loader ? `${input.loader.name}${input.loader.version ? ` ${input.loader.version}` : ""}` : "none"}`,
     "",
     `## Mods${input.profileName ? ` (profile ${input.profileName})` : ""}`,
@@ -195,7 +199,7 @@ export const formatModReport = (input: ModReportInput) => {
   else {
     lines.push(
       `- Run ${run.id}: ${run.outcome}${run.exitCode !== null ? `, exit code ${run.exitCode}` : ""}${run.signal ? `, signal ${run.signal}` : ""}`,
-      `- Started: ${run.mods ? (run.mods.modded ? "Play (modded)" : "Play (without the loader)") : "without mods"}${run.mods ? `, ${run.mods.mods.length} mods on` : ""}`,
+      `- Started: ${run.mods ? (run.mods.modded ? "Play (modded)" : "Play (unmodded)") : "without mods"}${run.mods ? `, ${run.mods.mods.length} mods on` : ""}`,
       `- Run folder: ${run.directory} (summary.md has the full record)`
     );
   }

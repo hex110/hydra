@@ -69,6 +69,7 @@ import {
 } from "@main/services/game-setup/optiscaler-step";
 
 import { GameRuns } from "@main/services/game-runs/game-runs";
+import { ModStore } from "@main/services/mods/mod-store";
 
 export interface LaunchGameOptions {
   shop: GameShop;
@@ -649,6 +650,10 @@ const launchResolvedGame = async (
   useGamemode: boolean,
   shortcut: ExecutableShortcut | null = null
 ) => {
+  // Play starts the game without its mods, Play (modded) with them.
+  await ModStore.prepareLaunch(shop, objectId).catch((error) =>
+    logger.error("[Mods] Could not prepare the game's mods for launch", error)
+  );
   await GameRuns.start({ shop, objectId, executablePath: parsedPath });
   const recordNativeLaunch = () =>
     GameRuns.recordLaunch(gameKey, {

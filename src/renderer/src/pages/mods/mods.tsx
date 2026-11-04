@@ -322,6 +322,13 @@ export default function Mods() {
           </div>
         </header>
 
+        {gameMods &&
+          !gameMods.deployed &&
+          gameMods.playMode === "plain" &&
+          mods.some((mod) => mod.enabled) && (
+            <p className="mods__notice">{t("mods_taken_out")}</p>
+          )}
+
         {gameMods?.blocker === "game-running" && (
           <p className="mods__notice">{t("blocker_game_running")}</p>
         )}

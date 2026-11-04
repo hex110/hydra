@@ -166,6 +166,8 @@ export interface GameMods {
   loader: { name: string; version: string | null } | null;
   /** Enabled mods need a loader that isn't installed. */
   loaderMissing: boolean;
+  /** The mods are in the game folder; Play takes them out until Play (modded). */
+  deployed: boolean;
   mods: InstalledMod[];
   nexusGame: NexusGameMatch | null;
   /** Files a mod ships that a mod lower in the list also ships (it loses them). */

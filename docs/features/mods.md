@@ -103,10 +103,15 @@ current choice, **Play (modded)** or **Play**, and the arrow opens both, the
 default ticked and each with a line on what it does. Picking one launches it
 and makes it the game's default (stored in `mods.json`, logged). The context
 menu's Play and Big Picture follow the default, since the launch reads it.
-**Play** skips the loader and loader DLL overrides only; it doesn't undeploy,
-so mods that are plain files still load, and the menu says so. Until loaders
-exist (phase 19 step 4) the two start the game the same way, and only the run
-record tells them apart.
+**Play** starts the game unmodded: just before the launch Hydra takes every
+mod out of the game folder and puts the game's own files back (logged as
+"Play: took N mod files out"), and with them goes the loader and its DLL
+override. **Play (modded)** puts them back first if Play took them out.
+Files the game or loader wrote itself (BepInEx's `cache`, `config`,
+`interop`) stay, so the next modded launch doesn't prepare again. While Play
+is the default and the mods are out, the Mods page says so; changing the list
+deploys again, and the next Play takes them out again. The run record says
+"Unmodded" and lists the mods taken out.
 
 The first **Play (modded)** of a game whose saves are backed up by save sync
 asks once: "Mods can change saves", **Back up and play** or **Play without a
@@ -280,6 +285,11 @@ Castlevania: Belmont's Curse (AnkerGames build, Unity IL2CPP) added as Steam
   **Install** fetched `denikson-BepInExPack_Valheim` 5.4.2360 from
   Thunderstore and left the pack's manifest and icon out.
 - The Mods page at 900 and 1600 px wide.
+
+Play unmodded, 2026-11-04, same sandbox: Play removed all 231 mod files
+(BepInEx's log stayed untouched while the game ran); Play (modded) put them
+back and BepInEx loaded the ultrawide plugin again. The Mods page's "mods are
+out" line was not looked at.
 
 Not checked: the proxy DLL clash with a real OptiScaler install (covered by
 unit tests), MelonLoader, a Mono game, Nexus files through TorBox for these

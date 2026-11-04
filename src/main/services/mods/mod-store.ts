@@ -325,6 +325,7 @@ export class ModStore {
       loader: loaderMod
         ? { name: loaderMod.name, version: loaderMod.version }
         : null,
+      deployed: await this.isDeployed(folder),
       loaderMissing: mods.some(
         (mod) =>
           mod.enabled &&
@@ -425,6 +426,40 @@ export class ModStore {
       removed: deployed.files.length,
       restored: deployed.files.filter((file) => file.backup).length,
     };
+  }
+
+  /**
+   * Before a launch: Play takes every mod out of the game folder so the game
+   * starts as it shipped; Play (modded) puts them back if Play took them out.
+   */
+  public static async prepareLaunch(shop: GameShop, objectId: string) {
+    const folder = storeFolder(shop, objectId);
+    await serialize(folder, async () => {
+      const state = await this.readMods(folder);
+      if (state.mods.length === 0) return;
+      const playMode = state.playMode ?? "modded";
+      const deployed = await exists(deployedFilePath(folder));
+      if (playMode === "plain") {
+        if (!deployed) return;
+        const undeployed = await this.undeploy(folder);
+        await ModActivity.append(shop, objectId, {
+          kind: "undeploy",
+          message: `Play: took ${count(undeployed?.removed ?? 0, "mod file")} out of the game folder and put back ${count(undeployed?.restored ?? 0, "file")} of the game's own, so the game starts unmodded.`,
+          details: { ...undeployed, reason: "play-unmodded" },
+        });
+        return;
+      }
+      if (deployed || !state.mods.some((mod) => mod.enabled)) return;
+      const game = await this.loadGame(shop, objectId);
+      const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+      if (!gameFolder) return;
+      await this.deploy(shop, objectId, folder, gameFolder, state.mods);
+    });
+  }
+
+  /** Whether the mods are in the game folder now (Play takes them out). */
+  private static isDeployed(folder: string) {
+    return exists(deployedFilePath(folder));
   }
 
   /** What `deployed.json` holds, counted, for reports. */
