@@ -10,6 +10,8 @@ export interface SelectProps
   theme?: "primary" | "dark";
   label?: string;
   options?: { key: string; value: string; label: string }[];
+  /** Fills its container's width; long option labels are cut off. */
+  block?: boolean;
 }
 
 export function SelectField({
@@ -20,12 +22,17 @@ export function SelectField({
   onChange,
   className,
   disabled,
+  block = false,
 }: Readonly<SelectProps>) {
   const [isFocused, setIsFocused] = useState(false);
   const id = useId();
 
   return (
-    <div className={cn("select-field__container", className)}>
+    <div
+      className={cn("select-field__container", className, {
+        "select-field__container--block": block,
+      })}
+    >
       {label && (
         <label htmlFor={id} className="select-field__label">
           {label}
