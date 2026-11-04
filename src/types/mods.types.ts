@@ -174,6 +174,8 @@ export interface GameMods {
   overridden: Record<string, string[]>;
   /** FOMOD installers waiting for the user's choices. */
   pendingFomods: PendingFomodInstall[];
+  /** Mods waiting for the user to say where their files go. */
+  pendingPlacements: PendingModPlacement[];
   profiles: { id: string; name: string }[];
   activeProfileId: string | null;
 }
@@ -289,6 +291,8 @@ export type ModActivityKind =
   | "save-backup"
   | "loader"
   | "load-order"
+  | "placement-waiting"
+  | "placement-chosen"
   | "error";
 
 /** One line of a game's `activity.jsonl`. Never holds tokens or signed URLs. */
@@ -302,6 +306,59 @@ export interface ModActivityEntry {
   message: string;
   /** Structured details: ids, counts, paths, the rule that placed a file. */
   details?: Record<string, unknown>;
+}
+
+/** A top-level file or folder of a mod's archive, in the placement dialog. */
+export interface ModPlacementEntry {
+  name: string;
+  isFolder: boolean;
+  files: number;
+}
+
+/** Where one top-level entry goes, relative to the game folder. */
+export interface ModPlacementChoice {
+  entry: string;
+  /** "folder": the folder itself; "contents": only what is inside it. */
+  mode: "folder" | "contents" | "skip";
+  target: string;
+}
+
+export type ModPlacementReason =
+  | "contains-program"
+  | "nothing-recognised"
+  | "loose-in-game-folder"
+  /** The user asked to place an installed mod again. */
+  | "user";
+
+export interface ModPlacementUncertainty {
+  reason: ModPlacementReason;
+  /** The files behind the reason (the programs), when there are any. */
+  files: string[];
+}
+
+/** A mod waiting for the user to say where its files go. */
+export interface PendingModPlacement {
+  id: string;
+  name: string;
+  version: string | null;
+  reason: ModPlacementReason;
+  createdAt: number;
+}
+
+/** What the placement dialog shows. */
+export interface PendingModPlacementDetails extends PendingModPlacement {
+  entries: ModPlacementEntry[];
+  /** Every file, relative to the archive, for the preview. */
+  files: string[];
+  /** Hydra's guess, preselected. */
+  guess: ModPlacementChoice[];
+  /** Folders to offer, relative to the game folder ("" is the game folder). */
+  targets: string[];
+  programs: string[];
+  /** The mod's description from its Nexus page, as plain text. */
+  description: string | null;
+  /** The mod's Nexus page, to read the rest. */
+  pageUrl: string | null;
 }
 
 /** One move Sort by dependencies makes, and why. */

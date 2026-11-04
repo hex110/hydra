@@ -180,21 +180,174 @@ export const detectUnityRuntime = ({
   return hasManagedFolder ? "mono" : null;
 };
 
-/** A definition for a Unity game Hydra has no entry for: BepInEx, as most of them use. */
-export const unityGameSupport = (
-  runtime: UnityRuntime
-): GameSupportDefinition => ({
-  id: `unity-${runtime}`,
-  name: runtime === "il2cpp" ? "Unity game (IL2CPP)" : "Unity game (Mono)",
-  match: {},
-  modTypes: BEPINEX_MOD_TYPES,
-  loader: runtime === "il2cpp" ? BEPINEX_IL2CPP_LOADER : BEPINEX_MONO_LOADER,
-  source:
+/** MelonLoader's folders: mods in `Mods`, plugins in `Plugins`, libraries in `UserLibs`. */
+const MELONLOADER_MOD_TYPES: ModTypeRule[] = [
+  { target: "game:Mods", extensions: [".dll"], isDefault: true },
+  { target: "game:Plugins" },
+  { target: "game:UserLibs" },
+  { target: "game:UserData" },
+];
+
+/** MelonLoader's release zip: `version.dll` and `MelonLoader/`. */
+export const MELONLOADER_LOADER: ModLoaderSupport = {
+  kind: "melonloader",
+  name: "MelonLoader",
+  package: {
+    kind: "url",
+    url: "https://github.com/LavaGang/MelonLoader/releases/download/v0.7.3/MelonLoader.x64.zip",
+    version: "0.7.3",
+    fileName: "MelonLoader.x64.zip",
+  },
+};
+
+/**
+ * Loaders a game's Nexus mods can show: files only the loader ships, or a
+ * folder only its mods use. Counted per game through Nexus's file contents
+ * search, so Hydra learns a game's loader from what its mods contain.
+ */
+export const LOADER_SIGNS: {
+  id: string;
+  name: string;
+  kind?: ModLoaderKind;
+  fileNames: string[];
+  /** Path segments (folder names, as cased in archives) only its mods use. */
+  folders?: string[];
+}[] = [
+  {
+    id: "bepinex",
+    name: "BepInEx",
+    kind: "bepinex",
+    fileNames: ["BepInEx.Core.dll", "BepInEx.dll"],
+    folders: ["BepInEx"],
+  },
+  {
+    id: "melonloader",
+    name: "MelonLoader",
+    kind: "melonloader",
+    fileNames: ["MelonLoader.dll"],
+    folders: ["MelonLoader"],
+  },
+  {
+    id: "ue4ss",
+    name: "UE4SS",
+    fileNames: ["UE4SS.dll"],
+    folders: ["ue4ss", "UE4SS"],
+  },
+  {
+    id: "reframework",
+    name: "REFramework",
+    fileNames: ["REFramework.dll"],
+    folders: ["reframework", "REFramework"],
+  },
+  {
+    id: "smapi",
+    name: "SMAPI",
+    fileNames: ["StardewModdingAPI.dll", "StardewModdingAPI.exe"],
+  },
+  {
+    id: "script-extender",
+    name: "a script extender (SKSE, F4SE, xNVSE, OBSE, SFSE)",
+    fileNames: [
+      "skse64_loader.exe",
+      "skse_loader.exe",
+      "f4se_loader.exe",
+      "nvse_loader.exe",
+      "obse_loader.exe",
+      "sfse_loader.exe",
+    ],
+  },
+];
+
+/** How many of a game's Nexus mods show each loader. */
+export interface NexusLoaderEvidence {
+  checkedAt: string;
+  gameId: number;
+  /** Distinct mods per sign id. */
+  mods: Record<string, number>;
+}
+
+/** Mods a loader needs to be counted as the game's: one could be a stray. */
+export const MIN_LOADER_EVIDENCE_MODS = 2;
+
+/** Hydra stops counting a loader's mods here: enough to compare loaders. */
+export const MAX_LOADER_EVIDENCE_MODS = 20;
+
+/** The loader most of a game's Nexus mods show, when enough of them do. */
+export const pickEvidenceLoader = (
+  evidence: NexusLoaderEvidence | null | undefined
+) => {
+  if (!evidence) return null;
+  const best = LOADER_SIGNS.map((sign) => ({
+    sign,
+    mods: evidence.mods[sign.id] ?? 0,
+  }))
+    .filter((item) => item.mods >= MIN_LOADER_EVIDENCE_MODS)
+    .toSorted((a, b) => b.mods - a.mods)[0];
+  return best ?? null;
+};
+
+/**
+ * A definition for a game Hydra has no entry for, from its files and its Nexus
+ * mods: a Unity game takes BepInEx unless its mods show MelonLoader; any game
+ * whose mods show a loader Hydra can't install yet names it.
+ */
+export const detectedGameSupport = ({
+  runtime,
+  evidence,
+}: {
+  runtime: UnityRuntime | null;
+  evidence?: NexusLoaderEvidence | null;
+}): GameSupportDefinition | null => {
+  const picked = pickEvidenceLoader(evidence);
+  const fromNexus = picked
+    ? `Nexus Mods: ${picked.mods} of its mods ship ${picked.sign.name} files (checked ${evidence!.checkedAt.slice(0, 10)})`
+    : null;
+  const fromFiles =
     runtime === "il2cpp"
-      ? "Detected from the game folder: UnityPlayer.dll and GameAssembly.dll"
-      : "Detected from the game folder: UnityPlayer.dll and a Managed folder",
-  origin: "detected",
-});
+      ? "the game folder: UnityPlayer.dll and GameAssembly.dll"
+      : runtime === "mono"
+        ? "the game folder: UnityPlayer.dll and a Managed folder"
+        : null;
+  const source = `Detected from ${[fromFiles, fromNexus].filter(Boolean).join("; and ")}`;
+
+  if (runtime) {
+    const melon = picked?.sign.kind === "melonloader";
+    const unsupported =
+      picked && !picked.sign.kind ? picked.sign.name : undefined;
+    return {
+      id: `unity-${runtime}${melon ? "-melonloader" : ""}`,
+      name: runtime === "il2cpp" ? "Unity game (IL2CPP)" : "Unity game (Mono)",
+      match: {},
+      modTypes: melon ? MELONLOADER_MOD_TYPES : BEPINEX_MOD_TYPES,
+      loader: unsupported
+        ? undefined
+        : melon
+          ? MELONLOADER_LOADER
+          : runtime === "il2cpp"
+            ? BEPINEX_IL2CPP_LOADER
+            : BEPINEX_MONO_LOADER,
+      unsupportedLoader: unsupported,
+      source,
+      origin: "detected",
+    };
+  }
+  // Not a Unity game: BepInEx or MelonLoader builds can't be picked without
+  // knowing the runtime, so every loader is named, not installed.
+  if (!picked) return null;
+  return {
+    id: `nexus-${picked.sign.id}`,
+    name: `Mods built for ${picked.sign.name}`,
+    match: {},
+    modTypes: [],
+    unsupportedLoader: picked.sign.name,
+    source,
+    origin: "detected",
+  };
+};
+
+/** A definition for a Unity game Hydra has no entry for: BepInEx, as most of them use. */
+export const unityGameSupport = (runtime: UnityRuntime) =>
+  detectedGameSupport({ runtime })!;
 
 /** The definition for a library game, by Steam app id, Nexus domain, then exe name. */
 export const matchGameSupport = (
@@ -243,6 +396,8 @@ export interface ModPlacement {
   skipped: string[];
   /** For the activity log. */
   description: string;
+  /** Something in the archive matched the definition: a folder, an extension, the loader. */
+  recognised: boolean;
 }
 
 /**
@@ -289,6 +444,7 @@ export const planModPlacement = ({
         target: file.slice(prefix.length),
       })),
       skipped: normalized.filter((file) => !file.startsWith(prefix)),
+      recognised: true,
       description: prefix
         ? `the archive ships ${definition.loader!.name} inside ${prefix.slice(0, -1)}, laid out like the game folder`
         : `the archive ships ${definition.loader!.name}, laid out like the game folder`,
@@ -328,6 +484,7 @@ export const planModPlacement = ({
     return {
       files: inner.map((file) => ({ archive: strip(file), target: file })),
       skipped: [],
+      recognised: true,
       description: wrapper
         ? `the folder ${wrapper} holds a game-folder layout`
         : "the archive is laid out like the game folder",
@@ -357,14 +514,17 @@ export const planModPlacement = ({
       .filter(Boolean)
       .join("/");
 
+  let recognised = false;
   const placed = inner.map((file) => {
     const [top, ...rest] = file.split("/");
     const routed = rest.length > 0 ? byLastSegment.get(lower(top)) : undefined;
+    if (routed) recognised = true;
     if (routed)
       return { archive: strip(file), target: into(routed, rest.join("/")) };
     const byType = byExtension.find(({ extension }) =>
       lower(file).endsWith(extension)
     )?.rule;
+    if (byType) recognised = true;
     return {
       archive: strip(file),
       target: fallback ? into(byType ?? fallback, file) : file,
@@ -373,6 +533,7 @@ export const planModPlacement = ({
   return {
     files: placed,
     skipped: [],
+    recognised,
     description: `loose files routed by ${definition.name}'s mod types${wrapper ? `, the folder ${wrapper} taken as the mod's name` : ""}`,
   };
 };

@@ -8,6 +8,8 @@ import type {
   ModsOverview,
   ModActionResult,
   ModOrderProposal,
+  ModPlacementChoice,
+  PendingModPlacementDetails,
   NexusGameMatch,
   NexusModFile,
   NexusModRequirement,
@@ -784,6 +786,34 @@ declare global {
       objectId: string,
       kind: ModFolderKind
     ) => Promise<boolean>;
+    getPendingModPlacement: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string
+    ) => Promise<PendingModPlacementDetails>;
+    completeModPlacement: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string,
+      choices: ModPlacementChoice[],
+      example: boolean
+    ) => Promise<ModActionResult>;
+    cancelModPlacement: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string
+    ) => Promise<ModActionResult>;
+    placeModAgain: (
+      shop: GameShop,
+      objectId: string,
+      modId: string
+    ) => Promise<string>;
+    openModPlacementFolder: (
+      shop: GameShop,
+      objectId: string,
+      pendingId: string
+    ) => Promise<boolean>;
+    openModPlacementExamples: () => Promise<boolean>;
     proposeModDependencyOrder: (
       shop: GameShop,
       objectId: string

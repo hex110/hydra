@@ -6,8 +6,9 @@ import {
   HYDRA_GAME_SUPPORT,
   MOD_FOLDERS,
   detectUnityRuntime,
+  detectedGameSupport,
   matchGameSupport,
-  unityGameSupport,
+  type NexusLoaderEvidence,
 } from "@shared";
 import type { Game, GameSupportDefinition } from "@types";
 
@@ -26,17 +27,21 @@ export const readRootEntries = async (folder: string) =>
 /**
  * What Hydra knows about modding a game, most specific first: a definition
  * written for it, Thunderstore's data, the mod folder table (as a fallback,
- * so null here), then what the game folder shows (a Unity game takes
- * BepInEx). Null means Hydra only knows where files go.
+ * so null here), then what the game folder and its Nexus mods show (a Unity
+ * game takes BepInEx unless its mods use MelonLoader; any game names the
+ * loader its mods use). Null means Hydra only knows where files go.
  */
 export const resolveGameSupportDefinition = async ({
   game,
   gameFolder,
   nexusDomain,
+  getEvidence,
 }: {
   game: Pick<Game, "shop" | "objectId" | "executablePath">;
   gameFolder: string | null;
   nexusDomain: string | null;
+  /** The game's Nexus loader evidence, fetched only when it is needed. */
+  getEvidence?: () => Promise<NexusLoaderEvidence | null>;
 }): Promise<GameSupportDefinition | null> => {
   const exeName = game.executablePath
     ? path.basename(parseExecutablePath(game.executablePath))
@@ -53,15 +58,20 @@ export const resolveGameSupportDefinition = async ({
   if (thunderstore) return thunderstore;
   if (nexusDomain && nexusDomain in MOD_FOLDERS) return null;
 
-  if (!gameFolder || !exeName) return null;
-  const rootEntries = await readRootEntries(gameFolder);
-  const dataFolder = `${exeName.replace(/\.exe$/i, "")}_Data`;
-  const runtime = detectUnityRuntime({
-    rootEntries,
-    exeName,
-    hasManagedFolder: fs.existsSync(
-      path.join(gameFolder, dataFolder, "Managed")
-    ),
-  });
-  return runtime ? unityGameSupport(runtime) : null;
+  const runtime =
+    gameFolder && exeName
+      ? detectUnityRuntime({
+          rootEntries: await readRootEntries(gameFolder),
+          exeName,
+          hasManagedFolder: fs.existsSync(
+            path.join(
+              gameFolder,
+              `${exeName.replace(/\.exe$/i, "")}_Data`,
+              "Managed"
+            )
+          ),
+        })
+      : null;
+  const evidence = getEvidence ? await getEvidence() : null;
+  return detectedGameSupport({ runtime, evidence });
 };

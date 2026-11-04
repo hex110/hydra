@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  ModPlacementChoice,
   CatalogueSearchResult,
   ModDownload,
   ModFolderKind,
@@ -1371,6 +1372,37 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("saveModReport", shop, objectId),
   openModFolder: (shop: GameShop, objectId: string, kind: ModFolderKind) =>
     ipcRenderer.invoke("openModFolder", shop, objectId, kind),
+  getPendingModPlacement: (
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ) => ipcRenderer.invoke("getPendingModPlacement", shop, objectId, pendingId),
+  completeModPlacement: (
+    shop: GameShop,
+    objectId: string,
+    pendingId: string,
+    choices: ModPlacementChoice[],
+    example: boolean
+  ) =>
+    ipcRenderer.invoke(
+      "completeModPlacement",
+      shop,
+      objectId,
+      pendingId,
+      choices,
+      example
+    ),
+  cancelModPlacement: (shop: GameShop, objectId: string, pendingId: string) =>
+    ipcRenderer.invoke("cancelModPlacement", shop, objectId, pendingId),
+  placeModAgain: (shop: GameShop, objectId: string, modId: string) =>
+    ipcRenderer.invoke("placeModAgain", shop, objectId, modId),
+  openModPlacementFolder: (
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ) => ipcRenderer.invoke("openModPlacementFolder", shop, objectId, pendingId),
+  openModPlacementExamples: () =>
+    ipcRenderer.invoke("openModPlacementExamples"),
   proposeModDependencyOrder: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("proposeModDependencyOrder", shop, objectId),
   applyModDependencyOrder: (

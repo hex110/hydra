@@ -14,6 +14,7 @@ import { logger } from "../logger";
 import { SystemPath } from "../system-path";
 import { ModActivity } from "./activity";
 import { ModError, ModStore, resolveModGameFolder } from "./mod-store";
+import { placementExamplesPath } from "./placement-examples";
 import { isNxmHandler } from "./nxm";
 import { readTorBoxToken } from "./mods";
 import { getTorBoxNexusLimit } from "./torbox-nexus";
@@ -199,4 +200,27 @@ export const answerSaveBackupOffer = async (
     });
     return false;
   }
+};
+
+/** The waiting mod's unpacked files and the game folder, to place by hand. */
+export const openModPlacementFolders = async (
+  shop: GameShop,
+  objectId: string,
+  pendingId: string
+) => {
+  const game = await loadGame(shop, objectId);
+  const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+  const unpacked = ModStore.placementFolderPath(shop, objectId, pendingId);
+  const failed = await shell.openPath(unpacked);
+  if (gameFolder) await shell.openPath(gameFolder);
+  return !failed;
+};
+
+/** The examples file, shown in the file manager (made empty if it isn't there). */
+export const openPlacementExamples = async () => {
+  const file = placementExamplesPath();
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  if (!fs.existsSync(file)) await fs.promises.writeFile(file, "");
+  shell.showItemInFolder(file);
+  return true;
 };

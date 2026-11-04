@@ -5,9 +5,11 @@ import {
   HYDRA_GAME_SUPPORT,
   detectModLoader,
   detectUnityRuntime,
+  detectedGameSupport,
   findNeededLoader,
   findProxyDllClash,
   matchGameSupport,
+  pickEvidenceLoader,
   planModPlacement,
   thunderstoreGameSupport,
   unityGameSupport,
@@ -315,5 +317,56 @@ describe("thunderstoreGameSupport", () => {
     });
     assert.equal(other.loader, undefined);
     assert.equal(other.unsupportedLoader, "shimloader");
+  });
+});
+
+describe("detectedGameSupport", () => {
+  const evidence = (mods: Record<string, number>) => ({
+    checkedAt: "2026-11-04T00:00:00.000Z",
+    gameId: 1,
+    mods,
+  });
+
+  it("gives a Unity game MelonLoader when its mods use it", () => {
+    const definition = detectedGameSupport({
+      runtime: "il2cpp",
+      evidence: evidence({ melonloader: 12, bepinex: 1 }),
+    });
+    assert.equal(definition?.loader?.kind, "melonloader");
+    assert.match(definition!.source, /12 of its mods ship MelonLoader/);
+  });
+
+  it("keeps BepInEx for a Unity game without enough evidence", () => {
+    const definition = detectedGameSupport({
+      runtime: "mono",
+      evidence: evidence({ melonloader: 1 }),
+    });
+    assert.equal(definition?.loader?.name, "BepInEx 5");
+  });
+
+  it("names a loader Hydra can't install for other games", () => {
+    const definition = detectedGameSupport({
+      runtime: null,
+      evidence: evidence({ ue4ss: 30, bepinex: 0 }),
+    });
+    assert.equal(definition?.unsupportedLoader, "UE4SS");
+    assert.deepEqual(definition?.modTypes, []);
+    assert.equal(definition?.loader, undefined);
+  });
+
+  it("knows nothing about a game with no signs", () => {
+    assert.equal(
+      detectedGameSupport({ runtime: null, evidence: evidence({}) }),
+      null
+    );
+  });
+});
+
+describe("pickEvidenceLoader", () => {
+  it("needs more than one mod", () => {
+    assert.equal(
+      pickEvidenceLoader({ checkedAt: "", gameId: 1, mods: { ue4ss: 1 } }),
+      null
+    );
   });
 });

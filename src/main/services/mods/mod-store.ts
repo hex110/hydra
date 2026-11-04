@@ -19,6 +19,14 @@ import {
   sortModsByDependencies,
   withRecordedDependencies,
   type ModDependencyInfo,
+  applyPlacementChoices,
+  assessPlacement,
+  choicesFromPlan,
+  listPlacementEntries,
+  modTypePath,
+  nexusDescriptionToText,
+  nexusModPageUrl,
+  type NexusLoaderEvidence,
   planModFiles,
   isFomodArchive,
   applyModProfile,
@@ -41,6 +49,11 @@ import type {
   NexusModRequirement,
   PendingFomodDetails,
   PendingFomodInstall,
+  ModPlacementChoice,
+  ModPlacementReason,
+  ModPlacementUncertainty,
+  PendingModPlacement,
+  PendingModPlacementDetails,
   FomodConfig,
 } from "@types";
 
@@ -48,6 +61,8 @@ import { SevenZip } from "../7zip";
 import { MAX_PLAN_FILES, ModActivity } from "./activity";
 import { applyFomod, readFomodConfig } from "./fomod";
 import { readRootEntries, resolveGameSupportDefinition } from "./games";
+import { getNexusLoaderEvidence, getNexusModDescription } from "./nexus";
+import { recordPlacementExample } from "./placement-examples";
 import { OptiScaler } from "../optiscaler/optiscaler";
 import { RenoDx } from "../renodx/renodx";
 import { isTrackedGameKeyRunning } from "../game-running-state";
@@ -64,6 +79,8 @@ interface ModsFile {
   playMode?: ModPlayMode;
   /** The "back up saves before the first modded launch" offer was shown. */
   saveBackupOffered?: boolean;
+  /** Which loaders the game's Nexus mods ship, cached. */
+  nexusLoaderEvidence?: NexusLoaderEvidence | null;
 }
 
 interface DeployedFile {
@@ -109,6 +126,21 @@ const pendingFolder = (folder: string, id: string) =>
   path.join(folder, "pending", id);
 const pendingFilePath = (folder: string, id: string) =>
   path.join(folder, "pending", `${id}.json`);
+const placementFolder = (folder: string, id: string) =>
+  path.join(folder, "placement", id);
+const placementFilePath = (folder: string, id: string) =>
+  path.join(folder, "placement", `${id}.json`);
+
+/** Why Hydra asks, in the activity log's English. */
+const PLACEMENT_REASONS: Record<ModPlacementReason, string> = {
+  "contains-program":
+    "the archive holds a program, and Hydra never runs one from a mod",
+  "nothing-recognised":
+    "nothing in it matches the game's mod folders or file types",
+  "loose-in-game-folder":
+    "its files would go loose into the game folder and match nothing there",
+  user: "you asked to place it again",
+};
 
 type InstallDetails = {
   name: string;
@@ -118,6 +150,14 @@ type InstallDetails = {
   replaces?: string;
   requirements?: NexusModRequirement[];
 };
+
+interface PendingPlacementFile extends PendingModPlacement {
+  details: InstallDetails;
+  /** The archive's files, relative to the unpacked folder. */
+  files: string[];
+  guess: ModPlacementChoice[];
+  programs: string[];
+}
 
 interface PendingFomodFile extends PendingFomodInstall {
   details: InstallDetails;
@@ -276,6 +316,12 @@ const checkProxyDlls = (game: Game, loader: InstalledModLoader) => {
   }
 };
 
+/** Folders the placement dialog offers from the game folder. */
+const MAX_PLACEMENT_TARGETS = 80;
+
+const EVIDENCE_REFRESH_MS = 14 * 24 * 60 * 60_000;
+const EVIDENCE_WAIT_MS = 10_000;
+
 const queues = new Map<string, Promise<unknown>>();
 
 /** Runs one change to a game's mods at a time. */
@@ -344,6 +390,15 @@ export class ModStore {
       profiles: (profiles ?? []).map(({ id, name }) => ({ id, name })),
       activeProfileId: activeProfileId ?? null,
       overridden: planDeployment(mods).overridden,
+      pendingPlacements: (await this.readPendingPlacements(folder)).map(
+        ({ id, name, version, reason, createdAt }) => ({
+          id,
+          name,
+          version,
+          reason,
+          createdAt,
+        })
+      ),
       pendingFomods: (await this.readPendingFomods(folder)).map(
         ({ id, name, version, moduleName, createdAt }) => ({
           id,
@@ -356,6 +411,40 @@ export class ModStore {
     };
   }
 
+  /**
+   * The game's Nexus loader evidence: cached for two weeks, fetched with a
+   * short wait the first time, and the old answer kept when Nexus is down.
+   */
+  private static async loaderEvidence(
+    shop: GameShop,
+    objectId: string,
+    nexusGame: NexusGameMatch | null
+  ) {
+    if (!nexusGame) return null;
+    const folder = storeFolder(shop, objectId);
+    const { nexusLoaderEvidence: cached } = await this.readMods(folder);
+    const fresh =
+      cached &&
+      cached.gameId === nexusGame.id &&
+      Date.now() - Date.parse(cached.checkedAt) < EVIDENCE_REFRESH_MS;
+    if (fresh) return cached;
+    const fetched = await Promise.race([
+      getNexusLoaderEvidence(nexusGame.id).catch((error) => {
+        logger.warn("[Mods] Could not read the game's loader evidence", error);
+        return null;
+      }),
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), EVIDENCE_WAIT_MS)
+      ),
+    ]);
+    if (!fetched) return cached?.gameId === nexusGame.id ? cached : null;
+    await this.updateFile(shop, objectId, (state) => ({
+      ...state,
+      nexusLoaderEvidence: fetched,
+    }));
+    return fetched;
+  }
+
   private static resolveDefinition(
     game: Game,
     gameFolder: string | null,
@@ -365,6 +454,8 @@ export class ModStore {
       game,
       gameFolder,
       nexusDomain: nexusGame?.domainName ?? null,
+      getEvidence: () =>
+        this.loaderEvidence(game.shop, game.objectId, nexusGame),
     }).catch((error) => {
       logger.warn("[Mods] Could not resolve the game's support", error);
       return null;
@@ -707,7 +798,8 @@ export class ModStore {
         nexusGame
       );
 
-      if (definition) {
+      // A definition without mod types only names a loader: place by layout.
+      if (definition && definition.modTypes.length > 0) {
         const placement = planModPlacement({
           files: extracted,
           definition,
@@ -715,6 +807,30 @@ export class ModStore {
           modName: details.name,
         });
         if (placement.files.length === 0) throw new ModError("empty-archive");
+        const placedTargets = placement.files.map((file) => file.target);
+        const unsure = detectModLoader(placedTargets)
+          ? null
+          : assessPlacement({
+              files: extracted,
+              gameRootEntries,
+              modFolder: defaultModFolder(definition),
+              plannedTargets: placedTargets,
+              recognised: placement.recognised,
+            });
+        if (unsure)
+          return await this.holdForPlacement(
+            shop,
+            objectId,
+            folder,
+            id,
+            partial,
+            {
+              details,
+              files: extracted,
+              guess: choicesFromPlan(placement.files),
+              unsure,
+            }
+          );
         await ModActivity.append(shop, objectId, {
           kind: "install-plan",
           modId: id,
@@ -773,6 +889,29 @@ export class ModStore {
 
       const modFolder = getModFolder(nexusGame?.domainName);
       const planned = planModFiles(extracted, layout);
+      const unsure = detectModLoader(planned.map((file) => file.target))
+        ? null
+        : assessPlacement({
+            files: extracted,
+            gameRootEntries,
+            modFolder,
+            plannedTargets: planned.map((file) => file.target),
+            recognised: null,
+          });
+      if (unsure)
+        return await this.holdForPlacement(
+          shop,
+          objectId,
+          folder,
+          id,
+          partial,
+          {
+            details,
+            files: extracted,
+            guess: choicesFromPlan(planned),
+            unsure,
+          }
+        );
       await ModActivity.append(shop, objectId, {
         kind: "install-plan",
         modId: id,
@@ -804,6 +943,323 @@ export class ModStore {
     } finally {
       await fs.promises.rm(partial, { recursive: true, force: true });
     }
+  }
+
+  /** Keeps an unpacked archive until the user says where its files go. */
+  private static async holdForPlacement(
+    shop: GameShop,
+    objectId: string,
+    folder: string,
+    id: string,
+    unpacked: string,
+    options: {
+      details: InstallDetails;
+      files: string[];
+      guess: ModPlacementChoice[];
+      unsure: ModPlacementUncertainty;
+    }
+  ): Promise<null> {
+    const pending: PendingPlacementFile = {
+      id,
+      name: options.details.name,
+      version: options.details.version,
+      reason: options.unsure.reason,
+      createdAt: Date.now(),
+      details: options.details,
+      files: options.files,
+      guess: options.guess,
+      programs: options.unsure.files,
+    };
+    await fs.promises.mkdir(path.join(folder, "placement"), {
+      recursive: true,
+    });
+    await fs.promises.rename(unpacked, placementFolder(folder, id));
+    await writeJson(placementFilePath(folder, id), pending);
+    await ModActivity.append(shop, objectId, {
+      kind: "placement-waiting",
+      modId: id,
+      modName: pending.name,
+      message: `Hydra isn't sure where ${pending.name}'s files go (${PLACEMENT_REASONS[pending.reason]}); it waits for you to choose.`,
+      details: {
+        reason: pending.reason,
+        guess: pending.guess,
+        programs: pending.programs,
+        files: pending.files.slice(0, MAX_PLAN_FILES),
+      },
+    });
+    return null;
+  }
+
+  private static async readPendingPlacements(folder: string) {
+    const entries = await fs.promises
+      .readdir(path.join(folder, "placement"))
+      .catch(() => [] as string[]);
+    const pending: PendingPlacementFile[] = [];
+    for (const entry of entries.filter((name) => name.endsWith(".json"))) {
+      const file = await readJson<PendingPlacementFile | null>(
+        path.join(folder, "placement", entry),
+        null
+      );
+      if (file?.id) pending.push(file);
+    }
+    return pending.sort((a, b) => a.createdAt - b.createdAt);
+  }
+
+  /** What the placement dialog shows for a waiting mod. */
+  public static async getPendingPlacement(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ): Promise<PendingModPlacementDetails> {
+    const folder = storeFolder(shop, objectId);
+    const pending = await readJson<PendingPlacementFile | null>(
+      placementFilePath(folder, pendingId),
+      null
+    );
+    if (!pending) throw new ModError("not-found");
+    const game = await this.loadGame(shop, objectId);
+    const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+    const { nexusGame } = await this.readMods(folder);
+    const definition = await this.resolveDefinition(
+      game,
+      gameFolder,
+      nexusGame
+    );
+    // The game folder's folders, two levels deep (`<Game>_Data/StreamingAssets`).
+    const listFolders = async (relative: string) =>
+      gameFolder
+        ? (
+            await fs.promises
+              .readdir(path.join(gameFolder, relative), { withFileTypes: true })
+              .catch(() => [] as fs.Dirent[])
+          )
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => [relative, entry.name].filter(Boolean).join("/"))
+            .toSorted((a, b) => a.localeCompare(b))
+        : [];
+    const rootFolders: string[] = [];
+    for (const top of await listFolders("")) {
+      rootFolders.push(top, ...(await listFolders(top)));
+      if (rootFolders.length >= MAX_PLACEMENT_TARGETS) break;
+    }
+    const targets = [
+      ...new Set([
+        "",
+        ...(definition?.modTypes.map(modTypePath) ?? []),
+        getModFolder(nexusGame?.domainName),
+        ...pending.guess.map((choice) => choice.target),
+        ...rootFolders.slice(0, MAX_PLACEMENT_TARGETS),
+      ]),
+    ];
+    const source = pending.details.source;
+    let description: string | null = null;
+    if (source.kind === "nexus") {
+      description = await getNexusModDescription(source.gameId, source.modId)
+        .then((text) => (text ? nexusDescriptionToText(text) : null))
+        .catch((error) => {
+          logger.warn("[Mods] Could not read the mod's description", error);
+          return null;
+        });
+    }
+    return {
+      id: pending.id,
+      name: pending.name,
+      version: pending.version,
+      reason: pending.reason,
+      createdAt: pending.createdAt,
+      entries: listPlacementEntries(pending.files),
+      files: pending.files,
+      guess: pending.guess,
+      targets,
+      programs: pending.programs,
+      description,
+      pageUrl:
+        source.kind === "nexus"
+          ? nexusModPageUrl(source.gameDomain, source.modId)
+          : null,
+    };
+  }
+
+  public static async cancelPlacement(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ) {
+    const folder = storeFolder(shop, objectId);
+    await fs.promises.rm(placementFolder(folder, pendingId), {
+      recursive: true,
+      force: true,
+    });
+    await fs.promises.rm(placementFilePath(folder, pendingId), {
+      force: true,
+    });
+  }
+
+  /** The unpacked archive of a waiting mod, to place by hand. */
+  public static placementFolderPath(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string
+  ) {
+    return placementFolder(storeFolder(shop, objectId), pendingId);
+  }
+
+  /**
+   * Installs a waiting mod where the user said. With `example`, the case is
+   * kept for improving Hydra's guesses: the description said where files go
+   * and Hydra should have read it.
+   */
+  public static async completePlacement(
+    shop: GameShop,
+    objectId: string,
+    pendingId: string,
+    choices: ModPlacementChoice[],
+    example: boolean
+  ): Promise<InstalledMod> {
+    const folder = storeFolder(shop, objectId);
+    const pending = await readJson<PendingPlacementFile | null>(
+      placementFilePath(folder, pendingId),
+      null
+    );
+    if (!pending) throw new ModError("not-found");
+    const game = await this.loadGame(shop, objectId);
+    const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+    if (!gameFolder) throw new ModError("no-game-folder");
+
+    const placed = applyPlacementChoices(pending.files, choices);
+    if (placed.length === 0) throw new ModError("empty-archive");
+    const { nexusGame } = await this.readMods(folder);
+    const definition = await this.resolveDefinition(
+      game,
+      gameFolder,
+      nexusGame
+    );
+    await ModActivity.append(shop, objectId, {
+      kind: "placement-chosen",
+      modId: pendingId,
+      modName: pending.name,
+      message: `Placing ${count(placed.length, "file")} where you chose${example ? "; kept as an example Hydra should have worked out" : ""}.`,
+      details: {
+        rule: "chosen",
+        reason: pending.reason,
+        guess: pending.guess,
+        choices,
+        files: placed
+          .slice(0, MAX_PLAN_FILES)
+          .map((file) => `${file.archive} -> ${file.target}`),
+        more: Math.max(0, placed.length - MAX_PLAN_FILES),
+      },
+    });
+    if (example)
+      await recordPlacementExample({
+        game: {
+          title: game.title,
+          shop,
+          objectId,
+          nexusDomain: nexusGame?.domainName ?? null,
+          definition: definition?.id ?? null,
+        },
+        mod: {
+          name: pending.name,
+          version: pending.version,
+          source: pending.details.source,
+        },
+        reason: pending.reason,
+        files: pending.files,
+        guess: pending.guess,
+        choices,
+        description:
+          pending.details.source.kind === "nexus"
+            ? await getNexusModDescription(
+                pending.details.source.gameId,
+                pending.details.source.modId
+              ).catch(() => null)
+            : null,
+      });
+
+    const unpacked = placementFolder(folder, pendingId);
+    const prepared = path.join(folder, "staging", `${pendingId}.prepared`);
+    await fs.promises.rm(prepared, { recursive: true, force: true });
+    try {
+      for (const file of placed) {
+        const destination = path.join(prepared, file.target);
+        await fs.promises.mkdir(path.dirname(destination), { recursive: true });
+        await fs.promises.rename(
+          path.join(unpacked, file.archive),
+          destination
+        );
+      }
+      const targets = placed.map((file) => file.target);
+      const mod = await this.recordInstall(
+        shop,
+        objectId,
+        folder,
+        pendingId,
+        prepared,
+        {
+          details: pending.details,
+          deployRoot: "",
+          game,
+          loader: detectModLoader(targets),
+          needsLoader: findNeededLoader(targets, definition?.loader?.kind),
+        }
+      );
+      await this.cancelPlacement(shop, objectId, pendingId);
+      return mod;
+    } finally {
+      await fs.promises.rm(prepared, { recursive: true, force: true });
+    }
+  }
+
+  /**
+   * Puts an installed mod back in the placement dialog, laid out as it is now
+   * relative to the game folder, to change where it goes.
+   */
+  public static async placeAgain(
+    shop: GameShop,
+    objectId: string,
+    modId: string
+  ) {
+    const folder = storeFolder(shop, objectId);
+    const { mods } = await this.readMods(folder);
+    const mod = mods.find((item) => item.id === modId);
+    if (!mod) throw new ModError("not-found");
+    const id = randomUUID();
+    const target = placementFolder(folder, id);
+    const files = mod.files.map((file) =>
+      [mod.deployRoot, file].filter(Boolean).join("/")
+    );
+    for (const [index, file] of mod.files.entries()) {
+      const destination = path.join(target, files[index]);
+      await fs.promises.mkdir(path.dirname(destination), { recursive: true });
+      await fs.promises.copyFile(
+        path.join(stagingFolder(folder, mod.id), file),
+        destination
+      );
+    }
+    const pending: PendingPlacementFile = {
+      id,
+      name: mod.name,
+      version: mod.version,
+      reason: "user",
+      createdAt: Date.now(),
+      details: {
+        name: mod.name,
+        version: mod.version,
+        source: mod.source,
+        replaces: mod.id,
+        requirements: mod.requirements,
+      },
+      files,
+      guess: listPlacementEntries(files).map((entry) => ({
+        entry: entry.name,
+        mode: "folder",
+        target: "",
+      })),
+      programs: [],
+    };
+    await writeJson(placementFilePath(folder, id), pending);
+    return id;
   }
 
   private static async readPendingFomods(folder: string) {

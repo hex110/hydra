@@ -1,7 +1,12 @@
 import axios from "axios";
 
 import { appVersion } from "@main/constants";
-import { isSameTitle } from "@shared";
+import {
+  LOADER_SIGNS,
+  MAX_LOADER_EVIDENCE_MODS,
+  isSameTitle,
+  type NexusLoaderEvidence,
+} from "@shared";
 import type {
   NexusFileCategory,
   NexusGameMatch,
@@ -249,4 +254,142 @@ export const getNexusModName = async (gameId: number, modId: number) => {
     mod: { name: string; version: string | null } | null;
   }>(MOD_QUERY, { modId, gameId });
   return data.mod?.name ?? null;
+};
+
+const FILE_CONTENTS_QUERY = `query FileContents($filter: ModFileContentSearchFilter!, $count: Int!, $offset: Int!) {
+  modFileContents(filter: $filter, count: $count, offset: $offset) {
+    totalCount
+    nodes { modId fileId filePath fileSize }
+  }
+}`;
+
+interface FileContentNode {
+  modId: number;
+  fileId: number;
+  filePath: string;
+  fileSize: string;
+}
+
+const FILE_CONTENTS_PAGE = 100;
+/** A file list past this is cut off: plans need the layout, not every texture. */
+const MAX_FILE_CONTENTS = 2_000;
+
+/**
+ * The files inside a Nexus file's archive, without downloading it: Nexus's
+ * file contents index answers without a key.
+ */
+export const getNexusFileContents = async (
+  gameId: number,
+  fileId: number
+): Promise<{ path: string; size: number }[] | null> => {
+  const files: { path: string; size: number }[] = [];
+  for (
+    let offset = 0;
+    offset < MAX_FILE_CONTENTS;
+    offset += FILE_CONTENTS_PAGE
+  ) {
+    const data = await query<{
+      modFileContents: { totalCount: number; nodes: FileContentNode[] };
+    }>(FILE_CONTENTS_QUERY, {
+      filter: {
+        gameId: [{ value: gameId, op: "EQUALS" }],
+        fileId: [{ value: fileId, op: "EQUALS" }],
+      },
+      count: FILE_CONTENTS_PAGE,
+      offset,
+    });
+    const { totalCount, nodes } = data.modFileContents;
+    files.push(
+      ...nodes.map((node) => ({
+        path: node.filePath,
+        size: Number(node.fileSize),
+      }))
+    );
+    if (offset + FILE_CONTENTS_PAGE >= totalCount || nodes.length === 0) {
+      // Nexus has no index for some files (old uploads, non-archives).
+      return totalCount === 0 ? null : files;
+    }
+  }
+  return files;
+};
+
+/**
+ * Distinct mods of a game whose files match a filter. One mod can fill a
+ * whole page (a REFramework pack has thousands of files), so each round
+ * leaves out the mods already found.
+ */
+const findModsWith = async (
+  gameId: number,
+  filter: Record<string, unknown>
+) => {
+  const found = new Set<number>();
+  for (let round = 0; round < 6; round++) {
+    const data = await query<{
+      modFileContents: { totalCount: number; nodes: FileContentNode[] };
+    }>(FILE_CONTENTS_QUERY, {
+      filter: {
+        gameId: [{ value: gameId, op: "EQUALS" }],
+        ...filter,
+        ...(found.size > 0
+          ? {
+              modId: [...found].map((modId) => ({
+                value: modId,
+                op: "NOT_EQUALS",
+              })),
+            }
+          : {}),
+      },
+      count: FILE_CONTENTS_PAGE,
+      offset: 0,
+    });
+    const { nodes } = data.modFileContents;
+    if (nodes.length === 0) break;
+    for (const node of nodes) found.add(node.modId);
+    if (found.size >= MAX_LOADER_EVIDENCE_MODS) break;
+  }
+  return found;
+};
+
+/** How many of a game's Nexus mods ship each known loader's files. */
+export const getNexusLoaderEvidence = async (
+  gameId: number
+): Promise<NexusLoaderEvidence> => {
+  const counts = await Promise.all(
+    LOADER_SIGNS.map(async (sign) => {
+      const mods = new Set<number>();
+      const lookups = [
+        ...sign.fileNames.map((fileName) =>
+          findModsWith(gameId, {
+            fileNameWildcard: [{ value: fileName, op: "EQUALS" }],
+          })
+        ),
+        ...(sign.folders ?? []).map((folder) =>
+          findModsWith(gameId, {
+            filePathPartsExact: [{ value: folder, op: "EQUALS" }],
+          })
+        ),
+      ];
+      for (const found of await Promise.all(lookups))
+        for (const modId of found) mods.add(modId);
+      return [sign.id, mods.size] as const;
+    })
+  );
+  return {
+    checkedAt: new Date().toISOString(),
+    gameId,
+    mods: Object.fromEntries(counts),
+  };
+};
+
+const DESCRIPTION_QUERY = `query Description($modId: ID!, $gameId: ID!) {
+  mod(modId: $modId, gameId: $gameId) { description }
+}`;
+
+/** A mod's full description from its Nexus page (BBCode and HTML). */
+export const getNexusModDescription = async (gameId: number, modId: number) => {
+  const data = await query<{ mod: { description: string | null } | null }>(
+    DESCRIPTION_QUERY,
+    { modId, gameId }
+  );
+  return data.mod?.description ?? null;
 };

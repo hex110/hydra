@@ -2,6 +2,7 @@ import { dialog } from "electron";
 
 import type {
   GameShop,
+  ModPlacementChoice,
   ModFolderKind,
   ModPlayMode,
   NexusGameMatch,
@@ -14,6 +15,8 @@ import {
   buildModReport,
   getModsOverview,
   openModFolder,
+  openModPlacementFolders,
+  openPlacementExamples,
   saveModReport,
   shouldOfferSaveBackup,
 } from "@main/services/mods/mod-report";
@@ -204,6 +207,57 @@ registerEvent(
   (_event, shop: GameShop, objectId: string, kind: ModFolderKind) =>
     openModFolder(shop, objectId, kind)
 );
+
+registerEvent(
+  "getPendingModPlacement",
+  (_event, shop: GameShop, objectId: string, pendingId: string) =>
+    ModStore.getPendingPlacement(shop, objectId, pendingId)
+);
+
+registerEvent(
+  "completeModPlacement",
+  async (
+    _event,
+    shop: GameShop,
+    objectId: string,
+    pendingId: string,
+    choices: ModPlacementChoice[],
+    example: boolean
+  ) => {
+    const result = await runModAction(async () => {
+      const mod = await ModStore.completePlacement(
+        shop,
+        objectId,
+        pendingId,
+        choices,
+        example
+      );
+      if (mod.needsLoader)
+        await ModDownloads.ensureLoader(shop, objectId, mod.name);
+    });
+    return result;
+  }
+);
+
+registerEvent(
+  "cancelModPlacement",
+  (_event, shop: GameShop, objectId: string, pendingId: string) =>
+    runModAction(() => ModStore.cancelPlacement(shop, objectId, pendingId))
+);
+
+registerEvent(
+  "placeModAgain",
+  (_event, shop: GameShop, objectId: string, modId: string) =>
+    ModStore.placeAgain(shop, objectId, modId)
+);
+
+registerEvent(
+  "openModPlacementFolder",
+  (_event, shop: GameShop, objectId: string, pendingId: string) =>
+    openModPlacementFolders(shop, objectId, pendingId)
+);
+
+registerEvent("openModPlacementExamples", () => openPlacementExamples());
 
 registerEvent(
   "proposeModDependencyOrder",

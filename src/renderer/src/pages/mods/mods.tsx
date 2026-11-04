@@ -40,6 +40,7 @@ import type {
 
 import { NexusBrowser } from "./nexus-browser";
 import { FomodWizard } from "./fomod-wizard";
+import { ModPlacementDialog } from "./mod-placement-dialog";
 import { ModProfiles } from "./mod-profiles";
 import { ModOrderSort } from "./mod-order-sort";
 import { ModActivity } from "./mod-activity";
@@ -107,6 +108,7 @@ export default function Mods() {
   } = useGameMods(shop, objectId, Boolean(shop && objectId));
   const [tab, setTab] = useState<ModsTab>("installed");
   const [fomodId, setFomodId] = useState<string | null>(null);
+  const [placementId, setPlacementId] = useState<string | null>(null);
   const seenPending = useRef<Set<string> | null>(null);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -135,15 +137,22 @@ export default function Mods() {
   // A FOMOD that arrives while the page is open asks for its options at once.
   useEffect(() => {
     if (!gameMods) return;
-    const ids = gameMods.pendingFomods.map((pending) => pending.id);
+    const fomods = gameMods.pendingFomods.map((pending) => pending.id);
+    const placements = gameMods.pendingPlacements.map((pending) => pending.id);
     if (seenPending.current) {
-      const fresh = ids.find((id) => !seenPending.current!.has(id));
+      const isFresh = (id: string) => !seenPending.current!.has(id);
+      const fresh = fomods.find(isFresh);
       if (fresh) setFomodId(fresh);
+      else {
+        const freshPlacement = placements.find(isFresh);
+        if (freshPlacement) setPlacementId(freshPlacement);
+      }
     }
-    seenPending.current = new Set(ids);
+    seenPending.current = new Set([...fomods, ...placements]);
   }, [gameMods]);
 
   const closeFomod = useCallback(() => setFomodId(null), []);
+  const closePlacement = useCallback(() => setPlacementId(null), []);
 
   if (!shop || !objectId) return null;
 
@@ -182,6 +191,17 @@ export default function Mods() {
           })
         )
       : undefined;
+
+  const placeAgain = async (mod: InstalledMod) => {
+    try {
+      const id = await window.electron.placeModAgain(shop, objectId, mod.id);
+      await refresh();
+      setPlacementId(id);
+    } catch (error) {
+      logger.error("Failed to place the mod again", error);
+      showErrorToast(t("error_failed"));
+    }
+  };
 
   const copyReport = async () => {
     try {
@@ -310,6 +330,12 @@ export default function Mods() {
                   label: t("open_store_folder"),
                   onClick: () => void openFolder("store"),
                 },
+                {
+                  icon: <FileIcon size={14} />,
+                  label: t("open_placement_examples"),
+                  onClick: () =>
+                    void window.electron.openModPlacementExamples(),
+                },
               ]}
             >
               <Button
@@ -355,6 +381,43 @@ export default function Mods() {
                 busy={busy || blocked}
                 run={run}
               />
+            )}
+
+            {gameMods && gameMods.pendingPlacements.length > 0 && (
+              <ul className="mods__list">
+                {gameMods.pendingPlacements.map((pending) => (
+                  <li key={pending.id} className="mods__row">
+                    <span className="mods__file-name">{pending.name}</span>
+                    <div className="mods__row-meta">
+                      <span>{t("placement_waiting")}</span>
+                    </div>
+                    <div className="mods__row-actions">
+                      <Button
+                        theme="primary"
+                        disabled={busy || blocked}
+                        onClick={() => setPlacementId(pending.id)}
+                      >
+                        {t("placement_choose")}
+                      </Button>
+                      <Button
+                        theme="outline"
+                        disabled={busy || blocked}
+                        onClick={() =>
+                          run(() =>
+                            window.electron.cancelModPlacement(
+                              shop,
+                              objectId,
+                              pending.id
+                            )
+                          )
+                        }
+                      >
+                        {t("fomod_discard")}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
 
             {gameMods && gameMods.pendingFomods.length > 0 && (
@@ -572,6 +635,16 @@ export default function Mods() {
                           type="button"
                           className="mods__icon-button"
                           disabled={busy || blocked}
+                          onClick={() => void placeAgain(mod)}
+                          title={t("placement_again")}
+                          aria-label={t("placement_again")}
+                        >
+                          <FileDirectoryIcon />
+                        </button>
+                        <button
+                          type="button"
+                          className="mods__icon-button"
+                          disabled={busy || blocked}
                           onClick={() =>
                             run(() =>
                               window.electron.removeMod(shop, objectId, mod.id)
@@ -602,6 +675,17 @@ export default function Mods() {
           </>
         )}
       </section>
+
+      <ModPlacementDialog
+        shop={shop}
+        objectId={objectId}
+        pendingId={placementId}
+        onClose={closePlacement}
+        onDone={() => {
+          setPlacementId(null);
+          void refresh();
+        }}
+      />
 
       <FomodWizard
         shop={shop}

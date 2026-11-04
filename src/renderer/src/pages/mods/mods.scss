@@ -304,6 +304,69 @@
     white-space: pre-wrap;
   }
 
+  &__placement {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__placement-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: calc(globals.$spacing-unit * 2);
+    max-height: 60vh;
+
+    @media (max-width: 800px) {
+      grid-template-columns: minmax(0, 1fr);
+      overflow-y: auto;
+    }
+  }
+
+  &__placement-description,
+  &__placement-entries {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    overflow-y: auto;
+  }
+
+  &__placement-heading {
+    margin: 0;
+    font-size: globals.$body-font-size;
+    color: globals.$muted-color;
+  }
+
+  &__placement-entries {
+    overflow-x: hidden;
+  }
+
+  &__placement-entry {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    min-width: 0;
+
+    > * {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  &__placement-name {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    overflow-wrap: anywhere;
+  }
+
+  &__placement-preview {
+    margin: 0;
+    padding-left: calc(globals.$spacing-unit * 2.5);
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+    overflow-wrap: anywhere;
+  }
+
   &__fomod-actions {
     display: flex;
     justify-content: flex-end;
