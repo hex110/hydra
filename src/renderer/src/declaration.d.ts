@@ -783,6 +783,10 @@ declare global {
       objectId: string,
       kind: ModFolderKind
     ) => Promise<boolean>;
+    installModLoader: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<ModActionResult>;
     setModPlayMode: (
       shop: GameShop,
       objectId: string,

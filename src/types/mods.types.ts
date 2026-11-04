@@ -9,7 +9,9 @@ export type ModSource =
       modId: number;
       fileId: number;
     }
-  | { kind: "file"; fileName: string };
+  | { kind: "file"; fileName: string }
+  /** Downloaded from where it is published (a loader's releases). */
+  | { kind: "url"; url: string; fileName: string };
 
 export interface InstalledMod {
   /** Hydra's id for the mod, also its staging folder's name. */
@@ -34,6 +36,68 @@ export interface InstalledMod {
   fomodChosen?: boolean;
   /** What the mod's Nexus page says it needs, read when it was installed. */
   requirements?: NexusModRequirement[];
+  /** The mod is (or ships) the game's mod loader. */
+  loader?: InstalledModLoader;
+  /** Its files go into the loader's folders: it does nothing without the loader. */
+  needsLoader?: ModLoaderKind;
+}
+
+export type ModLoaderKind = "bepinex" | "melonloader";
+
+/** A loader found in a mod's files. */
+export interface InstalledModLoader {
+  kind: ModLoaderKind;
+  /** Proxy DLLs (without ".dll") Wine must load from the game folder. */
+  nativeDlls: string[];
+}
+
+/** Where Hydra downloads a game's loader from. */
+export type ModLoaderPackage =
+  | { kind: "url"; url: string; version: string; fileName: string }
+  | {
+      kind: "thunderstore";
+      community: string;
+      /** Loader packages the community may use; the most downloaded wins. */
+      packageIds: string[];
+    };
+
+export interface ModLoaderSupport {
+  kind: ModLoaderKind;
+  /** "BepInEx 6 (IL2CPP)". */
+  name: string;
+  package: ModLoaderPackage;
+}
+
+/** Where a kind of mod file goes. */
+export interface ModTypeRule {
+  /** "game:<path>" in the game folder ("prefix:<path>" comes with step 6). */
+  target: string;
+  /** Loose files with these extensions go here. */
+  extensions?: string[];
+  /** Loose files no other rule takes go here. */
+  isDefault?: boolean;
+  /** A mod's loose files go into a folder named after it, like r2modman. */
+  perModFolder?: boolean;
+}
+
+/** What Hydra knows about modding one game. */
+export interface GameSupportDefinition {
+  id: string;
+  name: string;
+  match: {
+    steamAppIds?: string[];
+    nexusDomains?: string[];
+    /** Lower-case file names. */
+    exeNames?: string[];
+  };
+  modTypes: ModTypeRule[];
+  loader?: ModLoaderSupport;
+  /** A loader the game's mods use that Hydra can't install yet. */
+  unsupportedLoader?: string;
+  /** Where the facts came from. */
+  source: string;
+  /** "hydra": written by hand; "detected": read from the game's files. */
+  origin: "hydra" | "thunderstore" | "detected";
 }
 
 /** A requirement listed on a Nexus mod page. */
@@ -66,14 +130,31 @@ export type ModsBlocker = "no-executable" | "game-running";
 export type ModPlayMode = "modded" | "plain";
 
 /** What Hydra knows about installing mods for a game. */
-export interface ModGameSupport {
-  /** "fallback": no definition, files go into `modFolder` only. */
-  kind: "fallback";
-  /** Relative to the game folder; "" for the game folder itself. */
-  modFolder: string;
-  /** Where the folder came from: the mod folder table, or the game root. */
-  source: "mod-folder-table" | "game-root";
-}
+export type ModGameSupport =
+  | {
+      /** No definition: files go into `modFolder` only. */
+      kind: "fallback";
+      /** Relative to the game folder; "" for the game folder itself. */
+      modFolder: string;
+      /** Where the folder came from: the mod folder table, or the game root. */
+      source: "mod-folder-table" | "game-root";
+    }
+  | {
+      kind: "definition";
+      id: string;
+      name: string;
+      origin: GameSupportDefinition["origin"];
+      source: string;
+      /** Where loose mod files go, relative to the game folder. */
+      modFolder: string;
+      loader: {
+        kind: ModLoaderKind;
+        name: string;
+        /** An enabled mod is the loader. */
+        installed: boolean;
+      } | null;
+      unsupportedLoader: string | null;
+    };
 
 export interface GameMods {
   /** The folder mods are deployed into; null when the game has no executable. */
@@ -81,8 +162,10 @@ export interface GameMods {
   blocker: ModsBlocker | null;
   support: ModGameSupport;
   playMode: ModPlayMode;
-  /** The loader that starts the game modded; none until loaders exist. */
+  /** The loader that starts the game modded: an enabled loader mod. */
   loader: { name: string; version: string | null } | null;
+  /** Enabled mods need a loader that isn't installed. */
+  loaderMissing: boolean;
   mods: InstalledMod[];
   nexusGame: NexusGameMatch | null;
   /** Files a mod ships that a mod lower in the list also ships (it loses them). */
@@ -147,7 +230,7 @@ export interface ModDownload {
   shop: GameShop;
   objectId: string;
   gameTitle: string;
-  /** `nexus:<modId>:<fileId>`. */
+  /** `nexus:<modId>:<fileId>`, or `loader:<kind>` for a game's loader. */
   key: string;
   modName: string;
   fileName: string;
@@ -172,7 +255,9 @@ export type ModInstallErrorCode =
   | "download-failed"
   | "extract-failed"
   | "empty-archive"
-  | "no-game-folder";
+  | "no-game-folder"
+  | "proxy-dll-clash"
+  | "no-loader-package";
 
 export type ModActionErrorCode =
   | ModInstallErrorCode
@@ -200,6 +285,7 @@ export type ModActivityKind =
   | "play-mode"
   | "launch"
   | "save-backup"
+  | "loader"
   | "error";
 
 /** One line of a game's `activity.jsonl`. Never holds tokens or signed URLs. */

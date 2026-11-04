@@ -92,13 +92,15 @@ export const installModFromArchive = async (
   objectId: string,
   filePath: string
 ) => {
-  const result = await runModAction(() =>
-    ModStore.installFromFile(shop, objectId, filePath, {
+  const result = await runModAction(async () => {
+    const installed = await ModStore.installFromFile(shop, objectId, filePath, {
       name: path.basename(filePath).replace(/\.(zip|7z|rar|tar(\.\w+)?)$/i, ""),
       version: null,
       source: { kind: "file", fileName: path.basename(filePath) },
-    })
-  );
+    });
+    if (installed?.needsLoader)
+      await ModDownloads.ensureLoader(shop, objectId, installed.name);
+  });
   if (!result.ok)
     await ModActivity.append(shop, objectId, {
       kind: "error",
@@ -106,6 +108,25 @@ export const installModFromArchive = async (
       message: `Could not install ${path.basename(filePath)}: ${result.error}`,
     });
   return result;
+};
+
+/** Queues the game's loader from the Mods page's "is needed" row. */
+export const installModLoader = async (
+  shop: GameShop,
+  objectId: string
+): Promise<ModActionResult> => {
+  try {
+    const { mods } = await ModStore.readState(shop, objectId);
+    const off = mods.find((mod) => mod.loader && !mod.enabled);
+    if (off) {
+      await ModStore.setEnabled(shop, objectId, off.id, true);
+      return { ok: true };
+    }
+    const queued = await ModDownloads.ensureLoader(shop, objectId, null);
+    return queued ? { ok: true } : { ok: false, error: "no-loader-package" };
+  } catch (error) {
+    return toError(error);
+  }
 };
 
 /** Marks each Nexus mod with a newer main file; returns how many have one. */

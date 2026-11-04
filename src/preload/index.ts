@@ -1371,6 +1371,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("saveModReport", shop, objectId),
   openModFolder: (shop: GameShop, objectId: string, kind: ModFolderKind) =>
     ipcRenderer.invoke("openModFolder", shop, objectId, kind),
+  installModLoader: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("installModLoader", shop, objectId),
   setModPlayMode: (shop: GameShop, objectId: string, mode: ModPlayMode) =>
     ipcRenderer.invoke("setModPlayMode", shop, objectId, mode),
   shouldOfferModSaveBackup: (shop: GameShop, objectId: string) =>

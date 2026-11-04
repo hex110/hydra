@@ -8,6 +8,7 @@ import {
 } from "@main/services/machine/machine-profile";
 import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
+import { ModStore } from "@main/services/mods/mod-store";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
 import {
   buildGamescopeLaunchOptions,
@@ -51,8 +52,8 @@ const STEAM_BRIDGE_DLL = "lsteamclient";
 
 /**
  * Environment Hydra adds when a Windows game runs under Proton: the DLL
- * overrides OptiScaler, RenoDX's ReShade and OnlineFix need to load their proxy
- * DLLs, and the
+ * overrides OptiScaler, RenoDX's ReShade, OnlineFix and a mod loader need to
+ * load their proxy DLLs, and the
  * one that keeps Proton's Steam bridge out of the way.
  */
 const getLinuxLaunchEnvironment = async (
@@ -89,11 +90,16 @@ const getLinuxLaunchEnvironment = async (
 
   const optiScalerDll = OptiScaler.getLaunchNativeDll(game);
   const renoDxDll = RenoDx.getLaunchNativeDll(game);
+  // Play (modded) loads the loader's proxy DLL; Play leaves Wine's own.
+  const modLoader = game
+    ? await ModStore.getLaunchLoader(game.shop, objectId).catch(() => null)
+    : null;
 
   return buildLaunchEnvironment({
     nativeDlls: [
       ...(optiScalerDll ? [optiScalerDll] : []),
       ...(renoDxDll ? [renoDxDll] : []),
+      ...(modLoader?.nativeDlls ?? []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
     ],
     disabledDlls: [STEAM_BRIDGE_DLL],

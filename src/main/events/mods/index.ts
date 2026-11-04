@@ -23,6 +23,7 @@ import {
   getNexusGameForLibraryGame,
   hasTorBoxToken,
   installModFromArchive,
+  installModLoader,
   installNexusModFile,
   runModAction,
 } from "@main/services/mods/mods";
@@ -202,6 +203,10 @@ registerEvent(
   "openModFolder",
   (_event, shop: GameShop, objectId: string, kind: ModFolderKind) =>
     openModFolder(shop, objectId, kind)
+);
+
+registerEvent("installModLoader", (_event, shop: GameShop, objectId: string) =>
+  installModLoader(shop, objectId)
 );
 
 registerEvent(

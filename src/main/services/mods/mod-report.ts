@@ -13,12 +13,7 @@ import { GameRuns } from "../game-runs/game-runs";
 import { logger } from "../logger";
 import { SystemPath } from "../system-path";
 import { ModActivity } from "./activity";
-import {
-  ModError,
-  ModStore,
-  resolveModSupport,
-  resolveModGameFolder,
-} from "./mod-store";
+import { ModError, ModStore, resolveModGameFolder } from "./mod-store";
 import { isNxmHandler } from "./nxm";
 import { readTorBoxToken } from "./mods";
 import { getTorBoxNexusLimit } from "./torbox-nexus";
@@ -50,11 +45,13 @@ export const buildModReport = async (shop: GameShop, objectId: string) => {
     },
     gameFolder: resolveModGameFolder(game.executablePath ?? null),
     storeFolder: ModStore.storeFolder(shop, objectId),
-    support: resolveModSupport(state.nexusGame?.domainName),
+    support: (await ModStore.getGameMods(shop, objectId)).support,
     nexusGame: state.nexusGame,
     profileName: state.profileName,
     playMode: state.playMode,
-    loader: null,
+    loader: state.loader
+      ? { name: state.loader.name, version: state.loader.version }
+      : null,
     mods: state.mods,
     overridden: state.overridden,
     deployed,
@@ -92,8 +89,7 @@ export const openModFolder = async (
   else {
     const game = await loadGame(shop, objectId);
     const gameFolder = resolveModGameFolder(game.executablePath ?? null);
-    const { nexusGame } = await ModStore.readState(shop, objectId);
-    const modFolder = resolveModSupport(nexusGame?.domainName).modFolder;
+    const { modFolder } = (await ModStore.getGameMods(shop, objectId)).support;
     target = gameFolder ? path.join(gameFolder, modFolder) : null;
     // The mod folder may not exist until a mod is deployed.
     if (target && !fs.existsSync(target)) target = gameFolder;

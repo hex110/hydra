@@ -8,6 +8,7 @@ import type {
   ModActionErrorCode,
   ModActionResult,
   ModDownload,
+  ModLoaderSupport,
 } from "@types";
 
 import { downloadToFile } from "../download-to-file";
@@ -15,6 +16,7 @@ import { logger } from "../logger";
 import { SystemPath } from "../system-path";
 import { WindowManager } from "../window-manager";
 import { ModActivity } from "./activity";
+import { resolveThunderstoreLoader } from "./games";
 import { ModError, ModStore } from "./mod-store";
 import { getNexusModRequirements } from "./nexus";
 import { requestNexusFileThroughTorBox } from "./torbox-nexus";
@@ -27,9 +29,20 @@ export interface NexusFileRequest {
   replaces?: string;
 }
 
+/** A game's loader, downloaded straight from where it is published. */
+interface LoaderRequest {
+  kind: "loader";
+  loader: ModLoaderSupport;
+  /** The mod that needs it, for the activity log. */
+  neededBy: string | null;
+}
+
+/** Saved queues from before loaders have no kind: they are Nexus files. */
+type DownloadRequest = (NexusFileRequest & { kind?: "nexus" }) | LoaderRequest;
+
 interface Job {
   download: ModDownload;
-  request: NexusFileRequest;
+  request: DownloadRequest;
   controller: AbortController | null;
   finished: Promise<ModActionResult>;
 }
@@ -125,8 +138,126 @@ const fail = async (
   return { ok: false, error: code };
 };
 
+const finish = (job: Job, waitsForOptions: boolean): ModActionResult => {
+  update(job, { state: "done", progress: 1, waitsForOptions });
+  setTimeout(() => {
+    if (jobs.get(job.download.id)?.download.state === "done") {
+      jobs.delete(job.download.id);
+      announce();
+    }
+  }, DONE_KEPT_MS);
+  return { ok: true };
+};
+
+const fetchTo = async (job: Job, url: string, destination: string) =>
+  downloadToFile(
+    url,
+    destination,
+    (loaded, total) =>
+      update(
+        job,
+        {
+          progress: total ? loaded / total : null,
+          bytesLoaded: loaded,
+          bytesTotal: total,
+        },
+        false
+      ),
+    job.controller?.signal
+  );
+
+const runLoader = async (
+  job: Job,
+  request: LoaderRequest
+): Promise<ModActionResult> => {
+  const { shop, objectId } = job.download;
+  const controller = new AbortController();
+  job.controller = controller;
+  update(job, {
+    state: "downloading",
+    progress: null,
+    bytesLoaded: null,
+    bytesTotal: null,
+    error: null,
+    errorMessage: null,
+  });
+  let downloaded: string | null = null;
+  const startedAt = Date.now();
+  try {
+    const { loader } = request;
+    const pack =
+      loader.package.kind === "url"
+        ? loader.package
+        : await resolveThunderstoreLoader(loader);
+    await ModActivity.append(shop, objectId, {
+      kind: "download-requested",
+      modName: loader.name,
+      message: request.neededBy
+        ? `Downloading ${loader.name} ${pack.version}, which ${request.neededBy} needs.`
+        : `Downloading ${loader.name} ${pack.version}.`,
+      details: {
+        source: loader.package.kind,
+        url: pack.url,
+        version: pack.version,
+      },
+    });
+    update(job, {
+      fileName: pack.fileName,
+      version: pack.version,
+      progress: 0,
+    });
+    downloaded = path.join(
+      ModStore.downloadFolder(shop, objectId),
+      `${randomUUID()}-${pack.fileName}`
+    );
+    try {
+      await fetchTo(job, pack.url, downloaded);
+    } catch (error) {
+      if (controller.signal.aborted)
+        return await fail(job, "cancelled", "cancelled");
+      logger.error("[Mods] Loader download failed", error);
+      return await fail(job, "download-failed", errorText(error));
+    }
+    const size = (await fs.promises.stat(downloaded)).size;
+    await ModActivity.append(shop, objectId, {
+      kind: "download-finished",
+      modName: loader.name,
+      message: `Downloaded ${pack.fileName} (${size} bytes) in ${Math.round((Date.now() - startedAt) / 1000)} s.`,
+      details: { fileName: pack.fileName, sizeInBytes: size },
+    });
+    job.controller = null;
+    update(job, { state: "installing", progress: null });
+    const installed = await ModStore.installFromFile(
+      shop,
+      objectId,
+      downloaded,
+      {
+        name: loader.name,
+        version: pack.version,
+        source: { kind: "url", url: pack.url, fileName: pack.fileName },
+      }
+    );
+    if (installed && !installed.loader)
+      await ModActivity.append(shop, objectId, {
+        kind: "error",
+        modId: installed.id,
+        modName: installed.name,
+        message: `${pack.fileName} doesn't look like ${loader.name}: none of its files are the loader's.`,
+      });
+    return finish(job, installed === null);
+  } catch (error) {
+    if (!(error instanceof ModError))
+      logger.error("[Mods] Loader install failed", error);
+    return await fail(job, errorCode(error), errorText(error));
+  } finally {
+    job.controller = null;
+    if (downloaded) await fs.promises.rm(downloaded, { force: true });
+  }
+};
+
 const run = async (job: Job): Promise<ModActionResult> => {
-  const { download, request } = job;
+  const { request, download } = job;
+  if (request.kind === "loader") return runLoader(job, request);
   const { shop, objectId } = download;
   const controller = new AbortController();
   job.controller = controller;
@@ -243,18 +374,9 @@ const run = async (job: Job): Promise<ModActionResult> => {
         },
       }
     );
-    update(job, {
-      state: "done",
-      progress: 1,
-      waitsForOptions: installed === null,
-    });
-    setTimeout(() => {
-      if (jobs.get(download.id)?.download.state === "done") {
-        jobs.delete(download.id);
-        announce();
-      }
-    }, DONE_KEPT_MS);
-    return { ok: true };
+    if (installed?.needsLoader)
+      void ModDownloads.ensureLoader(shop, objectId, installed.name);
+    return finish(job, installed === null);
   } catch (error) {
     if (!(error instanceof ModError))
       logger.error("[Mods] Mod install failed", error);
@@ -263,6 +385,43 @@ const run = async (job: Job): Promise<ModActionResult> => {
     job.controller = null;
     if (downloaded) await fs.promises.rm(downloaded, { force: true });
   }
+};
+
+const findActive = (shop: GameShop, objectId: string, key: string) =>
+  [...jobs.values()].find(
+    (job) =>
+      job.download.key === key &&
+      job.download.shop === shop &&
+      job.download.objectId === objectId &&
+      job.download.state !== "failed" &&
+      job.download.state !== "done"
+  );
+
+const newDownload = async (
+  shop: GameShop,
+  objectId: string,
+  fields: Pick<ModDownload, "key" | "modName" | "fileName" | "version">
+): Promise<ModDownload> => {
+  const game = await gamesSublevel
+    .get(levelKeys.game(shop, objectId))
+    .catch(() => null);
+  const now = Date.now();
+  return {
+    id: randomUUID(),
+    shop,
+    objectId,
+    gameTitle: game?.title ?? objectId,
+    ...fields,
+    state: "waiting-torbox",
+    progress: null,
+    bytesLoaded: null,
+    bytesTotal: null,
+    error: null,
+    errorMessage: null,
+    waitsForOptions: false,
+    createdAt: now,
+    updatedAt: now,
+  };
 };
 
 const start = (job: Job) => {
@@ -284,44 +443,57 @@ export const ModDownloads = {
     request: NexusFileRequest
   ): Promise<{ id: string; finished: Promise<ModActionResult> }> {
     const key = `nexus:${request.modId}:${request.fileId}`;
-    const existing = [...jobs.values()].find(
-      (job) =>
-        job.download.key === key &&
-        job.download.shop === shop &&
-        job.download.objectId === objectId &&
-        job.download.state !== "failed" &&
-        job.download.state !== "done"
-    );
+    const existing = findActive(shop, objectId, key);
     if (existing)
       return { id: existing.download.id, finished: existing.finished };
 
-    const game = await gamesSublevel
-      .get(levelKeys.game(shop, objectId))
-      .catch(() => null);
-    const now = Date.now();
     const job: Job = {
-      request,
+      request: { ...request, kind: "nexus" },
       controller: null,
       finished: Promise.resolve({ ok: true }),
-      download: {
-        id: randomUUID(),
-        shop,
-        objectId,
-        gameTitle: game?.title ?? objectId,
+      download: await newDownload(shop, objectId, {
         key,
         modName: request.name,
         fileName: request.name,
         version: request.version,
-        state: "waiting-torbox",
-        progress: null,
-        bytesLoaded: null,
-        bytesTotal: null,
-        error: null,
-        errorMessage: null,
-        waitsForOptions: false,
-        createdAt: now,
-        updatedAt: now,
-      },
+      }),
+    };
+    jobs.set(job.download.id, job);
+    return { id: job.download.id, finished: start(job) };
+  },
+
+  /**
+   * Queues the game's loader when its definition names one and no loader
+   * mod is installed. Returns null when nothing needs queueing.
+   */
+  async ensureLoader(
+    shop: GameShop,
+    objectId: string,
+    neededBy: string | null
+  ): Promise<{ id: string; finished: Promise<ModActionResult> } | null> {
+    const definition = await ModStore.getDefinition(shop, objectId).catch(
+      () => null
+    );
+    const loader = definition?.loader;
+    if (!loader) return null;
+    const { mods } = await ModStore.readState(shop, objectId);
+    // Installed but turned off counts: the user turned it off.
+    if (mods.some((mod) => mod.loader?.kind === loader.kind)) return null;
+    const key = `loader:${loader.kind}`;
+    const existing = findActive(shop, objectId, key);
+    if (existing)
+      return { id: existing.download.id, finished: existing.finished };
+    const job: Job = {
+      request: { kind: "loader", loader, neededBy },
+      controller: null,
+      finished: Promise.resolve({ ok: true }),
+      download: await newDownload(shop, objectId, {
+        key,
+        modName: loader.name,
+        fileName:
+          loader.package.kind === "url" ? loader.package.fileName : loader.name,
+        version: loader.package.kind === "url" ? loader.package.version : null,
+      }),
     };
     jobs.set(job.download.id, job);
     return { id: job.download.id, finished: start(job) };
@@ -367,7 +539,7 @@ export const ModDownloads = {
         (text) =>
           JSON.parse(text) as {
             download: ModDownload;
-            request?: NexusFileRequest;
+            request?: DownloadRequest;
           }[]
       )
       .catch(() => []);

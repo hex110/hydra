@@ -80,6 +80,10 @@
     flex-wrap: wrap;
   }
 
+  &__row--loader {
+    border-color: globals.$warning-color;
+  }
+
   &__row-meta,
   &__result-meta {
     display: flex;

@@ -358,7 +358,13 @@ export const GameRuns = {
         options.objectId
       ).catch(() => null);
       const mods = modState
-        ? buildRunMods(modState.mods, modState.playMode, null)
+        ? buildRunMods(
+            modState.mods,
+            modState.playMode,
+            modState.loader
+              ? { name: modState.loader.name, version: modState.loader.version }
+              : null
+          )
         : null;
       const startedAt = new Date();
       const id = runIdFromDate(startedAt);

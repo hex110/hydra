@@ -51,15 +51,27 @@ type ModsTab = "installed" | "activity";
 const supportText = (
   gameMods: GameMods,
   t: (key: string, options?: Record<string, unknown>) => string
-) =>
-  t(
-    gameMods.support.source === "mod-folder-table"
-      ? "support_fallback_table"
-      : "support_fallback_root",
-    {
-      folder: gameMods.support.modFolder || t("support_game_folder"),
-    }
-  );
+) => {
+  const { support } = gameMods;
+  const folder = support.modFolder || t("support_game_folder");
+  if (support.kind === "fallback")
+    return t(
+      support.source === "mod-folder-table"
+        ? "support_fallback_table"
+        : "support_fallback_root",
+      { folder }
+    );
+  const options = {
+    name: support.name,
+    folder,
+    from: t(`support_origin_${support.origin}`),
+    loader: support.loader?.name ?? support.unsupportedLoader,
+  };
+  if (support.loader) return t("support_definition_loader", options);
+  if (support.unsupportedLoader)
+    return t("support_definition_unsupported_loader", options);
+  return t("support_definition", options);
+};
 
 export const useModActionToast = () => {
   const { t } = useTranslation("mods");
@@ -194,6 +206,16 @@ export default function Mods() {
     });
 
   const mods = gameMods?.mods ?? [];
+  const neededLoader =
+    gameMods?.support.kind === "definition" &&
+    gameMods.support.loader &&
+    !gameMods.support.loader.installed
+      ? gameMods.support.loader
+      : null;
+  // A loader that is installed but off is turned on, not downloaded again.
+  const disabledLoader = neededLoader
+    ? mods.find((mod) => mod.loader?.kind === neededLoader.kind)
+    : undefined;
   const blocked = Boolean(gameMods?.blocker);
   const canInstall = Boolean(gameMods?.gameFolder) && !blocked;
   const activeDownloads = downloads.filter(
@@ -227,7 +249,16 @@ export default function Mods() {
                   : t("loading")}
             </p>
             {gameMods?.gameFolder && (
-              <p className="mods__hint">{supportText(gameMods, t)}</p>
+              <p
+                className="mods__hint"
+                title={
+                  gameMods.support.kind === "definition"
+                    ? gameMods.support.source
+                    : undefined
+                }
+              >
+                {supportText(gameMods, t)}
+              </p>
             )}
           </div>
           <div className="mods__header-actions">
@@ -377,6 +408,41 @@ export default function Mods() {
               </ul>
             )}
 
+            {neededLoader && !downloadsByKey[`loader:${neededLoader.kind}`] && (
+              <div className="mods__row mods__row--loader">
+                <span className="mods__file-name">
+                  {t("loader_needed", { loader: neededLoader.name })}
+                </span>
+                <div className="mods__row-meta">
+                  <span>
+                    {gameMods?.loaderMissing
+                      ? t("loader_needed_missing_hint")
+                      : t("loader_needed_hint")}
+                  </span>
+                </div>
+                <div className="mods__row-actions">
+                  <Button
+                    theme="primary"
+                    disabled={busy || !canInstall}
+                    onClick={() =>
+                      run(() =>
+                        disabledLoader
+                          ? window.electron.setModEnabled(
+                              shop,
+                              objectId,
+                              disabledLoader.id,
+                              true
+                            )
+                          : window.electron.installModLoader(shop, objectId)
+                      )
+                    }
+                  >
+                    {disabledLoader ? t("loader_turn_on") : t("install")}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {gameMods === null ? (
               <p className="mods__hint">{t("loading")}</p>
             ) : mods.length === 0 ? (
@@ -408,8 +474,21 @@ export default function Mods() {
                         <Badge>
                           {mod.source.kind === "nexus"
                             ? t("source_nexus")
-                            : t("source_file")}
+                            : mod.source.kind === "url"
+                              ? t("source_web")
+                              : t("source_file")}
                         </Badge>
+                        {mod.loader && (
+                          <span
+                            title={t("loader_badge_hint", {
+                              dlls: mod.loader.nativeDlls
+                                .map((dll) => `${dll}.dll`)
+                                .join(", "),
+                            })}
+                          >
+                            <Badge>{t("loader_badge")}</Badge>
+                          </span>
+                        )}
                         {mod.fomod && (
                           <span title={t("fomod_hint")}>{t("fomod")}</span>
                         )}

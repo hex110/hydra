@@ -15,7 +15,9 @@ export const MOD_REPORT_ACTIVITY_LINES = 200;
 export const describeModSource = (source: ModSource) =>
   source.kind === "nexus"
     ? `Nexus Mods ${source.gameDomain}/mods/${source.modId} file ${source.fileId}`
-    : `file ${source.fileName}`;
+    : source.kind === "url"
+      ? `download ${source.url}`
+      : `file ${source.fileName}`;
 
 /** One activity entry as a single line of text. */
 export const formatModActivityLine = (entry: ModActivityEntry) => {
@@ -102,9 +104,21 @@ const count = (amount: number, noun: string) =>
   `${amount} ${noun}${amount === 1 ? "" : "s"}`;
 
 const describeSupport = (input: ModReportInput) => {
-  const folder = input.support.modFolder || "the game folder";
+  const { support } = input;
+  const folder = support.modFolder || "the game folder";
+  if (support.kind === "definition") {
+    const loader = support.loader
+      ? `Loader: ${support.loader.name} (${support.loader.installed ? "installed and on" : "not installed"}).`
+      : support.unsupportedLoader
+        ? `Its mods use ${support.unsupportedLoader}, which Hydra can't install yet.`
+        : "No loader.";
+    return [
+      `Definition ${support.id} (${support.name}, ${support.origin}). Loose mod files go into ${folder}. ${loader}`,
+      `Source: ${support.source}`,
+    ].join("\n\n");
+  }
   const where =
-    input.support.source === "mod-folder-table"
+    support.source === "mod-folder-table"
       ? `from Hydra's mod folder table for Nexus game "${input.nexusGame?.domainName}"`
       : "the game folder, since Hydra has no entry for this game";
   return `No support definition. Hydra places files in ${folder} (${where}); it doesn't know this game's loader or mod list.`;
@@ -155,6 +169,10 @@ export const formatModReport = (input: ModReportInput) => {
       overridden > 0
         ? `${count(overridden, "file")} replaced by mods below it`
         : null,
+      mod.loader
+        ? `the game's loader, through ${mod.loader.nativeDlls.map((dll) => `${dll}.dll`).join(", ")}`
+        : null,
+      mod.needsLoader ? `needs ${mod.needsLoader}` : null,
       mod.fomodChosen ? "FOMOD options chosen" : null,
       mod.fomod ? "FOMOD archive installed as packed" : null,
       mod.update

@@ -6,8 +6,14 @@ import { gamesSublevel, levelKeys } from "@main/level";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
 import {
   FILE_EXTENSIONS_TO_EXTRACT,
+  MOD_LOADERS,
+  defaultModFolder,
   describeModLayout,
+  detectModLoader,
+  findNeededLoader,
+  findProxyDllClash,
   getModFolder,
+  planModPlacement,
   planModFiles,
   isFomodArchive,
   applyModProfile,
@@ -16,8 +22,11 @@ import {
   snapshotModProfile,
 } from "@shared";
 import type {
+  Game,
   GameMods,
   GameShop,
+  GameSupportDefinition,
+  InstalledModLoader,
   ModGameSupport,
   ModPlayMode,
   InstalledMod,
@@ -33,6 +42,9 @@ import type {
 import { SevenZip } from "../7zip";
 import { MAX_PLAN_FILES, ModActivity } from "./activity";
 import { applyFomod, readFomodConfig } from "./fomod";
+import { readRootEntries, resolveGameSupportDefinition } from "./games";
+import { OptiScaler } from "../optiscaler/optiscaler";
+import { RenoDx } from "../renodx/renodx";
 import { isTrackedGameKeyRunning } from "../game-running-state";
 import { logger } from "../logger";
 import { SystemPath } from "../system-path";
@@ -73,8 +85,11 @@ export class ModError extends Error {
       | "extract-failed"
       | "empty-archive"
       | "not-found"
+      | "proxy-dll-clash",
+    /** A sentence for the activity log. */
+    public readonly detail?: string
   ) {
-    super(code);
+    super(detail ?? code);
   }
 }
 
@@ -201,6 +216,61 @@ export const resolveModSupport = (
   };
 };
 
+/** The enabled mod that is the game's loader; the first in the list wins. */
+const findEnabledLoader = (mods: InstalledMod[]) =>
+  mods.find((mod) => mod.enabled && mod.loader) ?? null;
+
+const describeSupport = (
+  definition: GameSupportDefinition | null,
+  nexusDomain: string | null | undefined,
+  mods: InstalledMod[]
+): ModGameSupport => {
+  if (!definition) return resolveModSupport(nexusDomain);
+  const loader = definition.loader;
+  return {
+    kind: "definition",
+    id: definition.id,
+    name: definition.name,
+    origin: definition.origin,
+    source: definition.source,
+    modFolder: defaultModFolder(definition),
+    loader: loader
+      ? {
+          kind: loader.kind,
+          name: loader.name,
+          installed: mods.some(
+            (mod) => mod.enabled && mod.loader?.kind === loader.kind
+          ),
+        }
+      : null,
+    unsupportedLoader: definition.unsupportedLoader ?? null,
+  };
+};
+
+/** Other tools in the game that load a proxy DLL from its folder. */
+const proxyDllUsers = (game: Game) => [
+  { tool: "OptiScaler", dll: OptiScaler.getLaunchNativeDll(game) },
+  { tool: "ReShade (RenoDX)", dll: RenoDx.getLaunchNativeDll(game) },
+  ...(game.onlineFixDisabled === true
+    ? []
+    : (game.onlineFix?.proxyDlls ?? []).map((dll) => ({
+        tool: "OnlineFix",
+        dll,
+      }))),
+];
+
+/** Refuses a loader whose proxy DLL another tool in the game already uses. */
+const checkProxyDlls = (game: Game, loader: InstalledModLoader) => {
+  const clash = findProxyDllClash(loader.nativeDlls, proxyDllUsers(game));
+  if (clash) {
+    const dll = `${clash.dll!.replace(/\.dll$/i, "")}.dll`;
+    throw new ModError(
+      "proxy-dll-clash",
+      `${MOD_LOADERS[loader.kind].name} loads through ${dll}, which ${clash.tool} already uses in this game. Remove ${clash.tool} or move it to another DLL first.`
+    );
+  }
+};
+
 const queues = new Map<string, Promise<unknown>>();
 
 /** Runs one change to a game's mods at a time. */
@@ -237,6 +307,12 @@ export class ModStore {
     const { mods, nexusGame, profiles, activeProfileId, playMode } =
       await this.readMods(folder);
     const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+    const definition = await this.resolveDefinition(
+      game,
+      gameFolder,
+      nexusGame
+    );
+    const loaderMod = findEnabledLoader(mods);
     return {
       gameFolder,
       blocker: !gameFolder
@@ -244,9 +320,19 @@ export class ModStore {
         : isTrackedGameKeyRunning(levelKeys.game(shop, objectId))
           ? "game-running"
           : null,
-      support: resolveModSupport(nexusGame?.domainName),
+      support: describeSupport(definition, nexusGame?.domainName, mods),
       playMode: playMode ?? "modded",
-      loader: null,
+      loader: loaderMod
+        ? { name: loaderMod.name, version: loaderMod.version }
+        : null,
+      loaderMissing: mods.some(
+        (mod) =>
+          mod.enabled &&
+          mod.needsLoader &&
+          !mods.some(
+            (other) => other.enabled && other.loader?.kind === mod.needsLoader
+          )
+      ),
       mods,
       nexusGame,
       profiles: (profiles ?? []).map(({ id, name }) => ({ id, name })),
@@ -262,6 +348,32 @@ export class ModStore {
         })
       ),
     };
+  }
+
+  private static resolveDefinition(
+    game: Game,
+    gameFolder: string | null,
+    nexusGame: NexusGameMatch | null
+  ) {
+    return resolveGameSupportDefinition({
+      game,
+      gameFolder,
+      nexusDomain: nexusGame?.domainName ?? null,
+    }).catch((error) => {
+      logger.warn("[Mods] Could not resolve the game's support", error);
+      return null;
+    });
+  }
+
+  /** The definition Hydra uses for a game, for installs and reports. */
+  public static async getDefinition(shop: GameShop, objectId: string) {
+    const game = await this.loadGame(shop, objectId);
+    const { nexusGame } = await this.readMods(storeFolder(shop, objectId));
+    return this.resolveDefinition(
+      game,
+      resolveModGameFolder(game.executablePath ?? null),
+      nexusGame
+    );
   }
 
   public static async setNexusGame(
@@ -438,7 +550,7 @@ export class ModStore {
       } catch (error) {
         await ModActivity.append(shop, objectId, {
           kind: "error",
-          message: `Could not ${action}: ${error instanceof ModError ? error.code : error instanceof Error ? error.message : String(error)}`,
+          message: `Could not ${action}: ${error instanceof ModError ? (error.detail ?? error.code) : error instanceof Error ? error.message : String(error)}`,
         });
         throw error;
       }
@@ -548,11 +660,71 @@ export class ModStore {
       }
 
       const { nexusGame } = await this.readMods(folder);
-      const gameRootEntries = new Set(
-        (await fs.promises.readdir(gameFolder).catch(() => [])).map((entry) =>
-          entry.toLowerCase()
-        )
+      const gameRootEntries = await readRootEntries(gameFolder);
+      const definition = await this.resolveDefinition(
+        game,
+        gameFolder,
+        nexusGame
       );
+
+      if (definition) {
+        const placement = planModPlacement({
+          files: extracted,
+          definition,
+          gameRootEntries,
+          modName: details.name,
+        });
+        if (placement.files.length === 0) throw new ModError("empty-archive");
+        await ModActivity.append(shop, objectId, {
+          kind: "install-plan",
+          modId: id,
+          modName: details.name,
+          message: `Placing ${count(placement.files.length, "file")} by the game definition ${definition.name}: ${placement.description}.`,
+          details: {
+            rule: "game-definition",
+            definition: definition.id,
+            definitionSource: definition.source,
+            files: placement.files
+              .slice(0, MAX_PLAN_FILES)
+              .map((file) => `${file.archive} -> ${file.target}`),
+            more: Math.max(0, placement.files.length - MAX_PLAN_FILES),
+            leftOut: placement.skipped.slice(0, MAX_PLAN_FILES),
+          },
+        });
+        // Staged in the game folder's layout, so the mod deploys to its root.
+        const prepared = path.join(folder, "staging", `${id}.prepared`);
+        await fs.promises.rm(prepared, { recursive: true, force: true });
+        try {
+          for (const file of placement.files) {
+            const destination = path.join(prepared, file.target);
+            await fs.promises.mkdir(path.dirname(destination), {
+              recursive: true,
+            });
+            await fs.promises.rename(
+              path.join(partial, file.archive),
+              destination
+            );
+          }
+          const targets = placement.files.map((file) => file.target);
+          return await this.recordInstall(
+            shop,
+            objectId,
+            folder,
+            id,
+            prepared,
+            {
+              details,
+              deployRoot: "",
+              game,
+              loader: detectModLoader(targets),
+              needsLoader: findNeededLoader(targets, definition.loader?.kind),
+            }
+          );
+        } finally {
+          await fs.promises.rm(prepared, { recursive: true, force: true });
+        }
+      }
+
       const layout = resolveModLayout({
         files: extracted,
         modFolder: getModFolder(nexusGame?.domainName),
@@ -586,6 +758,8 @@ export class ModStore {
         details,
         deployRoot: layout.deployRoot,
         fomod: isFomodArchive(extracted) ? "default" : undefined,
+        game,
+        loader: detectModLoader(planned.map((file) => file.target)),
       });
     } finally {
       await fs.promises.rm(partial, { recursive: true, force: true });
@@ -704,6 +878,7 @@ export class ModStore {
           details: pending.details,
           deployRoot,
           fomod: "chosen",
+          game,
         }
       );
       await this.cancelFomod(shop, objectId, pendingId);
@@ -724,9 +899,13 @@ export class ModStore {
       details: InstallDetails;
       deployRoot: string;
       fomod?: "default" | "chosen";
+      game: Game;
+      loader?: InstalledModLoader | null;
+      needsLoader?: InstalledMod["needsLoader"] | null;
     }
   ): Promise<InstalledMod> {
     const { details } = options;
+    if (options.loader) checkProxyDlls(options.game, options.loader);
     const staging = stagingFolder(folder, id);
     await fs.promises.rename(preparedFolder, staging);
 
@@ -745,6 +924,8 @@ export class ModStore {
       requirements: details.requirements?.length
         ? details.requirements
         : undefined,
+      loader: options.loader ?? undefined,
+      needsLoader: (!options.loader && options.needsLoader) || undefined,
     };
 
     let replaced: InstalledMod | undefined;
@@ -755,7 +936,12 @@ export class ModStore {
         replaced = details.replaces
           ? state.mods.find((existing) => existing.id === details.replaces)
           : undefined;
-        if (!replaced) return { ...state, mods: [...state.mods, mod] };
+        // A loader goes first, so the mods after it win the files they share.
+        if (!replaced)
+          return {
+            ...state,
+            mods: mod.loader ? [mod, ...state.mods] : [...state.mods, mod],
+          };
         return {
           ...state,
           mods: state.mods.map((existing) =>
@@ -774,6 +960,14 @@ export class ModStore {
       });
     }
 
+    if (mod.loader)
+      await ModActivity.append(shop, objectId, {
+        kind: "loader",
+        modId: mod.id,
+        modName: mod.name,
+        message: `${mod.name} is the game's ${MOD_LOADERS[mod.loader.kind].name} loader; Play (modded) loads it through ${mod.loader.nativeDlls.map((dll) => `${dll}.dll`).join(", ")}.`,
+        details: { loader: mod.loader },
+      });
     logger.info("[Mods] Installed", {
       gameKey: levelKeys.game(shop, objectId),
       name: mod.name,
@@ -905,9 +1099,11 @@ export class ModStore {
     return this.change(
       shop,
       objectId,
-      (state) => {
+      async (state) => {
         const mod = state.mods.find((item) => item.id === modId);
         if (!mod) throw new ModError("not-found");
+        if (enabled && mod.loader)
+          checkProxyDlls(await this.loadGame(shop, objectId), mod.loader);
         void ModActivity.append(shop, objectId, {
           kind: enabled ? "enabled" : "disabled",
           modId,
@@ -1014,7 +1210,27 @@ export class ModStore {
         state.profiles?.find((profile) => profile.id === state.activeProfileId)
           ?.name ?? null,
       overridden: planDeployment(state.mods).overridden,
+      loader: (() => {
+        const loaderMod = findEnabledLoader(state.mods);
+        return loaderMod
+          ? {
+              name: loaderMod.name,
+              version: loaderMod.version,
+              nativeDlls: loaderMod.loader!.nativeDlls,
+            }
+          : null;
+      })(),
     };
+  }
+
+  /**
+   * What Play (modded) adds for the game's loader: its proxy DLLs. Null for
+   * Play, or when no loader is on.
+   */
+  public static async getLaunchLoader(shop: GameShop, objectId: string) {
+    const state = await this.readState(shop, objectId).catch(() => null);
+    if (!state || state.playMode !== "modded") return null;
+    return state.loader;
   }
 
   private static updateFile(
