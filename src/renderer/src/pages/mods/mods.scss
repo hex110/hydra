@@ -80,6 +80,34 @@
     flex-wrap: wrap;
   }
 
+  &__order {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+    flex-wrap: wrap;
+  }
+
+  &__order-proposal {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 1.5);
+  }
+
+  &__order-changes {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin: 0;
+    padding-left: calc(globals.$spacing-unit * 2.5);
+  }
+
+  &__order-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: globals.$spacing-unit;
+  }
+
   &__row--loader {
     border-color: globals.$warning-color;
   }

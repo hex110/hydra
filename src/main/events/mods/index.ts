@@ -205,6 +205,18 @@ registerEvent(
     openModFolder(shop, objectId, kind)
 );
 
+registerEvent(
+  "proposeModDependencyOrder",
+  (_event, shop: GameShop, objectId: string) =>
+    ModStore.proposeDependencyOrder(shop, objectId)
+);
+
+registerEvent(
+  "applyModDependencyOrder",
+  (_event, shop: GameShop, objectId: string, order: string[]) =>
+    runModAction(() => ModStore.applyDependencyOrder(shop, objectId, order))
+);
+
 registerEvent("installModLoader", (_event, shop: GameShop, objectId: string) =>
   installModLoader(shop, objectId)
 );

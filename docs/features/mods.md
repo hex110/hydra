@@ -130,6 +130,19 @@ matched whatever their case (`data/` from a Windows archive lands in `Data/`).
 - **On/off** keeps the staged files and only changes what is deployed.
 - **Order:** when two mods ship the same file, the one lower in the list wins;
   the row of the losing mod says how many of its files are replaced.
+- **Sort by dependencies** (below the list) proposes the order the mods'
+  dependencies ask for: a mod others depend on goes above them, so it
+  deploys first and the mods that need it win the files they share. Hydra
+  reads the facts when asked, from the Nexus requirements stored with each
+  mod, the loader (a mod that needs it goes after it), and the manifests in
+  the staged files: SMAPI `manifest.json` (`Dependencies` that are required,
+  `ContentPackFor`), Thunderstore `manifest.json` (`dependencies`) and
+  RimWorld `About/About.xml` (`modDependencies`, `loadAfter`,
+  `loadBefore`). A dialog lists each move and why; nothing changes until
+  **Apply this order**, mods without facts keep their places, mods that
+  depend on each other in a circle are named and keep their order, and
+  moving mods by hand afterwards is kept. The activity log records each
+  applied sort.
 - **Check for updates** compares each Nexus mod's installed file with its
   newest main file; **Update to …** installs it in the mod's place.
 - **Install from file** takes an archive (zip, 7z, rar) or a single file the
@@ -242,7 +255,8 @@ the game's `mods.json`.
 
 ## Not yet
 
-Exe and `dinput8` loaders, load order, the game's own mod list, files in the
+Exe and `dinput8` loaders, Bethesda plugin lists and LOOT, Baldur's Gate 3's
+and RimWorld's own mod lists, files in the
 Wine prefix, reading the loader's log, more sources and modpacks: roadmap
 phase 19, planned in
 [Mods, phase 19](../mods-phase-19.md). Settings → Mods has no download size
@@ -290,6 +304,11 @@ Play unmodded, 2026-11-04, same sandbox: Play removed all 231 mod files
 (BepInEx's log stayed untouched while the game ran); Play (modded) put them
 back and BepInEx loaded the ultrawide plugin again. The Mods page's "mods are
 out" line was not looked at.
+
+Sort by dependencies, 2026-11-04, same sandbox: a fake Stardew Valley with
+a content pack installed before Content Patcher; the dialog proposed Content
+Patcher first ("its manifest.json ContentPackFor"), Apply saved it, a second
+sort found nothing to move. The dialog was looked at 1000 px wide.
 
 Not checked: the proxy DLL clash with a real OptiScaler install (covered by
 unit tests), MelonLoader, a Mono game, Nexus files through TorBox for these

@@ -41,6 +41,7 @@ import type {
 import { NexusBrowser } from "./nexus-browser";
 import { FomodWizard } from "./fomod-wizard";
 import { ModProfiles } from "./mod-profiles";
+import { ModOrderSort } from "./mod-order-sort";
 import { ModActivity } from "./mod-activity";
 import { ModDownloadState } from "./mod-download-state";
 import "./mods.scss";
@@ -587,7 +588,17 @@ export default function Mods() {
                 })}
               </ol>
             )}
-            {mods.length > 1 && <p className="mods__hint">{t("order_hint")}</p>}
+            {mods.length > 1 && (
+              <div className="mods__order">
+                <p className="mods__hint">{t("order_hint")}</p>
+                <ModOrderSort
+                  shop={shop}
+                  objectId={objectId}
+                  disabled={busy || blocked}
+                  run={run}
+                />
+              </div>
+            )}
           </>
         )}
       </section>

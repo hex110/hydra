@@ -288,6 +288,7 @@ export type ModActivityKind =
   | "launch"
   | "save-backup"
   | "loader"
+  | "load-order"
   | "error";
 
 /** One line of a game's `activity.jsonl`. Never holds tokens or signed URLs. */
@@ -301,6 +302,25 @@ export interface ModActivityEntry {
   message: string;
   /** Structured details: ids, counts, paths, the rule that placed a file. */
   details?: Record<string, unknown>;
+}
+
+/** One move Sort by dependencies makes, and why. */
+export interface ModOrderChange {
+  /** The mod that now loads first. */
+  modName: string;
+  beforeName: string;
+  /** Where the fact came from: "its manifest.json Dependencies"… */
+  reason: string;
+}
+
+/** The order Sort by dependencies proposes, applied only when the user agrees. */
+export interface ModOrderProposal {
+  /** Mod ids in the proposed order. */
+  order: string[];
+  changes: ModOrderChange[];
+  /** Mods that depend on each other in a circle, left in their order. */
+  cycles: string[][];
+  unchanged: boolean;
 }
 
 /** What Settings → Mods shows. */

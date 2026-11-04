@@ -7,6 +7,7 @@ import type {
   ModPlayMode,
   ModsOverview,
   ModActionResult,
+  ModOrderProposal,
   NexusGameMatch,
   NexusModFile,
   NexusModRequirement,
@@ -783,6 +784,15 @@ declare global {
       objectId: string,
       kind: ModFolderKind
     ) => Promise<boolean>;
+    proposeModDependencyOrder: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<ModOrderProposal>;
+    applyModDependencyOrder: (
+      shop: GameShop,
+      objectId: string,
+      order: string[]
+    ) => Promise<ModActionResult>;
     installModLoader: (
       shop: GameShop,
       objectId: string

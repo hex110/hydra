@@ -1371,6 +1371,13 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("saveModReport", shop, objectId),
   openModFolder: (shop: GameShop, objectId: string, kind: ModFolderKind) =>
     ipcRenderer.invoke("openModFolder", shop, objectId, kind),
+  proposeModDependencyOrder: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("proposeModDependencyOrder", shop, objectId),
+  applyModDependencyOrder: (
+    shop: GameShop,
+    objectId: string,
+    order: string[]
+  ) => ipcRenderer.invoke("applyModDependencyOrder", shop, objectId, order),
   installModLoader: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("installModLoader", shop, objectId),
   setModPlayMode: (shop: GameShop, objectId: string, mode: ModPlayMode) =>

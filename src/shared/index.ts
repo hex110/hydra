@@ -432,6 +432,7 @@ export * from "./game-start-window";
 export * from "./mods";
 export * from "./mods-report";
 export * from "./mod-games";
+export * from "./mod-order";
 export * from "./in-game-notices";
 export * from "./play-dates";
 export * from "./save-sync-summary";

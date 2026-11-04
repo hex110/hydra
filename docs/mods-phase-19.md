@@ -236,6 +236,13 @@ Written into the prefix on every deploy, so profiles switch it too.
 - **RimWorld**: at first, say where to turn mods on in the game; writing
   `ModsConfig.xml` later.
 
+**As built (2026-11-04), generic order only.** The owner chose to build the
+generic dependency order now (`src/shared/mod-order.ts`, **Sort by
+dependencies** on the Mods page) and leave the Bethesda plugin lists, the
+Plugins view, LOOT, Baldur's Gate 3 and RimWorld until there is such a game
+in the library to test with; step 9 comes next. Details:
+[Mods](features/mods.md).
+
 ### Step 6. Files in the Wine prefix
 
 A mod type target `prefix:<path>` resolves through `Wine.resolvePrefixPath`

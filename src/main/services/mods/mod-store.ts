@@ -14,6 +14,11 @@ import {
   findProxyDllClash,
   getModFolder,
   planModPlacement,
+  parseModManifest,
+  parseRimWorldAbout,
+  sortModsByDependencies,
+  withRecordedDependencies,
+  type ModDependencyInfo,
   planModFiles,
   isFomodArchive,
   applyModProfile,
@@ -1153,6 +1158,73 @@ export class ModStore {
         };
       },
       enabled ? "turn a mod on" : "turn a mod off"
+    );
+  }
+
+  /** What each mod's manifests and Hydra's records say about its order. */
+  private static async readDependencyInfo(folder: string, mod: InstalledMod) {
+    const info: ModDependencyInfo = { provides: [], after: [], before: [] };
+    for (const file of mod.files) {
+      const isManifest = /(^|\/)manifest\.json$/i.test(file);
+      const isAbout = /(^|\/)about\/about\.xml$/i.test(file);
+      if (!isManifest && !isAbout) continue;
+      const text = await fs.promises
+        .readFile(path.join(stagingFolder(folder, mod.id), file), "utf8")
+        .catch(() => null);
+      if (!text) continue;
+      const parsed = isManifest
+        ? parseModManifest(text)
+        : parseRimWorldAbout(text);
+      if (!parsed) continue;
+      info.provides.push(...parsed.provides);
+      info.after.push(...parsed.after);
+      info.before.push(...parsed.before);
+    }
+    return withRecordedDependencies(mod, info);
+  }
+
+  /** The order dependencies ask for; nothing changes until it is applied. */
+  public static async proposeDependencyOrder(shop: GameShop, objectId: string) {
+    const folder = storeFolder(shop, objectId);
+    const { mods } = await this.readMods(folder);
+    const infos = new Map<string, ModDependencyInfo>();
+    for (const mod of mods)
+      infos.set(mod.id, await this.readDependencyInfo(folder, mod));
+    return sortModsByDependencies(mods, infos);
+  }
+
+  /** Applies Sort by dependencies' proposal, if the list hasn't changed since. */
+  public static applyDependencyOrder(
+    shop: GameShop,
+    objectId: string,
+    order: string[]
+  ) {
+    return this.change(
+      shop,
+      objectId,
+      async (state) => {
+        const sameMods =
+          order.length === state.mods.length &&
+          state.mods.every((mod) => order.includes(mod.id));
+        if (!sameMods) throw new ModError("not-found");
+        const proposal = await this.proposeDependencyOrder(shop, objectId);
+        const byId = new Map(state.mods.map((mod) => [mod.id, mod]));
+        const mods = order.map((modId) => byId.get(modId)!);
+        void ModActivity.append(shop, objectId, {
+          kind: "load-order",
+          message: `Sorted by dependencies: ${count(proposal.changes.length, "move")}.`,
+          details: {
+            changes: proposal.changes.map(
+              (change) =>
+                `${change.modName} before ${change.beforeName} (${change.reason})`
+            ),
+            cycles: proposal.cycles,
+            order: mods.map((mod) => mod.name),
+          },
+        });
+        return { ...state, mods };
+      },
+      "sort by dependencies"
     );
   }
 
