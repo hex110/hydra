@@ -26,6 +26,11 @@ they are shown.
   overrides, `PROTON_*` variables.
 - The tools Hydra installed in the game, with their versions: OptiScaler,
   ReShade and RenoDX, OnlineFix.
+- For a game with mods on: whether it started through **Play (modded)** or
+  **Play**, the loader (none until loaders exist) and the mods that were on,
+  in load order, with version and source. The run's `summary.md` has them
+  under **Mods**, and a failed modded run has **Copy mods report**
+  ([Mods](mods.md#activity-and-reports)).
 - Events during the launch, such as umu-run failing and Hydra trying Wine
   instead.
 

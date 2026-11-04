@@ -117,6 +117,15 @@ the optional AI provider, and where mods are stored with its disk use.
 **Before the first modded launch**, if save backups are set up, offer one
 backup of the game's saves ("Mods can change saves"), once per game.
 
+**As built (2026-11-04).** All of the above, with these choices: the Play
+menu's hint says Play skips only the loader (the open question's second
+answer; undeploying for Play stays possible later). Settings → Mods shows
+TorBox (with the daily Nexus links left, read now rather than in step 8), the
+Nexus button handler and storage; the threshold, watched folder, LOOT and AI
+provider settings come with steps 8, 5 and 9. **Waiting for you** exists as a
+download state but nothing enters it before step 8. Details and what was
+checked: [Mods](features/mods.md).
+
 ### Step 3. Game support definitions
 
 One definition per game in `src/main/services/mods/games/`, data plus small
@@ -344,7 +353,8 @@ Ask the owner when the step gets there; don't block earlier steps on them.
 - **Plain Play for games whose mods are plain files** (Cyberpunk
   `archive/`, Bethesda `Data/` with `plugins.txt`): without a loader to skip,
   Play still loads them. Undeploy for Play (slow on big lists), or say in the
-  menu that it only skips the loader? (Step 2.)
+  menu that it only skips the loader? (Step 2.) Built as "say so" for now;
+  confirm with the owner.
 - **AI provider** for step 9: which ones (Anthropic, OpenAI-compatible,
   Ollama), and whether Hydra may send a mod's description and file list to
   it by default once a key is set.

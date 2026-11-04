@@ -147,6 +147,19 @@ Once a download is extracted, Hydra looks for the game's executable:
 Repacks that still need installing (only `setup.exe`) get no executable, as
 before.
 
+## Mod downloads
+
+Mods downloaded from Nexus Mods (on a game's Mods page, or with Nexus's Mod
+Manager Download button) are listed under **Mod downloads**, above the game
+downloads, and in the bottom bar. They run in the main process, so leaving the
+Mods page doesn't stop them. Each row says **Waiting for TorBox**,
+**Downloading** with its progress, **Installing**, **Installed** (or that a
+FOMOD installer waits for options), or **Failed** with the reason, TorBox's
+own words when it gave some, and **Retry**. A download Hydra was closed
+during comes back as failed with Retry. **Cancel** stops one that is waiting
+or downloading; **Open Mods** opens the game's Mods page. See
+[Mods](mods.md#nexus-mods).
+
 ## Background tasks
 
 Long actions that are not downloads show above the downloads: the Steam

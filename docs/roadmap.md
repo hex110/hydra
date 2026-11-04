@@ -268,7 +268,7 @@ in the sections below.
     [Mods, phase 19](mods-phase-19.md) (start there); research:
     [Mods: research](mods-game-support-design.md).
     1. [x] Research the open-source managers and mod sites
-    2. [ ] Modding as part of Hydra: activity log and Copy report, Play
+    2. [x] Modding as part of Hydra: activity log and Copy report, Play
            (modded) split button, mods in run records, mod downloads in the
            Downloads queue, states, Settings → Mods
     3. [ ] Game support definitions, Thunderstore data for 372 games,

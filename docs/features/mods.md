@@ -11,6 +11,32 @@ Vortex's deployment. The reasoning is in the [design](../mods-design.md).
   have no sidebar). Needs the game's executable: mods go into its folder.
 - **Mods** sidebar section on the game page: how many mods, how many are on,
   how many have updates.
+- **Settings → Mods**: whether TorBox is set up and how many Nexus downloads
+  it has left today (read from TorBox's hosters list, never assumed), whether
+  Hydra handles Nexus's Mod Manager Download buttons, and how much disk the
+  mod store uses, with **Open folder**.
+
+The Mods page says what Hydra knows about the game in one line: without a
+support definition, "Hydra places files in `<folder>`; it doesn't know this
+game's loader or mod list yet", naming whether the folder came from the mod
+folder table or is the game folder. While the game runs the list is read-only
+and says why. Every part has a loading and an error state.
+
+## Play (modded)
+
+A game with mods on gets a split Play button: the main part runs the
+current choice, **Play (modded)** or **Play**, and the arrow opens both, the
+default ticked and each with a line on what it does. Picking one launches it
+and makes it the game's default (stored in `mods.json`, logged). The context
+menu's Play and Big Picture follow the default, since the launch reads it.
+**Play** skips the loader and loader DLL overrides only; it doesn't undeploy,
+so mods that are plain files still load, and the menu says so. Until loaders
+exist (phase 19 step 4) the two start the game the same way, and only the run
+record tells them apart.
+
+The first **Play (modded)** of a game whose saves are backed up by save sync
+asks once: "Mods can change saves", **Back up and play** or **Play without a
+backup**. A failed backup doesn't start the game.
 
 ## Installed mods
 
@@ -67,6 +93,30 @@ mods' plugin files (only "missing" can be known) and game version checks
 (taken as met). Mods installed before this, as packed, still carry the old
 **FOMOD** mark.
 
+## Activity and reports
+
+Every mod action is appended to the game's
+`<userData>/mods/<shop>/<objectId>/activity.jsonl`, one JSON line each:
+downloads requested, finished and failed (source, mod and file ids, TorBox's
+request id, size, time, error; never tokens or signed links), the install plan
+(each archive path and where it lands, and the rule that chose it: layout
+guess or FOMOD), what was deployed and undeployed (hard links, copies, files
+backed up), conflicts, turning mods on and off, moves, removals, profiles,
+the Nexus match, the Play setting, modded launches, the save backup offer and
+errors. The log keeps its newest 3,000 lines once it passes 2 MB.
+
+- **Mods page → Activity**: the log, newest first, filterable by mod or to
+  errors only, errors marked; **Details** shows an entry's data.
+- **Copy mods report** (the Mods page's **⋯** menu, and on a failed modded run
+  in Runs): one Markdown block for Claude Code or a bug report, with the game
+  (exe, Proton, prefix, Nexus match), what Hydra knows about it, the Play
+  setting and loader, the mod list in order with on/off, versions, sources and
+  conflicts, the deployed summary, the last run, the loader's error lines, and
+  the last 200 activity lines. **Save mods report** writes it to
+  `…/reports/` and shows it in the file manager.
+- The same menu opens the game's mod folder, the staged mods and the game's
+  mod store.
+
 ## Nexus Mods
 
 Browsed through Nexus's public GraphQL API (`api.nexusmods.com/v2/graphql`),
@@ -78,9 +128,12 @@ optional, update and miscellaneous files are listed newest first.
 Downloads go through **TorBox**: Hydra sends the file's Nexus page to
 TorBox's web downloads, waits for TorBox to fetch it, and downloads the
 result from TorBox's CDN. It uses the TorBox token from **Settings →
-Integrations**; TorBox allows 100 Nexus links a day. Without a token the
-page says so, and each file offers **Open on Nexus Mods** instead, for a
-manual download and **Install from file**.
+Integrations**; TorBox limits Nexus links per day (100 when checked), and
+Settings → Mods shows what is left. **Install** queues the file in the
+Downloads page ([Mod downloads](downloads.md#mod-downloads)); the file's
+button shows its state meanwhile. Without a token the page says so, and each
+file offers **Open on Nexus Mods** instead, for a manual download and
+**Install from file**.
 
 ## Nexus's Mod Manager Download button
 
@@ -110,4 +163,20 @@ the game's `mods.json`.
 
 Loaders, load order, the game's own mod list, files in the Wine prefix, more
 sources and modpacks: roadmap phase 19, planned in
-[Mods, phase 19](../mods-phase-19.md).
+[Mods, phase 19](../mods-phase-19.md). Settings → Mods has no download size
+threshold, watched Downloads folder, LOOT or AI provider yet: each comes with
+the step that uses it (8, 5, 9), so no setting is shown that does nothing.
+
+## How step 2 was checked
+
+2026-11-04, in a signed-out sandbox (fresh user data, `HOME` pointed at a
+scratch folder) with a fake Stardew Valley folder: two zip fixtures that ship
+the same file installed through a stubbed file dialog (hard links, one
+conflict, activity lines for plan, deploy, undeploy, conflict and install);
+the Activity tab and the split Play menu at 900 and 1600 px wide; a launch
+through a native stand-in script exiting with code 3 (the run record and
+`summary.md` list both mods, the Mods page shows the game as running, the
+failed run offers Copy mods report); a Nexus install with a fake TorBox token
+(a failed row in Downloads with TorBox's message and Retry, no token in the
+log); Settings → Mods; the report text. Not checked: a real TorBox download,
+the save backup offer with save sync set up, a Windows game under Proton.
