@@ -46,8 +46,25 @@ Hydra picks the most specific one (`services/mods/games/`):
    GDWeave, …) says so.
 3. The **mod folder table** (`MOD_FOLDERS`, the fallback that existed
    before): Stardew Valley, Bethesda games and the rest keep their folder.
-4. **Its game files**: a Unity game (`UnityPlayer.dll` or `<exe>_Data`) takes
-   BepInEx, 6 (IL2CPP, when `GameAssembly.dll` is there) or 5 (Mono).
+4. **What it detects**: the game folder and the game's Nexus mods. A Unity
+   game (`UnityPlayer.dll` or `<exe>_Data`) takes BepInEx, 6 (IL2CPP, when
+   `GameAssembly.dll` is there) or 5 (Mono), or MelonLoader when its Nexus
+   mods use that. Any other game whose Nexus mods show a loader (UE4SS,
+   REFramework, SMAPI, a script extender) gets a line naming it, though Hydra
+   can't install that loader yet, and its files are placed as before.
+
+**Loader evidence.** Nexus's file contents index (GraphQL `modFileContents`,
+no key) lists the files inside every uploaded archive. For a matched game
+without a definition, Hydra counts the distinct mods that ship each loader's
+own files (`BepInEx.Core.dll`, `MelonLoader.dll`, `UE4SS.dll`,
+`skse64_loader.exe`…) or a folder only its mods use (`BepInEx/`,
+`reframework/`). A loader needs two mods to count, and Hydra stops at 20 per
+loader. Each round of the query leaves out the mods already found, because
+one big pack can fill a whole page. The answer is kept in the game's
+`mods.json` for two weeks, and the line under **Installed mods** says where
+it came from ("23 of its mods ship REFramework files"). Checked 2026-11-04:
+Belmont's Curse BepInEx 21, Palworld UE4SS 16, Stardew SMAPI 22, Valheim
+BepInEx 8, Monster Hunter Wilds REFramework 23.
 
 With a definition, an archive is placed by `planModPlacement`: an archive
 that ships the loader is laid out like the game folder, from inside the
@@ -60,6 +77,54 @@ with a mod type's extension (`.dll`) going there, the rest to the default
 type, in a folder named after the mod (`BepInEx/plugins/<mod>/`), as
 r2modman does. The activity log's install plan names the definition and its
 source. Games without a definition are placed as before.
+
+## When Hydra isn't sure
+
+Some archives can't be placed by layout alone. Hydra then waits for you
+instead of guessing:
+
+- the archive holds a program (`.exe`, `.bat`, `.sh`…), which Hydra never
+  runs from a mod;
+- with a definition, nothing in it matches the game's mod folders or file
+  types (a `.pak` for a BepInEx game);
+- without one, its files would go loose into the game folder and match
+  nothing there.
+
+Archives that ship the game's loader are never held.
+
+The mod shows above the list as **Hydra isn't sure where its files go** with
+**Choose where** and **Discard**, and the dialog opens at once if the Mods page
+is open. The dialog shows:
+
+- the mod's Nexus description as text (BBCode taken out, with a link to the
+  page), beside each top-level file and folder of the archive;
+- a choice per entry: the folder itself or only what's inside it, into the
+  game folder, a mod type's folder or any folder up to two levels deep in the
+  game folder; or **Leave out**. Hydra's guess is preselected;
+- where the files will land.
+
+**Install** stages and deploys the files like any other mod, so Play and
+removing it work the same. **Open the folders** shows the unpacked archive and
+the game folder for doing it by hand. **Later** keeps it waiting.
+
+**Change where it goes** (the folder icon on an installed mod) opens the same
+dialog for a mod that is already in, laid out as it is now; the result
+replaces it in its place in the list.
+
+**Examples for improving the guesses.** If the mod's description said where
+the files go, tick "keep this as an example". Hydra then appends one JSON line
+to `<userData>/mods/placement-examples.jsonl` with:
+
+- the game (title, Nexus domain, definition);
+- the mod and its source;
+- why Hydra asked;
+- the archive's files;
+- Hydra's guess and your choice;
+- the description as Nexus serves it.
+
+**Open placement examples** in the **⋯** menu shows that file. It stays on
+this machine, as material for a Claude Code session to turn into better install
+rules.
 
 ## Loaders
 
@@ -309,6 +374,20 @@ Sort by dependencies, 2026-11-04, same sandbox: a fake Stardew Valley with
 a content pack installed before Content Patcher; the dialog proposed Content
 Patcher first ("its manifest.json ContentPackFor"), Apply saved it, a second
 sort found nothing to move. The dialog was looked at 1000 px wide.
+
+Install knowledge, 2026-11-04, same sandbox:
+
+- Loader evidence for a fake Monster Hunter Wilds folder: REFramework, 23
+  mods, 2.2 s the first time, from the cache after that.
+- A `.pak`-only archive in Belmont's Curse waited with "nothing recognised".
+  The dialog put it into `<Game>_Data/StreamingAssets` with the example box
+  ticked; it deployed, and the example line had the choice and the files.
+- **Change where it goes** on the ultrawide fix left its readme folder out;
+  the mod kept its place.
+- The dialog was looked at 1000 and 1400 px wide.
+
+Not checked: a Nexus mod's description in the dialog (installs here were from
+files); a Unity game whose mods use MelonLoader.
 
 Not checked: the proxy DLL clash with a real OptiScaler install (covered by
 unit tests), MelonLoader, a Mono game, Nexus files through TorBox for these

@@ -280,7 +280,8 @@ mod that failed shows it on its row with the log line.
   download folder and installed. Files that don't match are left alone.
   **Check first:** on 2026-11-04 `modFiles.uri` was a storage path
   (`b1/83/e3/<uuid>`), not the file name, and the content preview URL built
-  from it answered 404; find the file name and preview another way.
+  from it answered 404. The file list comes from GraphQL `modFileContents`
+  now; the downloaded file's name still needs another source.
 - `nxm://` links (already handled) feed the same queue.
 
 ### Step 9. Install knowledge in layers
@@ -307,6 +308,28 @@ description }`), the file tree, the game's definition. Output: a
    mod and file id, so a mod is worked out once for everyone. Needs a home
    (a GitHub repo of JSON files is enough to start) and an owner decision on
    hosting before it is built.
+
+**As built (2026-11-04), first part, reshaped with the owner.** Built so far:
+
+1. **Nexus file contents.** GraphQL `modFileContents` lists an archive's
+   files without a key, so the old content-preview URL isn't needed.
+2. **Loader evidence.** Hydra counts how many of a game's Nexus mods ship
+   each loader's files. This picks MelonLoader over BepInEx for Unity games
+   and names UE4SS, REFramework, SMAPI or a script extender for other games.
+3. **Placement dialog.** When Hydra isn't sure, it waits instead of guessing
+   and shows the description beside the archive's entries; **Change where it
+   goes** does the same for an installed mod.
+4. **Examples flag.** Ticking it appends the case to
+   `placement-examples.jsonl` for a later Claude Code session.
+
+Next:
+
+- planning a Nexus install from its file list before spending a TorBox link;
+- reading the description with rules, scored against the examples;
+- the optional AI reader;
+- the shared database of install plans.
+
+Details: [Mods](features/mods.md#when-hydra-isnt-sure).
 
 ### Step 10. More sources
 
