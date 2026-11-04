@@ -12,7 +12,7 @@ import { formatBytes, nexusFilePageUrl, nexusModPageUrl } from "@shared";
 import type {
   GameShop,
   InstalledMod,
-  ModInstallProgress,
+  ModDownload,
   NexusGameMatch,
   NexusMod,
   NexusModFile,
@@ -21,6 +21,7 @@ import type {
 } from "@types";
 
 import { useModActionToast } from "./mods";
+import { useModDownloadText } from "./mod-download-state";
 
 const SEARCH_DELAY_MS = 400;
 const LISTED_CATEGORIES = new Set([
@@ -34,7 +35,8 @@ interface NexusBrowserProps {
   shop: GameShop;
   objectId: string;
   installedMods: InstalledMod[];
-  progress: Record<string, ModInstallProgress>;
+  /** Unfinished downloads by `nexus:<mod>:<file>`. */
+  downloads: Record<string, ModDownload>;
   disabled: boolean;
   onInstalled: () => void;
 }
@@ -43,12 +45,13 @@ export function NexusBrowser({
   shop,
   objectId,
   installedMods,
-  progress,
+  downloads,
   disabled,
   onInstalled,
 }: Readonly<NexusBrowserProps>) {
   const { t, i18n } = useTranslation("mods");
   const reportResult = useModActionToast();
+  const describeDownload = useModDownloadText();
   const numberFormat = useMemo(
     () => new Intl.NumberFormat(i18n.language, { notation: "compact" }),
     [i18n.language]
@@ -181,6 +184,7 @@ export function NexusBrowser({
       name: mod.name,
       version: file.version ?? mod.version,
     });
+    // Queued: the Downloads queue carries it on from here.
     if (reportResult(result)) onInstalled();
   };
 
@@ -372,7 +376,9 @@ export function NexusBrowser({
                     ) : (
                       files.map((file) => {
                         const key = `nexus:${mod.modId}:${file.fileId}`;
-                        const state = progress[key];
+                        const queued = downloads[key];
+                        const state =
+                          queued && queued.state !== "failed" ? queued : null;
                         const installed = installedFileIds.has(file.fileId);
                         return (
                           <div key={file.fileId} className="mods__file">
@@ -395,11 +401,7 @@ export function NexusBrowser({
                                 onClick={() => void install(mod, file)}
                               >
                                 {state
-                                  ? t(`stage_${state.stage}`, {
-                                      percent: Math.round(
-                                        (state.progress ?? 0) * 100
-                                      ),
-                                    })
+                                  ? describeDownload(state)
                                   : installed
                                     ? t("reinstall")
                                     : t("install")}

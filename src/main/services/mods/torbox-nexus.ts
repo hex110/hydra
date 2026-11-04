@@ -31,13 +31,14 @@ interface WebDownload {
 /**
  * Has TorBox fetch a Nexus Mods file through its web downloads (it accepts a
  * file's Nexus page) and returns a direct download link with the file name.
- * Needs no Nexus account; TorBox allows 100 Nexus links a day.
+ * Needs no Nexus account; TorBox limits Nexus links per day (see
+ * `getTorBoxNexusLimit`).
  */
 export const requestNexusFileThroughTorBox = async (
   apiToken: string,
   file: { gameDomain: string; modId: number; fileId: number },
   signal?: AbortSignal
-): Promise<{ url: string; fileName: string }> => {
+): Promise<{ url: string; fileName: string; requestId: number }> => {
   const client = axios.create({
     baseURL: BASE_URL,
     timeout: REQUEST_TIMEOUT_MS,
@@ -86,6 +87,7 @@ export const requestNexusFileThroughTorBox = async (
       }
       return {
         url: link.data.data,
+        requestId: webId,
         fileName: target.name.split("/").at(-1) ?? target.name,
       };
     }
@@ -99,4 +101,34 @@ export const requestNexusFileThroughTorBox = async (
   }
 
   throw new TorBoxNexusError("TorBox did not finish fetching the file");
+};
+
+/** TorBox's daily Nexus link limit and what is used, from its hosters list. */
+export const getTorBoxNexusLimit = async (
+  apiToken: string
+): Promise<{ limit: number; used: number } | null> => {
+  const response = await axios.get<
+    TorBoxResponse<
+      {
+        name?: string;
+        domains?: string[];
+        daily_link_limit?: number;
+        daily_link_used?: number;
+      }[]
+    >
+  >(`${BASE_URL}/webdl/hosters`, {
+    timeout: REQUEST_TIMEOUT_MS,
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "User-Agent": `HydraPlus/${appVersion}`,
+    },
+    validateStatus: () => true,
+  });
+  const nexus = response.data?.data?.find(
+    (hoster) =>
+      /nexus/i.test(hoster.name ?? "") ||
+      hoster.domains?.some((domain) => /nexusmods/i.test(domain))
+  );
+  if (typeof nexus?.daily_link_limit !== "number") return null;
+  return { limit: nexus.daily_link_limit, used: nexus.daily_link_used ?? 0 };
 };

@@ -153,6 +153,34 @@ export const resolveModLayout = ({
   return { stripPrefix: "", deployRoot: modFolder };
 };
 
+/** Why a layout was picked, for the activity log. */
+export const describeModLayout = (layout: ModLayout, modFolder: string) => {
+  const into = layout.deployRoot || "the game folder";
+  if (!layout.stripPrefix && !layout.deployRoot)
+    return modFolder
+      ? "the archive mirrors the game folder"
+      : "files go into the game folder as packed";
+  if (layout.stripPrefix && !layout.deployRoot)
+    return `the wrapper folder ${layout.stripPrefix} holds a game-folder layout`;
+  if (layout.stripPrefix)
+    return `the wrapper folder ${layout.stripPrefix} is the mod's name; its contents go into ${into}`;
+  return modFolder
+    ? `loose files go into the game's mod folder ${into}`
+    : "loose files go into the game folder";
+};
+
+/** Each archive path and where it lands, relative to the game folder. */
+export const planModFiles = (files: string[], layout: ModLayout) =>
+  files.map((file) => {
+    const inner = layout.stripPrefix
+      ? normalize(file).slice(layout.stripPrefix.length + 1)
+      : normalize(file);
+    return {
+      archive: normalize(file),
+      target: joinTarget(layout.deployRoot, inner),
+    };
+  });
+
 export const isFomodArchive = (files: string[]) =>
   files.some((file) =>
     /(^|\/)fomod\/moduleconfig\.xml$/i.test(normalize(file))

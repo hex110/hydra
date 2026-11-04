@@ -4,8 +4,10 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
-  ModInstallProgress,
   CatalogueSearchResult,
+  ModDownload,
+  ModFolderKind,
+  ModPlayMode,
   NexusGameMatch,
   NexusModSort,
   SavedLibraryFilter,
@@ -1361,17 +1363,48 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("removeMod", shop, objectId, modId),
   checkModUpdates: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("checkModUpdates", shop, objectId),
-  onModInstallProgress: (
-    cb: (progress: ModInstallProgress | null, key: string) => void
-  ) => {
+  getModActivity: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getModActivity", shop, objectId),
+  getModReport: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getModReport", shop, objectId),
+  saveModReport: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("saveModReport", shop, objectId),
+  openModFolder: (shop: GameShop, objectId: string, kind: ModFolderKind) =>
+    ipcRenderer.invoke("openModFolder", shop, objectId, kind),
+  setModPlayMode: (shop: GameShop, objectId: string, mode: ModPlayMode) =>
+    ipcRenderer.invoke("setModPlayMode", shop, objectId, mode),
+  shouldOfferModSaveBackup: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("shouldOfferModSaveBackup", shop, objectId),
+  answerModSaveBackupOffer: (
+    shop: GameShop,
+    objectId: string,
+    backUp: boolean
+  ) => ipcRenderer.invoke("answerModSaveBackupOffer", shop, objectId, backUp),
+  getModDownloads: () => ipcRenderer.invoke("getModDownloads"),
+  retryModDownload: (id: string) => ipcRenderer.invoke("retryModDownload", id),
+  cancelModDownload: (id: string) =>
+    ipcRenderer.invoke("cancelModDownload", id),
+  dismissModDownload: (id: string) =>
+    ipcRenderer.invoke("dismissModDownload", id),
+  getModsOverview: () => ipcRenderer.invoke("getModsOverview"),
+  onModDownloadsChanged: (cb: (downloads: ModDownload[]) => void) => {
     const listener = (
       _event: Electron.IpcRendererEvent,
-      progress: ModInstallProgress | null,
-      key: string
-    ) => cb(progress, key);
-    ipcRenderer.on("on-mod-install-progress", listener);
+      downloads: ModDownload[]
+    ) => cb(downloads);
+    ipcRenderer.on("on-mod-downloads-changed", listener);
     return () =>
-      ipcRenderer.removeListener("on-mod-install-progress", listener);
+      ipcRenderer.removeListener("on-mod-downloads-changed", listener);
+  },
+  onModActivityChanged: (cb: (shop: GameShop, objectId: string) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      shop: GameShop,
+      objectId: string
+    ) => cb(shop, objectId);
+    ipcRenderer.on("on-mod-activity-changed", listener);
+    return () =>
+      ipcRenderer.removeListener("on-mod-activity-changed", listener);
   },
   checkRenoDxUpdates: () => ipcRenderer.invoke("checkRenoDxUpdates"),
   clearRenoDxCache: () => ipcRenderer.invoke("clearRenoDxCache"),

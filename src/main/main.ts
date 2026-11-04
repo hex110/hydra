@@ -41,6 +41,7 @@ import { migrateDownloadSources } from "./helpers/migrate-download-sources";
 import { addBundledCommandsToPath } from "./services/bundled-commands";
 import { addHydraBinToPath } from "./services/cloud-save/save-store/rclone-setup";
 import { GameRuns } from "./services/game-runs/game-runs";
+import { ModDownloads } from "./services/mods/mod-downloads";
 import { getDirSize } from "./services/download/helpers";
 import { isDebridPendingError } from "./services/download/debrid-files";
 import { GofileApi } from "./services/hosters";
@@ -313,6 +314,7 @@ export const loadState = async () => {
   }
 
   void GameRuns.closeLeftoverRuns();
+  void ModDownloads.restore();
   setTimeout(() => void retryPendingCloudSaveUploads(), 30_000);
   startMainLoop();
 

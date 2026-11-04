@@ -25,6 +25,7 @@ import {
   Gamepad2,
   LayoutList,
   ListChecks,
+  Puzzle,
   SlidersHorizontal,
   Sparkles,
   Sun,
@@ -42,6 +43,7 @@ import { SettingsContextGamesOverview } from "./settings-context-games-overview"
 import { SettingsContextToolDefaults } from "./settings-context-tool-defaults";
 import { SettingsContextOptiScaler } from "./settings-context-optiscaler";
 import { SettingsContextRenoDx } from "./settings-context-renodx";
+import { SettingsContextMods } from "./settings-context-mods";
 import { SettingsContextLaunchRules } from "./settings-context-launch-rules";
 import { SettingsContextLibraryFolders } from "./settings-context-library-folders";
 import { SettingsContextSaveImport } from "./settings-context-save-import";
@@ -134,6 +136,12 @@ export default function Settings() {
         id: "renodx" as const,
         label: t("renodx"),
         icon: <Sun size={16} />,
+        group: "tools" as const,
+      },
+      {
+        id: "mods" as const,
+        label: t("mods"),
+        icon: <Puzzle size={16} />,
         group: "tools" as const,
       },
       {
@@ -256,6 +264,10 @@ export default function Settings() {
 
             if (selectedCategoryId === "renodx") {
               return <SettingsContextRenoDx />;
+            }
+
+            if (selectedCategoryId === "mods") {
+              return <SettingsContextMods />;
             }
 
             if (selectedCategoryId === "big_picture") {

@@ -5,6 +5,7 @@ import {
   useDownload,
   useDownloadLayout,
   useLibrary,
+  useModDownloads,
 } from "@renderer/hooks";
 
 import { useEffect, useMemo, useState } from "react";
@@ -13,6 +14,7 @@ import "./downloads.scss";
 import { DownloadGroup } from "./download-group";
 import { BackgroundTasksSection } from "./background-tasks-section";
 import { GameUpdatesSection } from "./game-updates-section";
+import { ModDownloadsSection } from "./mod-downloads-section";
 import {
   getDownloadId,
   getRendererDownloadBucket,
@@ -40,6 +42,7 @@ export default function Downloads() {
   const [showBinaryNotFoundModal, setShowBinaryNotFoundModal] = useState(false);
 
   const { lastPacket } = useDownload();
+  const hasModDownloads = useModDownloads().length > 0;
 
   const [seedingStatus, setSeedingStatus] = useState<SeedingStatus[]>([]);
 
@@ -173,6 +176,8 @@ export default function Downloads() {
 
       <BackgroundTasksSection />
 
+      <ModDownloadsSection />
+
       {userPreferences?.checkGameUpdates !== false && (
         <GameUpdatesSection library={fullLibrary} />
       )}
@@ -192,7 +197,7 @@ export default function Downloads() {
             ))}
           </div>
         </section>
-      ) : (
+      ) : hasModDownloads ? null : (
         <div className="downloads__no-downloads">
           <div className="downloads__arrow-icon">
             <ArrowDownIcon size={24} />

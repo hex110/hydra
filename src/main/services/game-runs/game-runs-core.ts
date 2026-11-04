@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { formatRunModsSection } from "../../../shared/mods-report.js";
 import type { GameRun, GameRunOutcome, GameShop } from "@types";
 
 export const RUN_FILE = "run.json";
@@ -123,6 +124,8 @@ export const formatRunSummary = (run: GameRun) => {
         `- ${tool.name} ${tool.version}${tool.detail ? ` (${tool.detail})` : ""}`
       );
   }
+
+  lines.push(...formatRunModsSection(run.mods));
 
   if (run.checks && run.checks.length > 0) {
     lines.push("", "## Checks", "");

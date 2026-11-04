@@ -9,7 +9,7 @@ import type { Game, NexusGameMatch } from "@types";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import { ModStore } from "./mod-store";
-import { installNexusModFile } from "./mods";
+import { queueNexusModFile } from "./mods";
 import {
   findNexusGameByDomain,
   getNexusModFiles,
@@ -79,12 +79,13 @@ export const handleNxmLink = async (uri: string) => {
       getNexusModName(nexusGame.id, link.modId).catch(() => null),
     ]);
     const file = files.find((candidate) => candidate.fileId === link.fileId);
-    const result = await installNexusModFile(game.shop, game.objectId, {
+    const queued = await queueNexusModFile(game.shop, game.objectId, {
       modId: link.modId,
       fileId: link.fileId,
       name: modName ?? file?.name ?? `${link.modId}`,
       version: file?.version ?? null,
     });
+    const result = queued.finished ? await queued.finished : queued.result;
     notify(
       result.ok
         ? t("nxm_installed", { mod: modName ?? file?.name, game: game.title })

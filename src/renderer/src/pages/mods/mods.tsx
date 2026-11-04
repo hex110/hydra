@@ -1,17 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  CopyIcon,
+  FileDirectoryIcon,
+  FileIcon,
   FileZipIcon,
+  KebabHorizontalIcon,
   SyncIcon,
   TrashIcon,
 } from "@primer/octicons-react";
 
-import { Badge, Button, CheckboxField } from "@renderer/components";
+import {
+  Badge,
+  Button,
+  CheckboxField,
+  DropdownMenu,
+  TabStrip,
+} from "@renderer/components";
 import { setHeaderTitle } from "@renderer/features";
-import { useAppDispatch, useToast } from "@renderer/hooks";
+import {
+  useAppDispatch,
+  useGameMods,
+  useModDownloads,
+  useToast,
+} from "@renderer/hooks";
 import { logger } from "@renderer/logger";
 import { getMissingModRequirements } from "@shared";
 import type {
@@ -19,13 +34,32 @@ import type {
   GameShop,
   InstalledMod,
   ModActionResult,
-  ModInstallProgress,
+  ModDownload,
+  ModFolderKind,
 } from "@types";
 
 import { NexusBrowser } from "./nexus-browser";
 import { FomodWizard } from "./fomod-wizard";
 import { ModProfiles } from "./mod-profiles";
+import { ModActivity } from "./mod-activity";
+import { ModDownloadState } from "./mod-download-state";
 import "./mods.scss";
+
+type ModsTab = "installed" | "activity";
+
+/** One line on what Hydra knows about modding this game. */
+const supportText = (
+  gameMods: GameMods,
+  t: (key: string, options?: Record<string, unknown>) => string
+) =>
+  t(
+    gameMods.support.source === "mod-folder-table"
+      ? "support_fallback_table"
+      : "support_fallback_root",
+    {
+      folder: gameMods.support.modFolder || t("support_game_folder"),
+    }
+  );
 
 export const useModActionToast = () => {
   const { t } = useTranslation("mods");
@@ -49,34 +83,41 @@ export default function Mods() {
   const objectId = searchParams.get("objectId");
   const title = searchParams.get("title") ?? "";
   const dispatch = useAppDispatch();
-  const { showSuccessToast } = useToast();
+  const navigate = useNavigate();
+  const { showSuccessToast, showErrorToast } = useToast();
   const reportResult = useModActionToast();
 
-  const [gameMods, setGameMods] = useState<GameMods | null>(null);
+  const {
+    gameMods,
+    error: loadFailed,
+    refresh,
+  } = useGameMods(shop, objectId, Boolean(shop && objectId));
+  const [tab, setTab] = useState<ModsTab>("installed");
   const [fomodId, setFomodId] = useState<string | null>(null);
   const seenPending = useRef<Set<string> | null>(null);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [progress, setProgress] = useState<Record<string, ModInstallProgress>>(
-    {}
+  const allDownloads = useModDownloads();
+  const downloads = allDownloads.filter(
+    (download) => download.shop === shop && download.objectId === objectId
   );
+  const downloadsByKey = Object.fromEntries(
+    downloads
+      .filter((download) => download.state !== "done")
+      .map((download) => [download.key, download])
+  ) as Record<string, ModDownload>;
+  const finishedCount = downloads.filter(
+    (download) => download.state === "done"
+  ).length;
 
   useEffect(() => {
     if (title) dispatch(setHeaderTitle(t("page_title", { game: title })));
   }, [dispatch, title, t]);
 
-  const refresh = useCallback(async () => {
-    if (!shop || !objectId) return;
-    try {
-      setGameMods(await window.electron.getGameMods(shop, objectId));
-    } catch (error) {
-      logger.error("Failed to load mods", error);
-    }
-  }, [shop, objectId]);
-
+  // A download that finished installs a mod: reload the list.
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (finishedCount > 0) void refresh();
+  }, [finishedCount, refresh]);
 
   // A FOMOD that arrives while the page is open asks for its options at once.
   useEffect(() => {
@@ -88,20 +129,6 @@ export default function Mods() {
     }
     seenPending.current = new Set(ids);
   }, [gameMods]);
-
-  useEffect(
-    () =>
-      window.electron.onModInstallProgress((next, key) => {
-        setProgress((current) => {
-          const updated = { ...current };
-          if (next && next.objectId === objectId) updated[key] = next;
-          else delete updated[key];
-          return updated;
-        });
-        if (!next) void refresh();
-      }),
-    [objectId, refresh]
-  );
 
   const closeFomod = useCallback(() => setFomodId(null), []);
 
@@ -143,7 +170,48 @@ export default function Mods() {
         )
       : undefined;
 
+  const copyReport = async () => {
+    try {
+      await window.electron.clipboard.writeText(
+        await window.electron.getModReport(shop, objectId)
+      );
+      showSuccessToast(t("report_copied"));
+    } catch (error) {
+      logger.error("Failed to copy the mods report", error);
+      showErrorToast(t("report_failed"));
+    }
+  };
+
+  const saveReport = () =>
+    window.electron.saveModReport(shop, objectId).catch((error) => {
+      logger.error("Failed to save the mods report", error);
+      showErrorToast(t("report_failed"));
+    });
+
+  const openFolder = (kind: ModFolderKind) =>
+    window.electron.openModFolder(shop, objectId, kind).then((opened) => {
+      if (!opened) showErrorToast(t("folder_open_failed"));
+    });
+
   const mods = gameMods?.mods ?? [];
+  const blocked = Boolean(gameMods?.blocker);
+  const canInstall = Boolean(gameMods?.gameFolder) && !blocked;
+  const activeDownloads = downloads.filter(
+    (download) => download.state !== "done"
+  );
+
+  if (loadFailed && !gameMods)
+    return (
+      <div className="mods mods--single">
+        <div className="mods__notice">
+          <p>{t("load_failed")}</p>
+          <Button theme="outline" onClick={() => void refresh()}>
+            <SyncIcon />
+            {t("retry")}
+          </Button>
+        </div>
+      </div>
+    );
 
   return (
     <div className="mods">
@@ -154,8 +222,13 @@ export default function Mods() {
             <p className="mods__hint">
               {gameMods?.gameFolder
                 ? t("installed_hint", { folder: gameMods.gameFolder })
-                : t("no_game_folder")}
+                : gameMods
+                  ? t("no_game_folder")
+                  : t("loading")}
             </p>
+            {gameMods?.gameFolder && (
+              <p className="mods__hint">{supportText(gameMods, t)}</p>
+            )}
           </div>
           <div className="mods__header-actions">
             <Button
@@ -168,7 +241,7 @@ export default function Mods() {
             </Button>
             <Button
               theme="outline"
-              disabled={busy || !gameMods?.gameFolder}
+              disabled={busy || !canInstall}
               onClick={() =>
                 run(() => window.electron.installModFromFile(shop, objectId))
               }
@@ -176,166 +249,261 @@ export default function Mods() {
               <FileZipIcon />
               {t("install_from_file")}
             </Button>
+            <DropdownMenu
+              align="end"
+              items={[
+                {
+                  icon: <CopyIcon size={14} />,
+                  label: t("copy_report"),
+                  onClick: () => void copyReport(),
+                },
+                {
+                  icon: <FileIcon size={14} />,
+                  label: t("save_report"),
+                  onClick: () => void saveReport(),
+                },
+                {
+                  icon: <FileDirectoryIcon size={14} />,
+                  label: t("open_game_mod_folder"),
+                  disabled: !gameMods?.gameFolder,
+                  onClick: () => void openFolder("game-mods"),
+                },
+                {
+                  icon: <FileDirectoryIcon size={14} />,
+                  label: t("open_staging_folder"),
+                  onClick: () => void openFolder("staging"),
+                },
+                {
+                  icon: <FileDirectoryIcon size={14} />,
+                  label: t("open_store_folder"),
+                  onClick: () => void openFolder("store"),
+                },
+              ]}
+            >
+              <Button
+                theme="outline"
+                aria-label={t("more_actions")}
+                title={t("more_actions")}
+              >
+                <KebabHorizontalIcon />
+              </Button>
+            </DropdownMenu>
           </div>
         </header>
 
-        {gameMods && (
-          <ModProfiles
-            shop={shop}
-            objectId={objectId}
-            gameMods={gameMods}
-            busy={busy}
-            run={run}
-          />
+        {gameMods?.blocker === "game-running" && (
+          <p className="mods__notice">{t("blocker_game_running")}</p>
         )}
 
-        {gameMods && gameMods.pendingFomods.length > 0 && (
-          <ul className="mods__list">
-            {gameMods.pendingFomods.map((pending) => (
-              <li key={pending.id} className="mods__row">
-                <span className="mods__file-name">{pending.name}</span>
-                <div className="mods__row-meta">
-                  <span>{t("fomod_waiting")}</span>
-                </div>
-                <div className="mods__row-actions">
-                  <Button
-                    theme="primary"
-                    disabled={busy}
-                    onClick={() => setFomodId(pending.id)}
-                  >
-                    {t("fomod_choose")}
-                  </Button>
-                  <Button
-                    theme="outline"
-                    disabled={busy}
-                    onClick={() =>
-                      run(() =>
-                        window.electron.cancelFomod(shop, objectId, pending.id)
-                      )
-                    }
-                  >
-                    {t("fomod_discard")}
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <TabStrip
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "installed", label: t("tab_installed") },
+            { value: "activity", label: t("tab_activity") },
+          ]}
+        />
 
-        {gameMods === null ? (
-          <p className="mods__hint">{t("loading")}</p>
-        ) : mods.length === 0 ? (
-          <p className="mods__empty">{t("installed_empty")}</p>
+        {tab === "activity" ? (
+          <ModActivity shop={shop} objectId={objectId} />
         ) : (
-          <ol className="mods__list">
-            {mods.map((mod, index) => {
-              const overridden = gameMods.overridden[mod.id]?.length ?? 0;
-              const missing = getMissingModRequirements(mod, mods);
-              return (
-                <li key={mod.id} className="mods__row">
-                  <CheckboxField
-                    label={mod.name}
-                    checked={mod.enabled}
-                    disabled={busy}
-                    onChange={() =>
-                      run(() =>
-                        window.electron.setModEnabled(
-                          shop,
-                          objectId,
-                          mod.id,
-                          !mod.enabled
-                        )
-                      )
-                    }
-                  />
-                  <div className="mods__row-meta">
-                    {mod.version && <span>{mod.version}</span>}
-                    <Badge>
-                      {mod.source.kind === "nexus"
-                        ? t("source_nexus")
-                        : t("source_file")}
-                    </Badge>
-                    {mod.fomod && (
-                      <span title={t("fomod_hint")}>{t("fomod")}</span>
-                    )}
-                    {mod.fomodChosen && (
-                      <span title={t("fomod_chosen_hint")}>{t("fomod")}</span>
-                    )}
-                    {missing.length > 0 && (
-                      <span title={t("requirements_missing_hint")}>
-                        {t("requirements_missing", {
-                          names: missing.map((item) => item.name).join(", "),
-                        })}
-                      </span>
-                    )}
-                    {overridden > 0 && (
-                      <span title={gameMods.overridden[mod.id].join("\n")}>
-                        {t("overridden", { count: overridden })}
-                      </span>
-                    )}
-                  </div>
-                  <div className="mods__row-actions">
-                    {mod.update && (
+          <>
+            {gameMods && (
+              <ModProfiles
+                shop={shop}
+                objectId={objectId}
+                gameMods={gameMods}
+                busy={busy || blocked}
+                run={run}
+              />
+            )}
+
+            {gameMods && gameMods.pendingFomods.length > 0 && (
+              <ul className="mods__list">
+                {gameMods.pendingFomods.map((pending) => (
+                  <li key={pending.id} className="mods__row">
+                    <span className="mods__file-name">{pending.name}</span>
+                    <div className="mods__row-meta">
+                      <span>{t("fomod_waiting")}</span>
+                    </div>
+                    <div className="mods__row-actions">
                       <Button
                         theme="primary"
-                        disabled={busy}
-                        onClick={() => void update(mod)}
-                        title={mod.update.name}
+                        disabled={busy || blocked}
+                        onClick={() => setFomodId(pending.id)}
                       >
-                        {t("update_to", {
-                          version: mod.update.version ?? mod.update.name,
-                        })}
+                        {t("fomod_choose")}
                       </Button>
-                    )}
-                    <button
-                      type="button"
-                      className="mods__icon-button"
-                      disabled={busy || index === 0}
-                      onClick={() =>
-                        run(() =>
-                          window.electron.moveMod(shop, objectId, mod.id, -1)
-                        )
-                      }
-                      title={t("move_up")}
-                      aria-label={t("move_up")}
-                    >
-                      <ArrowUpIcon />
-                    </button>
-                    <button
-                      type="button"
-                      className="mods__icon-button"
-                      disabled={busy || index === mods.length - 1}
-                      onClick={() =>
-                        run(() =>
-                          window.electron.moveMod(shop, objectId, mod.id, 1)
-                        )
-                      }
-                      title={t("move_down")}
-                      aria-label={t("move_down")}
-                    >
-                      <ArrowDownIcon />
-                    </button>
-                    <button
-                      type="button"
-                      className="mods__icon-button"
-                      disabled={busy}
-                      onClick={() =>
-                        run(() =>
-                          window.electron.removeMod(shop, objectId, mod.id)
-                        )
-                      }
-                      title={t("remove")}
-                      aria-label={t("remove")}
-                    >
-                      <TrashIcon />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+                      <Button
+                        theme="outline"
+                        disabled={busy || blocked}
+                        onClick={() =>
+                          run(() =>
+                            window.electron.cancelFomod(
+                              shop,
+                              objectId,
+                              pending.id
+                            )
+                          )
+                        }
+                      >
+                        {t("fomod_discard")}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {activeDownloads.length > 0 && (
+              <ul className="mods__list">
+                {activeDownloads.map((download) => (
+                  <li key={download.id} className="mods__row">
+                    <span className="mods__file-name">{download.modName}</span>
+                    <div className="mods__row-meta">
+                      <ModDownloadState download={download} />
+                    </div>
+                    <div className="mods__row-actions">
+                      <button
+                        type="button"
+                        className="mods__link"
+                        onClick={() => navigate("/downloads")}
+                      >
+                        {t("see_in_downloads")}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {gameMods === null ? (
+              <p className="mods__hint">{t("loading")}</p>
+            ) : mods.length === 0 ? (
+              <p className="mods__empty">{t("installed_empty")}</p>
+            ) : (
+              <ol className="mods__list">
+                {mods.map((mod, index) => {
+                  const overridden = gameMods.overridden[mod.id]?.length ?? 0;
+                  const missing = getMissingModRequirements(mod, mods);
+                  return (
+                    <li key={mod.id} className="mods__row">
+                      <CheckboxField
+                        label={mod.name}
+                        checked={mod.enabled}
+                        disabled={busy || blocked}
+                        onChange={() =>
+                          run(() =>
+                            window.electron.setModEnabled(
+                              shop,
+                              objectId,
+                              mod.id,
+                              !mod.enabled
+                            )
+                          )
+                        }
+                      />
+                      <div className="mods__row-meta">
+                        {mod.version && <span>{mod.version}</span>}
+                        <Badge>
+                          {mod.source.kind === "nexus"
+                            ? t("source_nexus")
+                            : t("source_file")}
+                        </Badge>
+                        {mod.fomod && (
+                          <span title={t("fomod_hint")}>{t("fomod")}</span>
+                        )}
+                        {mod.fomodChosen && (
+                          <span title={t("fomod_chosen_hint")}>
+                            {t("fomod")}
+                          </span>
+                        )}
+                        {missing.length > 0 && (
+                          <span title={t("requirements_missing_hint")}>
+                            {t("requirements_missing", {
+                              names: missing
+                                .map((item) => item.name)
+                                .join(", "),
+                            })}
+                          </span>
+                        )}
+                        {overridden > 0 && (
+                          <span title={gameMods.overridden[mod.id].join("\n")}>
+                            {t("overridden", { count: overridden })}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mods__row-actions">
+                        {mod.update && (
+                          <Button
+                            theme="primary"
+                            disabled={busy || blocked}
+                            onClick={() => void update(mod)}
+                            title={mod.update.name}
+                          >
+                            {t("update_to", {
+                              version: mod.update.version ?? mod.update.name,
+                            })}
+                          </Button>
+                        )}
+                        <button
+                          type="button"
+                          className="mods__icon-button"
+                          disabled={busy || blocked || index === 0}
+                          onClick={() =>
+                            run(() =>
+                              window.electron.moveMod(
+                                shop,
+                                objectId,
+                                mod.id,
+                                -1
+                              )
+                            )
+                          }
+                          title={t("move_up")}
+                          aria-label={t("move_up")}
+                        >
+                          <ArrowUpIcon />
+                        </button>
+                        <button
+                          type="button"
+                          className="mods__icon-button"
+                          disabled={
+                            busy || blocked || index === mods.length - 1
+                          }
+                          onClick={() =>
+                            run(() =>
+                              window.electron.moveMod(shop, objectId, mod.id, 1)
+                            )
+                          }
+                          title={t("move_down")}
+                          aria-label={t("move_down")}
+                        >
+                          <ArrowDownIcon />
+                        </button>
+                        <button
+                          type="button"
+                          className="mods__icon-button"
+                          disabled={busy || blocked}
+                          onClick={() =>
+                            run(() =>
+                              window.electron.removeMod(shop, objectId, mod.id)
+                            )
+                          }
+                          title={t("remove")}
+                          aria-label={t("remove")}
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            {mods.length > 1 && <p className="mods__hint">{t("order_hint")}</p>}
+          </>
         )}
-        {mods.length > 1 && <p className="mods__hint">{t("order_hint")}</p>}
       </section>
 
       <FomodWizard
@@ -353,8 +521,8 @@ export default function Mods() {
         shop={shop}
         objectId={objectId}
         installedMods={mods}
-        progress={progress}
-        disabled={!gameMods?.gameFolder}
+        downloads={downloadsByKey}
+        disabled={!canInstall}
         onInstalled={refresh}
       />
     </div>

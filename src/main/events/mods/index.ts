@@ -1,6 +1,22 @@
 import { dialog } from "electron";
 
-import type { GameShop, NexusGameMatch, NexusModSort } from "@types";
+import type {
+  GameShop,
+  ModFolderKind,
+  ModPlayMode,
+  NexusGameMatch,
+  NexusModSort,
+} from "@types";
+import { ModActivity } from "@main/services/mods/activity";
+import { ModDownloads } from "@main/services/mods/mod-downloads";
+import {
+  answerSaveBackupOffer,
+  buildModReport,
+  getModsOverview,
+  openModFolder,
+  saveModReport,
+  shouldOfferSaveBackup,
+} from "@main/services/mods/mod-report";
 import { ModStore } from "@main/services/mods/mod-store";
 import {
   checkModUpdates,
@@ -169,3 +185,52 @@ registerEvent("checkModUpdates", (_event, shop: GameShop, objectId: string) =>
 registerEvent("isNxmHandler", () => isNxmHandler());
 
 registerEvent("registerNxmHandler", () => registerNxmHandler());
+
+registerEvent("getModActivity", (_event, shop: GameShop, objectId: string) =>
+  ModActivity.read(shop, objectId)
+);
+
+registerEvent("getModReport", (_event, shop: GameShop, objectId: string) =>
+  buildModReport(shop, objectId)
+);
+
+registerEvent("saveModReport", (_event, shop: GameShop, objectId: string) =>
+  saveModReport(shop, objectId)
+);
+
+registerEvent(
+  "openModFolder",
+  (_event, shop: GameShop, objectId: string, kind: ModFolderKind) =>
+    openModFolder(shop, objectId, kind)
+);
+
+registerEvent(
+  "setModPlayMode",
+  (_event, shop: GameShop, objectId: string, mode: ModPlayMode) =>
+    ModStore.setPlayMode(shop, objectId, mode)
+);
+
+registerEvent(
+  "shouldOfferModSaveBackup",
+  (_event, shop: GameShop, objectId: string) =>
+    shouldOfferSaveBackup(shop, objectId)
+);
+
+registerEvent(
+  "answerModSaveBackupOffer",
+  (_event, shop: GameShop, objectId: string, backUp: boolean) =>
+    answerSaveBackupOffer(shop, objectId, backUp)
+);
+
+registerEvent("getModDownloads", () => ModDownloads.list());
+registerEvent("retryModDownload", (_event, id: string) =>
+  ModDownloads.retry(id)
+);
+registerEvent("cancelModDownload", (_event, id: string) =>
+  ModDownloads.cancel(id)
+);
+registerEvent("dismissModDownload", (_event, id: string) =>
+  ModDownloads.dismiss(id)
+);
+
+registerEvent("getModsOverview", () => getModsOverview());

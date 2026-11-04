@@ -430,6 +430,7 @@ export const generateAchievementCustomNotificationTest = (
 export * from "./emulator-systems";
 export * from "./game-start-window";
 export * from "./mods";
+export * from "./mods-report";
 export * from "./in-game-notices";
 export * from "./play-dates";
 export * from "./save-sync-summary";

@@ -25,6 +25,15 @@ export interface GameRunTool {
   detail?: string | null;
 }
 
+/** The mods a run started with. */
+export interface GameRunMods {
+  /** Started through Play (modded); false for Play. */
+  modded: boolean;
+  loader: { name: string; version: string | null } | null;
+  /** Mods that were on and deployed, in load order. */
+  mods: { name: string; version: string | null; source: string }[];
+}
+
 export interface GameRunEvent {
   at: string;
   message: string;
@@ -72,6 +81,8 @@ export interface GameRun {
   protonPath: string | null;
   winePrefixPath: string | null;
   tools: GameRunTool[];
+  /** Runs from before mods were recorded, and games without mods, have none. */
+  mods?: GameRunMods | null;
   events: GameRunEvent[];
   logs: GameRunLogFile[];
   /** Checks of the tools Hydra installed; runs from before they existed have none. */

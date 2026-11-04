@@ -6,7 +6,9 @@ import { gamesSublevel, levelKeys } from "@main/level";
 import { parseExecutablePath } from "@main/events/helpers/parse-executable-path";
 import {
   FILE_EXTENSIONS_TO_EXTRACT,
+  describeModLayout,
   getModFolder,
+  planModFiles,
   isFomodArchive,
   applyModProfile,
   planDeployment,
@@ -16,6 +18,8 @@ import {
 import type {
   GameMods,
   GameShop,
+  ModGameSupport,
+  ModPlayMode,
   InstalledMod,
   ModSource,
   NexusGameMatch,
@@ -27,6 +31,7 @@ import type {
 } from "@types";
 
 import { SevenZip } from "../7zip";
+import { MAX_PLAN_FILES, ModActivity } from "./activity";
 import { applyFomod, readFomodConfig } from "./fomod";
 import { isTrackedGameKeyRunning } from "../game-running-state";
 import { logger } from "../logger";
@@ -38,6 +43,10 @@ interface ModsFile {
   profiles?: ModProfile[];
   /** The profile the live list belongs to; every change is saved into it. */
   activeProfileId?: string | null;
+  /** What Play does for this game; modded unless the user picked Play. */
+  playMode?: ModPlayMode;
+  /** The "back up saves before the first modded launch" offer was shown. */
+  saveBackupOffered?: boolean;
 }
 
 interface DeployedFile {
@@ -45,6 +54,8 @@ interface DeployedFile {
   target: string;
   /** Where the game's own file was moved, relative to the backup folder. */
   backup: string | null;
+  /** Hard link, or a copy when staging is on another filesystem. */
+  method?: "link" | "copy";
 }
 
 interface DeployState {
@@ -161,12 +172,33 @@ const resolveCaseInsensitive = async (root: string, target: string) => {
   return current;
 };
 
-const linkOrCopy = async (source: string, destination: string) => {
+const linkOrCopy = async (
+  source: string,
+  destination: string
+): Promise<"link" | "copy"> => {
   try {
     await fs.promises.link(source, destination);
+    return "link";
   } catch {
     await fs.promises.copyFile(source, destination);
+    return "copy";
   }
+};
+
+/** "1 file", "2 files": the activity log is English for people and agents. */
+const count = (amount: number, noun: string) =>
+  `${amount} ${noun}${amount === 1 ? "" : "s"}`;
+
+/** Where a game's mods go when Hydra has no definition for it. */
+export const resolveModSupport = (
+  nexusDomain: string | null | undefined
+): ModGameSupport => {
+  const modFolder = getModFolder(nexusDomain);
+  return {
+    kind: "fallback",
+    modFolder,
+    source: nexusDomain && modFolder !== "" ? "mod-folder-table" : "game-root",
+  };
 };
 
 const queues = new Map<string, Promise<unknown>>();
@@ -202,10 +234,19 @@ export class ModStore {
   ): Promise<GameMods> {
     const game = await this.loadGame(shop, objectId);
     const folder = storeFolder(shop, objectId);
-    const { mods, nexusGame, profiles, activeProfileId } =
+    const { mods, nexusGame, profiles, activeProfileId, playMode } =
       await this.readMods(folder);
+    const gameFolder = resolveModGameFolder(game.executablePath ?? null);
     return {
-      gameFolder: resolveModGameFolder(game.executablePath ?? null),
+      gameFolder,
+      blocker: !gameFolder
+        ? "no-executable"
+        : isTrackedGameKeyRunning(levelKeys.game(shop, objectId))
+          ? "game-running"
+          : null,
+      support: resolveModSupport(nexusGame?.domainName),
+      playMode: playMode ?? "modded",
+      loader: null,
       mods,
       nexusGame,
       profiles: (profiles ?? []).map(({ id, name }) => ({ id, name })),
@@ -229,9 +270,15 @@ export class ModStore {
     nexusGame: NexusGameMatch | null
   ) {
     const folder = storeFolder(shop, objectId);
-    return serialize(folder, async () => {
+    await serialize(folder, async () => {
       const state = await this.readMods(folder);
       await writeJson(modsFilePath(folder), { ...state, nexusGame });
+    });
+    await ModActivity.append(shop, objectId, {
+      kind: "nexus-match",
+      message: nexusGame
+        ? `Matched to ${nexusGame.name} on Nexus Mods (${nexusGame.domainName}).`
+        : "Cleared the Nexus Mods match.",
     });
   }
 
@@ -241,7 +288,7 @@ export class ModStore {
       deployedFilePath(folder),
       null
     );
-    if (!deployed) return;
+    if (!deployed) return null;
 
     for (const file of deployed.files) {
       const target = path.join(deployed.gameFolder, file.target);
@@ -262,14 +309,41 @@ export class ModStore {
       force: true,
     });
     await fs.promises.rm(deployedFilePath(folder), { force: true });
+    return {
+      removed: deployed.files.length,
+      restored: deployed.files.filter((file) => file.backup).length,
+    };
+  }
+
+  /** What `deployed.json` holds, counted, for reports. */
+  public static async getDeployedSummary(shop: GameShop, objectId: string) {
+    const deployed = await readJson<DeployState | null>(
+      deployedFilePath(storeFolder(shop, objectId)),
+      null
+    );
+    if (!deployed || deployed.files.length === 0) return null;
+    return {
+      files: deployed.files.length,
+      linked: deployed.files.filter((file) => file.method !== "copy").length,
+      copied: deployed.files.filter((file) => file.method === "copy").length,
+      backedUp: deployed.files.filter((file) => file.backup).length,
+    };
   }
 
   private static async deploy(
+    shop: GameShop,
+    objectId: string,
     folder: string,
     gameFolder: string,
     mods: InstalledMod[]
   ) {
-    await this.undeploy(folder);
+    const undeployed = await this.undeploy(folder);
+    if (undeployed && undeployed.removed > 0)
+      await ModActivity.append(shop, objectId, {
+        kind: "undeploy",
+        message: `Took ${count(undeployed.removed, "mod file")} out of the game folder and put back ${count(undeployed.restored, "file")} of the game's own.`,
+        details: undeployed,
+      });
 
     const plan = planDeployment(mods);
     const files: DeployedFile[] = [];
@@ -315,42 +389,88 @@ export class ModStore {
           });
           await fs.promises.rename(destination, backupPath);
         }
-        files.push({ target: relative, backup });
-        await linkOrCopy(source, destination);
+        const method = await linkOrCopy(source, destination);
+        files.push({ target: relative, backup, method });
       }
     } finally {
       await record();
     }
+
+    const linked = files.filter((file) => file.method === "link").length;
+    const backedUp = files.filter((file) => file.backup).length;
+    if (files.length > 0)
+      await ModActivity.append(shop, objectId, {
+        kind: "deploy",
+        message: `Deployed ${count(files.length, "file")} from ${count(mods.filter((mod) => mod.enabled).length, "mod")}: ${count(linked, "hard link")}, ${count(files.length - linked, "copy").replace("copys", "copies")}, ${count(backedUp, "file")} of the game's own backed up.`,
+        details: {
+          gameFolder,
+          files: files.length,
+          linked,
+          copied: files.length - linked,
+          backedUp,
+          backups: files
+            .filter((file) => file.backup)
+            .slice(0, MAX_PLAN_FILES)
+            .map((file) => file.target),
+        },
+      });
+    const names = new Map(mods.map((mod) => [mod.id, mod.name]));
+    for (const [modId, targets] of Object.entries(plan.overridden))
+      await ModActivity.append(shop, objectId, {
+        kind: "conflicts",
+        modId,
+        modName: names.get(modId),
+        message: `${targets.length === 1 ? "1 of its files is" : `${targets.length} of its files are`} replaced by a mod lower in the list.`,
+        details: { files: targets.slice(0, MAX_PLAN_FILES) },
+      });
   }
 
   private static async change(
     shop: GameShop,
     objectId: string,
+    update: (state: ModsFile) => Promise<ModsFile> | ModsFile,
+    action = "change the mod list"
+  ) {
+    const folder = storeFolder(shop, objectId);
+    return serialize(folder, async () => {
+      try {
+        return await this.applyChange(shop, objectId, folder, update);
+      } catch (error) {
+        await ModActivity.append(shop, objectId, {
+          kind: "error",
+          message: `Could not ${action}: ${error instanceof ModError ? error.code : error instanceof Error ? error.message : String(error)}`,
+        });
+        throw error;
+      }
+    });
+  }
+
+  private static async applyChange(
+    shop: GameShop,
+    objectId: string,
+    folder: string,
     update: (state: ModsFile) => Promise<ModsFile> | ModsFile
   ) {
     const gameKey = levelKeys.game(shop, objectId);
-    const folder = storeFolder(shop, objectId);
-    return serialize(folder, async () => {
-      if (isTrackedGameKeyRunning(gameKey)) throw new ModError("game-running");
-      const game = await this.loadGame(shop, objectId);
-      const gameFolder = resolveModGameFolder(game.executablePath ?? null);
-      if (!gameFolder) throw new ModError("no-game-folder");
+    if (isTrackedGameKeyRunning(gameKey)) throw new ModError("game-running");
+    const game = await this.loadGame(shop, objectId);
+    const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+    if (!gameFolder) throw new ModError("no-game-folder");
 
-      const updated = await update(await this.readMods(folder));
-      const state: ModsFile = updated.activeProfileId
-        ? {
-            ...updated,
-            profiles: (updated.profiles ?? []).map((profile) =>
-              profile.id === updated.activeProfileId
-                ? { ...profile, entries: snapshotModProfile(updated.mods) }
-                : profile
-            ),
-          }
-        : updated;
-      await writeJson(modsFilePath(folder), state);
-      await this.deploy(folder, gameFolder, state.mods);
-      return state;
-    });
+    const updated = await update(await this.readMods(folder));
+    const state: ModsFile = updated.activeProfileId
+      ? {
+          ...updated,
+          profiles: (updated.profiles ?? []).map((profile) =>
+            profile.id === updated.activeProfileId
+              ? { ...profile, entries: snapshotModProfile(updated.mods) }
+              : profile
+          ),
+        }
+      : updated;
+    await writeJson(modsFilePath(folder), state);
+    await this.deploy(shop, objectId, folder, gameFolder, state.mods);
+    return state;
   }
 
   /** Unpacks an archive (or takes a single file) into a new staged mod. */
@@ -418,6 +538,12 @@ export class ModStore {
           name: details.name,
           steps: fomod.config.steps.length,
         });
+        await ModActivity.append(shop, objectId, {
+          kind: "fomod-waiting",
+          modName: details.name,
+          message: `The archive is a FOMOD installer (${fomod.config.moduleName}, ${fomod.config.steps.length} pages); it waits for your options.`,
+          details: { files: extracted.length },
+        });
         return null;
       }
 
@@ -431,6 +557,26 @@ export class ModStore {
         files: extracted,
         modFolder: getModFolder(nexusGame?.domainName),
         gameRootEntries,
+      });
+
+      const modFolder = getModFolder(nexusGame?.domainName);
+      const planned = planModFiles(extracted, layout);
+      await ModActivity.append(shop, objectId, {
+        kind: "install-plan",
+        modId: id,
+        modName: details.name,
+        message: `Placing ${count(extracted.length, "file")} by layout guess: ${describeModLayout(layout, modFolder)}.`,
+        details: {
+          rule: "layout-guess",
+          modFolder,
+          modFolderFrom: resolveModSupport(nexusGame?.domainName).source,
+          stripPrefix: layout.stripPrefix,
+          deployRoot: layout.deployRoot,
+          files: planned
+            .slice(0, MAX_PLAN_FILES)
+            .map((file) => `${file.archive} -> ${file.target}`),
+          more: Math.max(0, planned.length - MAX_PLAN_FILES),
+        },
       });
 
       const root = layout.stripPrefix
@@ -528,6 +674,26 @@ export class ModStore {
         throw new ModError("empty-archive");
 
       const { nexusGame } = await this.readMods(folder);
+      const staged = await listFiles(partial);
+      const deployRoot = getModFolder(nexusGame?.domainName);
+      await ModActivity.append(shop, objectId, {
+        kind: "install-plan",
+        modId: pendingId,
+        modName: pending.name,
+        message: `Placing ${count(staged.length, "file")} from the FOMOD options you picked into ${deployRoot || "the game folder"}.`,
+        details: {
+          rule: "fomod",
+          options: selected,
+          missing,
+          files: staged
+            .slice(0, MAX_PLAN_FILES)
+            .map(
+              (file) =>
+                `${file} -> ${[deployRoot, file].filter(Boolean).join("/")}`
+            ),
+          more: Math.max(0, staged.length - MAX_PLAN_FILES),
+        },
+      });
       const mod = await this.recordInstall(
         shop,
         objectId,
@@ -536,7 +702,7 @@ export class ModStore {
         partial,
         {
           details: pending.details,
-          deployRoot: getModFolder(nexusGame?.domainName),
+          deployRoot,
           fomod: "chosen",
         }
       );
@@ -582,20 +748,25 @@ export class ModStore {
     };
 
     let replaced: InstalledMod | undefined;
-    await this.change(shop, objectId, (state) => {
-      replaced = details.replaces
-        ? state.mods.find((existing) => existing.id === details.replaces)
-        : undefined;
-      if (!replaced) return { ...state, mods: [...state.mods, mod] };
-      return {
-        ...state,
-        mods: state.mods.map((existing) =>
-          existing.id === replaced!.id
-            ? { ...mod, enabled: existing.enabled }
-            : existing
-        ),
-      };
-    });
+    await this.change(
+      shop,
+      objectId,
+      (state) => {
+        replaced = details.replaces
+          ? state.mods.find((existing) => existing.id === details.replaces)
+          : undefined;
+        if (!replaced) return { ...state, mods: [...state.mods, mod] };
+        return {
+          ...state,
+          mods: state.mods.map((existing) =>
+            existing.id === replaced!.id
+              ? { ...mod, enabled: existing.enabled }
+              : existing
+          ),
+        };
+      },
+      `install ${mod.name}`
+    );
     if (replaced) {
       await fs.promises.rm(stagingFolder(folder, replaced.id), {
         recursive: true,
@@ -608,6 +779,20 @@ export class ModStore {
       name: mod.name,
       files: mod.files.length,
       deployRoot: mod.deployRoot,
+    });
+    await ModActivity.append(shop, objectId, {
+      kind: "installed",
+      modId: mod.id,
+      modName: mod.name,
+      message: replaced
+        ? `Updated from ${replaced.version ?? "the old file"} to ${mod.version ?? "the new file"}.`
+        : `Installed${mod.version ? ` version ${mod.version}` : ""}, ${count(mod.files.length, "file")} into ${mod.deployRoot || "the game folder"}.`,
+      details: {
+        source: mod.source,
+        version: mod.version,
+        files: mod.files.length,
+        requirements: mod.requirements?.map((item) => item.name),
+      },
     });
     return mod;
   }
@@ -622,26 +807,35 @@ export class ModStore {
     name: string,
     defaultName: string
   ) {
-    return this.change(shop, objectId, (state) => {
-      const profiles = [...(state.profiles ?? [])];
-      if (profiles.length === 0) {
-        profiles.push({
+    return this.change(
+      shop,
+      objectId,
+      (state) => {
+        const profiles = [...(state.profiles ?? [])];
+        if (profiles.length === 0) {
+          profiles.push({
+            id: randomUUID(),
+            name: defaultName,
+            entries: snapshotModProfile(state.mods),
+          });
+        }
+        const profile: ModProfile = {
           id: randomUUID(),
-          name: defaultName,
+          name: name.trim() || defaultName,
           entries: snapshotModProfile(state.mods),
+        };
+        void ModActivity.append(shop, objectId, {
+          kind: "profile",
+          message: `Created the profile ${profile.name} and made it active.`,
         });
-      }
-      const profile: ModProfile = {
-        id: randomUUID(),
-        name: name.trim() || defaultName,
-        entries: snapshotModProfile(state.mods),
-      };
-      return {
-        ...state,
-        profiles: [...profiles, profile],
-        activeProfileId: profile.id,
-      };
-    });
+        return {
+          ...state,
+          profiles: [...profiles, profile],
+          activeProfileId: profile.id,
+        };
+      },
+      "create a profile"
+    );
   }
 
   /** Deploys another profile's list; the current one was saved as it changed. */
@@ -650,15 +844,24 @@ export class ModStore {
     objectId: string,
     profileId: string
   ) {
-    return this.change(shop, objectId, (state) => {
-      const profile = state.profiles?.find((item) => item.id === profileId);
-      if (!profile) throw new ModError("not-found");
-      return {
-        ...state,
-        mods: applyModProfile(state.mods, profile.entries),
-        activeProfileId: profile.id,
-      };
-    });
+    return this.change(
+      shop,
+      objectId,
+      (state) => {
+        const profile = state.profiles?.find((item) => item.id === profileId);
+        if (!profile) throw new ModError("not-found");
+        void ModActivity.append(shop, objectId, {
+          kind: "profile",
+          message: `Switched to the profile ${profile.name}.`,
+        });
+        return {
+          ...state,
+          mods: applyModProfile(state.mods, profile.entries),
+          activeProfileId: profile.id,
+        };
+      },
+      "switch profiles"
+    );
   }
 
   /** Deletes a profile; deleting the active one switches to the first left. */
@@ -667,19 +870,30 @@ export class ModStore {
     objectId: string,
     profileId: string
   ) {
-    return this.change(shop, objectId, (state) => {
-      const profiles = (state.profiles ?? []).filter(
-        (item) => item.id !== profileId
-      );
-      if (state.activeProfileId !== profileId) return { ...state, profiles };
-      const next = profiles[0];
-      return {
-        ...state,
-        profiles,
-        mods: next ? applyModProfile(state.mods, next.entries) : state.mods,
-        activeProfileId: next?.id ?? null,
-      };
-    });
+    return this.change(
+      shop,
+      objectId,
+      (state) => {
+        const profiles = (state.profiles ?? []).filter(
+          (item) => item.id !== profileId
+        );
+        if (state.activeProfileId !== profileId) return { ...state, profiles };
+        const next = profiles[0];
+        void ModActivity.append(shop, objectId, {
+          kind: "profile",
+          message: next
+            ? `Deleted the active profile; switched to ${next.name}.`
+            : "Deleted the last profile.",
+        });
+        return {
+          ...state,
+          profiles,
+          mods: next ? applyModProfile(state.mods, next.entries) : state.mods,
+          activeProfileId: next?.id ?? null,
+        };
+      },
+      "delete a profile"
+    );
   }
 
   public static setEnabled(
@@ -688,12 +902,27 @@ export class ModStore {
     modId: string,
     enabled: boolean
   ) {
-    return this.change(shop, objectId, (state) => ({
-      ...state,
-      mods: state.mods.map((mod) =>
-        mod.id === modId ? { ...mod, enabled } : mod
-      ),
-    }));
+    return this.change(
+      shop,
+      objectId,
+      (state) => {
+        const mod = state.mods.find((item) => item.id === modId);
+        if (!mod) throw new ModError("not-found");
+        void ModActivity.append(shop, objectId, {
+          kind: enabled ? "enabled" : "disabled",
+          modId,
+          modName: mod.name,
+          message: enabled ? "Turned on." : "Turned off.",
+        });
+        return {
+          ...state,
+          mods: state.mods.map((item) =>
+            item.id === modId ? { ...item, enabled } : item
+          ),
+        };
+      },
+      enabled ? "turn a mod on" : "turn a mod off"
+    );
   }
 
   /** Moves a mod one place up or down; lower in the list wins conflicts. */
@@ -703,21 +932,48 @@ export class ModStore {
     modId: string,
     direction: -1 | 1
   ) {
-    return this.change(shop, objectId, (state) => {
-      const mods = [...state.mods];
-      const index = mods.findIndex((mod) => mod.id === modId);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= mods.length) return state;
-      [mods[index], mods[target]] = [mods[target], mods[index]];
-      return { ...state, mods };
-    });
+    return this.change(
+      shop,
+      objectId,
+      (state) => {
+        const mods = [...state.mods];
+        const index = mods.findIndex((mod) => mod.id === modId);
+        const target = index + direction;
+        if (index < 0 || target < 0 || target >= mods.length) return state;
+        [mods[index], mods[target]] = [mods[target], mods[index]];
+        void ModActivity.append(shop, objectId, {
+          kind: "moved",
+          modId,
+          modName: mods[target].name,
+          message: `Moved ${direction < 0 ? "up" : "down"} to place ${target + 1} of ${mods.length}.`,
+          details: { order: mods.map((mod) => mod.name) },
+        });
+        return { ...state, mods };
+      },
+      "move a mod"
+    );
   }
 
   public static async remove(shop: GameShop, objectId: string, modId: string) {
-    await this.change(shop, objectId, (state) => ({
-      ...state,
-      mods: state.mods.filter((mod) => mod.id !== modId),
-    }));
+    await this.change(
+      shop,
+      objectId,
+      (state) => {
+        const mod = state.mods.find((item) => item.id === modId);
+        if (mod)
+          void ModActivity.append(shop, objectId, {
+            kind: "removed",
+            modId,
+            modName: mod.name,
+            message: "Removed; its staged files are deleted.",
+          });
+        return {
+          ...state,
+          mods: state.mods.filter((item) => item.id !== modId),
+        };
+      },
+      "remove a mod"
+    );
     await fs.promises.rm(stagingFolder(storeFolder(shop, objectId), modId), {
       recursive: true,
       force: true,
@@ -746,9 +1002,61 @@ export class ModStore {
     return path.join(storeFolder(shop, objectId), "downloads");
   }
 
-  /** Every enabled mod, for run records. */
-  public static async listEnabled(shop: GameShop, objectId: string) {
-    const { mods } = await this.readMods(storeFolder(shop, objectId));
-    return mods.filter((mod) => mod.enabled);
+  /** The mod list, play mode and profile as they are, for launches and reports. */
+  public static async readState(shop: GameShop, objectId: string) {
+    const state = await this.readMods(storeFolder(shop, objectId));
+    return {
+      mods: state.mods,
+      nexusGame: state.nexusGame,
+      playMode: state.playMode ?? ("modded" as ModPlayMode),
+      saveBackupOffered: state.saveBackupOffered ?? false,
+      profileName:
+        state.profiles?.find((profile) => profile.id === state.activeProfileId)
+          ?.name ?? null,
+      overridden: planDeployment(state.mods).overridden,
+    };
+  }
+
+  private static updateFile(
+    shop: GameShop,
+    objectId: string,
+    update: (state: ModsFile) => ModsFile
+  ) {
+    const folder = storeFolder(shop, objectId);
+    return serialize(folder, async () => {
+      const state = await this.readMods(folder);
+      await writeJson(modsFilePath(folder), update(state));
+    });
+  }
+
+  public static async setPlayMode(
+    shop: GameShop,
+    objectId: string,
+    playMode: ModPlayMode
+  ) {
+    await this.updateFile(shop, objectId, (state) => ({ ...state, playMode }));
+    await ModActivity.append(shop, objectId, {
+      kind: "play-mode",
+      message:
+        playMode === "modded"
+          ? "Play now starts the game modded."
+          : "Play now starts the game without the loader.",
+    });
+  }
+
+  public static markSaveBackupOffered(shop: GameShop, objectId: string) {
+    return this.updateFile(shop, objectId, (state) => ({
+      ...state,
+      saveBackupOffered: true,
+    }));
+  }
+
+  /** The game's folder in the mod store. */
+  public static storeFolder(shop: GameShop, objectId: string) {
+    return storeFolder(shop, objectId);
+  }
+
+  public static stagingRoot(shop: GameShop, objectId: string) {
+    return path.join(storeFolder(shop, objectId), "staging");
   }
 }

@@ -10,8 +10,13 @@ import {
   StarIcon,
   SyncIcon,
 } from "@primer/octicons-react";
-import { Button, ConfirmationModal, Modal } from "@renderer/components";
-import type { LibraryGame } from "@types";
+import {
+  Button,
+  ConfirmationModal,
+  Modal,
+  SplitButton,
+} from "@renderer/components";
+import type { LibraryGame, ModPlayMode } from "@types";
 import {
   canRetryEpicLaunchWithLocalSaves,
   getEpicLaunchError,
@@ -23,6 +28,7 @@ import {
   useDownload,
   useGameExecutablePicker,
   useFinishedDownloadStep,
+  useGameMods,
   useLibrary,
   useToast,
 } from "@renderer/hooks";
@@ -135,7 +141,19 @@ export function HeroPanelActions() {
   } | null>(null);
 
   const { t } = useTranslation("game_details");
+  const { t: tMods } = useTranslation("mods");
   const { t: tLauncher } = useTranslation("game_launcher");
+  const { gameMods, refresh: refreshMods } = useGameMods(
+    game?.shop,
+    game?.objectId,
+    Boolean(game?.executablePath) && game?.shop !== "launchbox"
+  );
+  const hasModsOn =
+    Boolean(gameMods?.loader) ||
+    Boolean(gameMods?.mods.some((mod) => mod.enabled));
+  const playMode: ModPlayMode = gameMods?.playMode ?? "modded";
+  const [saveBackupOffer, setSaveBackupOffer] = useState(false);
+  const [backingUpSaves, setBackingUpSaves] = useState(false);
   const [launching, setLaunching] = useState(false);
   const launchRelease = useRef<ReturnType<typeof setTimeout>>();
   const {
@@ -356,6 +374,41 @@ export function HeroPanelActions() {
     } finally {
       launchRelease.current = setTimeout(() => setLaunching(false), 8000);
     }
+  };
+
+  /** Play from the split button: a modded launch may offer a save backup first. */
+  const playWithMode = async (mode: ModPlayMode) => {
+    if (!game) return;
+    if (mode !== playMode) {
+      await window.electron.setModPlayMode(game.shop, game.objectId, mode);
+      void refreshMods();
+    }
+    if (
+      mode === "modded" &&
+      (await window.electron
+        .shouldOfferModSaveBackup(game.shop, game.objectId)
+        .catch(() => false))
+    ) {
+      setSaveBackupOffer(true);
+      return;
+    }
+    await openGame();
+  };
+
+  const answerSaveBackupOffer = async (backUp: boolean) => {
+    if (!game) return;
+    setBackingUpSaves(backUp);
+    const ok = await window.electron
+      .answerModSaveBackupOffer(game.shop, game.objectId, backUp)
+      .catch(() => false);
+    setBackingUpSaves(false);
+    setSaveBackupOffer(false);
+    if (!ok) {
+      showErrorToast(tMods("save_backup_failed"));
+      return;
+    }
+    if (backUp) showSuccessToast(tMods("save_backup_done"));
+    await openGame();
   };
 
   const openGame = async () => {
@@ -764,7 +817,41 @@ export function HeroPanelActions() {
     }
 
     if (game?.executablePath || isPlayableClassics) {
-      const playButton = (
+      const modsPlayButton = hasModsOn && game?.shop !== "launchbox" && (
+        <SplitButton
+          onClick={() => void playWithMode(playMode)}
+          disabled={deleting || isGameRunning}
+          menuLabel={tMods("play_menu")}
+          className={cn({
+            "hero-panel-actions__action--returned": sessionEnd.justEnded,
+          })}
+          partClassName="hero-panel-actions__action"
+          options={[
+            {
+              id: "plain",
+              label: t("play"),
+              hint: tMods("play_plain_hint"),
+              checked: playMode === "plain",
+              onSelect: () => void playWithMode("plain"),
+            },
+            {
+              id: "modded",
+              label: tMods("play_modded"),
+              hint: gameMods?.loader
+                ? tMods("play_modded_hint_loader", {
+                    loader: gameMods.loader.name,
+                  })
+                : tMods("play_modded_hint"),
+              checked: playMode === "modded",
+              onSelect: () => void playWithMode("modded"),
+            },
+          ]}
+        >
+          <PlayIcon />
+          {playMode === "modded" ? tMods("play_modded") : t("play")}
+        </SplitButton>
+      );
+      const playButton = modsPlayButton || (
         <Button
           onClick={openGame}
           theme="outline"
@@ -826,6 +913,21 @@ export function HeroPanelActions() {
 
     return (
       <div className="hero-panel-actions__container">
+        <ConfirmationModal
+          visible={saveBackupOffer}
+          title={tMods("save_backup_title")}
+          descriptionText={tMods("save_backup_description")}
+          confirmButtonLabel={
+            backingUpSaves
+              ? tMods("save_backup_running")
+              : tMods("save_backup_confirm")
+          }
+          cancelButtonLabel={tMods("save_backup_skip")}
+          buttonsIsDisabled={backingUpSaves}
+          onConfirm={() => void answerSaveBackupOffer(true)}
+          onCancel={() => void answerSaveBackupOffer(false)}
+          onClose={() => setSaveBackupOffer(false)}
+        />
         <EpicCloudSaveConflictModal
           game={epicSaveConflict}
           isGameRunning={isGameRunning}

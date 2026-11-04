@@ -16,6 +16,10 @@ import type {
   GameShop,
 } from "@types";
 
+import { ModActivity } from "@main/services/mods/activity";
+import { ModStore } from "@main/services/mods/mod-store";
+import { buildRunMods } from "@shared";
+
 import { evaluateRunChecks } from "./run-checks-core";
 import {
   LATEST_LINK,
@@ -349,6 +353,13 @@ export const GameRuns = {
           getRunsPath(),
           gameFolderName(title, options.shop, options.objectId)
         );
+      const modState = await ModStore.readState(
+        options.shop,
+        options.objectId
+      ).catch(() => null);
+      const mods = modState
+        ? buildRunMods(modState.mods, modState.playMode, null)
+        : null;
       const startedAt = new Date();
       const id = runIdFromDate(startedAt);
       const directory = path.join(gameFolder, id);
@@ -373,6 +384,7 @@ export const GameRuns = {
         protonPath: game?.protonPath ?? null,
         winePrefixPath: game?.winePrefixPath ?? null,
         tools: game ? toolsFromGame(game) : [],
+        mods,
         events: [],
         logs: [],
         directory,
@@ -392,6 +404,12 @@ export const GameRuns = {
         outputLogPath: null,
       });
       writeRun(run);
+      if (mods)
+        void ModActivity.append(options.shop, options.objectId, {
+          kind: "launch",
+          message: `Started the game ${mods.modded ? "modded" : "without the loader"} with ${mods.mods.length} mods on (run ${id}).`,
+          details: { runId: id, mods: mods.mods.map((mod) => mod.name) },
+        });
       pointLatestAt(gameFolder, id);
       pruneRuns(gameFolder);
       announceChange(run);

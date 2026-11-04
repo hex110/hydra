@@ -20,6 +20,7 @@ const baseName = (filePath: string) => filePath.split(/[\\/]/).pop() ?? "";
 
 export function RunsSection({ game }: Readonly<{ game: LibraryGame }>) {
   const { t } = useTranslation("game_details");
+  const { t: tMods } = useTranslation("mods");
   const { formatDateTime } = useDate();
   const [runs, setRuns] = useState<GameRun[] | null>(null);
   const [copiedRunId, setCopiedRunId] = useState<string | null>(null);
@@ -50,6 +51,28 @@ export function RunsSection({ game }: Readonly<{ game: LibraryGame }>) {
     if (!summary) return;
     await window.electron.clipboard.writeText(summary);
     setCopiedRunId(run.id);
+  };
+
+  const copyModsReport = async (run: GameRun) => {
+    const report = await window.electron
+      .getModReport(game.shop, game.objectId)
+      .catch((error) => {
+        logger.error("Failed to build the mods report", error);
+        return null;
+      });
+    if (!report) return;
+    await window.electron.clipboard.writeText(report);
+    setCopiedRunId(`${run.id}:mods`);
+  };
+
+  const describeMods = (run: GameRun) => {
+    if (!run.mods) return null;
+    const names = run.mods.mods.map((mod) => mod.name).join(", ");
+    return tMods(run.mods.modded ? "run_mods_modded" : "run_mods_plain", {
+      count: run.mods.mods.length,
+      names,
+      loader: run.mods.loader?.name ?? tMods("run_mods_no_loader"),
+    });
   };
 
   const formatDuration = (milliseconds: number | null) => {
@@ -137,6 +160,22 @@ export function RunsSection({ game }: Readonly<{ game: LibraryGame }>) {
                       {duration ? ` · ${duration}` : ""}
                     </strong>
                     <span>{describeSetup(run) || t("run_no_details")}</span>
+                    {run.mods && <small>{describeMods(run)}</small>}
+                    {run.mods && OUTCOME_STATUS[run.outcome] === "failed" && (
+                      <div>
+                        <Button
+                          type="button"
+                          theme="outline"
+                          size="small"
+                          onClick={() => void copyModsReport(run)}
+                        >
+                          <CopyIcon size={12} />
+                          {copiedRunId === `${run.id}:mods`
+                            ? t("run_copied")
+                            : tMods("copy_report")}
+                        </Button>
+                      </div>
+                    )}
                     <small>
                       {[
                         exit,

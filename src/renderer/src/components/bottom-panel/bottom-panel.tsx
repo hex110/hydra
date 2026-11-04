@@ -6,6 +6,7 @@ import {
   useAppSelector,
   useDownload,
   useLibrary,
+  useModDownloads,
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
@@ -31,6 +32,7 @@ export function BottomPanel() {
   const { lastPacket, progress, downloadSpeed, eta } = useDownload();
 
   const extraction = useAppSelector((state) => state.download.extraction);
+  const modDownloads = useModDownloads();
 
   const [version, setVersion] = useState("");
   const [sessionHash, setSessionHash] = useState<null | string>("");
@@ -131,8 +133,29 @@ export function BottomPanel() {
       });
     }
 
+    const modDownload = modDownloads.find(
+      (download) =>
+        download.state === "downloading" ||
+        download.state === "waiting-torbox" ||
+        download.state === "installing"
+    );
+    if (modDownload) {
+      if (modDownload.state === "downloading")
+        return t("mod_downloading", {
+          mod: modDownload.modName,
+          percentage: `${Math.round((modDownload.progress ?? 0) * 100)}%`,
+        });
+      return t(
+        modDownload.state === "installing"
+          ? "mod_installing"
+          : "mod_waiting_torbox",
+        { mod: modDownload.modName }
+      );
+    }
+
     return t("no_downloads_in_progress");
   }, [
+    modDownloads,
     t,
     library,
     lastPacket,

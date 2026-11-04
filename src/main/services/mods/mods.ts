@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import path from "node:path";
 
 import { db, gamesSublevel, levelKeys } from "@main/level";
@@ -7,21 +6,15 @@ import type {
   GameShop,
   InstalledMod,
   ModActionResult,
-  ModInstallProgress,
   NexusGameMatch,
   UserPreferences,
 } from "@types";
 
-import { downloadToFile } from "../download-to-file";
 import { logger } from "../logger";
-import { WindowManager } from "../window-manager";
+import { ModActivity } from "./activity";
+import { ModDownloads, type NexusFileRequest } from "./mod-downloads";
 import { ModError, ModStore } from "./mod-store";
-import {
-  findNexusGame,
-  getNexusModFiles,
-  getNexusModRequirements,
-} from "./nexus";
-import { requestNexusFileThroughTorBox } from "./torbox-nexus";
+import { findNexusGame, getNexusModFiles } from "./nexus";
 
 const toError = (error: unknown): ModActionResult => {
   if (error instanceof ModError) return { ok: false, error: error.code };
@@ -40,9 +33,6 @@ export const runModAction = async (
   }
 };
 
-const sendProgress = (progress: ModInstallProgress | null, key: string) =>
-  WindowManager.sendToAppWindows("on-mod-install-progress", progress, key);
-
 const readTorBoxToken = async () => {
   const preferences = await db
     .get<string, UserPreferences | null>(levelKeys.userPreferences, {
@@ -53,6 +43,8 @@ const readTorBoxToken = async () => {
 };
 
 export const hasTorBoxToken = async () => Boolean(await readTorBoxToken());
+
+export { readTorBoxToken };
 
 /** The game's Nexus match, found by title the first time it is asked for. */
 export const getNexusGameForLibraryGame = async (
@@ -71,97 +63,50 @@ export const getNexusGameForLibraryGame = async (
   return match;
 };
 
+/**
+ * Queues a Nexus file in the Downloads queue. Resolves once it is queued;
+ * `finished` settles when it is installed or has failed.
+ */
+export const queueNexusModFile = async (
+  shop: GameShop,
+  objectId: string,
+  file: NexusFileRequest
+) => {
+  const nexusGame = await getNexusGameForLibraryGame(shop, objectId);
+  if (!nexusGame) return { result: toError(new ModError("not-found")) };
+  if (!(await readTorBoxToken()))
+    return { result: { ok: false, error: "no-torbox" } as ModActionResult };
+  const queued = await ModDownloads.enqueue(shop, objectId, file);
+  return { result: { ok: true } as ModActionResult, finished: queued.finished };
+};
+
 export const installNexusModFile = async (
   shop: GameShop,
   objectId: string,
-  file: {
-    modId: number;
-    fileId: number;
-    name: string;
-    version: string | null;
-    replaces?: string;
-  }
-): Promise<ModActionResult> => {
-  const key = `nexus:${file.modId}:${file.fileId}`;
-  const progress = (stage: ModInstallProgress["stage"], value: number | null) =>
-    sendProgress({ shop, objectId, key, stage, progress: value }, key);
+  file: NexusFileRequest
+): Promise<ModActionResult> =>
+  (await queueNexusModFile(shop, objectId, file)).result;
 
-  let downloaded: string | null = null;
-  try {
-    const nexusGame = await getNexusGameForLibraryGame(shop, objectId);
-    if (!nexusGame) return { ok: false, error: "failed" };
-    const token = await readTorBoxToken();
-    if (!token) return { ok: false, error: "no-torbox" };
-
-    progress("requesting", null);
-    const link = await requestNexusFileThroughTorBox(token, {
-      gameDomain: nexusGame.domainName,
-      modId: file.modId,
-      fileId: file.fileId,
-    }).catch((error) => {
-      logger.error("[Mods] TorBox could not fetch the Nexus file", error);
-      return null;
-    });
-    if (!link) return { ok: false, error: "torbox-failed" };
-
-    progress("downloading", 0);
-    downloaded = path.join(
-      ModStore.downloadFolder(shop, objectId),
-      `${file.fileId}-${link.fileName.replaceAll(/[/\\]/g, "_")}`
-    );
-    const ok = await downloadToFile(link.url, downloaded, (loaded, total) =>
-      progress("downloading", total ? loaded / total : null)
-    ).then(
-      () => true,
-      (error) => {
-        logger.error("[Mods] Download failed", error);
-        return false;
-      }
-    );
-    if (!ok) return { ok: false, error: "download-failed" };
-
-    progress("installing", null);
-    const requirements = await getNexusModRequirements(
-      nexusGame.id,
-      file.modId
-    ).catch((error) => {
-      logger.warn("[Mods] Could not read the mod's requirements", error);
-      return undefined;
-    });
-    await ModStore.installFromFile(shop, objectId, downloaded, {
-      requirements,
-      name: file.name,
-      version: file.version,
-      replaces: file.replaces,
-      source: {
-        kind: "nexus",
-        gameDomain: nexusGame.domainName,
-        gameId: nexusGame.id,
-        modId: file.modId,
-        fileId: file.fileId,
-      },
-    });
-    return { ok: true };
-  } catch (error) {
-    return toError(error);
-  } finally {
-    sendProgress(null, key);
-    if (downloaded) await fs.promises.rm(downloaded, { force: true });
-  }
-};
-
-export const installModFromArchive = (
+export const installModFromArchive = async (
   shop: GameShop,
   objectId: string,
   filePath: string
-) =>
-  runModAction(() =>
+) => {
+  const result = await runModAction(() =>
     ModStore.installFromFile(shop, objectId, filePath, {
       name: path.basename(filePath).replace(/\.(zip|7z|rar|tar(\.\w+)?)$/i, ""),
       version: null,
       source: { kind: "file", fileName: path.basename(filePath) },
     })
   );
+  if (!result.ok)
+    await ModActivity.append(shop, objectId, {
+      kind: "error",
+      modName: path.basename(filePath),
+      message: `Could not install ${path.basename(filePath)}: ${result.error}`,
+    });
+  return result;
+};
 
 /** Marks each Nexus mod with a newer main file; returns how many have one. */
 export const checkModUpdates = async (shop: GameShop, objectId: string) => {

@@ -12,13 +12,15 @@ export const removeFileQuietly = async (filePath: string): Promise<void> => {
 export const downloadToFile = async (
   url: string,
   dest: string,
-  onProgress: (loaded: number, total: number | null) => void
+  onProgress: (loaded: number, total: number | null) => void,
+  signal?: AbortSignal
 ): Promise<{ lastModified: string | null }> => {
   await fs.promises.mkdir(path.dirname(dest), { recursive: true });
 
   const response = await axios.get(url, {
     responseType: "stream",
     headers: { "User-Agent": "HydraLauncher" },
+    signal,
   });
 
   const lengthHeader = Number(response.headers["content-length"]);
@@ -43,6 +45,9 @@ export const downloadToFile = async (
         lastEmit = received;
         onProgress(received, total);
       }
+    });
+    signal?.addEventListener("abort", () => fail(new Error("aborted")), {
+      once: true,
     });
     response.data.on("error", fail);
     writer.on("error", fail);

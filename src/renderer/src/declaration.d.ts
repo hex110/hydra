@@ -1,8 +1,12 @@
 import type {
   SaveSyncStatus,
   GameMods,
+  ModActivityEntry,
+  ModDownload,
+  ModFolderKind,
+  ModPlayMode,
+  ModsOverview,
   ModActionResult,
-  ModInstallProgress,
   NexusGameMatch,
   NexusModFile,
   NexusModRequirement,
@@ -768,8 +772,41 @@ declare global {
       modId: string
     ) => Promise<ModActionResult>;
     checkModUpdates: (shop: GameShop, objectId: string) => Promise<number>;
-    onModInstallProgress: (
-      cb: (progress: ModInstallProgress | null, key: string) => void
+    getModActivity: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<ModActivityEntry[]>;
+    getModReport: (shop: GameShop, objectId: string) => Promise<string>;
+    saveModReport: (shop: GameShop, objectId: string) => Promise<string>;
+    openModFolder: (
+      shop: GameShop,
+      objectId: string,
+      kind: ModFolderKind
+    ) => Promise<boolean>;
+    setModPlayMode: (
+      shop: GameShop,
+      objectId: string,
+      mode: ModPlayMode
+    ) => Promise<void>;
+    shouldOfferModSaveBackup: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<boolean>;
+    answerModSaveBackupOffer: (
+      shop: GameShop,
+      objectId: string,
+      backUp: boolean
+    ) => Promise<boolean>;
+    getModDownloads: () => Promise<ModDownload[]>;
+    retryModDownload: (id: string) => Promise<boolean>;
+    cancelModDownload: (id: string) => Promise<boolean>;
+    dismissModDownload: (id: string) => Promise<boolean>;
+    getModsOverview: () => Promise<ModsOverview>;
+    onModDownloadsChanged: (
+      cb: (downloads: ModDownload[]) => void
+    ) => () => void;
+    onModActivityChanged: (
+      cb: (shop: GameShop, objectId: string) => void
     ) => () => void;
     checkRenoDxUpdates: () => Promise<void>;
     clearRenoDxCache: () => Promise<void>;
