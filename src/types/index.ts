@@ -992,6 +992,8 @@ export type LibraryGame = Game &
     id: string;
     download: Download | null;
     metadata?: GameLibraryMetadata | null;
+    /** The signed-in Steam account owns it (from the Steam history import). */
+    ownedOnSteam?: boolean;
     unlockedAchievementCount?: number;
     achievementCount?: number;
   };

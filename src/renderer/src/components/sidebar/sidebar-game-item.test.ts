@@ -145,7 +145,7 @@ const steamGame: LibraryGame = {
   objectId: "123",
   catalogueGame: undefined,
   availableShops: ["steam"],
-  hasActiveSteamImport: true,
+  ownedOnSteam: true,
 };
 
 const renderRow = (game: LibraryGame, props: Record<string, unknown> = {}) => {
@@ -200,7 +200,7 @@ it("shows a Steam mark for Steam-owned games and says when Steam launches them",
   );
 
   assert.equal(
-    renderRow({ ...steamGame, hasActiveSteamImport: false }).querySelector(
+    renderRow({ ...steamGame, ownedOnSteam: false }).querySelector(
       ".sidebar__game-steam-icon"
     ),
     null

@@ -83,12 +83,15 @@ export const SidebarGameItem = memo(function SidebarGameItem({
     playingGameId !== undefined &&
     getLibraryGameMembers(game).some((member) => member.id === playingGameId);
   // The Steam mark on the right replaces the corner badge for Steam games.
-  const isOwnedOnSteam = getLibraryPresentationImportSources(game).steam;
+  const isOwnedOnSteam =
+    game.ownedOnSteam === true ||
+    getLibraryPresentationImportSources(game).steam;
   const opensThroughSteam = launchesThroughSteam(
     getLibraryOperationalGame(game)
   );
   const showSteamMark =
-    isOwnedOnSteam && !userPreferences?.hideSteamLibraryBadges;
+    (isOwnedOnSteam || opensThroughSteam) &&
+    !userPreferences?.hideSteamLibraryBadges;
   const sidebarIcon = isCustomGame
     ? game.libraryImageUrl || game.iconUrl
     : game.customIconUrl || game.iconUrl;

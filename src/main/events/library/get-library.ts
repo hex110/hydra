@@ -14,6 +14,7 @@ import {
   gamesShopCacheSublevel,
   gamesSublevel,
   levelKeys,
+  steamHistorySublevel,
 } from "@main/level";
 import { composeAssetsWithArtwork } from "@shared";
 import { HydraApi } from "@main/services/hydra-api";
@@ -107,12 +108,18 @@ const getLibrary = async (
       : key
   );
   // Batched reads: one round trip per sublevel instead of three per game.
-  const [downloads, shopAssets, artworkSelections, metadataByKey] =
+  const [downloads, shopAssets, artworkSelections, metadataByKey, steamOwned] =
     await Promise.all([
       downloadsSublevel.getMany(keys),
       gamesShopAssetsSublevel.getMany(catalogueKeys),
       gamesArtworkSelectionSublevel.getMany(keys),
       LibraryMetadata.getAll(),
+      // The account's owned games, from the Steam history import.
+      steamHistorySublevel
+        .keys()
+        .all()
+        .then((appIds) => new Set(appIds))
+        .catch(() => new Set<string>()),
     ]);
 
   return Promise.all(
@@ -174,6 +181,7 @@ const getLibrary = async (
         installerSizeInBytes,
         installedSizeInBytes,
         download: download ?? null,
+        ownedOnSteam: game.shop === "steam" && steamOwned.has(game.objectId),
         // Spread composed assets last to ensure all image URLs are properly set
         ...composedAssets,
         shop: game.shop,
