@@ -56,6 +56,7 @@ import cn from "classnames";
 import { SidebarFilterMenu } from "./sidebar-filter-menu";
 import { SidebarGameItem } from "./sidebar-game-item";
 import { SidebarGameListSkeleton } from "./sidebar-game-list-skeleton";
+import { orderRunningGames } from "./sidebar-order";
 import { SidebarProfile } from "./sidebar-profile";
 
 const SIDEBAR_MIN_WIDTH = 200;
@@ -70,6 +71,12 @@ const SIDEBAR_SORT_OPTIONS = new Set<SortOption>([
   "recently_played",
   "most_played",
   "achievements",
+]);
+
+// Running games lead these sorts, ahead of favorites, newest start first.
+const RUNNING_FIRST_SORTS = new Set<SortOption>([
+  "recent_activity",
+  "recently_played",
 ]);
 
 const initialSidebarWidth = window.localStorage.getItem("sidebarWidth");
@@ -135,15 +142,23 @@ export function Sidebar() {
   const orderSidebarGames = useCallback(
     (games: LibraryGame[]) => {
       const sorted = sortLibraryGames(games, sidebarSortBy);
+      const running = RUNNING_FIRST_SORTS.has(sidebarSortBy)
+        ? orderRunningGames(sorted, runningGameIds)
+        : [];
+      const runningSet = new Set(running);
+      const rest = running.length
+        ? sorted.filter((game) => !runningSet.has(game))
+        : sorted;
 
-      if (!showFavoritesFirst) return sorted;
+      if (!showFavoritesFirst) return [...running, ...rest];
 
       return [
-        ...sorted.filter((game) => game.favorite),
-        ...sorted.filter((game) => !game.favorite),
+        ...running,
+        ...rest.filter((game) => game.favorite),
+        ...rest.filter((game) => !game.favorite),
       ];
     },
-    [sidebarSortBy, showFavoritesFirst]
+    [sidebarSortBy, showFavoritesFirst, runningGameIds]
   );
 
   const orderedLibrary = useMemo(

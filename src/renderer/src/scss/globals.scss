@@ -68,6 +68,9 @@ $review-negative: #d4672f;
 $critic-good: #66cc33;
 $critic-mixed: #ffcc33;
 $critic-bad: #ff0000;
+
+// A running game's title in the sidebar; the brightest green we have.
+$playing-color: $critic-good;
 $critic-dark-text: #1c1c1c;
 
 $protondb-platinum: rgb(180, 199, 220);

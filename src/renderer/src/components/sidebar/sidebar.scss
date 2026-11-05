@@ -148,10 +148,10 @@
 
     // Like Steam: the game that is running shows in green.
     &--playing {
-      color: globals.$success-color;
+      color: globals.$playing-color;
 
       &:hover {
-        color: globals.$success-color;
+        color: globals.$playing-color;
       }
     }
 
