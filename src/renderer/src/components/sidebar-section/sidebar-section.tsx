@@ -6,12 +6,60 @@ export interface SidebarSectionProps {
   title: string;
   subtitle?: string;
   subtitleHref?: string;
-  /** Starts folded away when false; open by default. */
+  /**
+   * `card` (default) is a collapsible panel, as in the catalogue's filters.
+   * `flat` is a frameless block under a small label and a hairline, for
+   * columns that should read as one piece (the game page).
+   */
+  variant?: "card" | "flat";
+  /** Card only: starts folded away when false; open by default. */
   defaultOpen?: boolean;
+  /** Flat only: something small on the label's right, such as a link. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function SidebarSection({
+export function SidebarSection(props: SidebarSectionProps) {
+  return props.variant === "flat" ? (
+    <FlatSidebarSection {...props} />
+  ) : (
+    <CardSidebarSection {...props} />
+  );
+}
+
+function FlatSidebarSection({
+  title,
+  subtitle,
+  subtitleHref,
+  action,
+  children,
+}: SidebarSectionProps) {
+  return (
+    <section className="flat-sidebar-section">
+      <header className="flat-sidebar-section__header">
+        <h3 className="flat-sidebar-section__title">{title}</h3>
+
+        {subtitle && subtitleHref && (
+          <a
+            href={subtitleHref}
+            className="flat-sidebar-section__link"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {subtitle}
+            <LinkExternalIcon size={12} />
+          </a>
+        )}
+
+        {action}
+      </header>
+
+      {children}
+    </section>
+  );
+}
+
+function CardSidebarSection({
   title,
   subtitle,
   subtitleHref,
@@ -75,4 +123,31 @@ export function SidebarSection({
       </div>
     </div>
   );
+}
+
+/** A label and its value on one line; wrap rows in SidebarRows. */
+export function SidebarRow({
+  label,
+  icon,
+  title,
+  children,
+}: {
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+  title?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="sidebar-row" title={title}>
+      <dt className="sidebar-row__label">
+        {icon}
+        {label}
+      </dt>
+      <dd className="sidebar-row__value">{children}</dd>
+    </div>
+  );
+}
+
+export function SidebarRows({ children }: { children: React.ReactNode }) {
+  return <dl className="sidebar-rows">{children}</dl>;
 }

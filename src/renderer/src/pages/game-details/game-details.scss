@@ -56,6 +56,21 @@
     margin: 0 auto;
   }
 
+  // A block in the centred column under About this game (requirements,
+  // languages…), headed like it.
+  &__section {
+    @include globals.reading-column;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: calc(globals.$spacing-unit * 1.5);
+  }
+
+  &__section-title {
+    margin: 0 0 calc(globals.$spacing-unit * 1.5);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
   &__description {
     user-select: text;
     line-height: 22px;

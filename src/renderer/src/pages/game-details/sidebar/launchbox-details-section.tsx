@@ -7,7 +7,11 @@ import {
   getSkuRegionFlag,
   type SkuRegion,
 } from "@renderer/helpers";
-import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
+import {
+  SidebarRow,
+  SidebarRows,
+  SidebarSection,
+} from "@renderer/components/sidebar-section/sidebar-section";
 
 import "./launchbox-details-section.scss";
 
@@ -44,27 +48,16 @@ export function LaunchboxDetailsSection({
   if (!hasContent) return null;
 
   return (
-    <SidebarSection title={t("details")}>
-      <div className="launchbox-details">
-        {platform && (
-          <div className="launchbox-details__row">
-            <span className="launchbox-details__label">{t("platform")}</span>
-            <span className="launchbox-details__value">{platform}</span>
-          </div>
-        )}
+    <SidebarSection variant="flat" title={t("details")}>
+      <SidebarRows>
+        {platform && <SidebarRow label={t("platform")}>{platform}</SidebarRow>}
 
         {genres && genres.length > 0 && (
-          <div className="launchbox-details__row">
-            <span className="launchbox-details__label">{t("genres")}</span>
-            <span className="launchbox-details__value">
-              {genres.join(", ")}
-            </span>
-          </div>
+          <SidebarRow label={t("genres")}>{genres.join(", ")}</SidebarRow>
         )}
 
         {regions.length > 0 && (
-          <div className="launchbox-details__row">
-            <span className="launchbox-details__label">{t("regions")}</span>
+          <SidebarRow label={t("regions")}>
             <span className="launchbox-details__flags">
               {regions.map((region) => {
                 const name = t(REGION_TRANSLATION_KEYS[region]);
@@ -80,9 +73,9 @@ export function LaunchboxDetailsSection({
                 );
               })}
             </span>
-          </div>
+          </SidebarRow>
         )}
-      </div>
+      </SidebarRows>
       <Tooltip id={tooltipId} />
     </SidebarSection>
   );

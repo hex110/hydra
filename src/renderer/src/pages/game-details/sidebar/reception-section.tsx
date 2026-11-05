@@ -5,7 +5,11 @@ import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import type { GameReception } from "@shared";
 import { Link } from "@renderer/components/link/link";
 import { useFormat } from "@renderer/hooks";
-import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
+import {
+  SidebarRow,
+  SidebarRows,
+  SidebarSection,
+} from "@renderer/components/sidebar-section/sidebar-section";
 import "./reception-section.scss";
 
 export interface ReceptionSectionProps {
@@ -68,22 +72,20 @@ export function ReceptionSection({
   return (
     <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
       <SidebarSection
+        variant="flat"
         title={t("reception")}
         subtitle="Steam"
         subtitleHref={`https://store.steampowered.com/app/${steamAppId}#app_reviews_hash`}
       >
-        {state.isLoading ? (
-          <div className="reception">
-            {Array.from({ length: 3 }).map((_, index) => (
+        <SidebarRows>
+          {state.isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
               <Skeleton key={index} className="reception__skeleton" />
-            ))}
-          </div>
-        ) : (
-          <dl className="reception">
-            {reviews && (
-              <div className="reception__row">
-                <dt>{t("reception_steam_reviews")}</dt>
-                <dd>
+            ))
+          ) : (
+            <>
+              {reviews && (
+                <SidebarRow label={t("reception_steam_reviews")}>
                   <span
                     className={cn(
                       "reception__score",
@@ -100,31 +102,27 @@ export function ReceptionSection({
                       ),
                     })}
                   </small>
-                </dd>
-              </div>
-            )}
+                </SidebarRow>
+              )}
 
-            {currentPlayers != null && (
-              <div className="reception__row">
-                <dt>{t("reception_players_now")}</dt>
-                <dd>{numberFormatter.format(currentPlayers)}</dd>
-              </div>
-            )}
+              {currentPlayers != null && (
+                <SidebarRow label={t("reception_players_now")}>
+                  {numberFormatter.format(currentPlayers)}
+                </SidebarRow>
+              )}
 
-            {metacritic && (
-              <div className="reception__row">
-                <dt>{t("reception_metacritic")}</dt>
-                <dd>
+              {metacritic && (
+                <SidebarRow label={t("reception_metacritic")}>
                   {metacritic.url ? (
                     <Link to={metacritic.url}>{metacritic.score}</Link>
                   ) : (
                     metacritic.score
                   )}
-                </dd>
-              </div>
-            )}
-          </dl>
-        )}
+                </SidebarRow>
+              )}
+            </>
+          )}
+        </SidebarRows>
       </SidebarSection>
     </SkeletonTheme>
   );

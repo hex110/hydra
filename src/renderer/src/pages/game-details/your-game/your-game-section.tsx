@@ -150,7 +150,7 @@ export function YourGameSection() {
   };
 
   return (
-    <SidebarSection title={t("your_stuff")}>
+    <SidebarSection variant="flat" title={t("your_stuff")}>
       <div className="your-game">
         {completionSuggestion && (
           <div className="your-game__suggestion" role="status">

@@ -2,17 +2,21 @@
 
 .links-section {
   display: flex;
-  flex-direction: column;
-  gap: globals.$spacing-unit;
+  flex-wrap: wrap;
+  gap: calc(globals.$spacing-unit / 2) calc(globals.$spacing-unit * 2);
   margin: 0;
-  padding: calc(globals.$spacing-unit * 2);
+  padding: 0;
   list-style: none;
 
   &__link {
     display: inline-flex;
     align-items: center;
     gap: calc(globals.$spacing-unit / 2);
-    color: globals.$muted-color;
-    font-size: globals.$body-font-size;
+    color: globals.$body-color;
+    font-size: globals.$hint-font-size;
+
+    &:hover {
+      color: globals.$muted-color;
+    }
   }
 }

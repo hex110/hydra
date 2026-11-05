@@ -1,12 +1,15 @@
 import cn from "classnames";
-import { LinkExternalIcon, StarIcon } from "@primer/octicons-react";
-import { Link } from "@renderer/components/link/link";
+import { StarIcon } from "@primer/octicons-react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import { useTranslation } from "react-i18next";
 import type { ProtonDBData } from "@types";
 import ProtonDBLogo from "@renderer/assets/protondb-logo.svg?url";
 import SteamDeckLogo from "@renderer/assets/steam-deck-logo.svg?url";
-import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
+import {
+  SidebarRow,
+  SidebarRows,
+  SidebarSection,
+} from "@renderer/components/sidebar-section/sidebar-section";
 import "./sidebar.scss";
 
 const protonTierTranslation: Record<string, string> = {
@@ -55,79 +58,70 @@ export function ProtonDBSection({
 
   return (
     <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
-      <SidebarSection title={t("catalogue:protondb")}>
-        <div className="protondb__content">
-          {protonDBData ? (
-            <>
-              <div className="protondb__section">
-                <div className="protondb__category">
-                  <p className="protondb__category-title">
-                    <img
-                      src={ProtonDBLogo}
-                      alt=""
-                      className="protondb__proton-icon"
-                      aria-hidden="true"
-                    />
-                    {t("protondb_tier")}
-                  </p>
-
-                  <span
-                    className={cn(
-                      "protondb__tier-badge",
-                      isKnownTier && `protondb__tier-badge--${tier}`
-                    )}
-                  >
-                    <span>{tierLabel}</span>
-                  </span>
-                </div>
-
-                <div className="protondb__category">
-                  <p className="protondb__category-title">
-                    <img
-                      src={SteamDeckLogo}
-                      alt=""
-                      className="protondb__steamdeck-icon"
-                      aria-hidden="true"
-                    />
-                    {t("deck_compatibility")}
-                  </p>
-                  <p className="protondb__value">
-                    {deckKey ? t(deckKey) : t("deck_unknown")}
-                  </p>
-                </div>
-
-                <div className="protondb__category">
-                  <p className="protondb__category-title">
-                    <StarIcon size={18} aria-hidden="true" />
-                    {t("protondb_score")}
-                  </p>
-                  <p className="protondb__value">{scoreLabel}</p>
-                </div>
-              </div>
-
-              <Link
-                to={`https://www.protondb.com/app/${objectId}`}
-                className="protondb__view-link"
+      <SidebarSection
+        variant="flat"
+        title={t("catalogue:protondb")}
+        subtitle={t("view_on_protondb")}
+        subtitleHref={`https://www.protondb.com/app/${objectId}`}
+      >
+        {protonDBData ? (
+          <SidebarRows>
+            <SidebarRow
+              label={t("protondb_tier")}
+              icon={
+                <img
+                  src={ProtonDBLogo}
+                  alt=""
+                  className="protondb__icon"
+                  aria-hidden="true"
+                />
+              }
+            >
+              <span
+                className={cn(
+                  "protondb__tier-badge",
+                  isKnownTier && `protondb__tier-badge--${tier}`
+                )}
               >
-                {t("view_on_protondb")}
-                <LinkExternalIcon size={12} aria-hidden="true" />
-              </Link>
-            </>
-          ) : (
-            <>
-              <div className="protondb__section">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="protondb__category">
-                    <Skeleton className="protondb__title-skeleton" />
-                    <Skeleton className="protondb__value-skeleton" />
-                  </div>
-                ))}
-              </div>
+                {tierLabel}
+              </span>
+            </SidebarRow>
 
-              <Skeleton className="protondb__link-skeleton" />
-            </>
-          )}
-        </div>
+            <SidebarRow
+              label={t("deck_compatibility")}
+              icon={
+                <img
+                  src={SteamDeckLogo}
+                  alt=""
+                  className="protondb__icon"
+                  aria-hidden="true"
+                />
+              }
+            >
+              <span className="protondb__value">
+                {deckKey ? t(deckKey) : t("deck_unknown")}
+              </span>
+            </SidebarRow>
+
+            <SidebarRow
+              label={t("protondb_score")}
+              icon={<StarIcon size={14} aria-hidden="true" />}
+            >
+              {scoreLabel}
+            </SidebarRow>
+          </SidebarRows>
+        ) : (
+          <SidebarRows>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <SidebarRow
+                key={index}
+                label={<Skeleton className="protondb__title-skeleton" />}
+              >
+                <Skeleton className="protondb__value-skeleton" />
+              </SidebarRow>
+            ))}
+          </SidebarRows>
+        )}
       </SidebarSection>
     </SkeletonTheme>
   );

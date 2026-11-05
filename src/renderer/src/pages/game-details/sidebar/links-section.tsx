@@ -37,7 +37,7 @@ export function LinksSection({
   const { t } = useTranslation("game_details");
 
   return (
-    <SidebarSection title={t("links")}>
+    <SidebarSection variant="flat" title={t("links")}>
       <ul className="links-section">
         {getGameLinks(title, steamAppId).map((link) => (
           <li key={link.key}>

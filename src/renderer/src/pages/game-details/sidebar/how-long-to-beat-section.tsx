@@ -1,7 +1,11 @@
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import { useTranslation } from "react-i18next";
 import type { HowLongToBeatCategory } from "@types";
-import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-section";
+import {
+  SidebarRow,
+  SidebarRows,
+  SidebarSection,
+} from "@renderer/components/sidebar-section/sidebar-section";
 import "./sidebar.scss";
 
 const durationTranslation: Record<string, string> = {
@@ -33,36 +37,33 @@ export function HowLongToBeatSection({
   return (
     <SkeletonTheme baseColor="#1c1c1c" highlightColor="#444">
       <SidebarSection
+        variant="flat"
         title="HowLongToBeat"
         subtitle={t("open_on_howlongtobeat")}
         subtitleHref={`https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`}
       >
-        <ul className="how-long-to-beat__categories-list">
+        <SidebarRows>
           {howLongToBeatData
             ? howLongToBeatData.map((category) => (
-                <li key={category.title} className="how-long-to-beat__category">
-                  <p className="how-long-to-beat__category-label how-long-to-beat__category-label--bold">
-                    {category.title}
-                  </p>
-
-                  <p className="how-long-to-beat__category-label">
-                    {getDuration(category.duration)}
-                  </p>
-
-                  {category.accuracy !== "00" && (
-                    <small>
-                      {t("accuracy", { accuracy: category.accuracy })}
-                    </small>
-                  )}
-                </li>
+                <SidebarRow
+                  key={category.title}
+                  label={category.title}
+                  title={
+                    category.accuracy !== "00"
+                      ? t("accuracy", { accuracy: category.accuracy })
+                      : undefined
+                  }
+                >
+                  {getDuration(category.duration)}
+                </SidebarRow>
               ))
-            : Array.from({ length: 4 }).map((_, index) => (
+            : Array.from({ length: 3 }).map((_, index) => (
                 <Skeleton
                   key={index}
                   className="how-long-to-beat__category-skeleton"
                 />
               ))}
-        </ul>
+        </SidebarRows>
       </SidebarSection>
     </SkeletonTheme>
   );

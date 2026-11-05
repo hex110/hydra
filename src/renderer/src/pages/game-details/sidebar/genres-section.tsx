@@ -44,7 +44,7 @@ export function GenresSection({ tags, genres }: Readonly<GenresSectionProps>) {
   };
 
   return (
-    <SidebarSection title={t("genres")}>
+    <SidebarSection variant="flat" title={t("genres")}>
       <div className="genres-section">
         {tags.map((tag) => (
           <button

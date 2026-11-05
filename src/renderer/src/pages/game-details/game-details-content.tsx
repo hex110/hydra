@@ -13,6 +13,8 @@ import { useSearchParams } from "react-router-dom";
 import { HeroPanel } from "./hero";
 import { DescriptionHeader } from "./description-header/description-header";
 import { GallerySlider } from "./gallery-slider/gallery-slider";
+import { GameLanguages } from "./game-languages";
+import { SystemRequirements } from "./system-requirements";
 import { Sidebar } from "./sidebar/sidebar";
 import { GameReviews } from "./game-reviews";
 import { ReviewPromptBanner } from "./review-prompt-banner";
@@ -536,6 +538,10 @@ export function GameDetailsContent() {
                 {isDescriptionExpanded ? t("show_less") : t("show_more")}
               </button>
             )}
+
+            {shop !== "launchbox" && <SystemRequirements />}
+
+            <GameLanguages />
 
             {shop && objectId && (
               <SimilarGames

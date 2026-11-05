@@ -1,3 +1,8 @@
+import {
+  SidebarRow,
+  SidebarRows,
+  SidebarSection,
+} from "@renderer/components/sidebar-section/sidebar-section";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -81,84 +86,41 @@ export function GameDetailsSkeleton() {
           </div>
 
           <aside className="content-sidebar">
-            <div className="sidebar-section">
-              <div className="sidebar-section__header">
-                <div
-                  className="sidebar-section__button"
-                  style={{ pointerEvents: "none" }}
-                >
-                  <Skeleton height={18} width={18} />
-                  <Skeleton height={18} width={88} />
-                </div>
-              </div>
-
-              <div className="sidebar-section__content">
-                <div className="reception">
-                  <div className="reception__row">
-                    <div className="reception__row-title">
-                      <Skeleton height={14} width={14} />
-                      <Skeleton height={14} width={80} />
-                    </div>
+            <SidebarSection variant="flat" title="">
+              <SidebarRows>
+                {[80, 70, 60].map((width) => (
+                  <SidebarRow
+                    key={width}
+                    label={<Skeleton height={14} width={width} />}
+                  >
                     <Skeleton height={14} width={40} />
-                  </div>
+                  </SidebarRow>
+                ))}
+              </SidebarRows>
+            </SidebarSection>
 
-                  <div className="reception__row">
-                    <div className="reception__row-title">
-                      <Skeleton height={14} width={14} />
-                      <Skeleton height={14} width={70} />
-                    </div>
-                    <Skeleton height={14} width={35} />
-                  </div>
-
-                  <div className="reception__row">
-                    <div className="reception__row-title">
-                      <Skeleton height={14} width={14} />
-                      <Skeleton height={14} width={60} />
-                    </div>
-                    <Skeleton height={14} width={30} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="sidebar-section">
-              <div className="sidebar-section__header">
-                <div
-                  className="sidebar-section__button"
-                  style={{ pointerEvents: "none" }}
-                >
-                  <Skeleton height={18} width={18} />
-                  <Skeleton height={18} width={136} />
-                </div>
-              </div>
-
-              <div className="sidebar-section__content">
-                <ul className="list">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <li key={index}>
-                      <div
-                        className="list__item"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        <Skeleton
-                          height={54}
-                          width={54}
-                          style={{ borderRadius: "4px" }}
-                        />
-                        <div>
-                          <Skeleton
-                            height={14}
-                            width={120}
-                            style={{ marginBottom: "4px" }}
-                          />
-                          <Skeleton height={12} width={80} />
-                        </div>
+            <SidebarSection variant="flat" title="">
+              <ul className="list">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <li key={index}>
+                    <div
+                      className="list__item"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      <Skeleton
+                        height={32}
+                        width={32}
+                        style={{ borderRadius: "4px" }}
+                      />
+                      <div>
+                        <Skeleton height={14} width={120} />
+                        <Skeleton height={12} width={80} />
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </SidebarSection>
           </aside>
         </div>
       </section>

@@ -1,0 +1,36 @@
+@use "../../scss/globals.scss";
+
+.system-requirements {
+  &__columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 4);
+  }
+
+  // Steam's markup: a bold "Minimum:" line, then a list of "Label: value".
+  &__details {
+    min-width: 0;
+    user-select: text;
+    line-height: 1.5;
+    font-size: globals.$body-font-size;
+    color: globals.$body-color;
+
+    strong {
+      color: globals.$muted-color;
+      font-weight: 600;
+    }
+
+    ul {
+      margin: globals.$spacing-unit 0 0;
+      padding-left: calc(globals.$spacing-unit * 2);
+    }
+
+    li + li {
+      margin-top: calc(globals.$spacing-unit / 2);
+    }
+
+    a {
+      color: globals.$body-color;
+    }
+  }
+}

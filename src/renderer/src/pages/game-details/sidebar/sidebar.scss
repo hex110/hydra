@@ -1,23 +1,24 @@
 @use "../../../scss/globals.scss";
 
+// One continuous column: sections are flat blocks under a hairline and a
+// small label (SidebarSection variant="flat"), not separate cards.
 .content-sidebar {
   height: 100%;
   flex-shrink: 0;
   width: 280px;
   display: flex;
   flex-direction: column;
-  gap: calc(globals.$spacing-unit * 1.5);
 
   @media (min-width: 1024px) {
     width: 320px;
   }
 
   @media (min-width: 1280px) {
-    width: 380px;
+    width: 360px;
   }
 
   @media (min-width: 1440px) {
-    width: 420px;
+    width: 380px;
   }
 
   @media (max-width: 768px) {
@@ -31,127 +32,24 @@
   }
 }
 
-.requirement {
-  &__button-container {
-    width: 100%;
-    display: flex;
-  }
-
-  &__button {
-    border: solid 1px globals.$border-color;
-    border-left: none;
-    border-right: none;
-    border-radius: 0;
-    width: 100%;
-  }
-
-  &__details {
-    padding: calc(globals.$spacing-unit * 2);
-    line-height: 22px;
-    font-size: globals.$body-font-size;
-
-    a {
-      display: flex;
-      color: globals.$body-color;
-    }
-  }
-
-  &__details-skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: globals.$spacing-unit;
-    padding: calc(globals.$spacing-unit * 2);
-    font-size: globals.$body-font-size;
-  }
-}
-
 .how-long-to-beat {
-  &__categories-list {
-    margin: 0;
-    padding: calc(globals.$spacing-unit * 2);
-    display: flex;
-    flex-direction: column;
-    gap: calc(globals.$spacing-unit * 2);
-  }
-
-  &__category {
-    display: flex;
-    flex-direction: column;
-    gap: calc(globals.$spacing-unit / 2);
-    background: linear-gradient(
-      90deg,
-      transparent 20%,
-      rgb(255 255 255 / 2%) 100%
-    );
-    border-radius: 4px;
-    padding: globals.$spacing-unit calc(globals.$spacing-unit * 2);
-    border: solid 1px globals.$border-color;
-  }
-
-  &__category-label {
-    color: globals.$muted-color;
-  }
-
-  &__category-label--bold {
-    font-weight: bold;
-  }
-
   &__category-skeleton {
-    border: solid 1px globals.$border-color;
-    border-radius: 4px;
-    height: 76px;
+    height: calc(globals.$spacing-unit * 3);
   }
 }
 
 .protondb {
-  &__content {
-    padding: calc(globals.$spacing-unit * 2);
-    overflow: hidden;
-  }
-
-  &__section {
-    display: flex;
-    gap: calc(globals.$spacing-unit * 1);
-    justify-content: space-between;
-
-    @media (min-width: 1024px) {
-      flex-direction: column;
-    }
-  }
-
-  &__category {
-    display: flex;
-    flex-direction: row;
-    gap: calc(globals.$spacing-unit / 2);
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  &__category-title {
-    font-size: globals.$small-font-size;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: globals.$spacing-unit;
-    color: globals.$muted-color;
-  }
-
-  &__steamdeck-icon {
-    width: 18px;
-    height: 18px;
+  &__icon {
+    width: 14px;
+    height: 14px;
     display: block;
     object-fit: contain;
     filter: brightness(0) saturate(100%) invert(100%);
     flex-shrink: 0;
   }
 
-  &__proton-icon {
-    width: 18px;
-    height: 18px;
-    display: block;
-    object-fit: contain;
-    filter: brightness(0) saturate(100%) invert(100%);
-    flex-shrink: 0;
+  &__value {
+    text-transform: capitalize;
   }
 
   &__title-skeleton {
@@ -164,123 +62,101 @@
   &__value-skeleton {
     display: block;
     width: 64px;
-    height: 24px;
+    height: 18px;
     border-radius: 4px;
     flex-shrink: 0;
-  }
-
-  &__link-skeleton {
-    display: block;
-    width: 142px;
-    height: 14px;
-    margin-top: calc(globals.$spacing-unit * 2);
-    border-radius: 4px;
-  }
-
-  &__view-link {
-    display: inline-flex;
-    align-items: center;
-    gap: calc(globals.$spacing-unit / 2);
-    width: fit-content;
-    margin-top: calc(globals.$spacing-unit * 2);
-  }
-
-  &__value {
-    font-size: globals.$body-font-size;
-    color: #fff;
-    font-weight: 400;
-    text-transform: capitalize;
   }
 
   &__tier-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 6px;
+    padding: 1px calc(globals.$spacing-unit * 0.75);
     border-radius: 4px;
-    font-size: 12px;
+    font-size: globals.$small-font-size;
     font-weight: 600;
-    color: #0a0a0a;
-    background: rgb(180, 199, 220);
-    border: 1px solid rgba(0, 0, 0, 0.25);
-    line-height: 1.25;
+    color: globals.$critic-dark-text;
+    background: globals.$protondb-platinum;
+    line-height: 1.4;
     white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
 
     &--platinum {
-      background: rgb(180, 199, 220);
+      background: globals.$protondb-platinum;
     }
 
     &--gold {
-      background: rgb(207, 181, 59);
+      background: globals.$protondb-gold;
     }
 
     &--silver {
-      background: rgb(166, 166, 166);
+      background: globals.$protondb-silver;
     }
 
     &--bronze {
-      background: rgb(205, 127, 50);
+      background: globals.$protondb-bronze;
       color: #fff;
     }
 
     &--borked {
-      background: #d72626;
+      background: globals.$protondb-borked;
       color: #fff;
     }
   }
-
-  &__logo {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    display: block;
-    opacity: 0.95;
-  }
 }
 
+// Achievements: a short list of icon, name and a one-line description.
 .list {
   list-style: none;
   margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: calc(globals.$spacing-unit * 2);
-  padding: calc(globals.$spacing-unit * 2);
+  gap: globals.$spacing-unit;
 
   &__item {
     display: flex;
     cursor: pointer;
-    transition: all ease 0.1s;
+    transition: background-color 0.1s ease;
     color: globals.$muted-color;
     width: 100%;
     overflow: hidden;
     border-radius: 4px;
-    padding: globals.$spacing-unit;
-    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit / 2);
+    margin: calc(globals.$spacing-unit / -2);
+    width: calc(100% + globals.$spacing-unit);
+    gap: calc(globals.$spacing-unit * 1.5);
     align-items: center;
     text-align: left;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.15);
+      background-color: globals.$surface-hover-color;
       text-decoration: none;
     }
   }
 
   &__item-text {
     min-width: 0;
+    line-height: 1.35;
+
+    p {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__item-description {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    display: block;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: globals.$body-color;
+    font-size: globals.$small-font-size;
   }
 
   &__item-image {
-    width: 54px;
-    height: 54px;
+    width: calc(globals.$spacing-unit * 4);
+    height: calc(globals.$spacing-unit * 4);
+    flex-shrink: 0;
     border-radius: 4px;
     object-fit: cover;
 
@@ -297,14 +173,18 @@
       border: dashed 1px globals.$border-color;
     }
   }
+
+  &__more {
+    margin-top: calc(globals.$spacing-unit / 2);
+    font-size: globals.$small-font-size;
+  }
 }
 
 .controller-support {
-  padding: calc(globals.$spacing-unit * 2);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: globals.$spacing-unit;
+  align-items: flex-start;
+  gap: calc(globals.$spacing-unit / 2);
   color: globals.$muted-color;
 
   &__skeleton {
@@ -313,18 +193,21 @@
     gap: globals.$spacing-unit;
   }
 
+  &__summary {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 1.5);
+  }
+
   &__icons {
     display: flex;
-    gap: calc(globals.$spacing-unit * 1.5);
-    justify-content: center;
+    gap: globals.$spacing-unit;
     align-items: center;
-    color: globals.$muted-color;
-    margin-bottom: calc(globals.$spacing-unit / 2);
   }
 
   &__icon {
-    width: 36px;
-    height: 36px;
+    width: 20px;
+    height: 20px;
     color: globals.$body-color;
     display: block;
     flex-shrink: 0;
@@ -335,17 +218,16 @@
   }
 
   &__icon--playstation {
-    width: 47px;
+    width: 26px;
   }
 
   &__badge {
-    align-self: center;
-    padding: calc(globals.$spacing-unit / 2) calc(globals.$spacing-unit * 2);
+    padding: 1px globals.$spacing-unit;
     border-radius: 999px;
-    font-weight: bold;
+    font-weight: 600;
     text-transform: uppercase;
     font-size: globals.$small-font-size;
-    line-height: 1.2;
+    line-height: 1.4;
 
     &--full {
       background: rgba(154, 205, 50, 0.15);
@@ -358,16 +240,14 @@
     }
 
     &--none {
-      background: rgba(255, 255, 255, 0.05);
+      background: globals.$chip-background-color;
     }
   }
 
   &__description {
     margin: 0;
-    margin-top: calc(globals.$spacing-unit / 2);
-    max-width: 280px;
-    text-align: center;
     line-height: 1.45;
+    font-size: globals.$hint-font-size;
     color: globals.$body-color;
   }
 }
@@ -393,11 +273,10 @@
 .mods-section {
   display: flex;
   flex-direction: column;
-  gap: globals.$spacing-unit;
-  padding: calc(globals.$spacing-unit * 2);
+  gap: calc(globals.$spacing-unit / 2);
 
   &__summary {
-    font-size: globals.$body-font-size;
+    font-size: globals.$hint-font-size;
     color: globals.$body-color;
   }
 

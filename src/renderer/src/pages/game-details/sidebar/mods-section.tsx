@@ -26,7 +26,7 @@ export function ModsSection() {
   const updates = installed.filter((mod) => mod.update).length;
 
   return (
-    <SidebarSection title={t("section_title")}>
+    <SidebarSection variant="flat" title={t("section_title")}>
       <div className="mods-section">
         <p className="mods-section__summary">
           {error && !mods

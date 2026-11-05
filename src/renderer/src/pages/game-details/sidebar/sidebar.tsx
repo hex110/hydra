@@ -1,11 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useState } from "react";
-import type {
-  HowLongToBeatCategory,
-  ProtonDBData,
-  SteamAppDetails,
-} from "@types";
+import type { HowLongToBeatCategory, ProtonDBData } from "@types";
 import { useTranslation } from "react-i18next";
-import { Button } from "@renderer/components/button/button";
 import { Link } from "@renderer/components/link/link";
 
 import { gameDetailsContext } from "@renderer/context";
@@ -22,7 +17,6 @@ import { SidebarSection } from "@renderer/components/sidebar-section/sidebar-sec
 import { buildGameAchievementPath } from "@renderer/helpers";
 import { RetroAchievementsConnectBanner } from "@renderer/components/retro-achievements-connect-banner/retro-achievements-connect-banner";
 import "./sidebar.scss";
-import { GameLanguageSection } from "./game-language-section";
 import { ControllerSupportSection } from "./controller-support-section";
 
 const ProtonDBSection = lazy(async () => {
@@ -75,9 +69,6 @@ export function Sidebar() {
     isLoading: boolean;
     data: ProtonDBData | null;
   }>({ isLoading: shouldShowProtonFeatures, data: null });
-
-  const [activeRequirement, setActiveRequirement] =
-    useState<keyof SteamAppDetails["pc_requirements"]>("minimum");
 
   const {
     gameTitle,
@@ -173,6 +164,7 @@ export function Sidebar() {
 
       {shouldRenderAchievementsSection && (
         <SidebarSection
+          variant="flat"
           title={
             achievementsCount > 0
               ? t("achievements_count", {
@@ -218,6 +210,7 @@ export function Sidebar() {
 
             {achievementsCount > 0 && (
               <Link
+                className="list__more"
                 to={buildGameAchievementPath({
                   shop: shop,
                   objectId: objectId!,
@@ -252,43 +245,6 @@ export function Sidebar() {
       />
 
       <ControllerSupportSection />
-
-      {shop !== "launchbox" && (
-        <SidebarSection title={t("requirements")}>
-          <div className="requirement__button-container">
-            <Button
-              className="requirement__button"
-              onClick={() => setActiveRequirement("minimum")}
-              theme={activeRequirement === "minimum" ? "primary" : "outline"}
-            >
-              {t("minimum")}
-            </Button>
-
-            <Button
-              className="requirement__button"
-              onClick={() => setActiveRequirement("recommended")}
-              theme={
-                activeRequirement === "recommended" ? "primary" : "outline"
-              }
-            >
-              {t("recommended")}
-            </Button>
-          </div>
-
-          <div
-            className="requirement__details"
-            dangerouslySetInnerHTML={{
-              __html:
-                shopDetails?.pc_requirements?.[activeRequirement] ??
-                t(`no_${activeRequirement}_requirements`, {
-                  gameTitle,
-                }),
-            }}
-          />
-        </SidebarSection>
-      )}
-
-      <GameLanguageSection />
 
       <LinksSection title={gameTitle} steamAppId={steamAppId} />
     </aside>

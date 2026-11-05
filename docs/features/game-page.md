@@ -18,6 +18,7 @@ summary that links there. Add a row here when a feature adds a new fact.
 | A run's mods (modded or not, loader, mods on)            | **Options → Compatibility**, the Runs part                                                                                                                                        |
 | Copies and other versions in your library                | **Your game** sidebar section, only when there are any                                                                                                                            |
 | Achievements                                             | Sidebar summary (icon, name, description), details on the achievements page                                                                                                       |
+| System requirements, supported languages                 | Middle column, below **About this game** and above **More like this**                                                                                                             |
 | Outside ratings and player counts                        | **Reception** sidebar section (Steam games)                                                                                                                                       |
 | Hydra rating (Steam reviews adjusted, with Metacritic)   | Store cards, rows and chart tables, one chip with its parts in the tooltip ([Catalogue](catalogue.md#hydra-rating)); the game page shows the separate figures under **Reception** |
 | Games played outside Hydra (for suggestions)             | **Based on** in For you ([Catalogue](catalogue.md#feedback-from-cards))                                                                                                           |
@@ -26,6 +27,15 @@ summary that links there. Add a row here when a feature adds a new fact.
 | RenoDX mod, ReShade version, HDR mod status              | **Options → Tools**, the RenoDX part below the tool list                                                                                                                          |
 | Which tools apply (OnlineFix, HDR, RenoDX, …), why       | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there                                                                                                         |
 | Past launches: outcome, exit code, tools, logs           | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))                                                                                                            |
+
+## Requirements and languages
+
+Below **About this game**: **System requirements** shows Steam's Minimum and
+Recommended lists side by side (stacked in a narrow window; one is left out
+when Steam has none, and the whole block when it has neither), then
+**Language** as two lines: every language, then the ones with voice-over. Both
+sit in the centred column ([below](#the-centred-column)). Not shown for
+LaunchBox games, which have no store requirements.
 
 ## The centred column
 
@@ -111,12 +121,21 @@ release ([updates](updates.md)), an **Update to …** button appears next to
 
 ## Sidebar sections
 
-Top to bottom: **Your game**, ProtonDB (Linux), **Achievements**,
-**Reception**, genres, HowLongToBeat, controller support, requirements,
-language, **Links**.
+One continuous column, not a stack of cards: each section is a block under a
+hairline with a small uppercase label (`SidebarSection variant="flat"`), no
+background header and no collapse, in the style of Steam's store and library
+sidebars. Rows of label and value use `SidebarRows` / `SidebarRow`, so ProtonDB,
+Reception, HowLongToBeat and Details look the same. Site links (ProtonDB,
+Steam, HowLongToBeat) sit on the label's right.
 
-- **Achievements** lists up to four, each with icon, name and description
-  (cut to two lines); unlock dates are on the achievements page.
+Top to bottom: **Your game**, ProtonDB (Linux), **Achievements**,
+**Reception**, genres, HowLongToBeat, controller support, **Links**.
+Requirements and languages are not here; they are in the middle column
+([above](#requirements-and-languages)). The catalogue's filter panels still use
+the collapsible `card` variant.
+
+- **Achievements** lists up to four, each with icon, name and a one-line
+  description (the full text is its tooltip); unlock dates are on the achievements page.
 - **Reception** is for Steam games and shows what players think, with no
   account or key: Steam's review summary (label, percentage positive, number
   of reviews), the number of players in game right now, and the Metacritic

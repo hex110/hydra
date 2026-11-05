@@ -67,7 +67,8 @@ collection of cards. The game page is the reference; check new work against it.
   place (a summary elsewhere) must link to the first, not repeat it. A new fact
   gets a row in the same change.
 - **Build from `src/renderer/src/components/`.** Right-hand sidebar content is a
-  `SidebarSection`. No native `<select>`, checkbox or other form control, and no
+  `SidebarSection` (`variant="flat"` on the game page) with `SidebarRows` for
+  label/value lines. No native `<select>`, checkbox or other form control, and no
   new card or section chrome in a feature folder. If a primitive is missing
   (e.g. an interactive rating), add it to `components/` first, then use it.
 - **No raw colours or sizes in feature SCSS.** No hex or `rgba()` literals

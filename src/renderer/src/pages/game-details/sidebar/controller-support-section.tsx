@@ -40,7 +40,7 @@ export function ControllerSupportSection() {
   const copy = getControllerSupportCopyKeys(status);
 
   return (
-    <SidebarSection title={t("controller_support")}>
+    <SidebarSection variant="flat" title={t("controller_support")}>
       <div className="controller-support">
         {isPending ? (
           <div className="controller-support__skeleton">
@@ -50,17 +50,19 @@ export function ControllerSupportSection() {
           </div>
         ) : (
           <>
-            {status !== "none" && (
-              <div className="controller-support__icons" aria-hidden="true">
-                <XboxIcon />
-                <PlayStationIcon />
-              </div>
-            )}
+            <div className="controller-support__summary">
+              {status !== "none" && (
+                <div className="controller-support__icons" aria-hidden="true">
+                  <XboxIcon />
+                  <PlayStationIcon />
+                </div>
+              )}
 
-            <div
-              className={`controller-support__badge controller-support__badge--${status}`}
-            >
-              {t(copy.labelKey)}
+              <div
+                className={`controller-support__badge controller-support__badge--${status}`}
+              >
+                {t(copy.labelKey)}
+              </div>
             </div>
 
             <p className="controller-support__description">

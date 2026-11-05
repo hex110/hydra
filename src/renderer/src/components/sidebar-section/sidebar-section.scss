@@ -82,3 +82,84 @@
     position: relative;
   }
 }
+
+// The flat variant: no card, no fold. Sections are told apart by a hairline and
+// a small label, so a column of them reads as one block.
+.flat-sidebar-section {
+  padding: calc(globals.$spacing-unit * 1.5) 0;
+  border-top: 1px solid globals.$border-color;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+    margin-bottom: globals.$spacing-unit;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: globals.$body-color;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+    text-decoration: none;
+
+    &:hover {
+      color: globals.$muted-color;
+      text-decoration: underline;
+    }
+  }
+}
+
+.sidebar-rows {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 0.75);
+  margin: 0;
+}
+
+.sidebar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: globals.$spacing-unit;
+  min-height: calc(globals.$spacing-unit * 3);
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+  }
+
+  &__value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin: 0;
+    font-size: globals.$body-font-size;
+    color: globals.$muted-color;
+    text-align: right;
+
+    small {
+      font-size: globals.$small-font-size;
+      color: globals.$body-color;
+    }
+  }
+}
