@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { getHardwareModels } from "@shared";
 import type { SystemSpecsOverrides } from "@types";
 
-import { Button, SelectField } from "@renderer/components";
+import { Button, ComboboxField } from "@renderer/components";
 import { settingsContext } from "@renderer/context";
 import { useAppSelector, useSystemSpecs } from "@renderer/hooks";
 
@@ -66,18 +66,16 @@ export function SettingsContextMyPc() {
           )}
         </div>
         <div className="settings-my-pc__controls">
-          <SelectField
+          <ComboboxField
             label={t(`my_pc_${part}`)}
-            value={modelId ?? ""}
-            onChange={(event) => save({ [key]: event.target.value || null })}
-            options={[
-              { key: "none", value: "", label: t("my_pc_choose") },
-              ...modelOptions[part].map((model) => ({
-                key: model.id,
-                value: model.id,
-                label: model.name,
-              })),
-            ]}
+            value={modelId}
+            placeholder={t("my_pc_choose")}
+            noResultsLabel={t("my_pc_no_match")}
+            options={modelOptions[part].map((model) => ({
+              value: model.id,
+              label: model.name,
+            }))}
+            onChange={(id) => save({ [key]: id })}
           />
           {edited && (
             <Button theme="outline" onClick={() => save({ [key]: null })}>
@@ -115,20 +113,16 @@ export function SettingsContextMyPc() {
               </span>
             </div>
             <div className="settings-my-pc__controls">
-              <SelectField
+              <ComboboxField
                 label={t("my_pc_ram")}
-                value={specs.ramGb ?? ""}
-                onChange={(event) =>
-                  save({ ramGb: Number(event.target.value) || null })
-                }
-                options={[
-                  { key: "none", value: "", label: t("my_pc_choose") },
-                  ...ramOptions.map((size) => ({
-                    key: String(size),
-                    value: String(size),
-                    label: t("my_pc_ram_value", { count: size }),
-                  })),
-                ]}
+                value={specs.ramGb ? String(specs.ramGb) : null}
+                placeholder={t("my_pc_choose")}
+                noResultsLabel={t("my_pc_no_match")}
+                options={ramOptions.map((size) => ({
+                  value: String(size),
+                  label: t("my_pc_ram_value", { count: size }),
+                }))}
+                onChange={(size) => save({ ramGb: Number(size) })}
               />
               {specs.ramSource === "edited" && (
                 <Button theme="outline" onClick={() => save({ ramGb: null })}>

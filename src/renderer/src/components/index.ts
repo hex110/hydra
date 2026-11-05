@@ -16,6 +16,7 @@ export * from "./segmented-control/segmented-control";
 export * from "./link/link";
 export * from "./guide-link/guide-link";
 export * from "./select-field/select-field";
+export * from "./combobox-field/combobox-field";
 export * from "./toast/toast";
 export * from "./vertical-cover-card/vertical-cover-card";
 export * from "./badge/badge";
