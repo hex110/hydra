@@ -32,16 +32,16 @@ interface SidebarGameItemProps {
   game: LibraryGame;
   handleSidebarGameClick: (game: LibraryGame) => void;
   getGameTitle: (game: LibraryGame) => string;
-  playingGameId?: string;
-  playingModded?: boolean;
+  playingGameIds?: readonly string[];
+  moddedGameIds?: ReadonlySet<string>;
 }
 
 export const SidebarGameItem = memo(function SidebarGameItem({
   game,
   handleSidebarGameClick,
   getGameTitle,
-  playingGameId,
-  playingModded = false,
+  playingGameIds = [],
+  moddedGameIds,
 }: Readonly<SidebarGameItemProps>) {
   const location = useLocation();
   const { t } = useTranslation("game_details");
@@ -79,9 +79,12 @@ export const SidebarGameItem = memo(function SidebarGameItem({
   const isCustomGame = game.shop === "custom";
   const catalogueIdentity = getGameCatalogueIdentity(game);
   const badgeSource = getLibraryPresentationBadgeSource(game);
-  const isPlaying =
-    playingGameId !== undefined &&
-    getLibraryGameMembers(game).some((member) => member.id === playingGameId);
+  const members = getLibraryGameMembers(game);
+  const isPlaying = members.some((member) =>
+    playingGameIds.includes(member.id)
+  );
+  const playingModded =
+    isPlaying && members.some((member) => moddedGameIds?.has(member.id));
   // The Steam mark on the right replaces the corner badge for Steam games.
   const isOwnedOnSteam =
     game.ownedOnSteam === true ||

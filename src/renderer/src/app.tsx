@@ -35,6 +35,7 @@ import {
   hydrateRetroArchScan,
   setExtractionProgress,
   setGameRunning,
+  setRunningGameIds,
   setLibrarySyncingRemote,
   setLibraryAwaitingAccount,
   setProfileBackground,
@@ -60,7 +61,7 @@ import { useScreenshotUploadFailureToast } from "./hooks/use-screenshot-upload-f
 import { LeaderboardNotificationLayer } from "./components/leaderboard-notification/leaderboard-notification-layer";
 import { playMessageSound } from "./pages/chat-window/chat-sounds";
 
-import type { UserPreferences } from "@types";
+import type { GameRunning, UserPreferences } from "@types";
 import "./app.scss";
 import {
   getAchievementSoundUrl,
@@ -391,7 +392,20 @@ export function App() {
   }, [dispatch, fetchUserDetails, t, showSuccessToast, updateUserDetails]);
 
   useEffect(() => {
-    const unsubscribe = window.electron.onGamesRunning((gamesRunning) => {
+    const applyGamesRunning = (
+      gamesRunning: Pick<GameRunning, "id" | "sessionDurationInMillis">[]
+    ) => {
+      dispatch(
+        setRunningGameIds(
+          gamesRunning
+            .filter(
+              (running) =>
+                !library.find((game) => game.id === running.id)?.isConcealed
+            )
+            .map((running) => running.id)
+        )
+      );
+
       if (gamesRunning.length) {
         const runningIds = new Set(gamesRunning.map((game) => game.id));
         const concealedExecutables = new Set(
@@ -426,7 +440,14 @@ export function App() {
         }
       }
       dispatch(setGameRunning(null));
-    });
+    };
+
+    const unsubscribe = window.electron.onGamesRunning(applyGamesRunning);
+    // Games that were already running before Hydra started show up at once.
+    window.electron
+      .getGamesRunning()
+      .then(applyGamesRunning)
+      .catch(() => {});
 
     return () => {
       unsubscribe();

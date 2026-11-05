@@ -178,8 +178,10 @@ faded, grayscale icon, as in Steam.
 
 Its filter menu changes the same settings as the library page.
 
-The game that is running shows its title in green, as on Steam, with a tools
-icon when it was started with **Play (modded)**. Games owned on Steam carry a
+Every game that is running shows its title in green, as on Steam, with a tools
+icon when it was started with **Play (modded)**. Hydra finds games by their
+processes, so games that were already running when Hydra started show at once
+(and Hydra stays open instead of hiding to the tray for them). Games owned on Steam carry a
 small dim Steam mark on the right (replacing the corner badge on the icon);
 its tooltip says when the game also opens through Steam, that is, its
 executable is in Steam's `steamapps/common` folder.

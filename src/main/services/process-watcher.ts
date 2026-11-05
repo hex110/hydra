@@ -334,6 +334,9 @@ const hasLinuxCompatibilityProcessMatch = (
   });
 };
 
+// Games already running when Hydra starts are adopted on the first scan.
+let initialScanDone = false;
+
 export const watchProcesses = async () => {
   startOptionalExecutableCatalogueLoad(() => GameExecutables.ensureLoaded());
 
@@ -361,6 +364,9 @@ export const watchProcesses = async () => {
     return;
   }
   const { processMap, winePrefixMap, linuxProcesses } = systemProcessMap;
+
+  const adoptingRunningGames = !initialScanDone;
+  initialScanDone = true;
 
   const pidToProcess = new Map<number, LinuxProcessInfo>(
     linuxProcesses.map((process) => [process.pid, process])
@@ -435,7 +441,7 @@ export const watchProcesses = async () => {
       if (gamesPlaytime.has(gameKey)) {
         onTickGame(game);
       } else {
-        await onOpenGame(game, matchedPath);
+        await onOpenGame(game, matchedPath, adoptingRunningGames);
       }
     } else if (gamesPlaytime.has(gameKey)) {
       onCloseGame(game);
@@ -447,7 +453,7 @@ export const watchProcesses = async () => {
   WindowManager.sendToAppWindows("on-games-running", getGamesRunning());
 };
 
-async function onOpenGame(game: Game, matchedPath: string) {
+async function onOpenGame(game: Game, matchedPath: string, adopted = false) {
   const authContext = HydraApi.getAuthContext();
   const hydraRevision = getHydraPlaytimeRevision(
     levelKeys.game(game.shop, game.objectId)
@@ -521,21 +527,23 @@ async function onOpenGame(game: Game, matchedPath: string) {
     markGameLauncherGameDetected(gameKey);
   }
 
-  // Hide Hydra to tray on game startup if enabled
-  db.get<string, UserPreferences | null>(levelKeys.userPreferences, {
-    valueEncoding: "json",
-  })
-    .then((userPreferences) => {
-      if (
-        resolveHideToTrayOnGameStart(
-          userPreferences?.hideToTrayOnGameStart,
-          os.totalmem()
-        )
-      ) {
-        WindowManager.closeMainWindowToTray();
-      }
+  // Hide Hydra to tray on game startup if enabled; a game found already
+  // running is not a start, and the user has just opened Hydra on purpose.
+  if (!adopted)
+    db.get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
     })
-    .catch(() => {});
+      .then((userPreferences) => {
+        if (
+          resolveHideToTrayOnGameStart(
+            userPreferences?.hideToTrayOnGameStart,
+            os.totalmem()
+          )
+        ) {
+          WindowManager.closeMainWindowToTray();
+        }
+      })
+      .catch(() => {});
 
   if (game.shop === "custom") return;
 

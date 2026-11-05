@@ -35,7 +35,7 @@ export * from "./use-steam-link-paste";
 export * from "./use-middle-click-autoscroll";
 export * from "./use-active-game-setups";
 export * from "./use-library-view";
-export * from "./use-running-game-modded";
+export * from "./use-running-games-modded";
 export * from "./use-cloud-save-access";
 export * from "./use-steam-tags";
 export * from "./use-popular-steam-tags";

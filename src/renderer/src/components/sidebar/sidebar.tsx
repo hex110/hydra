@@ -17,7 +17,7 @@ import {
   useDownload,
   useLibrary,
   useLibraryView,
-  useRunningGameModded,
+  useRunningGamesModded,
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
@@ -78,9 +78,14 @@ export function Sidebar() {
   const { t } = useTranslation(["sidebar", "library"]);
   const { library, updateLibrary } = useLibrary();
   const isLibraryLoading = useAppSelector(selectIsLibraryLoading);
-  const runningGame = useAppSelector((state) => state.gameRunning.gameRunning);
-  const runningGameId = runningGame?.id;
-  const runningGameModded = useRunningGameModded(runningGame);
+  const runningGameIds = useAppSelector(
+    (state) => state.gameRunning.runningGameIds
+  );
+  const runningGames = useMemo(
+    () => library.filter((game) => runningGameIds.includes(game.id)),
+    [library, runningGameIds]
+  );
+  const moddedGameIds = useRunningGamesModded(runningGames);
   const [deckyPluginInfo, setDeckyPluginInfo] = useState<{
     installed: boolean;
     version: string | null;
@@ -144,11 +149,11 @@ export function Sidebar() {
   const orderedLibrary = useMemo(
     () =>
       orderSidebarGames(
-        groupLibraryGames(library, runningGameId ? [runningGameId] : []).filter(
+        groupLibraryGames(library, runningGameIds).filter(
           (game) => !isWishlistOnlyEntry(game)
         )
       ),
-    [library, orderSidebarGames, runningGameId]
+    [library, orderSidebarGames, runningGameIds]
   );
 
   const availableTabs = useMemo(
@@ -310,7 +315,7 @@ export function Sidebar() {
   // Starting or ending a session changes lastTimePlayed, which the sort uses.
   useEffect(() => {
     void updateLibrary();
-  }, [runningGameId, updateLibrary]);
+  }, [runningGameIds, updateLibrary]);
 
   useEffect(() => {
     const handlePinToggled = () => {
@@ -595,8 +600,8 @@ export function Sidebar() {
                           game={game}
                           handleSidebarGameClick={handleSidebarGameClick}
                           getGameTitle={getGameTitle}
-                          playingGameId={runningGameId}
-                          playingModded={runningGameModded}
+                          playingGameIds={runningGameIds}
+                          moddedGameIds={moddedGameIds}
                         />
                       </div>
                     );

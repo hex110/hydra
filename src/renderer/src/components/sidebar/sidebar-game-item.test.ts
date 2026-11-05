@@ -167,19 +167,19 @@ it("marks the running game, and shows the mods icon only when modded", () => {
   const idle = renderRow(steamGame);
   assert.equal(idle.querySelector(".sidebar__menu-item--playing"), null);
 
-  const playing = renderRow(steamGame, { playingGameId: "steam:123" });
+  const playing = renderRow(steamGame, { playingGameIds: ["steam:123"] });
   assert.ok(playing.querySelector(".sidebar__menu-item--playing"));
   assert.equal(playing.querySelector(".sidebar__game-modded-icon"), null);
 
   const modded = renderRow(steamGame, {
-    playingGameId: "steam:123",
-    playingModded: true,
+    playingGameIds: ["steam:123"],
+    moddedGameIds: new Set(["steam:123"]),
   });
   assert.ok(modded.querySelector(".sidebar__game-modded-icon"));
 
   const other = renderRow(steamGame, {
-    playingGameId: "steam:999",
-    playingModded: true,
+    playingGameIds: ["steam:999"],
+    moddedGameIds: new Set(["steam:999"]),
   });
   assert.equal(other.querySelector(".sidebar__menu-item--playing"), null);
   assert.equal(other.querySelector(".sidebar__game-modded-icon"), null);
@@ -205,4 +205,11 @@ it("shows a Steam mark for Steam-owned games and says when Steam launches them",
     ),
     null
   );
+});
+
+it("marks every game in the running list, not only the last one", () => {
+  const row = renderRow(steamGame, {
+    playingGameIds: ["steam:999", "steam:123", "steam:456"],
+  });
+  assert.ok(row.querySelector(".sidebar__menu-item--playing"));
 });
