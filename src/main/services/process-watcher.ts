@@ -67,6 +67,7 @@ import { updateGameRecord } from "./game-record-updater";
 import { recordPlayActivity } from "./play-activity";
 import { onScreenshotGameClosed, onScreenshotGameStarted } from "./screenshots";
 import { GameExecutables } from "./game-executables";
+import { getRealPath } from "./real-path-cache";
 import {
   onManagedEpicClosed,
   onManagedEpicDetected,
@@ -396,7 +397,7 @@ export const watchProcesses = async () => {
       matchPaths = [executablePath, ...trackingPaths];
     }
 
-    let matchedPath = matchPaths.find((matchPath) => {
+    const matchesProcess = (matchPath: string) => {
       const executable = matchPath
         .slice(matchPath.lastIndexOf(platform === "win32" ? "\\" : "/") + 1)
         .toLowerCase();
@@ -411,7 +412,20 @@ export const watchProcesses = async () => {
       }
 
       return false;
-    });
+    };
+
+    let matchedPath = matchPaths.find(matchesProcess);
+
+    // Processes report resolved paths; the recorded one may go through a symlink.
+    if (!matchedPath && platform === "linux") {
+      for (const matchPath of matchPaths) {
+        const realPath = await getRealPath(matchPath);
+        if (realPath !== matchPath && matchesProcess(realPath)) {
+          matchedPath = matchPath;
+          break;
+        }
+      }
+    }
 
     if (
       !matchedPath &&
