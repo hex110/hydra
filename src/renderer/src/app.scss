@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+// No browser default focus ring (the square outline that appears after a key
+// press). :where() keeps specificity at zero, so a component's own
+// :focus-visible style still applies.
+:where(:focus-visible) {
+  outline: none;
+}
+
 ::-webkit-scrollbar {
   width: 9px;
   background-color: globals.$dark-background-color;
