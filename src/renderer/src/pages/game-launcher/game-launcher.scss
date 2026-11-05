@@ -60,7 +60,7 @@
     bottom: 0;
     background: radial-gradient(
       ellipse at top right,
-      rgba(22, 177, 149, 0.15) 0%,
+      globals.with-alpha(globals.$brand-teal, 0.15) 0%,
       transparent 50%
     );
     pointer-events: none;

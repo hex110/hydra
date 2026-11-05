@@ -418,7 +418,7 @@ $disc-menu-transition-duration: 0.15s;
     gap: 0;
     padding: 0;
     background: #0d0d0d;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 8px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     max-height: $disc-menu-max-height;

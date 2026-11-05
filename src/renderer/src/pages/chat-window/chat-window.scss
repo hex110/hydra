@@ -1,28 +1,35 @@
-@use "sass:color";
 @use "sass:math";
 @use "../../scss/globals.scss";
 
-$popover-background: #1c1c1c;
+$popover-background: globals.$surface-color;
 $popover-border: rgba(255, 255, 255, 0.1);
-$faded-text: rgba(globals.$body-color, 0.7);
-$meta-text: rgba(globals.$body-color, 0.6);
+$faded-text: globals.with-alpha(globals.$body-color, 0.7);
+$meta-text: globals.with-alpha(globals.$body-color, 0.6);
 // Message links; each keeps 6:1 contrast on its bubble.
 $link-color: #7aa2ff;
 $mine-link-color: #2350c8;
 $emoji-font-family:
   "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
-$mine-reaction-background: color.mix(
-  globals.$muted-color,
-  globals.$background-color,
-  12%
+$mine-reaction-background: color-mix(
+  in srgb,
+  #{globals.$muted-color} 12%,
+  #{globals.$background-color}
 );
 // Height of the window controls, which the tab strip lines up with.
 $strip-height: 40px;
 // Matches CHAT_TAB_GAP in chat-tab-layout.ts.
 $tab-gap: 4px;
 // Opaque, so the status orb's ring can match the tab under it.
-$tab-hover-background: color.mix(#ffffff, globals.$dark-background-color, 4%);
-$tab-active-background: color.mix(#ffffff, globals.$dark-background-color, 8%);
+$tab-hover-background: color-mix(
+  in srgb,
+  #ffffff 4%,
+  #{globals.$dark-background-color}
+);
+$tab-active-background: color-mix(
+  in srgb,
+  #ffffff 8%,
+  #{globals.$dark-background-color}
+);
 // Circumference of the send button's cooldown ring (r=11, chat-send-cooldown.tsx).
 $cooldown-ring-length: 2 * math.$pi * 11;
 
@@ -456,7 +463,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     }
 
     .chat-window__profile-link--avatar {
-      box-shadow: 0 0 0 2px rgba(globals.$muted-color, 0.35);
+      box-shadow: 0 0 0 2px globals.with-alpha(globals.$muted-color, 0.35);
     }
   }
 
@@ -1377,7 +1384,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
       content: "";
       flex: 1;
       height: 1px;
-      background-color: rgba(globals.$muted-color, 0.4);
+      background-color: globals.with-alpha(globals.$muted-color, 0.4);
     }
   }
 
@@ -1389,7 +1396,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     z-index: 1;
     padding: 3px 10px;
     transform: translateX(-50%);
-    background-color: rgba($popover-background, 0.92);
+    background-color: globals.with-alpha($popover-background, 0.92);
     border: 1px solid globals.$border-color;
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -1397,7 +1404,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: rgba(globals.$body-color, 0.8);
+    color: globals.with-alpha(globals.$body-color, 0.8);
     pointer-events: none;
     animation: chat-window-fade-in 0.15s ease;
   }
@@ -1486,13 +1493,13 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     &--replying {
       box-shadow:
         0 0 0 2px globals.$background-color,
-        0 0 0 3px rgba(globals.$muted-color, 0.5);
+        0 0 0 3px globals.with-alpha(globals.$muted-color, 0.5);
     }
 
     &--flash {
       box-shadow:
         0 0 0 2px globals.$background-color,
-        0 0 0 4px rgba(globals.$muted-color, 0.9);
+        0 0 0 4px globals.with-alpha(globals.$muted-color, 0.9);
     }
   }
 
@@ -1593,7 +1600,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
       font-size: globals.$small-font-size;
       font-style: italic;
       line-height: 16px;
-      color: rgba(globals.$body-color, 0.75);
+      color: globals.with-alpha(globals.$body-color, 0.75);
       white-space: normal;
       cursor: default;
 
@@ -1619,30 +1626,30 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     text-overflow: ellipsis;
     font-size: globals.$small-font-size;
     line-height: 16px;
-    color: rgba(globals.$body-color, 0.75);
+    color: globals.with-alpha(globals.$body-color, 0.75);
   }
 
   &__message-group--mine &__message-quote {
-    background-color: rgba(globals.$background-color, 0.08);
+    background-color: globals.with-alpha(globals.$background-color, 0.08);
 
     &:hover,
     &:focus-visible {
-      background-color: rgba(globals.$background-color, 0.14);
+      background-color: globals.with-alpha(globals.$background-color, 0.14);
     }
 
     &--unavailable,
     &--unavailable:hover {
-      background-color: rgba(globals.$background-color, 0.08);
-      color: rgba(globals.$background-color, 0.66);
+      background-color: globals.with-alpha(globals.$background-color, 0.08);
+      color: globals.with-alpha(globals.$background-color, 0.66);
     }
   }
 
   &__message-group--mine &__message-quote-name {
-    color: rgba(globals.$background-color, 0.8);
+    color: globals.with-alpha(globals.$background-color, 0.8);
   }
 
   &__message-group--mine &__message-quote-text {
-    color: rgba(globals.$background-color, 0.66);
+    color: globals.with-alpha(globals.$background-color, 0.66);
   }
 
   &__message-row:first-child &__message {
@@ -2112,7 +2119,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
 
     &:disabled {
       background-color: rgba(255, 255, 255, 0.06);
-      color: rgba(globals.$body-color, 0.4);
+      color: globals.with-alpha(globals.$body-color, 0.4);
       cursor: default;
     }
   }
@@ -2294,7 +2301,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
 
     &--mine {
       background-color: $mine-reaction-background;
-      border-color: rgba(globals.$muted-color, 0.6);
+      border-color: globals.with-alpha(globals.$muted-color, 0.6);
     }
 
     &--pending {
@@ -2452,8 +2459,8 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     }
 
     &[aria-pressed="true"] {
-      background-color: rgba(globals.$muted-color, 0.14);
-      box-shadow: inset 0 0 0 1px rgba(globals.$muted-color, 0.4);
+      background-color: globals.with-alpha(globals.$muted-color, 0.14);
+      box-shadow: inset 0 0 0 1px globals.with-alpha(globals.$muted-color, 0.4);
     }
   }
 
@@ -2657,8 +2664,8 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     }
 
     &--selected {
-      background-color: rgba(globals.$muted-color, 0.14);
-      box-shadow: inset 0 0 0 1px rgba(globals.$muted-color, 0.4);
+      background-color: globals.with-alpha(globals.$muted-color, 0.14);
+      box-shadow: inset 0 0 0 1px globals.with-alpha(globals.$muted-color, 0.4);
     }
   }
 
@@ -2736,7 +2743,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
 
     &:disabled {
       background: none;
-      color: rgba(globals.$body-color, 0.4);
+      color: globals.with-alpha(globals.$body-color, 0.4);
       cursor: not-allowed;
     }
   }
@@ -2850,7 +2857,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     z-index: 20;
     display: flex;
     padding: 12px;
-    background-color: rgba(globals.$background-color, 0.88);
+    background-color: globals.with-alpha(globals.$background-color, 0.88);
     pointer-events: none;
     animation: chat-window-fade-in 0.16s ease;
   }
@@ -2862,7 +2869,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border: 1px dashed rgba(globals.$muted-color, 0.45);
+    border: 1px dashed globals.with-alpha(globals.$muted-color, 0.45);
     border-radius: 8px;
     color: globals.$muted-color;
   }
@@ -2899,13 +2906,13 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     &--replying {
       box-shadow:
         0 0 0 2px globals.$background-color,
-        0 0 0 3px rgba(globals.$muted-color, 0.5);
+        0 0 0 3px globals.with-alpha(globals.$muted-color, 0.5);
     }
 
     &--flash {
       box-shadow:
         0 0 0 2px globals.$background-color,
-        0 0 0 4px rgba(globals.$muted-color, 0.9);
+        0 0 0 4px globals.with-alpha(globals.$muted-color, 0.9);
     }
   }
 
@@ -3017,7 +3024,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     left: 50%;
     padding: 4px 10px;
     transform: translate(-50%, -50%);
-    background-color: rgba(globals.$background-color, 0.8);
+    background-color: globals.with-alpha(globals.$background-color, 0.8);
     border-radius: 4px;
     font-size: globals.$small-font-size;
     font-weight: 700;
@@ -3033,7 +3040,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     bottom: 0;
     left: 0;
     height: 3px;
-    background-color: rgba(globals.$background-color, 0.6);
+    background-color: globals.with-alpha(globals.$background-color, 0.6);
   }
 
   &__message-images-progress-bar {
@@ -3055,12 +3062,12 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background-color: rgba(globals.$background-color, 0.55);
+    background-color: globals.with-alpha(globals.$background-color, 0.55);
     color: globals.$muted-color;
     animation: chat-window-fade-in 0.16s ease;
 
     &--retry {
-      background-color: rgba(globals.$background-color, 0.45);
+      background-color: globals.with-alpha(globals.$background-color, 0.45);
     }
   }
 
@@ -3075,7 +3082,7 @@ $cooldown-ring-length: 2 * math.$pi * 11;
     gap: 6px;
     height: 32px;
     padding: 0 12px;
-    background-color: rgba(globals.$background-color, 0.85);
+    background-color: globals.with-alpha(globals.$background-color, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 6px;
     color: globals.$muted-color;

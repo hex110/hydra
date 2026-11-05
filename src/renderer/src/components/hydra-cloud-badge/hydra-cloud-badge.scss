@@ -1,11 +1,10 @@
-@use "sass:color";
 @use "../../scss/globals.scss";
 
 .hydra-cloud-badge {
   background: linear-gradient(
     270deg,
-    color.scale(globals.$brand-teal, $lightness: -30%) 50%,
-    color.scale(globals.$brand-blue, $lightness: -30%) 100%
+    hsl(from #{globals.$brand-teal} h s calc(l * 0.7)) 50%,
+    hsl(from #{globals.$brand-blue} h s calc(l * 0.7)) 100%
   );
   color: #fff;
   padding: 0 globals.$spacing-unit;

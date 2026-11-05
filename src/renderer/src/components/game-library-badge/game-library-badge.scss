@@ -16,7 +16,7 @@
   color: globals.$muted-color;
 
   &--installed {
-    background: rgba(22, 177, 149, 0.18);
+    background: globals.with-alpha(globals.$brand-teal, 0.18);
     color: globals.$brand-teal;
   }
 

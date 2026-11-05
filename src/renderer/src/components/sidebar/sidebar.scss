@@ -158,7 +158,7 @@
     &--decky {
       background: linear-gradient(
         135deg,
-        rgba(22, 177, 149, 0.2) 0%,
+        globals.with-alpha(globals.$brand-teal, 0.2) 0%,
         rgba(62, 98, 192, 0.1) 100%
       );
       color: globals.$muted-color;
@@ -166,7 +166,7 @@
       &:hover {
         background: linear-gradient(
           135deg,
-          rgba(22, 177, 149, 0.3) 0%,
+          globals.with-alpha(globals.$brand-teal, 0.3) 0%,
           rgba(62, 98, 192, 0.15) 100%
         );
       }

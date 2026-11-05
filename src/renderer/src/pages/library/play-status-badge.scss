@@ -1,3 +1,4 @@
+@use "../../scss/globals.scss";
 .play-status-badge {
   display: inline-flex;
   align-items: center;
@@ -29,7 +30,7 @@
   }
 
   &--playing &__dot {
-    background-color: #16b195;
+    background-color: globals.$brand-teal;
   }
 
   &--backlog &__dot {

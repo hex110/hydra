@@ -35,7 +35,7 @@
 
   &__toggle--active {
     color: globals.$brand-teal;
-    border-color: rgba(globals.$brand-teal, 0.5);
+    border-color: globals.with-alpha(globals.$brand-teal, 0.5);
   }
 
   &__suggestion {

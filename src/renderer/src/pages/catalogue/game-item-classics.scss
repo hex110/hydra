@@ -1,7 +1,8 @@
+@use "../../scss/globals.scss";
 .game-item-classics {
   position: relative;
   background: #0d0d0d;
-  border: 1px solid #1c1c1c;
+  border: 1px solid globals.$surface-color;
   border-radius: 8px;
   overflow: hidden;
   color: #fafafa;

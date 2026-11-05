@@ -170,7 +170,7 @@
 
   &__row {
     background: #0d0d0d;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 12px;
     padding: 16px 24px;
     display: flex;
@@ -579,7 +579,7 @@
     height: 4px;
     width: 100%;
     border-radius: 999px;
-    background: #1c1c1c;
+    background: globals.$surface-color;
     overflow: hidden;
   }
 
@@ -598,7 +598,7 @@
 
   &__memcard-card {
     background: #0d0d0d;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 10px;
     padding: 10px 12px;
     display: flex;
@@ -707,7 +707,7 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 8px;
     background: transparent;
     color: #c0c1c7;
@@ -958,7 +958,7 @@
     width: 100%;
     text-align: left;
     background: #0d0d0d;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 8px;
     padding: 10px 12px;
     cursor: pointer;
@@ -1061,7 +1061,7 @@
     display: flex;
     align-items: center;
     background: #0d0d0d;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 8px;
     padding: 12px 16px;
     cursor: pointer;

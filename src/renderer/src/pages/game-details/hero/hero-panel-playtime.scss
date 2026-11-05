@@ -51,7 +51,7 @@
 @keyframes playtime-flash {
   from {
     color: globals.$brand-teal;
-    text-shadow: 0 0 12px rgba(globals.$brand-teal, 0.6);
+    text-shadow: 0 0 12px globals.with-alpha(globals.$brand-teal, 0.6);
   }
 }
 

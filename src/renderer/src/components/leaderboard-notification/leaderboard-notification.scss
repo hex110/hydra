@@ -1,3 +1,4 @@
+@use "../../scss/globals.scss";
 $leaderboard-up: #4ade80;
 $leaderboard-down: #ff6b81;
 $leaderboard-text: #f0f1f7;
@@ -94,7 +95,7 @@ $leaderboard-muted: #a6a7ad;
   gap: 12px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1c1c1c;
+  background: globals.$surface-color;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   text-align: left;
   cursor: pointer;

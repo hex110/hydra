@@ -1,7 +1,7 @@
 @use "../../scss/globals.scss";
 
-$faded-text: rgba(globals.$body-color, 0.7);
-$meta-text: rgba(globals.$body-color, 0.6);
+$faded-text: globals.with-alpha(globals.$body-color, 0.7);
+$meta-text: globals.with-alpha(globals.$body-color, 0.6);
 
 // Extends `.modal`; the chat window can be narrower than its min-width. It is
 // a native <dialog>, so its default placement and padding are reset.

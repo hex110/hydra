@@ -1,3 +1,4 @@
+@use "../../../scss/globals.scss";
 .disc-selection-modal {
   &__body {
     display: flex;
@@ -14,7 +15,7 @@
     width: 100%;
     padding: 12px;
     background-color: #0d0d0d;
-    border: 1px solid #1c1c1c;
+    border: 1px solid globals.$surface-color;
     border-radius: 8px;
     color: #c0c1c7;
     cursor: pointer;

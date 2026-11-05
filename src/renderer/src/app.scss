@@ -156,7 +156,11 @@ progress[value] {
   }
 
   &__cloud-text {
-    background: linear-gradient(270deg, #16b195 50%, #3e62c0 100%);
+    background: linear-gradient(
+      270deg,
+      globals.$brand-teal 50%,
+      globals.$brand-blue 100%
+    );
     background-clip: text;
     color: transparent;
   }

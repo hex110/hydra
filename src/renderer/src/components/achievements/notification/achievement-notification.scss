@@ -221,7 +221,11 @@ $margin-bottom: 28px;
   }
 
   &--platinum &__container {
-    background: linear-gradient(94deg, #1c1c1c -25%, #044838 100%);
+    background: linear-gradient(
+      94deg,
+      globals.$surface-color -25%,
+      #044838 100%
+    );
   }
 
   &--rare &__container {
