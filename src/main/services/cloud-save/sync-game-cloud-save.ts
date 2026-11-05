@@ -26,6 +26,7 @@ import {
 } from "./custom-path-store";
 import { deleteLocalSaveTargets } from "./delete-local-save-targets";
 import { assertCloudSaveEnvironmentCurrent } from "./environment-guard";
+import { isPreLaunchSyncAbandoned } from "./pre-launch-wait";
 import { canDeleteInstallationOwnedCustomPathFiles } from "./installation-owned-custom-paths";
 import { resolveAnalyzedCloudSaveMerge } from "./resolve-analyzed-cloud-save-merge";
 import {
@@ -695,12 +696,16 @@ const executeGameCloudSaveSync = async ({
   suppliedContext: Awaited<ReturnType<typeof getCloudSaveGameContext>>;
   attempt: number;
 }): Promise<SyncGameCloudSaveResult> => {
-  const assertEnvironmentCurrent = () =>
-    assertCloudSaveEnvironmentCurrent(
+  const assertEnvironmentCurrent = async () => {
+    if (trigger === "pre-launch" && isPreLaunchSyncAbandoned(objectId, shop)) {
+      throw new Error("cloud_save_game_running");
+    }
+    await assertCloudSaveEnvironmentCurrent(
       objectId,
       shop,
       suppliedContext.environmentId
-    ).then(() => undefined);
+    );
+  };
   await assertEnvironmentCurrent();
   emitProgress({
     gameId: { objectId, shop },

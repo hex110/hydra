@@ -34,6 +34,10 @@ import {
 } from "./launch-guard";
 import { CloudSaveOperationCoordinator } from "./operation-coordinator";
 import {
+  clearAbandonedPreLaunchSync,
+  waitForPreLaunchSync,
+} from "./pre-launch-wait";
+import {
   classifyAutomaticCloudSaveFailure,
   getPendingDeletionAutomaticSyncOutcome,
   type AutomaticCloudSaveSyncOutcome,
@@ -280,7 +284,8 @@ export const runAutomaticCloudSaveSyncDetailed = async (
     }
 
     let latestStage: CloudSaveSyncProgressStage | undefined;
-    return syncGameCloudSave(
+    if (trigger === "pre-launch") clearAbandonedPreLaunchSync(objectId, shop);
+    const outcome = syncGameCloudSave(
       objectId,
       shop,
       trigger,
@@ -399,6 +404,21 @@ export const runAutomaticCloudSaveSyncDetailed = async (
               : undefined,
         } as AutomaticCloudSaveSyncOutcome;
       });
+
+    // A slow or unreachable cloud must not hold Play back; start with local saves.
+    if (trigger !== "pre-launch") return outcome;
+    return waitForPreLaunchSync<AutomaticCloudSaveSyncOutcome>(outcome, {
+      objectId,
+      shop,
+      getStage: () => latestStage,
+      onGiveUp: () => {
+        logger.warn(
+          "[Cloud Save] Pre-launch sync took too long; starting with local saves",
+          { shop, objectId, stage: latestStage }
+        );
+        return { status: "offline", result: null };
+      },
+    });
   });
 };
 

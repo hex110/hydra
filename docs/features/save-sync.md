@@ -48,7 +48,9 @@ The same as Hydra Cloud's saves, signed in or not:
   check fails (the store can't be reached, a file is missing), the game still
   starts with the saves it has, and nothing is uploaded when it closes, so
   those saves can't replace newer ones in the store. Only a conflict stops a
-  launch;
+  launch. The check waits at most 20 seconds (it never gives up during a
+  restore); then the game starts with its local saves as if the store could not
+  be reached, and the unfinished check stops before it can change any save;
 - no sync while a game is starting or running: from the launch until the run
   ends, opening the game's page or changing its prefix doesn't sync, since
   the game may be writing its saves (under Proton the process watcher can
