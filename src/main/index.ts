@@ -28,6 +28,7 @@ import {
   ScreenshotInputService,
 } from "@main/services";
 import { MAX_ADDON_TITLE_LENGTH } from "@main/services/addon-bridge-core";
+import { startMatugenPalette } from "@main/services/matugen-palette";
 import resources from "@locales";
 import { TorrentService } from "./services/torrent-service";
 import { DownloadManager } from "./services/download/download-manager";
@@ -212,6 +213,9 @@ const initializeApp = async () => {
     logger.error("Failed to load app state during startup", error);
   }
   startAddonBridge();
+  startMatugenPalette().catch((error) => {
+    logger.warn("Matugen palette unavailable", error);
+  });
   // Optional integration failures must not interrupt launcher startup.
   await initializeEpicIntegration().catch((error) => {
     logger.warn("Epic integration initialization unavailable", error);

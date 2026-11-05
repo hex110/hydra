@@ -1,4 +1,6 @@
 import type {
+  MatugenPaletteSetupResult,
+  MatugenPaletteState,
   SaveSyncStatus,
   GameMods,
   ModActivityEntry,
@@ -2158,6 +2160,17 @@ declare global {
     /* Editor */
     openEditorWindow: (themeId: string) => Promise<void>;
     onCustomThemeUpdated: (cb: () => void) => () => Electron.IpcRenderer;
+
+    /* Matugen palette */
+    getMatugenPalette: () => Promise<MatugenPaletteState>;
+    setMatugenPalette: (update: {
+      enabled?: boolean;
+      path?: string | null;
+    }) => Promise<MatugenPaletteState>;
+    setupMatugenPalette: () => Promise<MatugenPaletteSetupResult>;
+    onMatugenPaletteUpdated: (
+      cb: (state: MatugenPaletteState) => void
+    ) => () => void;
     closeEditorWindow: (themeId?: string) => Promise<void>;
 
     /* Game Launcher Window */

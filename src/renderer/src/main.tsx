@@ -30,6 +30,7 @@ import { clearStateFromPreviousSession } from "./session-state";
 import * as Sentry from "@sentry/react";
 import { ErrorBoundary } from "./components/error-boundary/error-boundary";
 import { levelDBService } from "./services/leveldb.service";
+import { startMatugenPalette } from "./matugen-palette";
 import Catalogue from "./pages/catalogue/catalogue";
 import Home from "./pages/home/home";
 import Downloads from "./pages/downloads/downloads";
@@ -61,6 +62,8 @@ import BigPictureGameAchievements from "../../big-picture/src/pages/game-achieve
 import BigPictureProfile from "../../big-picture/src/pages/profile/profile";
 
 console.log = logger.log;
+
+void startMatugenPalette();
 
 Sentry.init({
   dsn: import.meta.env.RENDERER_VITE_SENTRY_DSN,

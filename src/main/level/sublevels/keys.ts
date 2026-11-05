@@ -6,6 +6,7 @@ export const levelKeys = {
   user: "user",
   auth: "auth",
   themes: "themes",
+  matugenPalette: "matugenPalette",
   gameShopAssets: "gameShopAssets",
   artworkSelection: "artworkSelection",
   gameStatsCache: "gameStatsAssets",

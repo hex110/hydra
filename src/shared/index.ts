@@ -447,3 +447,4 @@ export * from "./steam-charts";
 export * from "./catalogue-charts";
 export * from "./catalogue-facets";
 export * from "./steamcharts";
+export * from "./matugen-palette";

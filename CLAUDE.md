@@ -73,6 +73,10 @@ collection of cards. The game page is the reference; check new work against it.
 - **No raw colours or sizes in feature SCSS.** No hex or `rgba()` literals
   except inside `globals.scss`; repeated values become tokens there. Use
   `$spacing-unit` multiples and the font-size tokens.
+- **Palette tokens are CSS variables** (`var(--hydra-*, stock)`, see
+  `docs/features/matugen-theming.md`). Never pass one to a Sass colour function
+  (`rgba()`, `color.*`): use `globals.with-alpha()` or `color-mix()`; Sass won't
+  error, it emits invalid CSS. A test guards this.
 - **Animation:** use `opacity` and `transform` only, and gate it behind
   `prefers-reduced-motion`. Don't animate inside `backdrop-filter` or
   `overflow: hidden` panels with anything that can leave stale paint on Linux.

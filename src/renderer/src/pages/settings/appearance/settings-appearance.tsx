@@ -5,6 +5,7 @@ import type { Theme } from "@types";
 import { ImportThemeModal } from "./modals/import-theme-modal";
 import { settingsContext } from "@renderer/context";
 import { useNavigate } from "react-router-dom";
+import { MatugenPalette } from "./components/matugen-palette";
 import { levelDBService } from "@renderer/services/leveldb.service";
 
 interface SettingsAppearanceProps {
@@ -83,6 +84,8 @@ export function SettingsAppearance({
 
   return (
     <div className="settings-appearance">
+      <MatugenPalette />
+
       <ThemeActions onListUpdated={loadThemes} themesCount={themes.length} />
 
       <div className="settings-appearance__themes">

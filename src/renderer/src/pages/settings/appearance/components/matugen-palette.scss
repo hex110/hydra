@@ -1,0 +1,72 @@
+@use "../../../../scss/globals.scss";
+
+.matugen-palette {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 1.5);
+  padding-bottom: calc(globals.$spacing-unit * 2);
+  border-bottom: 1px solid globals.$border-color;
+
+  &__title {
+    font-size: globals.$body-font-size;
+    font-weight: 600;
+    color: globals.$muted-color;
+  }
+
+  &__description,
+  &__hint,
+  &__configured,
+  &__status {
+    font-size: globals.$hint-font-size;
+    color: globals.$body-color;
+  }
+
+  &__status--unreadable,
+  &__status--empty {
+    color: globals.$warning-color;
+  }
+
+  &__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: globals.$spacing-unit;
+    list-style: none;
+    padding: 0;
+  }
+
+  &__swatch {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+    border: 1px solid globals.$border-color;
+    border-radius: 999px;
+    font-size: globals.$small-font-size;
+    color: globals.$body-color;
+  }
+
+  &__swatch-color {
+    width: calc(globals.$spacing-unit * 2);
+    height: calc(globals.$spacing-unit * 2);
+    border-radius: 50%;
+    border: 1px solid globals.$border-color;
+  }
+
+  &__setup {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+  }
+
+  &__configured {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    color: globals.$success-color;
+  }
+
+  &__actions {
+    display: flex;
+    gap: globals.$spacing-unit;
+  }
+}

@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  MatugenPaletteState,
   ModPlacementChoice,
   CatalogueSearchResult,
   ModDownload,
@@ -2850,6 +2851,20 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("on-custom-theme-updated", listener);
     return () =>
       ipcRenderer.removeListener("on-custom-theme-updated", listener);
+  },
+  /* Matugen palette */
+  getMatugenPalette: () => ipcRenderer.invoke("getMatugenPalette"),
+  setMatugenPalette: (update: { enabled?: boolean; path?: string | null }) =>
+    ipcRenderer.invoke("setMatugenPalette", update),
+  setupMatugenPalette: () => ipcRenderer.invoke("setupMatugenPalette"),
+  onMatugenPaletteUpdated: (cb: (state: MatugenPaletteState) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      state: MatugenPaletteState
+    ) => cb(state);
+    ipcRenderer.on("on-matugen-palette-updated", listener);
+    return () =>
+      ipcRenderer.removeListener("on-matugen-palette-updated", listener);
   },
   onNewDownloadOptions: (
     cb: (gamesWithNewOptions: { gameId: string; count: number }[]) => void

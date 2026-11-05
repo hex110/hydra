@@ -29,6 +29,7 @@ import "./notifications";
 import "./profile";
 import "./screenshots";
 import "./themes";
+import "./matugen";
 import "./torrenting";
 import "./user";
 import "./user-preferences";
