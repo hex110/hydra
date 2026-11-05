@@ -444,6 +444,7 @@ export interface UserPreferences {
   hideToTrayOnGameStart?: boolean;
   /** Notices (achievements) inside the game through MangoHud; unset is on. */
   inGameNotices?: boolean;
+  useNativeWindowDecorations?: boolean;
   enableNewDownloadOptionsBadges?: boolean;
   createStartMenuShortcut?: boolean;
   /** Linux: a desktop entry per installed game, for app launchers. */

@@ -154,6 +154,7 @@ import type {
   CatalogueChartResult,
   Downloader,
 } from "@shared";
+import { NATIVE_WINDOW_DECORATIONS_ARGUMENT } from "../shared/window-layout";
 import type { AxiosProgressEvent } from "axios";
 
 const fileExplorerApi = {
@@ -2448,6 +2449,9 @@ contextBridge.exposeInMainWorld("electron", {
     process.platform === "linux" &&
     (process.env.XDG_SESSION_TYPE?.toLowerCase() === "wayland" ||
       Boolean(process.env.WAYLAND_DISPLAY)),
+  hasNativeWindowDecorations: process.argv.includes(
+    NATIVE_WINDOW_DECORATIONS_ARGUMENT
+  ),
 
   /* Auto update */
   onAutoUpdaterEvent: (cb: (value: AppUpdaterEvent) => void) => {

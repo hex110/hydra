@@ -1990,6 +1990,7 @@ declare global {
     deleteTempFile: (filePath: string) => Promise<void>;
     platform: NodeJS.Platform;
     isWayland: boolean;
+    hasNativeWindowDecorations: boolean;
 
     /* Auto update */
     onAutoUpdaterEvent: (
