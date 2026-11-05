@@ -1044,6 +1044,7 @@ export * from "./renodx.types";
 export * from "./game-runs.types";
 export * from "./game-capabilities.types";
 export * from "./machine.types";
+export * from "./system-requirements.types";
 export * from "./local-source.types";
 export * from "./launch-rule.types";
 export * from "./save-import.types";

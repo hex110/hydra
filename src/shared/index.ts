@@ -448,3 +448,6 @@ export * from "./catalogue-charts";
 export * from "./catalogue-facets";
 export * from "./steamcharts";
 export * from "./matugen-palette";
+export * from "./system-requirements/hardware-table";
+export * from "./system-requirements/hardware-match";
+export * from "./system-requirements/requirements";

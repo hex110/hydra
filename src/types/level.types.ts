@@ -5,6 +5,7 @@ import type { ClassicsDisc } from "./emulator.types";
 import type { PlayStatus } from "./library-metadata.types";
 import type { SaveStoreConfig } from "./save-store.types";
 import type { LaunchRule } from "./launch-rule.types";
+import type { SystemSpecsOverrides } from "./system-requirements.types";
 import type { MangoHudSettings, ProtonFlavor } from "./linux-gaming.types";
 import type {
   GameSaveImportState,
@@ -477,6 +478,8 @@ export interface UserPreferences {
   startBrowserDownloadsImmediately?: boolean;
   /** Unset until first edited; the built-in presets apply until then. */
   launchRules?: LaunchRule[];
+  /** Corrections to the hardware Hydra detected, for the requirements check. */
+  systemSpecs?: SystemSpecsOverrides;
   /** @deprecated Migrated to the HDR launch rule. */
   enableHdr?: boolean;
   /** Load OnlineFix's proxy DLLs and give its games Steam's client files. */
