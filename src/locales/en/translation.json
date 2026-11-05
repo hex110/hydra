@@ -694,7 +694,7 @@
     "filter": "Filter repacks",
     "requirements": "System requirements",
     "requirements_meets": "Your PC meets this.",
-    "requirements_below": "Your PC falls short on: {{parts}}.",
+    "requirements_below": "Falls short: {{parts}}.",
     "requirements_partial": "Nothing falls short, but {{parts}} could not be checked.",
     "requirements_unknown": "Hydra could not check this against your PC.",
     "requirements_gpu_guess": "Hydra only guessed your graphics card.",

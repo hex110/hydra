@@ -23,6 +23,10 @@
     &--below {
       color: globals.$warning-color;
     }
+
+    a {
+      white-space: nowrap;
+    }
   }
 
   // Steam's markup: a bold "Minimum:" line, then a list of "Label: value".

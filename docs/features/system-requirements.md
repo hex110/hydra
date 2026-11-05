@@ -10,7 +10,7 @@ On the game page, **System requirements** (below About this game) shows
 Steam's Minimum and Recommended lists. Above each list is one line:
 
 - **Your PC meets this.**
-- **Your PC falls short on: graphics card, memory.** Names every part below the
+- **Falls short: graphics card, memory.** Names every part below the
   line. If your card is only a guess (see below) it says so.
 - **Nothing falls short, but processor could not be checked.** Some part of the
   requirement text isn't a model Hydra knows ("Quad core 3 GHz",
