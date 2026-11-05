@@ -84,8 +84,9 @@ export function ComboboxField({
         }
         autoComplete="off"
         disabled={disabled}
-        value={query}
-        placeholder={selected?.label ?? placeholder}
+        value={open ? query : (selected?.label ?? "")}
+        // While searching, the current choice stays visible as the hint.
+        placeholder={open ? (selected?.label ?? placeholder) : placeholder}
         onFocus={() => {
           setOpen(true);
           setActiveIndex(
@@ -144,9 +145,13 @@ export function ComboboxField({
                 "combobox-field__option--active": index === activeIndex,
                 "combobox-field__option--current": option.value === value,
               })}
-              // Keeps the input focused, so picking doesn't blur and close first.
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => choose(option)}
+              // Picks on mouse-down and keeps the input focused, so the blur
+              // that would close the list never comes first. The keyboard
+              // works on the input (arrows and Enter).
+              onMouseDown={(event) => {
+                event.preventDefault();
+                choose(option);
+              }}
               onMouseMove={() => setActiveIndex(index)}
             >
               {option.label}
