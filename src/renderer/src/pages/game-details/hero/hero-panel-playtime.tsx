@@ -147,7 +147,7 @@ export function HeroPanelPlaytime() {
   return (
     <>
       <p
-        key={sessionEnd.endedAt ?? "idle"}
+        key={`play-time-${sessionEnd.endedAt ?? "idle"}`}
         className={`hero-panel-playtime__play-time${
           sessionEnd.justEnded ? " hero-panel-playtime__play-time--updated" : ""
         }`}
@@ -178,7 +178,7 @@ export function HeroPanelPlaytime() {
       {!isExtracting && hasDownload && downloadInProgressInfo}
       {!isExtracting && !hasDownload && !!lastTimePlayed && (
         <p
-          key={sessionEnd.endedAt ?? "idle"}
+          key={`last-played-${sessionEnd.endedAt ?? "idle"}`}
           className={
             sessionEnd.justEnded
               ? "hero-panel-playtime__last-played"
