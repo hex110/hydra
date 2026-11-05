@@ -37,6 +37,7 @@
   }
 
   &__description-content {
+    container-type: inline-size;
     width: 100%;
     min-height: 100%;
     min-width: 0;
@@ -51,36 +52,20 @@
   &__description-title {
     font-size: 20px;
     font-weight: 600;
-    width: 100%;
+    @include globals.reading-column;
     margin: 0 auto;
-
-    @media (min-width: 1280px) {
-      width: 60%;
-    }
-
-    @media (min-width: 1536px) {
-      width: 50%;
-    }
   }
 
   &__description {
     user-select: text;
     line-height: 22px;
     font-size: globals.$body-font-size;
-    width: 100%;
+    @include globals.reading-column;
     margin-left: auto;
     margin-right: auto;
     overflow-x: auto;
     min-height: auto;
     transition: max-height 0.3s ease-in-out;
-
-    @media (min-width: 1280px) {
-      width: 60%;
-    }
-
-    @media (min-width: 1536px) {
-      width: 50%;
-    }
 
     &--collapsed {
       max-height: 300px;

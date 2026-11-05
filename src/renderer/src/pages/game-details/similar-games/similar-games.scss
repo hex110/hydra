@@ -7,17 +7,9 @@ $card-hover-transition-duration: 0.2s;
   display: flex;
   flex-direction: column;
   gap: calc(globals.$spacing-unit * 1.5);
-  width: 100%;
+  @include globals.reading-column;
   align-self: center;
   margin-inline: auto;
-
-  @media (min-width: 1280px) {
-    width: 60%;
-  }
-
-  @media (min-width: 1536px) {
-    width: 50%;
-  }
 
   &__header {
     display: flex;

@@ -20,19 +20,17 @@
   }
 
   &__viewport {
-    width: 100%;
+    @include globals.reading-column;
     height: 100%;
     position: relative;
     overflow: hidden;
     border-radius: 8px;
 
     @media (min-width: 1280px) {
-      width: 60%;
       max-height: 500px;
     }
 
     @media (min-width: 1536px) {
-      width: 50%;
       max-height: 600px;
     }
   }
@@ -90,7 +88,7 @@
   }
 
   &__preview {
-    width: 100%;
+    @include globals.reading-column;
     padding: globals.$spacing-unit 0;
     height: auto;
     display: flex;
@@ -98,14 +96,6 @@
     overflow-x: auto;
     overflow-y: hidden;
     gap: calc(globals.$spacing-unit / 2);
-
-    @media (min-width: 1280px) {
-      width: 60%;
-    }
-
-    @media (min-width: 1536px) {
-      width: 50%;
-    }
 
     &::-webkit-scrollbar-thumb {
       width: 20%;

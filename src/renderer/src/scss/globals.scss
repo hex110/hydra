@@ -26,6 +26,37 @@ $brand-blue: var(--hydra-accent-secondary, #3e62c0);
 
 $surface-selected-color: with-alpha($brand-teal, 0.14);
 
+// Width of the centred column on the game page (gallery, description, reviews…).
+// Each side's gutter is at most what the old 60 % / 50 % breakpoints left, at
+// least $reading-column-min-gutter, and otherwise just enough to keep the
+// column about $reading-column-target-width wide, so a half-screen window is
+// not mostly margin. Needs a size container ancestor
+// (.game-details__description-content).
+$reading-column-min-gutter: 50px;
+$reading-column-target-width: 760px;
+
+@mixin reading-column {
+  --reading-gutter-cap: 0px;
+  width: calc(
+    100cqw - 2 *
+      min(
+        var(--reading-gutter-cap),
+        max(
+          #{$reading-column-min-gutter},
+          (100cqw - #{$reading-column-target-width}) / 2
+        )
+      )
+  );
+
+  @media (min-width: 1280px) {
+    --reading-gutter-cap: 20cqw;
+  }
+
+  @media (min-width: 1536px) {
+    --reading-gutter-cap: 25cqw;
+  }
+}
+
 $success-color: #1c9749;
 $danger-color: #801d1e;
 $error-color: #e11d48;
