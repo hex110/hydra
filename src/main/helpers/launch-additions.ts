@@ -9,6 +9,7 @@ import {
 import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
 import { prepareOnlineFixGame } from "@main/services/game-setup/online-fix-step";
 import { ModStore } from "@main/services/mods/mod-store";
+import { WidescreenPatch } from "@main/services/widescreen-patch/widescreen-patch";
 import { resolveGameRootForDetection } from "@main/services/optiscaler/game-files";
 import {
   buildGamescopeLaunchOptions,
@@ -90,6 +91,7 @@ const getLinuxLaunchEnvironment = async (
 
   const optiScalerDll = OptiScaler.getLaunchNativeDll(game);
   const renoDxDll = RenoDx.getLaunchNativeDll(game);
+  const widescreenDll = WidescreenPatch.getLaunchNativeDll(game);
   // Play (modded) loads the loader's proxy DLL; Play leaves Wine's own.
   const modLoader = game
     ? await ModStore.getLaunchLoader(game.shop, objectId).catch(() => null)
@@ -99,6 +101,7 @@ const getLinuxLaunchEnvironment = async (
     nativeDlls: [
       ...(optiScalerDll ? [optiScalerDll] : []),
       ...(renoDxDll ? [renoDxDll] : []),
+      ...(widescreenDll ? [widescreenDll] : []),
       ...(modLoader?.nativeDlls ?? []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
     ],

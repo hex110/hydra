@@ -1061,3 +1061,4 @@ export type ExtractionFailure =
 export type { SystemPowerAction } from "./system-power";
 export * from "./mods.types";
 export * from "./fomod.types";
+export * from "./widescreen-patch.types";

@@ -14,6 +14,7 @@ import { logger } from "@main/services/logger";
 import { OptiScaler } from "@main/services/optiscaler/optiscaler";
 import { getMachineProfile } from "@main/services/machine/machine-profile";
 import { RenoDx, canSwitchMonitorToHdr } from "@main/services/renodx/renodx";
+import { WidescreenPatch } from "@main/services/widescreen-patch/widescreen-patch";
 import {
   CAPABILITY_LAUNCH_RULES,
   capabilityOverrideFromMode,
@@ -42,6 +43,7 @@ import {
   resolveOnlineFix,
   resolveOptiScaler,
   resolveRenoDx,
+  resolveWidescreenPatch,
 } from "./game-capabilities-core";
 
 const loadPreferences = () =>
@@ -105,10 +107,12 @@ export const getGameCapabilities = async (
   const capabilities: GameCapability[] = [];
 
   if (isWindowsGame(game)) {
-    const [renoDxStatus, optiScalerStatus] = await Promise.all([
-      RenoDx.getGameStatus(shop, objectId),
-      OptiScaler.getGameStatus(shop, objectId),
-    ]);
+    const [renoDxStatus, optiScalerStatus, widescreenStatus] =
+      await Promise.all([
+        RenoDx.getGameStatus(shop, objectId),
+        OptiScaler.getGameStatus(shop, objectId),
+        WidescreenPatch.getGameStatus(shop, objectId),
+      ]);
     const findRule = (id: "hdr" | "hdr_monitor") =>
       rules.find((rule) => rule.id === CAPABILITY_LAUNCH_RULES[id]);
     const canSwitchMonitor = canSwitchMonitorToHdr();
@@ -160,6 +164,8 @@ export const getGameCapabilities = async (
         machine.upscalerFit
       )
     );
+    const widescreen = resolveWidescreenPatch(game, widescreenStatus);
+    if (widescreen) capabilities.push(widescreen);
   }
 
   if (!isLinux) return capabilities;
@@ -243,6 +249,23 @@ const setInstallCapability = async (
   }
 };
 
+const setWidescreenPatch = async (game: Game, mode: GameCapabilityMode) => {
+  const gameKey = levelKeys.game(game.shop, game.objectId);
+  if (mode === "on") {
+    await WidescreenPatch.install(game.shop, game.objectId);
+  } else if (game.widescreenPatch) {
+    await WidescreenPatch.uninstall(game.shop, game.objectId);
+  }
+  // Written after the install, so a failed install keeps the previous choice.
+  await updateGameRecord(gameKey, (current) => ({
+    capabilityOverrides: withCapabilityOverride(
+      current,
+      "widescreen_patch",
+      capabilityOverrideFromMode(mode)
+    ),
+  }));
+};
+
 export const setGameCapabilityMode = async (
   shop: GameShop,
   objectId: string,
@@ -274,6 +297,9 @@ export const setGameCapabilityMode = async (
       case "renodx":
       case "optiscaler":
         await setInstallCapability(game, id, mode);
+        break;
+      case "widescreen_patch":
+        await setWidescreenPatch(game, mode);
         break;
       case "discrete_gpu":
         await updateGameRecord(gameKey, (current) => ({

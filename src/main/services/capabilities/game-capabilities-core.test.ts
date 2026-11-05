@@ -1,6 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import type { Game, GameOptiScalerStatus, GameRenoDxStatus } from "@types";
+import type {
+  Game,
+  GameOptiScalerStatus,
+  GameRenoDxStatus,
+  GameWidescreenPatchStatus,
+} from "@types";
 import {
   resolveLaunchRuleCapability,
   resolveDiscreteGpu,
@@ -8,6 +13,7 @@ import {
   resolveOnlineFix,
   resolveOptiScaler,
   resolveRenoDx,
+  resolveWidescreenPatch,
 } from "./game-capabilities-core.ts";
 
 const game = (fields: Partial<Game> = {}) => fields as Game;
@@ -300,5 +306,80 @@ describe("resolveDiscreteGpu", () => {
     );
     assert.equal(result.mode, "on");
     assert.equal(result.active, true);
+  });
+});
+
+describe("resolveWidescreenPatch", () => {
+  const status = (
+    fields: Partial<GameWidescreenPatchStatus> = {}
+  ): GameWidescreenPatchStatus => ({
+    patch: { id: "p", name: "SUWSF", configFile: "SUWSF.ini" },
+    installDirectory: "/games/x",
+    installation: null,
+    conflict: null,
+    missingFiles: [],
+    ...fields,
+  });
+  const installation = {
+    directory: "/games/x",
+    patchId: "p",
+    version: "1",
+    nativeDll: "winmm",
+    installedAt: "",
+  };
+
+  it("is not listed for a game without a patch", () => {
+    assert.strictEqual(
+      resolveWidescreenPatch(game(), status({ patch: null })),
+      null
+    );
+  });
+
+  it("offers the patch in Auto without installing it", () => {
+    const result = resolveWidescreenPatch(game(), status())!;
+    assert.strictEqual(result.mode, "auto");
+    assert.strictEqual(result.active, false);
+    assert.strictEqual(result.blocked, false);
+    assert.strictEqual(result.reason.code, "widescreen_patch_available");
+  });
+
+  it("is active once installed, and blocked when its files are gone", () => {
+    const on = resolveWidescreenPatch(
+      game({ capabilityOverrides: { widescreen_patch: true } }),
+      status({ installation })
+    )!;
+    assert.strictEqual(on.mode, "on");
+    assert.strictEqual(on.active, true);
+    assert.strictEqual(on.reason.code, "widescreen_patch_installed");
+
+    const broken = resolveWidescreenPatch(
+      game(),
+      status({ installation, missingFiles: ["winmm.dll"] })
+    )!;
+    assert.strictEqual(broken.blocked, true);
+    assert.strictEqual(broken.reason.code, "widescreen_patch_files_missing");
+  });
+
+  it("blocks On when a foreign DLL is in the way, but only reports it in Auto", () => {
+    const conflict = { fileName: "winmm.dll" };
+    const wanted = resolveWidescreenPatch(
+      game({ capabilityOverrides: { widescreen_patch: true } }),
+      status({ conflict })
+    )!;
+    assert.strictEqual(wanted.blocked, true);
+    assert.strictEqual(wanted.reason.code, "widescreen_patch_conflict");
+    assert.strictEqual(
+      resolveWidescreenPatch(game(), status({ conflict }))!.blocked,
+      false
+    );
+  });
+
+  it("says Off was chosen for the game", () => {
+    const off = resolveWidescreenPatch(
+      game({ capabilityOverrides: { widescreen_patch: false } }),
+      status()
+    )!;
+    assert.strictEqual(off.mode, "off");
+    assert.strictEqual(off.reason.code, "set_off_for_game");
   });
 });

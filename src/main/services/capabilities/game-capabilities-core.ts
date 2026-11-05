@@ -13,6 +13,7 @@ import type {
   GameCapabilityReason,
   GameOptiScalerStatus,
   GameRenoDxStatus,
+  GameWidescreenPatchStatus,
   GpuUpscalerFit,
   LaunchRule,
   MachineGpu,
@@ -365,6 +366,62 @@ export const resolveDiscreteGpu = (
     reason: reason(
       override === false ? "set_off_for_game" : "discrete_gpu_auto",
       { vendor }
+    ),
+  });
+};
+
+/**
+ * A patch built for one game. Auto offers it without installing: it changes
+ * the game with someone else's binary, and it is not known to suit every
+ * version of the game.
+ */
+export const resolveWidescreenPatch = (
+  game: Game,
+  status: GameWidescreenPatchStatus
+): GameCapability | null => {
+  if (!status.patch) return null;
+  const params = {
+    name: status.patch.name,
+    config: status.patch.configFile,
+  };
+  if (status.installation)
+    return capability("widescreen_patch", game, {
+      active: true,
+      blocked: status.missingFiles.length > 0,
+      reason:
+        status.missingFiles.length > 0
+          ? reason("widescreen_patch_files_missing", {
+              ...params,
+              files: status.missingFiles.join(", "),
+            })
+          : reason("widescreen_patch_installed", {
+              ...params,
+              version: status.installation.version,
+            }),
+    });
+  const override = getCapabilityOverride(game, "widescreen_patch");
+  if (override === false)
+    return capability("widescreen_patch", game, {
+      active: false,
+      reason: reason("set_off_for_game"),
+    });
+  if (status.conflict)
+    return capability("widescreen_patch", game, {
+      active: false,
+      blocked: override === true,
+      reason: reason("widescreen_patch_conflict", {
+        ...params,
+        file: status.conflict.fileName,
+      }),
+    });
+  return capability("widescreen_patch", game, {
+    active: false,
+    blocked: override === true,
+    reason: reason(
+      override === true
+        ? "widescreen_patch_not_installed"
+        : "widescreen_patch_available",
+      params
     ),
   });
 };

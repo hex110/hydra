@@ -32,6 +32,7 @@ scrolls.
 | HDR: switch the monitor | Linux     | The `hypr-hdr` launch rule's setting for every game                                                 |
 | RenoDX HDR mod          | All       | Installed during setup when a mod exists, a display accepts HDR and **Tool defaults** is Auto       |
 | OptiScaler              | All       | Installed during setup when the game qualifies, the GPU gains from it and **Tool defaults** is Auto |
+| Widescreen patch        | All       | Nothing installed: a per-game patch exists for the game ([details](widescreen-patch.md))            |
 | MangoHud                | Linux     | The global setting, or a launch rule that turns it on                                               |
 | GameMode                | Linux     | On where `gamemoderun` is installed, unless **Tool defaults** says Never                            |
 | Second GPU              | Linux     | Off: games stay on the GPU that drives the screen (shown on hybrid laptops only)                    |
@@ -73,6 +74,7 @@ choices carry over:
 | HDR rules          | `launchRuleOverrides[rule]` | `launchRuleOverrides[rule]` |
 | RenoDX, OptiScaler | `*AutoInstallDisabled`      | `capabilityOverrides.<id>`  |
 | MangoHud, GameMode | `capabilityOverrides.<id>`  | `capabilityOverrides.<id>`  |
+| Widescreen patch   | `capabilityOverrides.<id>`  | `capabilityOverrides.<id>`  |
 
 A MangoHud or GameMode switch that was ticked before (`autoRunMangohud`,
 `autoRunGamemode`) reads as On. Before Tools, a game could not turn MangoHud or

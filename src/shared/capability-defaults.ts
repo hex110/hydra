@@ -37,6 +37,8 @@ export const CAPABILITY_DEFAULT_MODES: Record<
   gamemode: ["auto", "never", "always"],
   // Per game only until offload is confirmed on real hardware.
   discrete_gpu: ["never"],
+  // Built for one game each, so there is no default for every game.
+  widescreen_patch: ["never"],
 };
 
 const findRule = (
@@ -68,6 +70,7 @@ export const getCapabilityDefault = (
     case "hdr_monitor":
       return findRule(preferences, id)?.enabled ? "always" : "never";
     case "discrete_gpu":
+    case "widescreen_patch":
       return "never";
   }
 };
@@ -92,6 +95,7 @@ export const capabilityDefaultPatch = (
         autoRunGamemode: mode === "auto" ? undefined : mode === "always",
       };
     case "discrete_gpu":
+    case "widescreen_patch":
       return {};
     case "hdr":
     case "hdr_monitor": {

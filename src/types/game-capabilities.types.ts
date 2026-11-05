@@ -8,6 +8,7 @@ export type GameCapabilityId =
   | "hdr_monitor"
   | "renodx"
   | "optiscaler"
+  | "widescreen_patch"
   | "mangohud"
   | "gamemode"
   | "discrete_gpu";

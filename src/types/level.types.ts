@@ -18,6 +18,7 @@ import type {
   OptiScalerProxyDll,
 } from "./optiscaler.types";
 import type { GameRenoDxInstallation } from "./renodx.types";
+import type { GameWidescreenPatchInstallation } from "./widescreen-patch.types";
 import type {
   GameCapabilityCheck,
   GameCapabilityId,
@@ -168,6 +169,7 @@ export interface Game extends LibraryCatalogueMetadata {
   dismissedUpdateTitles?: string[];
   optiScaler?: GameOptiScalerInstallation | null;
   renoDx?: GameRenoDxInstallation | null;
+  widescreenPatch?: GameWidescreenPatchInstallation | null;
   /** Set when the user removed RenoDX or opted the game out of automatic installs. */
   renoDxAutoInstallDisabled?: boolean;
   /** OnlineFix found in the game folder; null when checked and absent. */

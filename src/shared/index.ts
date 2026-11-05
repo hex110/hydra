@@ -36,6 +36,7 @@ export * from "./title-matching";
 export * from "./bundled-commands";
 export * from "./ini-overrides";
 export * from "./optiscaler";
+export * from "./widescreen-patches";
 export * from "./renodx";
 export * from "./reshade";
 export * from "./local-source-matching";

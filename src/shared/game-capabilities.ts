@@ -51,6 +51,8 @@ export const getCapabilityOverride = (
     case "optiscaler":
       if (game.optiScalerAutoInstallDisabled) return false;
       return game.capabilityOverrides?.optiscaler === true ? true : null;
+    case "widescreen_patch":
+      return game.capabilityOverrides?.widescreen_patch ?? null;
     case "mangohud":
       return (
         game.capabilityOverrides?.mangohud ??
