@@ -1,7 +1,11 @@
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { LibraryGame } from "@types";
-import { getGameCatalogueIdentity, getLibraryOperationalGame } from "@shared";
+import {
+  getGameCatalogueIdentity,
+  getLibraryGameMembers,
+  getLibraryOperationalGame,
+} from "@shared";
 import cn from "classnames";
 import { useLocation } from "react-router-dom";
 import { memo, useEffect, useState } from "react";
@@ -9,14 +13,18 @@ import { useTranslation } from "react-i18next";
 import {
   ConfirmationModal,
   GameContextMenu,
+  SteamIcon,
   SteamLibraryBadge,
   useGameActions,
 } from "..";
-import { AlertIcon, HeartFillIcon } from "@primer/octicons-react";
+import { AlertIcon, HeartFillIcon, ToolsIcon } from "@primer/octicons-react";
 import { useAppSelector, useToast } from "@renderer/hooks";
-import { isGameInstalled } from "@renderer/helpers";
+import { isGameInstalled, launchesThroughSteam } from "@renderer/helpers";
 import { useCollectionContextMenu } from "@renderer/context";
-import { getLibraryPresentationBadgeSource } from "@renderer/pages/library/library-category";
+import {
+  getLibraryPresentationBadgeSource,
+  getLibraryPresentationImportSources,
+} from "@renderer/pages/library/library-category";
 
 const FAILED_ICON_RETRY_MS = 60_000;
 
@@ -24,12 +32,16 @@ interface SidebarGameItemProps {
   game: LibraryGame;
   handleSidebarGameClick: (game: LibraryGame) => void;
   getGameTitle: (game: LibraryGame) => string;
+  playingGameId?: string;
+  playingModded?: boolean;
 }
 
 export const SidebarGameItem = memo(function SidebarGameItem({
   game,
   handleSidebarGameClick,
   getGameTitle,
+  playingGameId,
+  playingModded = false,
 }: Readonly<SidebarGameItemProps>) {
   const location = useLocation();
   const { t } = useTranslation("game_details");
@@ -67,6 +79,16 @@ export const SidebarGameItem = memo(function SidebarGameItem({
   const isCustomGame = game.shop === "custom";
   const catalogueIdentity = getGameCatalogueIdentity(game);
   const badgeSource = getLibraryPresentationBadgeSource(game);
+  const isPlaying =
+    playingGameId !== undefined &&
+    getLibraryGameMembers(game).some((member) => member.id === playingGameId);
+  // The Steam mark on the right replaces the corner badge for Steam games.
+  const isOwnedOnSteam = getLibraryPresentationImportSources(game).steam;
+  const opensThroughSteam = launchesThroughSteam(
+    getLibraryOperationalGame(game)
+  );
+  const showSteamMark =
+    isOwnedOnSteam && !userPreferences?.hideSteamLibraryBadges;
   const sidebarIcon = isCustomGame
     ? game.libraryImageUrl || game.iconUrl
     : game.customIconUrl || game.iconUrl;
@@ -100,6 +122,7 @@ export const SidebarGameItem = memo(function SidebarGameItem({
           "sidebar__menu-item--active":
             location.pathname ===
             `/game/${catalogueIdentity.shop}/${catalogueIdentity.objectId}`,
+          "sidebar__menu-item--playing": isPlaying,
           "sidebar__menu-item--muted": game.download?.status === "removed",
           "sidebar__menu-item--not-installed": !isGameInstalled(game),
         })}
@@ -154,15 +177,6 @@ export const SidebarGameItem = memo(function SidebarGameItem({
                   hasActiveEpicImport={game.hasActiveEpicImport}
                 />
               )}
-            {badgeSource === "steam" &&
-              !userPreferences?.hideSteamLibraryBadges && (
-                <SteamLibraryBadge
-                  variant="sidebar"
-                  availableShops={game.availableShops}
-                  hasActiveSteamImport={game.hasActiveSteamImport}
-                  hasActiveEpicImport={game.hasActiveEpicImport}
-                />
-              )}
           </span>
 
           <span className="sidebar__menu-item-button-label">
@@ -185,8 +199,29 @@ export const SidebarGameItem = memo(function SidebarGameItem({
             </span>
           )}
 
+          {isPlaying && playingModded && (
+            <span
+              className="sidebar__game-modded-icon"
+              title={t("playing_modded", { ns: "sidebar" })}
+            >
+              <ToolsIcon size={12} />
+            </span>
+          )}
+
           {game.favorite && (
             <HeartFillIcon size={12} className="sidebar__game-favorite-icon" />
+          )}
+
+          {showSteamMark && (
+            <span
+              className="sidebar__game-steam-icon"
+              title={t(
+                opensThroughSteam ? "opens_through_steam" : "owned_on_steam",
+                { ns: "sidebar" }
+              )}
+            >
+              <SteamIcon size={12} />
+            </span>
           )}
         </button>
       </li>

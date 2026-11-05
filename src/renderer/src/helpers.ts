@@ -478,6 +478,13 @@ export const isSteamImportedGame = (
   game: Pick<LibraryGame, "shop" | "hasActiveSteamImport"> | null | undefined
 ): boolean => game?.shop === "steam" && game.hasActiveSteamImport === true;
 
+/** Mirrors the launch preview: Steam's own copy of a Steam game starts through Steam. */
+export const launchesThroughSteam = (
+  game: Pick<LibraryGame, "shop" | "executablePath"> | null | undefined
+): boolean =>
+  game?.shop === "steam" &&
+  /[\\/]steamapps[\\/]common[\\/]/i.test(game.executablePath ?? "");
+
 export const canDownloadOnSteam = (
   game:
     | Pick<LibraryGame, "shop" | "hasActiveSteamImport" | "executablePath">

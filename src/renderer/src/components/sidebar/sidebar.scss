@@ -146,6 +146,15 @@
       }
     }
 
+    // Like Steam: the game that is running shows in green.
+    &--playing {
+      color: globals.$success-color;
+
+      &:hover {
+        color: globals.$success-color;
+      }
+    }
+
     &--decky {
       background: linear-gradient(
         135deg,
@@ -271,6 +280,17 @@
     flex-shrink: 0;
     color: #ffffff;
     opacity: 0.85;
+  }
+
+  &__game-modded-icon {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  &__game-steam-icon {
+    display: flex;
+    flex-shrink: 0;
+    opacity: 0.35;
   }
 
   &__game-missing-icon {

@@ -169,11 +169,20 @@ the top; adding a game to the library doesn't count, that is what **Recently
 added** is for. The install time (`installedAt`) is stamped when a game goes
 from having no executable to having one — a finished download, a picked
 executable, a scan or a Steam/Epic import — so games installed before this
-existed sort by last played until they are played or reinstalled.
+existed sort by last played until they are played or reinstalled. Starting or
+ending a session refreshes the list, so the game you just played moves up at
+once.
 **Favorites on top** is a switch below the sorts and applies to all of them.
 Games that are in the library but not installed show with a gray name and a
 faded, grayscale icon, as in Steam.
+
 Its filter menu changes the same settings as the library page.
+
+The game that is running shows its title in green, as on Steam, with a tools
+icon when it was started with **Play (modded)**. Games owned on Steam carry a
+small dim Steam mark on the right (replacing the corner badge on the icon);
+its tooltip says when the game also opens through Steam, that is, its
+executable is in Steam's `steamapps/common` folder.
 
 ### Saved filters
 

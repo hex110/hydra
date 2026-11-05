@@ -457,6 +457,11 @@ async function onOpenGame(game: Game, matchedPath: string) {
 
   const now = performance.now();
   const gameKey = levelKeys.game(game.shop, game.objectId);
+  // Stamped before the first running-games event so the library list sorts it up.
+  await updateGameRecord(gameKey, { lastTimePlayed: new Date() }).catch(
+    (error: unknown) =>
+      logger.warn("Failed to stamp the start of a game session", error)
+  );
   let countHydraPlaytime = true;
   let syncEpicOnExit = false;
   const managedEpicSession = await onManagedEpicDetected(game, matchedPath);

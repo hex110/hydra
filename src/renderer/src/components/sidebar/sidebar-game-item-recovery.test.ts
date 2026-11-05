@@ -44,21 +44,33 @@ async function setup(t: TestContext) {
     "@shared": {
       getGameCatalogueIdentity: (game: LibraryGame) => game,
       getLibraryOperationalGame: (game: LibraryGame) => game,
+      getLibraryGameMembers: (game: LibraryGame) => [game],
     },
     "react-router-dom": { useLocation: () => ({ pathname: "" }) },
     "react-i18next": { useTranslation: () => ({ t: (key: string) => key }) },
     "..": {
       ConfirmationModal: () => null,
       GameContextMenu: () => null,
+      SteamIcon: () => null,
       SteamLibraryBadge: () => null,
       useGameActions: () => ({ rpcs3ConfirmPending: null }),
     },
-    "@primer/octicons-react": { HeartFillIcon: () => null },
+    "@primer/octicons-react": {
+      HeartFillIcon: () => null,
+      ToolsIcon: () => null,
+    },
     "@renderer/hooks": { useAppSelector: () => ({}), useToast: () => ({}) },
-    "@renderer/helpers": { isGameInstalled: () => true },
+    "@renderer/helpers": {
+      isGameInstalled: () => true,
+      launchesThroughSteam: () => false,
+    },
     "@renderer/context": { useCollectionContextMenu: () => ({}) },
     "@renderer/pages/library/library-category": {
       getLibraryPresentationBadgeSource: () => null,
+      getLibraryPresentationImportSources: () => ({
+        steam: false,
+        epic: false,
+      }),
     },
   };
   const filename = new URL("./sidebar-game-item.tsx", import.meta.url);

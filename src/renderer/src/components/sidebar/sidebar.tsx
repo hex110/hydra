@@ -17,6 +17,7 @@ import {
   useDownload,
   useLibrary,
   useLibraryView,
+  useRunningGameModded,
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
@@ -77,9 +78,9 @@ export function Sidebar() {
   const { t } = useTranslation(["sidebar", "library"]);
   const { library, updateLibrary } = useLibrary();
   const isLibraryLoading = useAppSelector(selectIsLibraryLoading);
-  const runningGameId = useAppSelector(
-    (state) => state.gameRunning.gameRunning?.id
-  );
+  const runningGame = useAppSelector((state) => state.gameRunning.gameRunning);
+  const runningGameId = runningGame?.id;
+  const runningGameModded = useRunningGameModded(runningGame);
   const [deckyPluginInfo, setDeckyPluginInfo] = useState<{
     installed: boolean;
     version: string | null;
@@ -305,6 +306,11 @@ export function Sidebar() {
   useEffect(() => {
     updateLibrary();
   }, [lastPacket?.gameId, updateLibrary]);
+
+  // Starting or ending a session changes lastTimePlayed, which the sort uses.
+  useEffect(() => {
+    void updateLibrary();
+  }, [runningGameId, updateLibrary]);
 
   useEffect(() => {
     const handlePinToggled = () => {
@@ -589,6 +595,8 @@ export function Sidebar() {
                           game={game}
                           handleSidebarGameClick={handleSidebarGameClick}
                           getGameTitle={getGameTitle}
+                          playingGameId={runningGameId}
+                          playingModded={runningGameModded}
                         />
                       </div>
                     );
