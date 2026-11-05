@@ -19,6 +19,7 @@ import {
 } from "@primer/octicons-react";
 import {
   Camera,
+  Cpu,
   CloudUpload,
   FolderSearch,
   FolderSync,
@@ -41,6 +42,7 @@ import { SettingsContextIntegrations } from "./settings-context-integrations";
 import { SettingsContextCompatibility } from "./settings-context-compatibility";
 import { SettingsContextGamesOverview } from "./settings-context-games-overview";
 import { SettingsContextToolDefaults } from "./settings-context-tool-defaults";
+import { SettingsContextMyPc } from "./settings-context-my-pc";
 import { SettingsContextOptiScaler } from "./settings-context-optiscaler";
 import { SettingsContextRenoDx } from "./settings-context-renodx";
 import { SettingsContextMods } from "./settings-context-mods";
@@ -76,6 +78,12 @@ export default function Settings() {
         id: "content_gameplay" as const,
         label: t("content_gameplay"),
         icon: <PlayIcon size={16} />,
+        group: "app" as const,
+      },
+      {
+        id: "my_pc" as const,
+        label: t("my_pc"),
+        icon: <Cpu size={16} />,
         group: "app" as const,
       },
       {
@@ -232,6 +240,10 @@ export default function Settings() {
 
             if (selectedCategoryId === "compatibility") {
               return <SettingsContextCompatibility />;
+            }
+
+            if (selectedCategoryId === "my_pc") {
+              return <SettingsContextMyPc />;
             }
 
             if (selectedCategoryId === "tool_defaults") {

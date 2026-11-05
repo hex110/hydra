@@ -36,6 +36,7 @@ import type {
   SteamSimilarGame,
 } from "@shared";
 import type {
+  DetectedSpecs,
   GameSetupStatusEvent,
   GameCollection,
   SavedLibraryFilter,
@@ -1736,6 +1737,7 @@ declare global {
     checkFolderWritePermission: (path: string) => Promise<boolean>;
     getNetworkInterfaces: () => Promise<NetworkInterface[]>;
     getTotalMemory: () => Promise<number>;
+    getSystemSpecs: () => Promise<DetectedSpecs>;
 
     /* Cloud save */
     uploadSaveGame: (

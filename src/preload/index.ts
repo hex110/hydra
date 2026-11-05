@@ -2080,6 +2080,7 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("checkFolderWritePermission", path),
   getNetworkInterfaces: () => ipcRenderer.invoke("getNetworkInterfaces"),
   getTotalMemory: () => ipcRenderer.invoke("getTotalMemory"),
+  getSystemSpecs: () => ipcRenderer.invoke("getSystemSpecs"),
 
   /* Cloud save */
   uploadSaveGame: (

@@ -1,0 +1,41 @@
+@use "../../scss/globals.scss";
+
+.settings-my-pc {
+  &__muted {
+    color: globals.$muted-color;
+    font-size: globals.$small-font-size;
+    margin: 0;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 1.5) 0;
+    border-bottom: 1px solid globals.$border-color;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    min-width: 0;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    flex-shrink: 0;
+  }
+}

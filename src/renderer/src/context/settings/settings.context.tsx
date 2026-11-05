@@ -18,6 +18,7 @@ export type SettingsCategoryId =
   | "integrations"
   | "compatibility"
   | "tool_defaults"
+  | "my_pc"
   | "games_overview"
   | "library_folders"
   | "save_import"
@@ -50,6 +51,7 @@ const isSettingsCategoryId = (value: string): value is SettingsCategoryId => {
     "integrations",
     "compatibility",
     "tool_defaults",
+    "my_pc",
     "games_overview",
     "library_folders",
     "save_import",
