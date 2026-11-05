@@ -7,6 +7,24 @@
     gap: calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 4);
   }
 
+  &__column {
+    min-width: 0;
+  }
+
+  &__verdict {
+    margin: 0 0 globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+    color: globals.$muted-color;
+
+    &--meets {
+      color: globals.$success-color;
+    }
+
+    &--below {
+      color: globals.$warning-color;
+    }
+  }
+
   // Steam's markup: a bold "Minimum:" line, then a list of "Label: value".
   &__details {
     min-width: 0;

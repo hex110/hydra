@@ -19,6 +19,7 @@ summary that links there. Add a row here when a feature adds a new fact.
 | Copies and other versions in your library                | **Your game** sidebar section, only when there are any                                                                                                                            |
 | Achievements                                             | Sidebar summary (icon, name, description), details on the achievements page                                                                                                       |
 | System requirements, supported languages                 | Middle column, below **About this game** and above **More like this**                                                                                                             |
+| Whether your PC meets the requirements, and your specs   | The line above each requirements list; the specs themselves live in **Settings → My PC** ([System requirements check](system-requirements.md))                                    |
 | Outside ratings and player counts                        | **Reception** sidebar section (Steam games)                                                                                                                                       |
 | Hydra rating (Steam reviews adjusted, with Metacritic)   | Store cards, rows and chart tables, one chip with its parts in the tooltip ([Catalogue](catalogue.md#hydra-rating)); the game page shows the separate figures under **Reception** |
 | Games played outside Hydra (for suggestions)             | **Based on** in For you ([Catalogue](catalogue.md#feedback-from-cards))                                                                                                           |
@@ -34,8 +35,10 @@ Below **About this game**: **System requirements** shows Steam's Minimum and
 Recommended lists side by side (stacked in a narrow window; one is left out
 when Steam has none, and the whole block when it has neither), then
 **Language** as two lines: every language, then the ones with voice-over. Both
-sit in the centred column ([below](#the-centred-column)). Not shown for
-LaunchBox games, which have no store requirements.
+sit in the centred column ([below](#the-centred-column)). Each requirements
+list has a line saying whether your PC meets it ([System requirements
+check](system-requirements.md)). Not shown for LaunchBox games, which have no
+store requirements.
 
 ## The centred column
 
