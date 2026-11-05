@@ -70,11 +70,16 @@ not covered yet.
 
 ## Limits and open ideas
 
-- The palette only appears when matugen next writes the file, i.e. on the next
-  wallpaper/palette change (dms skips regenerating an unchanged palette). The
-  status line says so.
-- Not yet: a seed-colour picker that works without matugen, light mode,
-  Big Picture.
+- **First colours.** dms skips regenerating an unchanged palette, so a new
+  template would not render until the next wallpaper change. Whenever the
+  palette is on and the default file is missing, Hydra Plus renders the template
+  itself from dms's cached dark palette
+  (`$XDG_CACHE_HOME/DankMaterialShell/dms-colors.json`, the colours dms gave
+  matugen), once per enable. Other shells have no such cache, so there the
+  status stays "waiting" until matugen writes the file. A custom palette path
+  is never seeded.
+- Not yet: a seed-colour picker for desktops without dms or matugen, light
+  mode, Big Picture.
 
 ## Testing
 

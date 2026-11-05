@@ -44,6 +44,31 @@ ${Object.entries(MATUGEN_PALETTE_ROLES)
 }
 `;
 
+const TEMPLATE_COLOR = /\{\{colors\.([a-z_]+)\.dark\.hex\}\}/g;
+
+/**
+ * Fills the template from already-known dark-scheme colours (role -> #hex),
+ * as matugen would. Null when a role is missing, so a partial palette is never
+ * written.
+ */
+export const renderMatugenTemplate = (
+  template: string,
+  darkColors: Record<string, unknown> | null | undefined
+): string | null => {
+  if (!darkColors) return null;
+
+  let complete = true;
+  const rendered = template.replace(TEMPLATE_COLOR, (_match, role: string) => {
+    const value = darkColors[role];
+    if (typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value))
+      return value;
+    complete = false;
+    return "";
+  });
+
+  return complete ? rendered : null;
+};
+
 const MAX_VALUE_LENGTH = 200;
 const FORBIDDEN_VALUE = /[;{}<>\\]|url\(|var\(|\/\*/i;
 

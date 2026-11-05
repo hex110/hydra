@@ -27,6 +27,17 @@ summary that links there. Add a row here when a feature adds a new fact.
 | Which tools apply (OnlineFix, HDR, RenoDX, …), why       | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there                                                                                                         |
 | Past launches: outcome, exit code, tools, logs           | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))                                                                                                            |
 
+## The centred column
+
+The gallery, thumbnails, "About this game", review prompt, reviews, DLC and
+news and similar games share one centred column, `@include
+globals.reading-column`, inside `.game-details__description-content` (a size
+container). Each side's gutter is at most 20 % / 25 % of that area (the old
+60 % / 50 % layout, still the case on very wide windows), at least 50px, and
+otherwise just enough to keep the column about 760px wide, so a half-screen
+window is not mostly margin. Below 1280px viewport width the column is full
+width. A new block in that column uses the mixin instead of its own width rules.
+
 ## Patterns across pages
 
 Decided 2026-10-31 (roadmap phase 13 item 7), so the catalogue, library and

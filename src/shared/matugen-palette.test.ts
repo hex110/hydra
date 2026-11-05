@@ -5,6 +5,7 @@ import {
   addTemplateToMatugenConfig,
   MATUGEN_TEMPLATE,
   parseMatugenPalette,
+  renderMatugenTemplate,
 } from "./matugen-palette.js";
 
 describe("parseMatugenPalette", () => {
@@ -112,5 +113,40 @@ describe("addTemplateToMatugenConfig", () => {
     );
 
     assert.match(config, /input_path = "C:\\\\Users\\\\u\\\\t\.css"/);
+  });
+});
+
+describe("renderMatugenTemplate", () => {
+  const roles = {
+    surface: "#030f19",
+    surface_container_lowest: "#000000",
+    surface_container: "#061b2a",
+    on_surface: "#d1e8ff",
+    on_surface_variant: "#93aec6",
+    primary: "#94d4f9",
+    tertiary: "#ffb8f3",
+  };
+
+  it("renders a file the parser reads back", () => {
+    const css = renderMatugenTemplate(MATUGEN_TEMPLATE, roles);
+
+    assert.ok(css);
+    const palette = parseMatugenPalette(css);
+    assert.equal(palette.background, "#030f19");
+    assert.equal(palette.accent, "#94d4f9");
+    assert.equal(palette["accent-secondary"], "#ffb8f3");
+    assert.equal(palette.border, "color-mix(in srgb, #d1e8ff 8%, transparent)");
+  });
+
+  it("refuses a palette with a missing or malformed role", () => {
+    assert.equal(renderMatugenTemplate(MATUGEN_TEMPLATE, null), null);
+    assert.equal(
+      renderMatugenTemplate(MATUGEN_TEMPLATE, { ...roles, primary: undefined }),
+      null
+    );
+    assert.equal(
+      renderMatugenTemplate(MATUGEN_TEMPLATE, { ...roles, primary: "red" }),
+      null
+    );
   });
 });

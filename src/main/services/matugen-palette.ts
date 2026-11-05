@@ -6,6 +6,7 @@ import {
   MATUGEN_CONFIG_TABLE,
   MATUGEN_TEMPLATE,
   parseMatugenPalette,
+  renderMatugenTemplate,
   type MatugenPalette,
 } from "@shared";
 import type {
@@ -32,6 +33,8 @@ let palette: MatugenPalette = {};
 let status: MatugenPaletteStatus = "off";
 let watchedPath: string | null = null;
 let refreshTimer: NodeJS.Timeout | null = null;
+// Seeding is tried once per enable; a missing cache is not worth re-reading every poll.
+let seedTried = false;
 
 const workDirectory = () =>
   path.join(SystemPath.getPath("userData"), "matugen");
@@ -46,6 +49,17 @@ const matugenConfigPath = () =>
       path.join(SystemPath.getPath("home"), ".config"),
     "matugen",
     "config.toml"
+  );
+
+// dms keeps the palette it last gave matugen here. Hydra Plus renders its own
+// template from it, so a first run has colours without waiting for the next
+// wallpaper change.
+const dmsColorsPath = () =>
+  path.join(
+    process.env.XDG_CACHE_HOME ||
+      path.join(SystemPath.getPath("home"), ".cache"),
+    "DankMaterialShell",
+    "dms-colors.json"
   );
 
 const expandHome = (value: string) =>
@@ -108,6 +122,21 @@ const readPalette = async (): Promise<{
   }
 };
 
+/** Writes the default palette file from the desktop's current palette, if it can be found. */
+const seedFromDms = async () => {
+  try {
+    const dms = JSON.parse(await fs.promises.readFile(dmsColorsPath(), "utf8"));
+    const css = renderMatugenTemplate(MATUGEN_TEMPLATE, dms?.colors?.dark);
+    if (!css) return false;
+
+    await fs.promises.mkdir(workDirectory(), { recursive: true });
+    await fs.promises.writeFile(defaultPalettePath(), css);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const refresh = async (retryEmpty = true) => {
   if (!settings.enabled) {
     palette = {};
@@ -117,6 +146,16 @@ const refresh = async (retryEmpty = true) => {
   }
 
   let next = await readPalette();
+
+  // Only the default file is ours to create; a custom path is the user's.
+  if (
+    next.status === "waiting" &&
+    !seedTried &&
+    palettePath() === defaultPalettePath()
+  ) {
+    seedTried = true;
+    if (await seedFromDms()) next = await readPalette();
+  }
 
   // An empty read right after a palette was live is most likely a write in
   // progress; look again before dropping back to the stock colours.
@@ -195,6 +234,7 @@ export const setMatugenPalette = async (
     path: update.path === undefined ? settings.path : update.path || null,
   };
 
+  seedTried = false;
   await persist();
   await applySettings();
   return getState();
