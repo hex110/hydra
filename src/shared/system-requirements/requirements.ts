@@ -1,5 +1,4 @@
 import type {
-  CheckStatus,
   ComponentCheck,
   DetectedSpecs,
   RequirementTier,
@@ -80,9 +79,99 @@ export const parseMemoryGb = (text: string): number | null => {
   return match[2].toLowerCase() === "mb" ? amount / 1024 : amount;
 };
 
+const CORE_WORDS: Record<string, number> = {
+  single: 1,
+  dual: 2,
+  triple: 3,
+  quad: 4,
+  hexa: 6,
+  six: 6,
+  octa: 8,
+  eight: 8,
+};
+
 /**
- * The lowest score among the alternatives a requirement names ("or" means the
- * easiest one is enough). Null when none is a model the table knows.
+ * What a requirement that names no model asks of a CPU ("Quad-core 3.0 GHz"),
+ * as the score of a typical chip of that class. Null when it states neither
+ * a core count nor a clock speed.
+ */
+export const genericCpuScore = (text: string): number | null => {
+  const coreMatch =
+    /\b(single|dual|triple|quad|hexa|six|octa|eight|\d+)[\s-]*cores?\b/i.exec(
+      text
+    );
+  const cores = coreMatch
+    ? (CORE_WORDS[coreMatch[1].toLowerCase()] ?? Number(coreMatch[1]))
+    : null;
+  const ghzMatch = /(\d+(?:[.,]\d+)?)\s*ghz/i.exec(text);
+  const ghz = ghzMatch ? Number(ghzMatch[1].replace(",", ".")) : null;
+
+  const byCores =
+    cores === null
+      ? null
+      : cores <= 2
+        ? 20
+        : cores <= 4
+          ? 45
+          : cores <= 6
+            ? 85
+            : 110;
+  const byClock = ghz === null ? null : ghz <= 2.5 ? 20 : ghz <= 3.2 ? 35 : 45;
+  if (byCores === null && byClock === null) return null;
+  return Math.max(byCores ?? 0, byClock ?? 0);
+};
+
+const VRAM_SCORES: [number, number][] = [
+  [1, 15],
+  [2, 30],
+  [3, 45],
+  [4, 55],
+  [6, 90],
+  [8, 100],
+  [12, 150],
+];
+
+const apiScore = (text: string): number | null => {
+  const scores: number[] = [];
+  const directx = /directx\s*(?:version\s*)?(\d+)/i.exec(text);
+  if (directx) {
+    const level = Number(directx[1]);
+    scores.push(level >= 12 ? 28 : level === 11 ? 20 : level === 10 ? 8 : 5);
+  }
+  if (/vulkan/i.test(text)) scores.push(28);
+  const opengl = /opengl\s*(\d+(?:\.\d+)?)/i.exec(text);
+  if (opengl) {
+    const version = Number(opengl[1]);
+    scores.push(version >= 4.5 ? 28 : version >= 4 ? 18 : version >= 3 ? 8 : 5);
+  }
+  // "DirectX 12 or Vulkan": either API is enough.
+  return scores.length > 0 ? Math.min(...scores) : null;
+};
+
+/**
+ * What a requirement that names no model asks of a GPU ("DirectX 12 or Vulkan
+ * compatible, 2 GB VRAM"), as the score of a typical card of that class.
+ */
+export const genericGpuScore = (text: string): number | null => {
+  const vramMatch =
+    /(\d+(?:[.,]\d+)?)\s*(gb|mb)\s*(?:of\s+)?(?:dedicated\s+)?(?:vram|video\s+memory|video\s+ram)/i.exec(
+      text
+    );
+  let byVram: number | null = null;
+  if (vramMatch) {
+    const amount = Number(vramMatch[1].replace(",", "."));
+    const gb = vramMatch[2].toLowerCase() === "mb" ? amount / 1024 : amount;
+    byVram = VRAM_SCORES.find(([limit]) => gb <= limit)?.[1] ?? 200;
+  }
+  const byApi = apiScore(text);
+  if (byVram === null && byApi === null) return null;
+  return Math.max(byVram ?? 0, byApi ?? 0);
+};
+
+/**
+ * What a requirement asks for, as a score. The lowest among the models it
+ * names ("or" means the easiest one is enough); failing that, a typical chip
+ * of the class it describes. Null when it is neither.
  */
 const requiredScore = (kind: "cpu" | "gpu", text: string): number | null => {
   const scores = splitAlternatives(text).flatMap((alternative) => {
@@ -90,7 +179,8 @@ const requiredScore = (kind: "cpu" | "gpu", text: string): number | null => {
     if (!match) return [];
     return [match.model.score * (match.mobile ? MOBILE_GPU_FACTOR : 1)];
   });
-  return scores.length > 0 ? Math.min(...scores) : null;
+  if (scores.length > 0) return Math.min(...scores);
+  return kind === "cpu" ? genericCpuScore(text) : genericGpuScore(text);
 };
 
 /** Detected values with the user's edits on top. */
@@ -120,14 +210,20 @@ export const resolveSpecs = (
   };
 };
 
+type Outcome = Pick<ComponentCheck, "status" | "unknownReason">;
+
 const checkScore = (
   kind: "cpu" | "gpu",
   userScore: number | null,
   required: string
-): CheckStatus => {
+): Outcome => {
   const needed = requiredScore(kind, required);
-  if (needed === null || userScore === null) return "unknown";
-  return userScore >= needed * SCORE_TOLERANCE ? "meets" : "below";
+  if (needed === null)
+    return { status: "unknown", unknownReason: "requirement" };
+  if (userScore === null) return { status: "unknown", unknownReason: "pc" };
+  return {
+    status: userScore >= needed * SCORE_TOLERANCE ? "meets" : "below",
+  };
 };
 
 /** Whether the PC meets one tier of a game's requirements, part by part. */
@@ -145,13 +241,13 @@ export const compareSpecs = (
   if (parsed.cpu)
     checks.push({
       component: "cpu",
-      status: checkScore("cpu", cpu?.score ?? null, parsed.cpu),
+      ...checkScore("cpu", cpu?.score ?? null, parsed.cpu),
       required: parsed.cpu,
     });
   if (parsed.gpu)
     checks.push({
       component: "gpu",
-      status: checkScore(
+      ...checkScore(
         "gpu",
         gpu ? gpu.score * (specs.gpuMobile ? MOBILE_GPU_FACTOR : 1) : null,
         parsed.gpu
@@ -162,12 +258,11 @@ export const compareSpecs = (
     const needed = parseMemoryGb(parsed.ram);
     checks.push({
       component: "ram",
-      status:
-        needed === null || specs.ramGb === null
-          ? "unknown"
-          : specs.ramGb >= needed
-            ? "meets"
-            : "below",
+      ...(needed === null
+        ? ({ status: "unknown", unknownReason: "requirement" } as const)
+        : specs.ramGb === null
+          ? ({ status: "unknown", unknownReason: "pc" } as const)
+          : { status: specs.ramGb >= needed ? "meets" : "below" }),
       required: parsed.ram,
     });
   }

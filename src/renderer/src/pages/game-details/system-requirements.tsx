@@ -19,11 +19,17 @@ function RequirementsVerdict({
 
   if (verdict.checks.length === 0) return null;
 
-  const parts = (status: "below" | "unknown") =>
+  const parts = (status: "below" | "unknown", reason?: "requirement" | "pc") =>
     verdict.checks
-      .filter((check) => check.status === status)
+      .filter(
+        (check) =>
+          check.status === status && (!reason || check.unknownReason === reason)
+      )
       .map((check) => t(`requirements_part_${check.component}`))
       .join(", ");
+
+  // A part left unchecked because the list is vague, or because the PC's part isn't set.
+  const unreadable = parts("unknown", "requirement");
 
   const gpuBelowOnAGuess =
     specs.gpuAmbiguous &&
@@ -34,7 +40,9 @@ function RequirementsVerdict({
   const message = {
     meets: t("requirements_meets"),
     below: t("requirements_below", { parts: parts("below") }),
-    partial: t("requirements_partial", { parts: parts("unknown") }),
+    partial: unreadable
+      ? t("requirements_partial_list", { parts: unreadable })
+      : t("requirements_partial_pc", { parts: parts("unknown", "pc") }),
     unknown: t("requirements_unknown"),
   }[verdict.status];
 

@@ -43,6 +43,8 @@ export type CheckStatus = "meets" | "below" | "unknown";
 export interface ComponentCheck {
   component: SpecComponent;
   status: CheckStatus;
+  /** Why an unknown part is unknown: the list names nothing to compare, or the PC's part is not set. */
+  unknownReason?: "requirement" | "pc";
   /** The requirement as the store words it; null when it lists none. */
   required: string | null;
 }

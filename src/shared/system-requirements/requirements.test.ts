@@ -10,6 +10,8 @@ import {
 } from "./hardware-match.js";
 import {
   compareSpecs,
+  genericCpuScore,
+  genericGpuScore,
   parseMemoryGb,
   parseRequirements,
   resolveSpecs,
@@ -198,8 +200,8 @@ describe("compareSpecs", () => {
     const verdict = compareSpecs(
       specs,
       html({
-        Processor: "Quad core 3 GHz",
-        Graphics: "DirectX 11 compatible",
+        Processor: "A reasonably fast processor",
+        Graphics: "A modern graphics card",
         Memory: "8 GB",
       }),
       "minimum"
@@ -207,7 +209,7 @@ describe("compareSpecs", () => {
     assert.equal(verdict.status, "partial");
     const none = compareSpecs(
       specs,
-      html({ Graphics: "DirectX 11 compatible" }),
+      html({ Graphics: "A modern graphics card" }),
       "minimum"
     );
     assert.equal(none.status, "unknown");
@@ -257,5 +259,80 @@ describe("resolveSpecs", () => {
     assert.equal(resolved.cpuSource, "detected");
     assert.equal(resolved.ramGb, 16);
     assert.equal(resolved.ramSource, "edited");
+  });
+});
+
+describe("requirements that name no model", () => {
+  const strong = resolveSpecs(
+    detected({
+      cpuId: "amd-ryzen-7-9800x3d",
+      gpuIds: ["radeon-rx-9070-xt"],
+      ramGb: 60,
+    }),
+    undefined
+  );
+  const weak = resolveSpecs(
+    detected({
+      cpuId: "intel-core-2-duo-e6600",
+      gpuIds: ["radeon-hd-5770"],
+      ramGb: 2,
+    }),
+    undefined
+  );
+  const minimum = html({
+    Processor: "Dual-core 2.0 GHz",
+    Memory: "4 GB RAM",
+    Graphics: "DirectX 12 or Vulkan compatible, 1 GB VRAM",
+  });
+  const recommended = html({
+    Processor: "Quad-core 3.0 GHz",
+    Memory: "8 GB RAM",
+    Graphics: "DirectX 12 or Vulkan compatible, 2 GB VRAM",
+  });
+
+  it("checks core counts, clocks and VRAM against typical hardware", () => {
+    assert.equal(compareSpecs(strong, minimum, "minimum").status, "meets");
+    assert.equal(
+      compareSpecs(strong, recommended, "recommended").status,
+      "meets"
+    );
+  });
+
+  it("still fails a PC that is below them", () => {
+    const verdict = compareSpecs(weak, recommended, "recommended");
+    assert.equal(verdict.status, "below");
+    assert.deepEqual(
+      verdict.checks.map((check) => check.status),
+      ["below", "below", "below"]
+    );
+  });
+
+  it("scores the generic wordings", () => {
+    assert.equal(genericCpuScore("Dual-core 2.0 GHz"), 20);
+    assert.equal(genericCpuScore("Quad core 3.4 GHz"), 45);
+    assert.equal(genericCpuScore("8 cores"), 110);
+    assert.equal(genericCpuScore("A fast processor"), null);
+    assert.equal(genericGpuScore("DirectX 11 compatible"), 20);
+    assert.equal(genericGpuScore("DirectX 11, 4 GB video memory"), 55);
+    assert.equal(genericGpuScore("OpenGL 3.3"), 8);
+    assert.equal(genericGpuScore("Any graphics card"), null);
+  });
+
+  it("says whether the list or the PC is the unknown side", () => {
+    const vague = compareSpecs(
+      strong,
+      html({ Processor: "A fast processor" }),
+      "minimum"
+    );
+    assert.equal(vague.checks[0].unknownReason, "requirement");
+    const noPc = compareSpecs(
+      resolveSpecs(detected({}), undefined),
+      html({ Processor: "Intel Core i5-8400", Memory: "8 GB" }),
+      "minimum"
+    );
+    assert.deepEqual(
+      noPc.checks.map((check) => check.unknownReason),
+      ["pc", "pc"]
+    );
   });
 });

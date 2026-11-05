@@ -12,9 +12,11 @@ Steam's Minimum and Recommended lists. Above each list is one line:
 - **Your PC meets this.**
 - **Falls short: graphics card, memory.** Names every part below the
   line. If your card is only a guess (see below) it says so.
-- **Nothing falls short, but processor could not be checked.** Some part of the
-  requirement text isn't a model Hydra knows ("Quad core 3 GHz",
-  "DirectX 11 compatible"). Hydra never calls an unknown part a pass or a fail.
+- **Nothing falls short, but the processor requirement names nothing Hydra can
+  compare.** The list says something Hydra can't read ("A fast processor"),
+  so that part isn't judged. Hydra never calls an unreadable part a pass or a
+  fail. When it is your PC's part that is missing, the line says to choose it
+  in My PC instead.
 - **Hydra could not check this against your PC.** Nothing in the list could be
   compared.
 - **Tell Hydra about your PC…** when nothing about your PC is known.
@@ -28,7 +30,8 @@ and free disk space depends on where the game goes.
 ## My PC
 
 **Settings → My PC** lists processor, graphics card and memory with what
-Hydra detected, a picker to correct each, and **Use detected** to undo a
+Hydra detected, a searchable field (`ComboboxField`: type "9070xt" to find the RX 9070 XT) to
+correct each, and **Use detected** to undo a
 correction. Corrections are stored in `userPreferences.systemSpecs` (model ids,
 and memory in GB) and win over detection every time, so a later re-detection
 never overwrites them.
@@ -63,6 +66,11 @@ All in `shared/system-requirements/`, covered by `requirements.test.ts`.
   speeds and "8-Core Processor" are dropped; `GTX1060` equals `GTX 1060`) and
   picks the table model with the most tokens found in order, so "RTX 3060 Ti"
   isn't read as "RTX 3060".
+- **Requirements that name no model** ("Dual-core 2.0 GHz", "DirectX 12 or
+  Vulkan compatible, 1 GB VRAM") are compared with a typical chip of that
+  class: core count or clock for CPUs, VRAM and the DirectX, Vulkan or OpenGL
+  level for GPUs. These baselines are rough (`genericCpuScore`,
+  `genericGpuScore`) and only used when the text names no model.
 - **Requirement text** is Steam's HTML. Each `Processor`, `Graphics` and
   `Memory` line is read; alternatives ("X or Y", "X / Y") count as met when
   you beat the easiest one.
