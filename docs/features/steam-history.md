@@ -56,6 +56,11 @@ hour. Demos and betas are always skipped.
   on it is an ordinary game of yours: uploaded like any other, no longer
   under the Steam tab, and never removed by the options below.
 - Installing one works like any uninstalled game.
+- **Download on Steam.** Any game the connected account owns, whether or not
+  it is in the library or came from the import, lists **Download on Steam**
+  first in its download options and opens Steam's install dialog. This needs
+  the Steam history connected, since that is what knows what you own; it is
+  left out once the game is installed through Steam.
 - Achievements you already have on Steam are recorded silently: with **Steam
   achievements** on, Hydra reads them from Steam's local cache, but for these
   games that never produces an unlock popup or notification. Only an unlock

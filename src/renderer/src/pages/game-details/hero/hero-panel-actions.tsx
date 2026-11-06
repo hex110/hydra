@@ -49,6 +49,7 @@ import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-m
 
 import { useLaunchPhase } from "./use-launch-phase";
 import { formatSessionLength, useSessionEnd } from "../use-session-end";
+import { useOwnedSteamAppId } from "../use-owned-steam-app";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
@@ -75,6 +76,7 @@ export function HeroPanelActions() {
     downloadGame,
     presentation,
     repacks,
+    catalogueGame,
     isGameRunning,
     shop,
     objectId,
@@ -89,6 +91,7 @@ export function HeroPanelActions() {
     transferProgress,
   } = useContext(gameDetailsContext);
 
+  const ownedSteamAppId = useOwnedSteamAppId(catalogueGame);
   const isGameDownloading = isLibraryGameDownloading(downloadGame);
   const isWishlistOnlyGame = game ? isWishlistOnly(game) : false;
   const isInLibrary = Boolean(game) && !isWishlistOnlyGame;
@@ -888,7 +891,7 @@ export function HeroPanelActions() {
         onClick={() => setShowRepacksModal(true)}
         theme="outline"
         disabled={isGameDownloading}
-        className={`hero-panel-actions__action ${repacks.length === 0 && !canDownloadOnSteam(officialMembers.steam) && !officialMembers.epic ? "hero-panel-actions__action--disabled" : ""}`}
+        className={`hero-panel-actions__action ${repacks.length === 0 && !canDownloadOnSteam(officialMembers.steam) && !ownedSteamAppId && !officialMembers.epic ? "hero-panel-actions__action--disabled" : ""}`}
       >
         <DownloadIcon />
         {t("download")}
@@ -896,7 +899,7 @@ export function HeroPanelActions() {
     );
   };
 
-  if (repacks.length && !isInLibrary) {
+  if ((repacks.length > 0 || ownedSteamAppId) && !isInLibrary) {
     return (
       <>
         {addGameToLibraryButton}

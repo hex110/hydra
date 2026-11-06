@@ -42,8 +42,10 @@ import { levelDBService } from "@renderer/services/leveldb.service";
 import {
   canDownloadOnSteam,
   getGameKey,
+  launchesThroughSteam,
   isSteamImportedGame,
 } from "@renderer/helpers";
+import { useOwnedSteamAppId } from "../use-owned-steam-app";
 import "./repacks-modal.scss";
 import EpicLogo from "@renderer/assets/epic-integration-logo.svg?react";
 import { EpicInstallModal } from "./epic-install-modal";
@@ -100,6 +102,8 @@ export function RepacksModal({
     autoDownloadRequest,
     clearAutoDownloadRequest,
     updateGame,
+    catalogueGame,
+    gameTitle,
   } = useContext(gameDetailsContext);
   const { showWarningToast } = useToast();
   const [autoStartDownload, setAutoStartDownload] = useState(false);
@@ -392,13 +396,18 @@ export function RepacksModal({
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const steamOptionTerm = filterTerm.trim().toLowerCase();
   const isNonSteamExecutable = useIsNonSteamExecutable(steamGame);
+  const ownedSteamAppId = useOwnedSteamAppId(catalogueGame);
+  const steamAppId = steamGame?.objectId ?? ownedSteamAppId;
+  const optionTitle = game?.title || gameTitle;
   const showSteamOption =
     (canDownloadOnSteam(steamGame) ||
-      (isSteamImportedGame(steamGame) && isNonSteamExecutable)) &&
+      (isSteamImportedGame(steamGame) && isNonSteamExecutable) ||
+      // Owned on Steam but added another way: Steam still has the files.
+      (ownedSteamAppId !== null && !launchesThroughSteam(steamGame))) &&
     selectedFingerprints.length === 0 &&
     (!steamOptionTerm ||
       "steam".includes(steamOptionTerm) ||
-      (game?.title ?? "").toLowerCase().includes(steamOptionTerm));
+      optionTitle.toLowerCase().includes(steamOptionTerm));
   const showEpicOption =
     epicAvailable &&
     isEpicMemberInCurrentScope(epicGame, connection) &&
@@ -408,9 +417,9 @@ export function RepacksModal({
       (game?.title ?? "").toLowerCase().includes(steamOptionTerm));
 
   const handleSteamOptionClick = () => {
-    if (!steamGame) return;
+    if (!steamAppId) return;
 
-    void window.electron.installGameOnSteam(steamGame.objectId);
+    void window.electron.installGameOnSteam(steamAppId);
     onClose();
   };
 
@@ -509,7 +518,7 @@ export function RepacksModal({
         </div>
 
         <div className="repacks-modal__repacks">
-          {showSteamOption && game && (
+          {showSteamOption && steamAppId && (
             <Button
               theme="dark"
               onClick={handleSteamOptionClick}
@@ -524,7 +533,7 @@ export function RepacksModal({
 
               <p className="repacks-modal__repack-title repacks-modal__steam-title">
                 <SteamIcon size={16} />
-                {game.title}
+                {optionTitle}
               </p>
 
               <p className="repacks-modal__repack-info">
