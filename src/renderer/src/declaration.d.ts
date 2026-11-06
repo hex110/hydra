@@ -1033,6 +1033,7 @@ declare global {
     ) => () => Electron.IpcRenderer;
     checkGameUpdates: () => Promise<GameUpdateCheckResult>;
     isCheckingGameUpdates: () => Promise<boolean>;
+    getGameUpdatesCheckedAt: () => Promise<number | null>;
     dismissGameUpdate: (shop: GameShop, objectId: string) => Promise<void>;
     onGameUpdatesChecking: (cb: (checking: boolean) => void) => () => void;
     onGameUpdateFailed: (

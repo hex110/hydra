@@ -1617,6 +1617,7 @@ contextBridge.exposeInMainWorld("electron", {
   },
   checkGameUpdates: () => ipcRenderer.invoke("checkGameUpdates"),
   isCheckingGameUpdates: () => ipcRenderer.invoke("isCheckingGameUpdates"),
+  getGameUpdatesCheckedAt: () => ipcRenderer.invoke("getGameUpdatesCheckedAt"),
   dismissGameUpdate: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("dismissGameUpdate", shop, objectId),
   onGameUpdatesChecking: (cb: (checking: boolean) => void) => {

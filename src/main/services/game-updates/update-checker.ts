@@ -43,6 +43,12 @@ const canUpdate = (game: Game) =>
  */
 export class GameUpdates {
   private static running: Promise<GameUpdateCheckResult> | null = null;
+  private static lastCheckedAt: number | null = null;
+
+  /** Epoch milliseconds of the last finished check in this session. */
+  public static getLastCheckedAt() {
+    return this.lastCheckedAt;
+  }
 
   public static isChecking() {
     return this.running !== null;
@@ -169,10 +175,12 @@ export class GameUpdates {
       void publishGameUpdatesNotification(newlyFound);
     }
 
+    this.lastCheckedAt = Date.now();
+
     return {
       checked: games.length,
       updates: withUpdates,
-      checkedAt: new Date().toISOString(),
+      checkedAt: new Date(this.lastCheckedAt).toISOString(),
     };
   }
 

@@ -9,6 +9,8 @@ const checkGameUpdates = () => GameUpdates.checkAll();
 
 const isCheckingGameUpdates = () => GameUpdates.isChecking();
 
+const getGameUpdatesCheckedAt = () => GameUpdates.getLastCheckedAt();
+
 const dismissGameUpdate = (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
@@ -42,6 +44,7 @@ const openGameSaveBackups = async (
 
 registerEvent("checkGameUpdates", checkGameUpdates);
 registerEvent("isCheckingGameUpdates", isCheckingGameUpdates);
+registerEvent("getGameUpdatesCheckedAt", getGameUpdatesCheckedAt);
 registerEvent("dismissGameUpdate", dismissGameUpdate);
 registerEvent("listSaveBackups", listSaveBackups);
 registerEvent("getGameSaveBackups", getGameSaveBackups);
