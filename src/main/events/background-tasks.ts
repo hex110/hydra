@@ -11,10 +11,7 @@ import {
   countRemovableImports,
   removeImportedGames,
 } from "@main/services/imported-games";
-import type {
-  IntegrationName,
-  LibraryImportSource,
-} from "@types";
+import type { IntegrationName, LibraryImportSource } from "@types";
 
 import { registerEvent } from "./register-event";
 

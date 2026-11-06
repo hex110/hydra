@@ -15,6 +15,7 @@ import type {
 } from "@types";
 import { downloadToFile } from "./download-to-file";
 import { logger } from "./logger";
+import { trackBackgroundTask } from "./background-tasks";
 import { SystemPath } from "./system-path";
 import { WindowManager } from "./window-manager";
 
@@ -256,6 +257,22 @@ export class ProtonManager {
 
   private static sendProgress(progress: ProtonInstallProgress) {
     WindowManager.sendToAppWindows("on-proton-install-progress", progress);
+
+    // The Downloads page follows it too, so leaving Settings doesn't hide it.
+    const task = trackBackgroundTask("proton-install", {
+      key: `proton-install:${progress.flavor}:${progress.tag}`,
+      params: { version: progress.tag },
+      route: "/settings?tab=compatibility",
+      retry: () => this.install(progress.flavor, progress.tag),
+    });
+
+    if (progress.stage === "done") task.done();
+    else if (progress.stage === "failed") task.fail(new Error(progress.error));
+    else if (progress.stage === "downloading") {
+      task.progress(Math.round(progress.progress * 100), 100, {
+        stage: progress.stage,
+      });
+    } else task.progress(0, null, { stage: progress.stage });
   }
 
   /** Installs a release (the newest when `tag` is omitted) and returns its folder. */

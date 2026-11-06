@@ -28,12 +28,18 @@ export function useTaskText() {
           return t("task_floppy_push_queued", { count: task.total ?? 0 });
         }
         if (task.state === "running") {
-          return task.total === null
-            ? t("task_starting")
-            : t("task_progress", {
-                processed: task.processed,
-                total: task.total,
-              });
+          const stage = task.params?.stage;
+          const fallback =
+            task.total === null ? "task_starting" : "task_progress";
+
+          return t(
+            [
+              ...(stage ? [`${key(task)}_${stage}`] : []),
+              `${key(task)}_progress`,
+              fallback,
+            ],
+            { ...task.params, processed: task.processed, total: task.total }
+          );
         }
 
         return t(`${key(task)}_done`, { ...task.params, ...task.result });

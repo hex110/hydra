@@ -110,3 +110,53 @@ export const retryBackgroundTask = async (key: string) => {
   dismissedFailures.delete(key);
   await retry();
 };
+
+interface TrackedTaskOptions {
+  /** Tells entries of one kind apart; defaults to the kind. */
+  key?: string;
+  /** Fills the title and the finished text. */
+  params?: Record<string, string>;
+  /** The page that owns the job. */
+  route?: string;
+  /** Run again after a failure. */
+  retry?: () => Promise<unknown>;
+}
+
+/**
+ * Reports a job that already has its own progress events to the Downloads
+ * page too. `progress` without a total shows an indeterminate bar.
+ */
+export const trackBackgroundTask = (
+  id: BackgroundTaskKind,
+  { key = id as string, params, route, retry }: TrackedTaskOptions = {}
+) => {
+  if (retry) registerBackgroundTaskRetry(id, retry, key);
+
+  return {
+    progress: (
+      processed: number,
+      total: number | null,
+      extra?: Record<string, string>
+    ) =>
+      updateBackgroundTask(
+        id,
+        {
+          state: "running",
+          processed,
+          total,
+          params: { ...params, ...extra },
+          route,
+        },
+        key
+      ),
+    done: (result: Record<string, number> | null = null) =>
+      updateBackgroundTask(
+        id,
+        { state: "done", result, params, route, processed: 0, total: null },
+        key
+      ),
+    fail: (error: unknown) => {
+      failBackgroundTask(id, error, { key });
+    },
+  };
+};
