@@ -44,8 +44,6 @@ export interface OnlineFixDetection {
   directory: string;
   /** Proxy DLLs (without ".dll") found there, which Wine must load natively. */
   proxyDlls: string[];
-  /** The fix needs Proton's bridge to the running Linux Steam. */
-  steamBridge?: boolean;
 }
 
 /** Finds an OnlineFix (or UnionCrax online fix) install inside a game folder, nearest to the top first. */
@@ -70,14 +68,15 @@ export const detectOnlineFix = async (
           .map((entry) => entry.name.toLowerCase())
       );
 
-      const unionCrax = files.has(UNION_CRAX_MARKER);
-      if (unionCrax || [...MARKER_FILES].some((marker) => files.has(marker))) {
+      if (
+        files.has(UNION_CRAX_MARKER) ||
+        [...MARKER_FILES].some((marker) => files.has(marker))
+      ) {
         return {
           directory,
           proxyDlls: ONLINE_FIX_PROXY_DLLS.filter((dll) =>
             files.has(`${dll}.dll`)
           ),
-          ...(unionCrax ? { steamBridge: true } : {}),
         };
       }
 

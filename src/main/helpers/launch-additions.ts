@@ -105,10 +105,10 @@ const getLinuxLaunchEnvironment = async (
       ...(modLoader?.nativeDlls ?? []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
     ],
-    // The UnionCrax fix reaches Steam through the bridge, which is what makes
-    // Steam list the player in Spacewar.
-    disabledDlls:
-      onlineFixEnabled && onlineFix?.steamBridge ? [] : [STEAM_BRIDGE_DLL],
+    // OnlineFix loads the original steamclient64.dll, which only works with
+    // Proton's bridge patching it to the running Linux Steam; without the
+    // bridge the real DLL crashes in Wine (error 998).
+    disabledDlls: onlineFixEnabled && onlineFix ? [] : [STEAM_BRIDGE_DLL],
   });
 };
 

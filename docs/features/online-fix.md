@@ -35,7 +35,9 @@ defaults**), Hydra handles both on Linux.
   Files already in the prefix are kept. Missing files are listed in the log.
 
 - At launch, the proxy DLLs are added to `WINEDLLOVERRIDES` as `native,builtin`,
-  merged with any overrides in the game's launch options.
+  merged with any overrides in the game's launch options. Proton's Steam
+  bridge is left **on** (see below), so **Steam must be running and signed
+  in**.
 
 Games set up before this existed are checked the first time they are
 launched. The game's [Tools](game-tools.md) options show whether OnlineFix was
@@ -46,17 +48,23 @@ The setting is stored per game (`onlineFixDisabled`).
 This replaces the standalone `hydra-prep` script, which edited the prefix's
 `user.reg` instead and had to wait for Proton to create it.
 
+## Why Steam must be running
+
+OnlineFix loads the original `steamclient64.dll` from the prefix. Proton only
+makes that DLL work by patching it to the bridge, `lsteamclient`, which talks
+to the running Linux Steam (see below). Without the bridge the real Windows
+DLL runs on its own and crashes inside Wine, and the game stops with
+`Failed to load original steamclient. Error code: 998`. So Hydra does not add
+`lsteamclient=d` for OnlineFix games, and Steam lists the player as in
+Spacewar while they play.
+
 ## UnionCrax's UCOnline fix
 
 `union-crax.ini` marks UnionCrax's UCOnline fix (for example the one for
 Finals Week). It works like OnlineFix: a `winmm.dll` proxy, and the game
 runs as Spacewar (`AppId=480`) through the Steam client. Hydra treats it the
-same, with one difference: it leaves Proton's Steam bridge **on** for the
-game, because the bridge is what reaches the running Linux Steam. So **Steam
-must be running and signed in**, and Steam then lists the player as in
-Spacewar. Everything else (proxy DLL override, Steam client files in the
-prefix) is as above. A `union-crax.ini` game only becomes detected when
-setup runs again: **Run again** on the OnlineFix step.
+same. A `union-crax.ini` game only becomes detected when setup runs again:
+**Run again** on the OnlineFix step.
 
 ## Steam emulators and Proton's Steam bridge
 
@@ -70,7 +78,7 @@ does, with errors such as `Cannot create IPC pipe to Steam client process`.
 
 Hydra launches games through umu, without Steam, so on Linux it adds
 `lsteamclient=d` to `WINEDLLOVERRIDES` for every Windows game (except
-UCOnline-fix games, above). GE-Proton does
+OnlineFix games, above). GE-Proton does
 the same for umu launches; Proton-CachyOS 11 (`proton-cachyos-slr`) only does
 it on the Steam branch of its launch script, which a Hydra launch never takes.
 The override is visible in the [launch command

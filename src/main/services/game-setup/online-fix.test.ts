@@ -43,7 +43,6 @@ describe("detectOnlineFix", () => {
     assert.deepStrictEqual(await detectOnlineFix(path.join(root, "game")), {
       directory: path.join(root, "game/Proj/Binaries/Win64"),
       proxyDlls: ["winmm"],
-      steamBridge: true,
     });
   });
 
