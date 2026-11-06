@@ -29,7 +29,7 @@ up out of Unreal Engine's `Binaries/Win64`.
 With **Settings → Downloads → Look for updates to installed games** on (the
 default), Hydra checks every installed game after it starts and after the
 download sources sync. **Check for updates** on the Downloads page runs it by
-hand.
+hand and shows when the last check finished.
 
 For each game, Hydra reads the same download list the game page shows (the
 server's matches plus [local source matching](local-source-matching.md)) and
@@ -51,8 +51,11 @@ picks a newer release:
 Games installed by Steam or Epic are never checked; their launchers update
 them. Repacks show **Installed** and **Update** badges in the download list.
 
-Games with an update are listed under **Updates** on the Downloads page.
-**Ignore** hides that release for the game; a later one is offered again.
+Games with an update are listed under **Needs you** on the Downloads page,
+which is the home of that list; the hero's update chip and the home
+**Updates available** shelf are summaries that link to it or to the game.
+The row's ✕ (**Ignore this version**) hides that release for the game; a
+later one is offered again.
 A notification is posted when a check finds new updates.
 
 ## Installing an update

@@ -1,5 +1,40 @@
 # Downloads and extraction
 
+## The Downloads page
+
+One list of everything Hydra is doing for you, grouped by state, not by
+which feature started the work. A section with nothing in it is not shown;
+with all four empty the page says "Such empty". The header has **Check for
+updates**, with "Checked <time ago>" once a check has finished this session.
+
+| Section       | What is in it                                                                                                                                                                                       |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Now**       | The active game download as a large card (art, bar, speed chart), then everything else that is moving: an extraction, a Steam install, a mod download, a running background task or long job.       |
+| **Up next**   | Queued and paused game downloads (in queue order, **Move up** / **Move down** in ⋮), Steam installs that are waiting, queued or paused, and changes waiting to be sent to Floppy.                   |
+| **Needs you** | Failed jobs of every kind, a mod installer that waits for options, and available game updates (by title). Failures come first.                                                                      |
+| **Recent**    | Finished work of every kind, newest first: completed downloads (seeding ones too), installed mods, finished background tasks with their result. **Clear all** clears every row that can be cleared. |
+
+Every row is the same `ActivityRow` (`components/activity-row/`): the game's
+cover (or an icon), the title, a kind badge (downloader, Steam, Mod, Update,
+Floppy, Proton, …), one status line, the shared `ProgressBar` while it runs
+(a moving segment while the amount is not known yet) and the actions:
+
+- **✕** in the rightmost slot hides a finished or failed row; on an update it
+  is **Ignore this version**. Rows that can't be cleared (running, seeding,
+  extracting) leave the slot empty so the columns line up.
+- One primary button for the obvious next step: **Play**, **Extract files**,
+  **Install**, **Update**, **Resume**, **Try again**, **Choose options**.
+- **⋮** holds the rest: **Cancel**, **Open game**, **Open Mods**, **Open in
+  Steam**, the game's own menu for game downloads.
+
+Where the page gets its rows is `features/activity/` (pure adapters and
+grouping, tested in `activity.test.ts`; `useActivity()` gathers the sources).
+The bottom bar reads the same list: one line for the highest-priority work in
+**Now** (redistributable install, extraction, game download, Steam install,
+mod download, background job), a thin bar, **+N more** and **N needs you**
+(failures and installers waiting for options; updates are not counted). It
+opens this page.
+
 ## Where downloads go
 
 **Settings → General → Downloads path** sets the default folder. Archives are
@@ -75,9 +110,10 @@ compare against the installed game too; see [Game updates](updates.md).
 
 ## Finished downloads
 
-The **Completed** list shows the newest finished download first, by when it
-finished (older downloads by when they started). Each row offers what makes
-sense for the files on disk:
+Finished downloads sit in **Recent**, newest first by when they finished
+(older downloads by when they started); one whose extraction failed is in
+**Needs you** with the reason. Each row offers what makes sense for the files
+on disk:
 
 | Files                                                                        | Button                             |
 | ---------------------------------------------------------------------------- | ---------------------------------- |
@@ -90,7 +126,7 @@ sense for the files on disk:
 The ⋮ button opens the same menu as right-clicking the game in the sidebar
 (torrents also get seeding controls under **Manage game**). **Remove files** is
 in that menu's **Manage game** submenu. The ✕ button clears a row from the list
-and **Clear all** clears every finished one. Clearing only hides the row; the
+and **Clear all** (in **Recent**) clears every finished one. Clearing only hides the row; the
 files, the game and its download record stay, so **Remove files** and **Open
 download location** keep working. Rows that are seeding or extracting are not
 cleared. Starting a new download of the game shows it again.
@@ -150,28 +186,35 @@ before.
 ## Mod downloads
 
 Mods downloaded from Nexus Mods (on a game's Mods page, or with Nexus's Mod
-Manager Download button) are listed under **Mod downloads**, above the game
-downloads, and in the bottom bar. They run in the main process, so leaving the
-Mods page doesn't stop them. Each row says **Waiting for TorBox**,
-**Downloading** with its progress, **Installing**, **Installed** (or that a
-FOMOD installer waits for options), or **Failed** with the reason, TorBox's
-own words when it gave some, and **Retry**. A download Hydra was closed
-during comes back as failed with Retry. **Cancel** stops one that is waiting
-or downloading; **Open Mods** opens the game's Mods page. See
-[Mods](mods.md#nexus-mods).
+Manager Download button) are rows on this page and in the bottom bar. They
+run in the main process, so leaving the Mods page doesn't stop them. A row
+says **Waiting for TorBox**, **Downloading** with its progress,
+**Installing** (all in **Now**), **Installed** (in **Recent**; in **Needs
+you** with **Choose options** when a FOMOD installer waits for options) or
+**Failed** with the reason, TorBox's own words when it gave some, and **Try
+again** (in **Needs you**). A download Hydra was closed during comes back as
+failed. **Cancel** (in ⋮) stops one that is waiting or downloading; **Open
+Mods** opens the game's Mods page. See [Mods](mods.md#nexus-mods).
 
-## Background tasks
+## Background tasks and long jobs
 
-Long actions that are not downloads show above the downloads: the Steam
-history import, the Steam wishlist check, a Floppy library sync or preview, a
-pull from Floppy, adding Floppy games to the library, and
-changes waiting to be sent to Floppy (a game's change is sent about ten
-seconds after it happens, so a burst shows as "N waiting to be sent"). Each
-shows its progress, and a finished one stays with its result until you dismiss
-it. Scheduled runs that changed nothing leave nothing behind.
+Long actions that are not downloads are rows too: the Steam history import,
+the Steam wishlist check, a Floppy library sync or preview, a pull from
+Floppy, adding Floppy games to the library, and changes waiting to be sent to
+Floppy (a game's change is sent about ten seconds after it happens, so a
+burst shows as "N waiting to be sent"). Jobs that keep running when you leave
+the page that started them report here as well, in addition to their own
+page: Proton installs, bulk RenoDX and OptiScaler, bulk save import, manual
+save backup, moving a game's files, and emulator and RetroArch core installs.
+Each shows its progress, and a finished one stays in **Recent** with its
+result until you clear it. A row's title opens the page that owns the job
+(⋮ for the rest). Settings export and import are not listed: they write one
+small file. Scheduled runs that changed nothing leave nothing behind. Tasks
+live in memory, so finished ones do not survive a restart.
 
 A failed task says why in plain words (Floppy can't be reached, Steam rejected
 the key, the Steam profile is private, the service is rate-limiting or had a
-server error) and has **Try again**. If you dismiss a failure, scheduled runs
-that fail the same way stay quiet until one succeeds or the reason changes;
-the integration's card in **Settings → Integrations** still shows it.
+server error) and, when it can be run again, has **Try again**. If you dismiss
+a failure, scheduled runs that fail the same way stay quiet until one
+succeeds or the reason changes; the integration's card in **Settings →
+Integrations** still shows it.

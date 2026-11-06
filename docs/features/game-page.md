@@ -5,30 +5,33 @@
 Each fact on the game page has one home. Anything else that mentions it is a
 summary that links there. Add a row here when a feature adds a new fact.
 
-| Fact                                                     | Lives in                                                                                                                                                                          |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Playtime, last played, launch state, update chip         | Hero bar                                                                                                                                                                          |
-| Play status, rating, favourite, pin, wishlist, notes     | **Your game** sidebar section                                                                                                                                                     |
-| Installed mods, their order and updates                  | **Mods** page; the **Mods** sidebar section summarises and links to it                                                                                                            |
-| What Hydra knows about modding a game, its loader        | **Mods** page: the line under **Installed mods**, the loader's row (**Loader**) and the "is needed" row                                                                           |
-| Mods waiting for a placement, and where a mod's files go | **Mods** page: the waiting row and its placement dialog; **Change where it goes** on an installed row                                                                             |
-| What happened to a game's mods (activity log, report)    | **Mods** page → **Activity**; Copy mods report there and on a failed modded run                                                                                                   |
-| Play or Play (modded), the default per game              | Hero bar's split Play button; the context menu and Big Picture follow it                                                                                                          |
-| Mod downloads and their state                            | **Downloads** page → **Mod downloads**; the Mods page shows this game's with a link there                                                                                         |
-| Steam installs and their progress                        | **Downloads** page → **Downloading through Steam**; the hero shows this game's, and its button opens Steam's downloads                                                            |
-| A run's mods (modded or not, loader, mods on)            | **Options → Compatibility**, the Runs part                                                                                                                                        |
-| Copies and other versions in your library                | **Your game** sidebar section, only when there are any                                                                                                                            |
-| Achievements                                             | Sidebar summary (icon, name, description), details on the achievements page                                                                                                       |
-| System requirements, supported languages                 | Middle column, below **About this game** and above **More like this**                                                                                                             |
-| Whether your PC meets the requirements, and your specs   | The line above each requirements list; the specs themselves live in **Settings → My PC** ([System requirements check](system-requirements.md))                                    |
-| Outside ratings and player counts                        | **Reception** sidebar section (Steam games)                                                                                                                                       |
-| Hydra rating (Steam reviews adjusted, with Metacritic)   | Store cards, rows and chart tables, one chip with its parts in the tooltip ([Catalogue](catalogue.md#hydra-rating)); the game page shows the separate figures under **Reception** |
-| Games played outside Hydra (for suggestions)             | **Based on** in For you ([Catalogue](catalogue.md#feedback-from-cards))                                                                                                           |
-| ProtonDB, How Long to Beat                               | Their own sidebar sections, each with its site link in the header                                                                                                                 |
-| Other external links (Steam, SteamDB, PCGamingWiki)      | **Links** sidebar section                                                                                                                                                         |
-| RenoDX mod, ReShade version, HDR mod status              | **Options → Tools**, the RenoDX part below the tool list                                                                                                                          |
-| Which tools apply (OnlineFix, HDR, RenoDX, …), why       | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there                                                                                                         |
-| Past launches: outcome, exit code, tools, logs           | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))                                                                                                            |
+| Fact                                                              | Lives in                                                                                                                                                                          |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Playtime, last played, launch state, update chip                  | Hero bar                                                                                                                                                                          |
+| Play status, rating, favourite, pin, wishlist, notes              | **Your game** sidebar section                                                                                                                                                     |
+| Installed mods, their order and updates                           | **Mods** page; the **Mods** sidebar section summarises and links to it                                                                                                            |
+| What Hydra knows about modding a game, its loader                 | **Mods** page: the line under **Installed mods**, the loader's row (**Loader**) and the "is needed" row                                                                           |
+| Mods waiting for a placement, and where a mod's files go          | **Mods** page: the waiting row and its placement dialog; **Change where it goes** on an installed row                                                                             |
+| What happened to a game's mods (activity log, report)             | **Mods** page → **Activity**; Copy mods report there and on a failed modded run                                                                                                   |
+| Play or Play (modded), the default per game                       | Hero bar's split Play button; the context menu and Big Picture follow it                                                                                                          |
+| Mod downloads and their state                                     | **Downloads** page (Now / Up next / Needs you / Recent); the Mods page shows this game's with a link there                                                                        |
+| Steam installs and their progress                                 | **Downloads** page (Now / Up next); the hero shows this game's, and its button opens Steam's downloads                                                                            |
+| Available updates (the list)                                      | **Downloads** page → **Needs you**; the hero's update chip and the home **Updates available** shelf are summaries that link to it or to the game ([updates](updates.md))          |
+| Long-running jobs (Proton installs, bulk tools, imports, backups) | **Downloads** page; the settings pages that start them keep their local progress and link there                                                                                   |
+| Bottom bar status                                                 | A summary of **Downloads** → **Now**; it opens the page                                                                                                                           |
+| A run's mods (modded or not, loader, mods on)                     | **Options → Compatibility**, the Runs part                                                                                                                                        |
+| Copies and other versions in your library                         | **Your game** sidebar section, only when there are any                                                                                                                            |
+| Achievements                                                      | Sidebar summary (icon, name, description), details on the achievements page                                                                                                       |
+| System requirements, supported languages                          | Middle column, below **About this game** and above **More like this**                                                                                                             |
+| Whether your PC meets the requirements, and your specs            | The line above each requirements list; the specs themselves live in **Settings → My PC** ([System requirements check](system-requirements.md))                                    |
+| Outside ratings and player counts                                 | **Reception** sidebar section (Steam games)                                                                                                                                       |
+| Hydra rating (Steam reviews adjusted, with Metacritic)            | Store cards, rows and chart tables, one chip with its parts in the tooltip ([Catalogue](catalogue.md#hydra-rating)); the game page shows the separate figures under **Reception** |
+| Games played outside Hydra (for suggestions)                      | **Based on** in For you ([Catalogue](catalogue.md#feedback-from-cards))                                                                                                           |
+| ProtonDB, How Long to Beat                                        | Their own sidebar sections, each with its site link in the header                                                                                                                 |
+| Other external links (Steam, SteamDB, PCGamingWiki)               | **Links** sidebar section                                                                                                                                                         |
+| RenoDX mod, ReShade version, HDR mod status                       | **Options → Tools**, the RenoDX part below the tool list                                                                                                                          |
+| Which tools apply (OnlineFix, HDR, RenoDX, …), why                | **Options → Tools** ([Tools and fixes](game-tools.md)); others link there                                                                                                         |
+| Past launches: outcome, exit code, tools, logs                    | **Options → Compatibility**, the Runs part ([Game runs](game-runs.md))                                                                                                            |
 
 ## Requirements and languages
 
@@ -53,6 +56,12 @@ window is not mostly margin. Below 1280px viewport width the column is full
 width. A new block in that column uses the mixin instead of its own width rules.
 
 ## Patterns across pages
+
+**One row for work in progress.** Anything that runs, waits, fails or
+finishes is an `ActivityRow` (`components/`) on the Downloads page, with the
+shared `ProgressBar` (thin, small or large; indeterminate when the amount is
+unknown). ✕ clears or ignores, one primary button, the rest in ⋮. A new kind
+of job adds an adapter in `features/activity/`, not a new section.
 
 Decided 2026-10-31 (roadmap phase 13 item 7), so the catalogue, library and
 home are reworked once and stay one app.

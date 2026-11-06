@@ -343,15 +343,15 @@ in the sections below.
     5. [x] Hide a group, refine a group, build a group around games
 23. **Downloads: one activity list.** Added 2026-11-06 with the owner.
     Spec and plan: [Downloads redesign](downloads-redesign.md) (start there).
-    1. [ ] Shared progress bar and activity row
-    2. [ ] One action language: ✕ to clear or ignore, one primary, the rest
+    1. [x] Shared progress bar and activity row
+    2. [x] One action language: ✕ to clear or ignore, one primary, the rest
            in ⋮
-    3. [ ] Now, Up next, Needs you, Recent
-    4. [ ] Bottom bar: what's happening now, +N more, needs you
-    5. [ ] Jobs that outlive their page (Proton, bulk tools, imports,
+    3. [x] Now, Up next, Needs you, Recent
+    4. [x] Bottom bar: what's happening now, +N more, needs you
+    5. [x] Jobs that outlive their page (Proton, bulk tools, imports,
            backups) on the Downloads page
-    6. [ ] Polish: keyboard, narrow windows, loading
-    7. [ ] Docs
+    6. [x] Polish: keyboard, narrow windows, loading
+    7. [x] Docs
 
 Why this order:
 

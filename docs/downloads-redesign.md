@@ -506,3 +506,24 @@ Before finishing: `npm run typecheck`, `npm run lint`, `npm test`, then
   looks empty.
 - Should Recent cap its length (e.g. 50 rows, older ones behind "Show
   more")? Decide after seeing a real library in Step 3.
+
+## Implementation notes (2026-11-07)
+
+What differs from the plan above:
+
+- Steps 2 and 3 were done together: the action rules landed with the
+  `ActivityRow` pieces that replaced the per-source sections, since those were
+  being rewritten anyway.
+- `useActivity()` lives in `features/activity/use-activity.ts` with the text
+  helpers it needs, not in `hooks/`; `useBackgroundTasks` is in `hooks/`.
+- Settings export and import are not reported (a single small file write; the
+  "more than a few seconds" test fails). Epic sync was not added.
+- Moving files, bulk tools, imports, backups and installs report through
+  `trackBackgroundTask` (`services/background-tasks.ts`) next to their own
+  events. Only Proton, bulk RenoDX/OptiScaler, save import, backup, game
+  moves and emulator/core installs were wired; none was run end to end
+  (only the rows themselves were checked with injected state).
+- "Checked <time ago>" is kept in memory for the session, not stored.
+- Not done: Delete key on a focused row (optional). Not checked visually:
+  the hero card with a live download (stale paint around its bar), mod and
+  Steam rows against real downloads, a matugen palette.
