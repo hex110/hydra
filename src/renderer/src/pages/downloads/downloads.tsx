@@ -101,7 +101,7 @@ export default function Downloads() {
       games.length > 0 ? actions.dismiss(games) : undefined,
       ...clearable.map((item) => {
         if (item.source.kind === "task") {
-          return window.electron.dismissBackgroundTask(item.source.task.id);
+          return window.electron.dismissBackgroundTask(item.source.task.key);
         }
         if (item.source.kind === "mod-download") {
           return window.electron.dismissModDownload(item.source.download.id);

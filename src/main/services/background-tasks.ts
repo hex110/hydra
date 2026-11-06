@@ -10,13 +10,17 @@ import { WindowManager } from "./window-manager";
 const CHANGED_EVENT = "on-background-tasks-changed";
 const NOTIFY_INTERVAL_MS = 300;
 
-const tasks = new Map<BackgroundTaskKind, BackgroundTask>();
-const retryHandlers = new Map<BackgroundTaskKind, () => Promise<unknown>>();
+const tasks = new Map<string, BackgroundTask>();
+const retryHandlers = new Map<string, () => Promise<unknown>>();
 // A dismissed failure is not shown again by scheduled runs until the reason changes.
-const dismissedFailures = new Map<BackgroundTaskKind, BackgroundTaskError>();
+const dismissedFailures = new Map<string, BackgroundTaskError>();
 let notifyTimer: NodeJS.Timeout | null = null;
 
-export const getBackgroundTasks = () => [...tasks.values()];
+export const getBackgroundTasks = () =>
+  [...tasks.values()].map((task) => ({
+    ...task,
+    retryable: retryHandlers.has(task.key),
+  }));
 
 // Progress ticks arrive per game; the window only needs a few updates a second.
 const notify = () => {
@@ -28,15 +32,23 @@ const notify = () => {
   }, NOTIFY_INTERVAL_MS);
 };
 
+type TaskPatch = Partial<
+  Omit<BackgroundTask, "id" | "key" | "retryable" | "updatedAt">
+>;
+
+/** `key` tells entries of one kind apart; it defaults to the kind itself. */
 export const updateBackgroundTask = (
   id: BackgroundTaskKind,
-  patch: Partial<Omit<BackgroundTask, "id" | "updatedAt">>
+  patch: TaskPatch,
+  key: string = id
 ) => {
-  const current = tasks.get(id);
-  if (patch.state === "done") dismissedFailures.delete(id);
+  const current = tasks.get(key);
+  if (patch.state === "done") dismissedFailures.delete(key);
 
-  tasks.set(id, {
+  tasks.set(key, {
     id,
+    key,
+    retryable: false,
     state: "running",
     processed: 0,
     total: null,
@@ -57,43 +69,44 @@ export const updateBackgroundTask = (
 export const failBackgroundTask = (
   id: BackgroundTaskKind,
   error: unknown,
-  { quiet = false } = {}
+  { quiet = false, key = id as string } = {}
 ) => {
   const reason = describeTaskError(error);
 
-  if (quiet && dismissedFailures.get(id) === reason) {
-    removeBackgroundTask(id);
+  if (quiet && dismissedFailures.get(key) === reason) {
+    removeBackgroundTask(key);
     return reason;
   }
 
-  updateBackgroundTask(id, { state: "failed", error: reason });
+  updateBackgroundTask(id, { state: "failed", error: reason }, key);
   return reason;
 };
 
-export const removeBackgroundTask = (id: BackgroundTaskKind) => {
-  if (tasks.delete(id)) notify();
+export const removeBackgroundTask = (key: string) => {
+  if (tasks.delete(key)) notify();
 };
 
-export const dismissBackgroundTask = (id: BackgroundTaskKind) => {
-  const task = tasks.get(id);
+export const dismissBackgroundTask = (key: string) => {
+  const task = tasks.get(key);
   if (task?.state === "failed" && task.error) {
-    dismissedFailures.set(id, task.error);
+    dismissedFailures.set(key, task.error);
   }
-  removeBackgroundTask(id);
+  removeBackgroundTask(key);
 };
 
 /** Lets the Downloads page run a failed task again without knowing its service. */
 export const registerBackgroundTaskRetry = (
   id: BackgroundTaskKind,
-  retry: () => Promise<unknown>
+  retry: () => Promise<unknown>,
+  key: string = id
 ) => {
-  retryHandlers.set(id, retry);
+  retryHandlers.set(key, retry);
 };
 
-export const retryBackgroundTask = async (id: BackgroundTaskKind) => {
-  const retry = retryHandlers.get(id);
-  if (!retry) throw new Error(`No retry for background task ${id}`);
+export const retryBackgroundTask = async (key: string) => {
+  const retry = retryHandlers.get(key);
+  if (!retry) throw new Error(`No retry for background task ${key}`);
 
-  dismissedFailures.delete(id);
+  dismissedFailures.delete(key);
   await retry();
 };

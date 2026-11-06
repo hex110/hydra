@@ -21,7 +21,6 @@ import type {
   GameMetadataOverrides,
   PlayStatus,
   BackgroundTask,
-  BackgroundTaskKind,
   IntegrationName,
   LibraryImportSource,
   SaveStoreConfig,
@@ -1083,8 +1082,8 @@ contextBridge.exposeInMainWorld("electron", {
   testFloppyConnection: (url: string, token: string) =>
     ipcRenderer.invoke("testFloppyConnection", url, token),
   getBackgroundTasks: () => ipcRenderer.invoke("getBackgroundTasks"),
-  dismissBackgroundTask: (id: BackgroundTaskKind) =>
-    ipcRenderer.invoke("dismissBackgroundTask", id),
+  dismissBackgroundTask: (key: string) =>
+    ipcRenderer.invoke("dismissBackgroundTask", key),
   testSaveStore: (config: SaveStoreConfig) =>
     ipcRenderer.invoke("testSaveStore", config),
   isRcloneAvailable: () => ipcRenderer.invoke("isRcloneAvailable"),
@@ -1125,8 +1124,8 @@ contextBridge.exposeInMainWorld("electron", {
   },
   testSteamGridDbApiKey: (apiKey: string) =>
     ipcRenderer.invoke("testSteamGridDbApiKey", apiKey),
-  retryBackgroundTask: (id: BackgroundTaskKind) =>
-    ipcRenderer.invoke("retryBackgroundTask", id),
+  retryBackgroundTask: (key: string) =>
+    ipcRenderer.invoke("retryBackgroundTask", key),
   getIntegrationStatuses: () => ipcRenderer.invoke("getIntegrationStatuses"),
   resetIntegrationStatus: (name: IntegrationName) =>
     ipcRenderer.invoke("resetIntegrationStatus", name),

@@ -196,19 +196,21 @@ function TaskRow({
   task,
 }: Readonly<{ item: ActivityItem; task: BackgroundTask }>) {
   const { t } = useTranslation("downloads");
+  const navigate = useNavigate();
   const { showErrorToast } = useToast();
 
   return (
     <ActivityRow
       {...common(item)}
       icon={<SyncIcon size={20} />}
+      onOpen={task.route ? () => navigate(task.route!) : undefined}
       primary={
-        task.state === "failed" ? (
+        task.state === "failed" && task.retryable ? (
           <Button
             size="small"
             onClick={() =>
               window.electron
-                .retryBackgroundTask(task.id)
+                .retryBackgroundTask(task.key)
                 .catch(() => showErrorToast(t("task_retry_failed")))
             }
           >
@@ -219,7 +221,7 @@ function TaskRow({
       }
       onClear={
         item.canClear
-          ? () => void window.electron.dismissBackgroundTask(task.id)
+          ? () => void window.electron.dismissBackgroundTask(task.key)
           : undefined
       }
       clearLabel={t("clear")}

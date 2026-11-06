@@ -68,6 +68,8 @@ const downloadItem = (
 
 const task = (patch: Partial<BackgroundTask>): BackgroundTask => ({
   id: "floppy-sync",
+  key: "floppy-sync",
+  retryable: false,
   state: "running",
   processed: 0,
   total: null,

@@ -4,7 +4,17 @@ export type BackgroundTaskKind =
   | "floppy-sync"
   | "floppy-pull"
   | "floppy-import"
-  | "floppy-push";
+  | "floppy-push"
+  | "proton-install"
+  | "settings-export"
+  | "settings-import"
+  | "renodx-bulk"
+  | "optiscaler-bulk"
+  | "save-import-bulk"
+  | "game-move"
+  | "save-backup"
+  | "emulator-install"
+  | "retroarch-core-install";
 
 export type BackgroundTaskState = "queued" | "running" | "done" | "failed";
 
@@ -20,7 +30,16 @@ export type BackgroundTaskError =
 
 /** A long-running action shown on the Downloads page. */
 export interface BackgroundTask {
+  /** What kind of job this is; picks its words. */
   id: BackgroundTaskKind;
+  /** Unique entry; the same as `id` unless a kind can run several at once. */
+  key: string;
+  /** Fills the title, e.g. { version: "GE-Proton10-4" }. */
+  params?: Record<string, string>;
+  /** A retry handler is registered, so failed entries can run again. */
+  retryable: boolean;
+  /** The page that owns the job, opened from the row's menu. */
+  route?: string;
   state: BackgroundTaskState;
   /** Games handled so far, and in all (null while unknown or for a queue). */
   processed: number;

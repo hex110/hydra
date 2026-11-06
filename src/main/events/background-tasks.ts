@@ -12,7 +12,6 @@ import {
   removeImportedGames,
 } from "@main/services/imported-games";
 import type {
-  BackgroundTaskKind,
   IntegrationName,
   LibraryImportSource,
 } from "@types";
@@ -20,11 +19,11 @@ import type {
 import { registerEvent } from "./register-event";
 
 registerEvent("getBackgroundTasks", () => getBackgroundTasks());
-registerEvent("dismissBackgroundTask", (_event, id: BackgroundTaskKind) => {
-  dismissBackgroundTask(id);
+registerEvent("dismissBackgroundTask", (_event, key: string) => {
+  dismissBackgroundTask(key);
 });
-registerEvent("retryBackgroundTask", (_event, id: BackgroundTaskKind) =>
-  retryBackgroundTask(id)
+registerEvent("retryBackgroundTask", (_event, key: string) =>
+  retryBackgroundTask(key)
 );
 
 registerEvent("getIntegrationStatuses", () => getIntegrationStatuses());

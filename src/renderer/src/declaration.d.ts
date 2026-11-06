@@ -515,7 +515,7 @@ declare global {
     ) => Promise<void>;
     testFloppyConnection: (url: string, token: string) => Promise<void>;
     getBackgroundTasks: () => Promise<BackgroundTask[]>;
-    dismissBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    dismissBackgroundTask: (key: string) => Promise<void>;
     testSaveStore: (config: SaveStoreConfig) => Promise<void>;
     getSaveSyncStatuses: () => Promise<SaveSyncStatus[]>;
     isRcloneAvailable: () => Promise<boolean>;
@@ -544,7 +544,7 @@ declare global {
       cb: (progress: ManualSaveBackupProgress) => void
     ) => () => void;
     testSteamGridDbApiKey: (apiKey: string) => Promise<void>;
-    retryBackgroundTask: (id: BackgroundTaskKind) => Promise<void>;
+    retryBackgroundTask: (key: string) => Promise<void>;
     getIntegrationStatuses: () => Promise<IntegrationStatuses>;
     resetIntegrationStatus: (name: IntegrationName) => Promise<void>;
     onIntegrationStatusChanged: (cb: () => void) => () => void;

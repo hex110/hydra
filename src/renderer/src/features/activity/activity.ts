@@ -240,7 +240,7 @@ export function fromBackgroundTask(
   }[task.state] as ActivitySection;
 
   return {
-    key: `task:${task.id}`,
+    key: `task:${task.key}`,
     kind: "task",
     section,
     title: context.title,
