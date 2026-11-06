@@ -105,7 +105,10 @@ const getLinuxLaunchEnvironment = async (
       ...(modLoader?.nativeDlls ?? []),
       ...(onlineFixEnabled ? (onlineFix?.proxyDlls ?? []) : []),
     ],
-    disabledDlls: [STEAM_BRIDGE_DLL],
+    // The UnionCrax fix reaches Steam through the bridge, which is what makes
+    // Steam list the player in Spacewar.
+    disabledDlls:
+      onlineFixEnabled && onlineFix?.steamBridge ? [] : [STEAM_BRIDGE_DLL],
   });
 };
 

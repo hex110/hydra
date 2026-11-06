@@ -13,6 +13,10 @@ interface LaunchOptionParts {
   args: string[];
 }
 
+// A shell would drop the quotes of NAME="value" before the game sees it.
+const unquoteValue = (value: string) =>
+  /^(["']).*\1$/.test(value) && value.length >= 2 ? value.slice(1, -1) : value;
+
 const splitEnvAssignment = (token: string): [string, string] | null => {
   const separatorIndex = token.indexOf("=");
   if (separatorIndex <= 0) return null;
@@ -20,7 +24,7 @@ const splitEnvAssignment = (token: string): [string, string] | null => {
   const name = token.slice(0, separatorIndex);
   if (!envVariableNameRegex.test(name)) return null;
 
-  return [name, token.slice(separatorIndex + 1)];
+  return [name, unquoteValue(token.slice(separatorIndex + 1))];
 };
 
 const splitLaunchOptions = (tokens: string[]): LaunchOptionParts => {

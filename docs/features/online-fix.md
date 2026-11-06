@@ -46,6 +46,18 @@ The setting is stored per game (`onlineFixDisabled`).
 This replaces the standalone `hydra-prep` script, which edited the prefix's
 `user.reg` instead and had to wait for Proton to create it.
 
+## UnionCrax's UCOnline fix
+
+`union-crax.ini` marks UnionCrax's UCOnline fix (for example the one for
+Finals Week). It works like OnlineFix: a `winmm.dll` proxy, and the game
+runs as Spacewar (`AppId=480`) through the Steam client. Hydra treats it the
+same, with one difference: it leaves Proton's Steam bridge **on** for the
+game, because the bridge is what reaches the running Linux Steam. So **Steam
+must be running and signed in**, and Steam then lists the player as in
+Spacewar. Everything else (proxy DLL override, Steam client files in the
+prefix) is as above. A `union-crax.ini` game only becomes detected when
+setup runs again: **Run again** on the OnlineFix step.
+
 ## Steam emulators and Proton's Steam bridge
 
 Many cracks bring their own Steam: a `steamclient64.dll` and a loader DLL
@@ -57,7 +69,8 @@ then stops at `Failed to initialize Steamworks system`, whatever the crack
 does, with errors such as `Cannot create IPC pipe to Steam client process`.
 
 Hydra launches games through umu, without Steam, so on Linux it adds
-`lsteamclient=d` to `WINEDLLOVERRIDES` for every Windows game. GE-Proton does
+`lsteamclient=d` to `WINEDLLOVERRIDES` for every Windows game (except
+UCOnline-fix games, above). GE-Proton does
 the same for umu launches; Proton-CachyOS 11 (`proton-cachyos-slr`) only does
 it on the Steam branch of its launch script, which a Hydra launch never takes.
 The override is visible in the [launch command

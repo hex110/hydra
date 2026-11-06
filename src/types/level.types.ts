@@ -110,6 +110,11 @@ export interface GameOnlineFix {
   directory: string;
   /** Proxy DLLs (without ".dll") Wine must load from the game folder. */
   proxyDlls: string[];
+  /**
+   * The fix talks to the running Linux Steam through Proton's bridge (it shows
+   * the player as in Spacewar), so Hydra must leave `lsteamclient` on.
+   */
+  steamBridge?: boolean;
 }
 
 export interface Game extends LibraryCatalogueMetadata {

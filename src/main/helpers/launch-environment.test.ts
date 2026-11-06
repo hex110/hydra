@@ -50,4 +50,14 @@ describe("buildLaunchEnvironment", () => {
       "-dx12",
     ]);
   });
+
+  it("drops shell quotes around an assigned value", () => {
+    assert.strictEqual(
+      applyDefaultLaunchOptions(
+        "WINEDLLOVERRIDES=lsteamclient=d %command%",
+        'WINEDLLOVERRIDES="winmm=n,b" %command%'
+      ),
+      "WINEDLLOVERRIDES=lsteamclient=d;winmm=n,b %command%"
+    );
+  });
 });
