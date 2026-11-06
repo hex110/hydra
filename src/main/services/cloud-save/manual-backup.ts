@@ -5,6 +5,7 @@ import type {
   ManualSaveBackupSummary,
 } from "@types";
 
+import { trackBackgroundTask } from "../background-tasks";
 import { isGameRunning } from "../game-running-state";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
@@ -50,13 +51,18 @@ const run = async (
     cancelled: false,
   };
 
+  const task = trackBackgroundTask("save-backup", {
+    route: "/settings?tab=cloud",
+  });
   let done = 0;
-  const report = (title: string | null) =>
+  const report = (title: string | null) => {
     WindowManager.sendToAppWindows("on-manual-save-backup-progress", {
       done,
       total: games.length,
       title,
     });
+    task.progress(done, games.length);
+  };
   report(null);
 
   await mapWithConcurrency(games, CONCURRENCY, async (game) => {
@@ -106,6 +112,12 @@ const run = async (
     }
   });
 
+  task.done({
+    uploaded: summary.uploaded,
+    restored: summary.restored,
+    failed: summary.failed,
+    conflicts: summary.conflicts.length,
+  });
   return summary;
 };
 
@@ -114,8 +126,13 @@ export const runManualSaveBackup = (scope: ManualSaveBackupScope) => {
   if (running) return running;
 
   cancelRequested = false;
-  running = run(scope).finally(() => {
-    running = null;
-  });
+  running = run(scope)
+    .catch((error) => {
+      trackBackgroundTask("save-backup").fail(error);
+      throw error;
+    })
+    .finally(() => {
+      running = null;
+    });
   return running;
 };

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { db, gamesSublevel, levelKeys } from "@main/level";
+import { trackBackgroundTask } from "@main/services/background-tasks";
 import { logger } from "@main/services/logger";
 import { UserNotLoggedInError } from "@shared";
 import { SystemPath } from "@main/services/system-path";
@@ -485,6 +486,16 @@ export class SaveImport {
 
   private static sendBulkProgress(progress: SaveImportBulkProgress) {
     WindowManager.sendToAppWindows("on-save-import-bulk-progress", progress);
+
+    const task = trackBackgroundTask("save-import-bulk", {
+      route: "/settings?tab=save_import",
+    });
+    if (progress.status === "completed")
+      task.done({
+        imported: progress.importedGames,
+        failed: progress.failedGames,
+      });
+    else task.progress(progress.processed, progress.total);
   }
 
   /**
@@ -495,7 +506,10 @@ export class SaveImport {
   public static runBulk() {
     if (this.bulkRun) return false;
     this.bulkRun = this.bulk()
-      .catch((error) => logger.error("[SaveImport] Bulk import failed", error))
+      .catch((error) => {
+        logger.error("[SaveImport] Bulk import failed", error);
+        trackBackgroundTask("save-import-bulk").fail(error);
+      })
       .finally(() => {
         this.bulkRun = null;
         WindowManager.sendToAppWindows("on-library-batch-complete");

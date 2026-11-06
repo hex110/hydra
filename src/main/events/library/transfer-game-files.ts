@@ -6,6 +6,10 @@ import { gamesSublevel, downloadsSublevel, levelKeys } from "@main/level";
 import { updateGameExecutablePath } from "@main/helpers/update-executable-path";
 import { findGameRootFromExe } from "../helpers/find-game-root";
 import { getDirectorySize } from "../helpers/get-directory-size";
+import {
+  removeBackgroundTask,
+  trackBackgroundTask,
+} from "@main/services/background-tasks";
 import { WindowManager } from "@main/services/window-manager";
 import type { GameShop, LibraryGame } from "@types";
 
@@ -43,7 +47,8 @@ class SteamCopyEngine {
     private readonly id: string,
     private readonly shop: GameShop,
     private readonly objectId: string,
-    totalSize: number
+    totalSize: number,
+    private readonly onProgress?: (fraction: number) => void
   ) {
     this.totalSize = totalSize;
     this.startTime = Date.now();
@@ -67,6 +72,7 @@ class SteamCopyEngine {
       transferred: this.bytesCopied,
       total: this.totalSize,
     });
+    this.onProgress?.(progress);
   }
 
   private addBytes(bytes: number) {
@@ -364,7 +370,21 @@ registerEvent(
 
     await fs.mkdir(destParent, { recursive: true });
 
-    const engine = new SteamCopyEngine(id, shop, objectId, gameSize);
+    const taskKey = `game-move:${id}`;
+    const task = trackBackgroundTask("game-move", {
+      key: taskKey,
+      params: { game: game.title },
+      route: `/game/${shop}/${objectId}?title=${encodeURIComponent(game.title)}`,
+    });
+    task.progress(0, 100);
+
+    const engine = new SteamCopyEngine(
+      id,
+      shop,
+      objectId,
+      gameSize,
+      (fraction) => task.progress(Math.round(fraction * 100), 100)
+    );
 
     try {
       await engine.moveGame(gameRoot, targetRoot);
@@ -373,10 +393,12 @@ registerEvent(
       await cleanupOnError(id, targetRoot);
 
       if (msg === "cancelled") {
+        removeBackgroundTask(taskKey);
         send("on-game-transfer-cancelled", shop, objectId);
         return { ok: false, error: "Transfer cancelled" };
       }
 
+      task.fail(err);
       send("on-game-transfer-error", shop, objectId, msg);
       return { ok: false, error: msg };
     }
@@ -393,8 +415,9 @@ registerEvent(
         gameSize,
         targetRoot
       );
-    } catch {
+    } catch (error) {
       activeTransfers.delete(id);
+      task.fail(error);
       send(
         "on-game-transfer-error",
         shop,
@@ -405,6 +428,7 @@ registerEvent(
     }
 
     activeTransfers.delete(id);
+    task.done();
     send("on-game-transfer-complete", shop, objectId, newExePath);
     return { ok: true, newExePath };
   }

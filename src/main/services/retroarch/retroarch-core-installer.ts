@@ -1,3 +1,4 @@
+import { trackBackgroundTask } from "../background-tasks";
 import { shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
@@ -83,6 +84,20 @@ const sendCoreProgress = (progress: RetroArchCoreInstallProgress): void => {
     "on-retroarch-core-install-progress",
     progress
   );
+
+  const task = trackBackgroundTask("retroarch-core-install", {
+    key: `retroarch-core-install:${progress.core}`,
+    params: { core: progress.core },
+    route: "/settings?tab=emulation",
+  });
+  if (progress.phase === "done") task.done();
+  else if (progress.phase === "error") {
+    task.fail(new Error(progress.reason ?? "install_failed"));
+  } else {
+    task.progress(progress.loaded ?? 0, progress.total ?? null, {
+      stage: progress.phase,
+    });
+  }
 };
 
 const sendInstallProgress = (progress: RetroArchInstallProgress): void => {

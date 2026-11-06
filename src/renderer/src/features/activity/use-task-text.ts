@@ -38,7 +38,14 @@ export function useTaskText() {
               `${key(task)}_progress`,
               fallback,
             ],
-            { ...task.params, processed: task.processed, total: task.total }
+            {
+              ...task.params,
+              processed: task.processed,
+              total: task.total,
+              percent: task.total
+                ? Math.round((task.processed / task.total) * 100)
+                : 0,
+            }
           );
         }
 

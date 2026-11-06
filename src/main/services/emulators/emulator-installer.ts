@@ -1,3 +1,4 @@
+import { trackBackgroundTask } from "../background-tasks";
 import { shell } from "electron";
 import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
@@ -39,6 +40,20 @@ const sendProgress = (progress: EmulatorInstallProgress): void => {
     "on-emulator-install-progress",
     progress
   );
+
+  const task = trackBackgroundTask("emulator-install", {
+    key: `emulator-install:${progress.binary}`,
+    params: { emulator: progress.binary },
+    route: "/settings?tab=emulation",
+  });
+  if (progress.phase === "done") task.done();
+  else if (progress.phase === "error") {
+    task.fail(new Error(progress.reason ?? "install_failed"));
+  } else {
+    task.progress(progress.loaded ?? 0, progress.total ?? null, {
+      stage: progress.phase,
+    });
+  }
 };
 
 const runWindowsInstaller = async (filePath: string): Promise<boolean> => {

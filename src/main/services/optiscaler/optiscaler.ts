@@ -5,6 +5,7 @@ import {
   getWindowsExecutable,
   isManagedElsewhere,
 } from "@main/helpers/windows-game";
+import { trackBackgroundTask } from "@main/services/background-tasks";
 import { logger } from "@main/services/logger";
 import { markCapabilityCheckPending } from "@main/services/capabilities/capability-checks";
 import { updateGameRecord } from "@main/services/game-record-updater";
@@ -628,6 +629,13 @@ export class OptiScaler {
 
   private static sendBulkProgress(progress: OptiScalerBulkProgress) {
     WindowManager.sendToAppWindows("on-optiscaler-bulk-progress", progress);
+
+    const task = trackBackgroundTask("optiscaler-bulk", {
+      route: "/settings?tab=optiscaler",
+    });
+    if (progress.status === "completed")
+      task.done({ installed: progress.installed, failed: progress.failed });
+    else task.progress(progress.processed, progress.total);
   }
 
   /**
@@ -639,7 +647,10 @@ export class OptiScaler {
     if (this.bulkRun) return false;
 
     this.bulkRun = this.bulk(mode)
-      .catch((error) => logger.error("[OptiScaler] Bulk run failed", error))
+      .catch((error) => {
+        logger.error("[OptiScaler] Bulk run failed", error);
+        trackBackgroundTask("optiscaler-bulk").fail(error);
+      })
       .finally(() => {
         this.bulkRun = null;
         WindowManager.sendToAppWindows("on-library-batch-complete");

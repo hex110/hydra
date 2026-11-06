@@ -6,8 +6,6 @@ export type BackgroundTaskKind =
   | "floppy-import"
   | "floppy-push"
   | "proton-install"
-  | "settings-export"
-  | "settings-import"
   | "renodx-bulk"
   | "optiscaler-bulk"
   | "save-import-bulk"

@@ -6,6 +6,7 @@ import {
   isManagedElsewhere,
 } from "@main/helpers/windows-game";
 import { mayHaveHdrDisplay } from "../machine/machine-profile";
+import { trackBackgroundTask } from "@main/services/background-tasks";
 import { logger } from "@main/services/logger";
 import { markCapabilityCheckPending } from "@main/services/capabilities/capability-checks";
 import { updateGameRecord } from "@main/services/game-record-updater";
@@ -728,6 +729,13 @@ export class RenoDx {
 
   private static sendBulkProgress(progress: RenoDxBulkProgress) {
     WindowManager.sendToAppWindows("on-renodx-bulk-progress", progress);
+
+    const task = trackBackgroundTask("renodx-bulk", {
+      route: "/settings?tab=renodx",
+    });
+    if (progress.status === "completed")
+      task.done({ installed: progress.installed, failed: progress.failed });
+    else task.progress(progress.processed, progress.total);
   }
 
   /**
@@ -739,7 +747,10 @@ export class RenoDx {
     if (this.bulkRun) return false;
 
     this.bulkRun = this.bulk(mode)
-      .catch((error) => logger.error("[RenoDX] Bulk run failed", error))
+      .catch((error) => {
+        logger.error("[RenoDX] Bulk run failed", error);
+        trackBackgroundTask("renodx-bulk").fail(error);
+      })
       .finally(() => {
         this.bulkRun = null;
         WindowManager.sendToAppWindows("on-library-batch-complete");
