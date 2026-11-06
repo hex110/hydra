@@ -16,7 +16,8 @@ defaults**), Hydra handles both on Linux.
 ## What Hydra does
 
 - [Game setup](game-setup.md) looks for `OnlineFix.ini` or `OnlineFix64.dll`
-  in the game folder and records which of these proxy DLLs sit beside it:
+  in the game folder (or `union-crax.ini`, which marks UnionCrax's UCOnline
+  fix and sits beside its own `winmm.dll`) and records which of these proxy DLLs sit beside it:
   `winmm`, `version`, `winhttp`, `wininet`, `dinput8`, `dsound`,
   `xinput1_3`, `xinput1_4`, `xinput9_1_0`. `dxgi` and `d3d*` are left to
   Proton's DXVK and VKD3D.

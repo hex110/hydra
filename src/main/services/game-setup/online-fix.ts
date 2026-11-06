@@ -33,7 +33,12 @@ const STEAM_PREFIX_DIRECTORY = path.join(
   "Steam"
 );
 
-const MARKER_FILES = new Set(["onlinefix.ini", "onlinefix64.dll"]);
+/** OnlineFix's own files, and `union-crax.ini` from UnionCrax's UCOnline fix. */
+const MARKER_FILES = new Set([
+  "onlinefix.ini",
+  "onlinefix64.dll",
+  "union-crax.ini",
+]);
 const SEARCH_MAX_DEPTH = 6;
 const SEARCH_MAX_ENTRIES = 20_000;
 
@@ -44,7 +49,7 @@ export interface OnlineFixDetection {
   proxyDlls: string[];
 }
 
-/** Finds an OnlineFix install inside a game folder, nearest to the top first. */
+/** Finds an OnlineFix (or UnionCrax online fix) install inside a game folder, nearest to the top first. */
 export const detectOnlineFix = async (
   gameRoot: string
 ): Promise<OnlineFixDetection | null> => {

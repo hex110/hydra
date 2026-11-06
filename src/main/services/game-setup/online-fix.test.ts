@@ -35,6 +35,17 @@ describe("detectOnlineFix", () => {
     });
   });
 
+  it("finds the UnionCrax online fix by union-crax.ini", async () => {
+    write("game/uco2-fix-manifest.json");
+    write("game/Proj/Binaries/Win64/union-crax.ini");
+    write("game/Proj/Binaries/Win64/winmm.dll");
+
+    assert.deepStrictEqual(await detectOnlineFix(path.join(root, "game")), {
+      directory: path.join(root, "game/Proj/Binaries/Win64"),
+      proxyDlls: ["winmm"],
+    });
+  });
+
   it("returns null for games without OnlineFix", async () => {
     write("game/Game.exe");
     write("game/winmm.dll");
