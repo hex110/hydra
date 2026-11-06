@@ -55,6 +55,21 @@
     }
   }
 
+  // No chrome until hovered: icon buttons in rows.
+  &--ghost {
+    background-color: transparent;
+    color: globals.$body-color;
+
+    &:hover {
+      background-color: globals.$chip-background-color;
+      color: globals.$muted-color;
+    }
+
+    &:disabled {
+      background-color: transparent;
+    }
+  }
+
   &--dark {
     background-color: globals.$dark-background-color;
     color: globals.$muted-color;

@@ -6,6 +6,7 @@ import {
   CheckboxField,
   ConfirmationModal,
   GuideLink,
+  ProgressBar,
 } from "@renderer/components";
 import {
   formatDownloadProgress,
@@ -468,14 +469,13 @@ function HeroDownloadView({
                   <AnimatedPercentage value={currentProgress} />
                 </span>
               </div>
-              <div className="download-group__progress-bar">
-                <div
-                  className={`download-group__progress-fill ${isGameExtracting ? "download-group__progress-fill--extraction" : ""}`}
-                  style={{
-                    width: `${currentProgress * 100}%`,
-                  }}
-                />
-              </div>
+              <ProgressBar
+                label={game.title}
+                now={currentProgress}
+                max={1}
+                size="large"
+                tone={isGameExtracting ? "extraction" : "default"}
+              />
             </div>
             {!isGameExtracting && (
               <div className="download-group__hero-buttons">
@@ -1307,15 +1307,12 @@ export function DownloadGroup({
                         ? t("waiting_for_debrid")
                         : formatDownloadProgress(progress)}
                     </span>
-                    <div className="download-group__progress-bar download-group__progress-bar--small">
-                      <div
-                        className="download-group__progress-fill"
-                        style={{
-                          width: `${progress * 100}%`,
-                          backgroundColor: "#fff",
-                        }}
-                      />
-                    </div>
+                    <ProgressBar
+                      label={game.title}
+                      now={progress}
+                      max={1}
+                      size="small"
+                    />
                   </div>
                 )}
 

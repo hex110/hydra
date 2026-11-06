@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SyncIcon, XIcon } from "@primer/octicons-react";
+import { SyncIcon } from "@primer/octicons-react";
 import type { BackgroundTask } from "@types";
-import { Button } from "@renderer/components";
+import { ActivityRow, Button } from "@renderer/components";
 import { useToast } from "@renderer/hooks";
 
+import { ActivitySection } from "./activity-section";
 import { useTaskErrorMessage } from "./use-task-error-message";
-
-import "./background-tasks-section.scss";
 
 const TASK_ORDER = [
   "steam-history",
@@ -67,43 +66,38 @@ export function BackgroundTasksSection() {
   };
 
   return (
-    <section className="background-tasks">
-      <h2>{t("background_tasks")}</h2>
-      <ul className="background-tasks__list">
-        {sorted.map((task) => (
-          <li key={task.id} className="background-tasks__item">
-            <div className="background-tasks__details">
-              <strong>{title(task)}</strong>
-              <span className="background-tasks__muted">{detail(task)}</span>
-              {task.state === "running" && task.total !== null && (
-                <progress
-                  className="background-tasks__progress"
-                  max={Math.max(task.total, 1)}
-                  value={task.processed}
-                />
-              )}
-            </div>
-            {task.state === "failed" && (
-              <Button theme="outline" onClick={() => retry(task)}>
+    <ActivitySection title={t("background_tasks")}>
+      {sorted.map((task) => (
+        <ActivityRow
+          key={task.id}
+          title={title(task)}
+          icon={<SyncIcon size={20} />}
+          badge={t(
+            task.id.startsWith("steam") ? "badge_steam" : "badge_floppy"
+          )}
+          status={detail(task)}
+          isError={task.state === "failed"}
+          showProgress={task.state === "running"}
+          progress={
+            task.total === null
+              ? null
+              : task.processed / Math.max(task.total, 1)
+          }
+          primary={
+            task.state === "failed" ? (
+              <Button size="small" onClick={() => retry(task)}>
                 <SyncIcon size={14} />
                 {t("task_retry")}
               </Button>
-            )}
-            {(task.state === "done" || task.state === "failed") && (
-              <button
-                type="button"
-                className="background-tasks__dismiss"
-                aria-label={t("task_dismiss")}
-                onClick={() =>
-                  void window.electron.dismissBackgroundTask(task.id)
-                }
-              >
-                <XIcon size={14} />
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </section>
+            ) : undefined
+          }
+          onClear={
+            task.state === "done" || task.state === "failed"
+              ? () => void window.electron.dismissBackgroundTask(task.id)
+              : undefined
+          }
+        />
+      ))}
+    </ActivitySection>
   );
 }

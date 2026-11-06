@@ -1,0 +1,120 @@
+@use "../../scss/globals.scss";
+
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: calc(globals.$spacing-unit * 2);
+  padding: calc(globals.$spacing-unit * 1.5) calc(globals.$spacing-unit * 2);
+  border-radius: 8px;
+  border: 1px solid globals.$border-color;
+  background-color: globals.$background-color;
+  list-style: none;
+
+  &__thumb-button {
+    display: flex;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  &__thumb {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: globals.$chip-background-color;
+    color: globals.$body-color;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    min-width: 0;
+  }
+
+  &__heading {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    min-width: 0;
+  }
+
+  &__title {
+    overflow: hidden;
+    padding: 0;
+    border: none;
+    background: none;
+    color: globals.$muted-color;
+    font-size: globals.$body-font-size;
+    font-weight: 700;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  button#{&}__title {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__status {
+    overflow: hidden;
+    color: globals.$body-color;
+    font-size: globals.$hint-font-size;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--error {
+      color: globals.$error-color;
+    }
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+  }
+
+  &__percent {
+    flex: none;
+    min-width: 4ch;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    text-align: right;
+  }
+
+  &__actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: globals.$spacing-unit;
+  }
+
+  // Reserved even when empty so ⋮ and ✕ line up down the list.
+  &__slot {
+    display: flex;
+    width: 28px;
+    height: 28px;
+  }
+
+  &__icon-button {
+    width: 28px;
+    padding: 0;
+  }
+}

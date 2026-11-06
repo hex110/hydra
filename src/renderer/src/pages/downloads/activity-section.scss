@@ -1,0 +1,44 @@
+@use "../../scss/globals.scss";
+
+.activity-section {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 2);
+  margin-inline: calc(globals.$spacing-unit * 3);
+  padding-top: calc(globals.$spacing-unit * 3);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: globals.$muted-color;
+    }
+  }
+
+  &__count {
+    padding: 0 globals.$spacing-unit;
+    border-radius: 999px;
+    background-color: globals.$chip-background-color;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    line-height: 20px;
+  }
+
+  &__action {
+    margin-left: auto;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin: 0;
+    padding: 0;
+  }
+}
