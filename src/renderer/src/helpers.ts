@@ -20,6 +20,7 @@ import { v4 as uuidv4 } from "uuid";
 import { THEME_WEB_STORE_URL } from "./constants";
 import { levelDBService } from "./services/leveldb.service";
 import { logger } from "./logger";
+import { getLastActivityTime } from "./helpers/library-activity";
 import type { SortOption } from "./pages/library/filter-options";
 import type { SkuRegion } from "./helpers/sku-region";
 import {
@@ -537,11 +538,6 @@ const toTime = (value: Date | string | null | undefined): number | null => {
   const time = new Date(value).getTime();
   return Number.isNaN(time) ? null : time;
 };
-
-/** Installing or playing a game counts as activity; adding it does not. */
-const getLastActivityTime = (game: LibraryGame): number | null =>
-  Math.max(toTime(game.lastTimePlayed) ?? 0, toTime(game.installedAt) ?? 0) ||
-  null;
 
 /** Larger values first (or smaller with `ascending`); games without one go last. */
 const compareKnownValues = (

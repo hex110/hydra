@@ -40,6 +40,7 @@ export const prepareSteamInstallEntry = async (
         addedToLibraryAt: existing.addedToLibraryAt ?? new Date(),
         ...IMPORT_FLAGS_CLEARED,
         hasActiveSteamImport: true,
+        downloadStartedAt: new Date(),
       });
       return true;
     }
@@ -63,6 +64,7 @@ export const prepareSteamInstallEntry = async (
       addedToLibraryAt: new Date(),
       source: "hydra",
       hasActiveSteamImport: true,
+      downloadStartedAt: new Date(),
     });
     return true;
   });

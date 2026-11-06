@@ -261,6 +261,15 @@ const projectGroup = (
     installedAt: latestDate(
       members.map((member) => member.installedAt ?? null)
     ),
+    downloadStartedAt: latestDate(
+      members.flatMap((member) => [
+        member.downloadStartedAt ?? null,
+        member.download?.timestamp ? new Date(member.download.timestamp) : null,
+        member.download?.completedAt
+          ? new Date(member.download.completedAt)
+          : null,
+      ])
+    ),
     playStatus:
       customCandidates.find((member) => member.playStatus)?.playStatus ?? null,
     customGenres:
