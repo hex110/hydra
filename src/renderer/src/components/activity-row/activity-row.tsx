@@ -96,7 +96,11 @@ export function ActivityRow({
           ) : (
             <span className="activity-row__title">{title}</span>
           )}
-          {badge && <Badge>{badge}</Badge>}
+          {badge && (
+            <span className="activity-row__badge">
+              <Badge>{badge}</Badge>
+            </span>
+          )}
         </div>
 
         {status && (

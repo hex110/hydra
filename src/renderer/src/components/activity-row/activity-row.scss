@@ -1,6 +1,7 @@
 @use "../../scss/globals.scss";
 
 .activity-row {
+  container-type: inline-size;
   display: flex;
   align-items: center;
   gap: calc(globals.$spacing-unit * 2);
@@ -70,6 +71,16 @@
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  &__badge {
+    display: flex;
+    flex: none;
+
+    // At narrow widths the badge goes first, then the status truncates.
+    @container (max-width: 480px) {
+      display: none;
     }
   }
 

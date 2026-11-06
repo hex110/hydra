@@ -140,6 +140,7 @@ function ModRow({
   return (
     <ActivityRow
       {...common(item)}
+      icon={<PackageIcon size={20} />}
       onOpen={openMods}
       statusTitle={download.errorMessage ?? undefined}
       primary={primary}
