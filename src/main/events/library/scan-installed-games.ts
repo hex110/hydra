@@ -31,6 +31,8 @@ import {
 } from "@main/services/library-scan/identify-folders";
 import { trackAchievementBatchGame } from "@main/services/achievements/achievement-batch-games";
 import { resolveSteamLaunchExecutables } from "@main/services/steam-integration/steam-app-info-core";
+import { listUnfinishedSteamInstallDirectories } from "@main/services/steam-integration/steam-download-core";
+import { getSteamLibraryFolders } from "@main/services/steam";
 import {
   getInstalledSteamApps,
   loadSteamAppInfo,
@@ -286,6 +288,40 @@ const resolveScanRoots = async (directories: string[]) => {
   return resolved.filter(
     (directory) => !resolved.some((other) => isWithin(directory, other))
   );
+};
+
+/**
+ * Steam writes a game's files before it has finished installing it; linking
+ * one then would make Hydra call the game installed mid-download.
+ */
+const withoutUnfinishedSteamInstalls = async (
+  scannedDirectories: ScannedDirectory[]
+): Promise<ScannedDirectory[]> => {
+  const unfinished = await listUnfinishedSteamInstallDirectories(
+    await getSteamLibraryFolders().catch(() => [])
+  );
+  if (unfinished.length === 0) return scannedDirectories;
+
+  const excluded = await resolveScanRoots(unfinished);
+  const isExcluded = (directory: string, relativeFilePath: string) => {
+    const filePath = path.join(directory, relativeFilePath);
+    return excluded.some((folder) => isWithin(filePath, folder));
+  };
+
+  return scannedDirectories.map((scanned) => ({
+    directory: scanned.directory,
+    relativeFilePaths: scanned.relativeFilePaths.filter(
+      (relativeFilePath) => !isExcluded(scanned.directory, relativeFilePath)
+    ),
+    pathsByFileName: new Map(
+      [...scanned.pathsByFileName].flatMap(([fileName, paths]) => {
+        const kept = paths.filter(
+          (relativeFilePath) => !isExcluded(scanned.directory, relativeFilePath)
+        );
+        return kept.length > 0 ? [[fileName, kept] as const] : [];
+      })
+    ),
+  }));
 };
 
 const scanDirectories = async (
@@ -1189,10 +1225,8 @@ const runScan = async (
 
   const games = await loadLibraryGames();
 
-  const scannedDirectories = await scanDirectories(
-    directories,
-    getCatalogFileNames(),
-    signal
+  const scannedDirectories = await withoutUnfinishedSteamInstalls(
+    await scanDirectories(directories, getCatalogFileNames(), signal)
   );
   logScannedDirectories(scannedDirectories);
 

@@ -8,12 +8,10 @@ import {
   buildSteamGameLaunchUrl,
   findInstalledSteamApp,
   findSteamAppInstallDirectories,
-  findSteamAppInstallState,
   getSteamCompatibilityPrefixPath,
   isPathInsideSteamInstallDirectory,
   isStaleSteamLibraryExecutable,
   listInstalledSteamApps,
-  parseSteamAppInstallState,
   steamAppIdFromManifestFileName,
 } from "./steam-installation-core.ts";
 
@@ -342,66 +340,5 @@ test("flags Steam executables that are gone from an available library", async (t
       library,
     ]),
     false
-  );
-});
-
-const manifest = (values: Record<string, string>) =>
-  `"AppState"\n{\n${Object.entries(values)
-    .map(([key, value]) => `\t"${key}"\t\t"${value}"`)
-    .join("\n")}\n}`;
-
-test("a manifest with the installed flag is installed", () => {
-  assert.deepEqual(
-    parseSteamAppInstallState(manifest({ appid: "1", StateFlags: "4" })),
-    { state: "installed" }
-  );
-});
-
-test("a manifest that is still downloading reports its progress", () => {
-  assert.deepEqual(
-    parseSteamAppInstallState(
-      manifest({
-        appid: "1",
-        StateFlags: "1026",
-        BytesToDownload: "1000",
-        BytesDownloaded: "250",
-        BytesToStage: "1000",
-        BytesStaged: "250",
-      })
-    ),
-    { state: "downloading", progress: 0.25 }
-  );
-});
-
-test("a manifest that has no sizes yet has no progress", () => {
-  assert.deepEqual(
-    parseSteamAppInstallState(manifest({ appid: "1", StateFlags: "1026" })),
-    { state: "downloading", progress: null }
-  );
-});
-
-test("the install state is none without a manifest and follows the manifest otherwise", async () => {
-  const library = await createLibrary();
-
-  assert.deepEqual(await findSteamAppInstallState("7", [library]), {
-    state: "none",
-  });
-
-  await fs.promises.writeFile(
-    path.join(library, "steamapps", "appmanifest_7.acf"),
-    manifest({ appid: "7", StateFlags: "1026" })
-  );
-  assert.equal(
-    (await findSteamAppInstallState("7", [library])).state,
-    "downloading"
-  );
-
-  await fs.promises.writeFile(
-    path.join(library, "steamapps", "appmanifest_7.acf"),
-    manifest({ appid: "7", StateFlags: "4" })
-  );
-  assert.equal(
-    (await findSteamAppInstallState("7", [library])).state,
-    "installed"
   );
 });

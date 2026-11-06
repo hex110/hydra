@@ -23,12 +23,23 @@ const isImportedSteamGame = async (steamAppId: string) => {
   return game?.hasActiveSteamImport === true && game.isDeleted !== true;
 };
 
-const refreshInstalledState = async (steamAppId: string) => {
-  if (!(await isImportedSteamGame(steamAppId))) return;
-  if (!(await refreshSteamGameExecutable(steamAppId))) return;
+/** Links or clears the game's executable to match Steam; true when it changed. */
+export const refreshInstalledState = async (steamAppId: string) => {
+  if (!(await isImportedSteamGame(steamAppId))) return false;
+  if (!(await refreshSteamGameExecutable(steamAppId))) return false;
 
   steamSyncLogger.log(`Steam install state changed for ${steamAppId}`);
   WindowManager.sendToAppWindows("on-library-batch-complete");
+  return true;
+};
+
+type SteamAppsListener = (steamAppId: string | null) => void;
+const steamAppsListeners = new Set<SteamAppsListener>();
+
+/** Called with the app id of a changed manifest, or null when unsure what changed. */
+export const onSteamAppsChange = (listener: SteamAppsListener) => {
+  steamAppsListeners.add(listener);
+  return () => steamAppsListeners.delete(listener);
 };
 
 const scheduleRefresh = (
@@ -87,6 +98,13 @@ const scheduleLibraryRewatch = () => {
 };
 
 const handleSteamAppsChange = (fileName: string | Buffer | null) => {
+  const changedAppId = fileName
+    ? steamAppIdFromManifestFileName(fileName.toString())
+    : null;
+  if (changedAppId || !fileName) {
+    steamAppsListeners.forEach((listener) => listener(changedAppId));
+  }
+
   if (!fileName) {
     scheduleLibraryRewatch();
     scheduleReconcile();
@@ -143,21 +161,4 @@ export const watchSteamLibraries = async () => {
 export const watchSteamAppInstall = async (steamAppId: string) => {
   await watchSteamLibraries();
   scheduleRefresh(checkTimers, steamAppId, MANIFEST_CHECK_DELAY_MS);
-};
-
-const REFRESH_REQUEST_COOLDOWN_MS = 30000;
-const lastRefreshRequests = new Map<string, number>();
-
-/** Asks for the same refresh a manifest change would, at most every 30 s per app. */
-export const requestSteamInstallRefresh = (steamAppId: string) => {
-  const now = Date.now();
-  if (
-    now - (lastRefreshRequests.get(steamAppId) ?? 0) <
-    REFRESH_REQUEST_COOLDOWN_MS
-  ) {
-    return;
-  }
-
-  lastRefreshRequests.set(steamAppId, now);
-  void refreshInstalledState(steamAppId);
 };

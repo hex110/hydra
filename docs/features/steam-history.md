@@ -62,11 +62,26 @@ hour. Demos and betas are always skipped.
   the Steam history connected, since that is what knows what you own; it is
   left out once the game is installed through Steam. Choosing it makes the
   game an ordinary library game that Steam installs (added if it was not in
-  the library, restored if removed). While Steam downloads, the game page shows
-  **Downloading through Steam** with Steam's progress, read from the app
-  manifest in `steamapps/` every couple of seconds; Hydra does not control the
-  download. When Steam finishes, Hydra finds the executable and the game turns
-  into an installed one without a restart.
+  the library, restored if removed). Hydra does not control the download; it
+  watches it (`main/services/steam-integration/steam-downloads.ts`):
+  - Right after the click the game shows **Waiting for Steam** until you
+    confirm Steam's dialog (it is dropped after 15 minutes, or with its
+    dismiss button).
+  - Any install Steam is doing for a library game, started from Hydra or from
+    Steam, is listed on the **Downloads** page under **Downloading through
+    Steam**, with status (downloading, queued, paused, finishing), percentage,
+    size and an estimated speed, and on the game page's hero. A manifest change
+    wakes the watcher; it polls every 1.5 s only while something is installing.
+  - Progress is the size of Steam's staging folder
+    (`steamapps/downloading/<appid>`) against the manifest's `BytesToStage`,
+    because Steam rewrites the manifest's byte counts only now and then. The
+    status and early totals come from the tail of `logs/content_log.txt`.
+  - When the manifest turns fully installed, Hydra links the executable at
+    once and retries for a minute while Steam runs its install scripts, so the
+    game turns installed without a restart.
+  - The library scan skips files inside a Steam install folder whose manifest
+    is not fully installed, so a half-downloaded game is never linked as
+    installed.
 - Achievements you already have on Steam are recorded silently: with **Steam
   achievements** on, Hydra reads them from Steam's local cache, but for these
   games that never produces an unlock popup or notification. Only an unlock

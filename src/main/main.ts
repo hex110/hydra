@@ -58,6 +58,7 @@ import {
 } from "./services/steam-history";
 import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automatic-sync-emulator-migration";
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
+import { SteamDownloads } from "./services/steam-integration/steam-downloads";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
 import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migration";
 import { applyFirstRunDownloadDefaults } from "./services/first-run-defaults";
@@ -159,7 +160,7 @@ export const loadState = async () => {
     void ProtonManager.updateAutomatically();
   }
 
-  void watchSteamLibraries();
+  void watchSteamLibraries().then(() => SteamDownloads.start());
   await loadSaveStoreConfig();
   startCloudLibrarySchedule();
   startSaveStoreMaintenance();

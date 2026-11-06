@@ -10,7 +10,8 @@ import { gameDetailsContext } from "@renderer/context";
 import { getOfficialStoreMembers } from "@shared";
 import { isGameInstalled } from "@renderer/helpers";
 import { useOwnedSteamAppId } from "../use-owned-steam-app";
-import { useSteamInstallState } from "../use-steam-install-state";
+import { useSteamDownload } from "@renderer/hooks";
+import { useSteamDownloadText } from "../../downloads/steam-download-text";
 import "./hero-panel.scss";
 
 export function HeroPanel() {
@@ -26,10 +27,8 @@ export function HeroPanel() {
   );
   const ownedSteamAppId = useOwnedSteamAppId(catalogueGame);
   const steamAppId = steamMember?.objectId ?? ownedSteamAppId;
-  const steamInstall = useSteamInstallState(
-    steamAppId,
-    steamAppId !== null && !(game && isGameInstalled(game))
-  );
+  const liveSteamDownload = useSteamDownload(steamAppId);
+  const describeSteamDownload = useSteamDownloadText();
 
   const { lastPacket } = useDownload();
 
@@ -42,20 +41,14 @@ export function HeroPanel() {
   const isExtracting = extraction?.visibleId === downloadGame?.id;
 
   const steamDownload =
-    steamInstall.state === "downloading" ? steamInstall : null;
+    game && isGameInstalled(game) ? null : liveSteamDownload;
 
   const getInfo = () => {
     if (steamDownload) {
       return (
         <>
           <p>{t("downloading_through_steam")}</p>
-          <p>
-            {steamDownload.progress === null
-              ? t("steam_download_waiting")
-              : t("steam_download_progress", {
-                  percentage: `${Math.floor(steamDownload.progress * 100)}%`,
-                })}
-          </p>
+          <p>{describeSteamDownload(steamDownload)}</p>
         </>
       );
     }
@@ -114,13 +107,15 @@ export function HeroPanel() {
           />
         )}
 
-        {steamDownload && !showProgressBar && (
-          <progress
-            max={1}
-            value={steamDownload.progress ?? undefined}
-            className="hero-panel__progress-bar"
-          />
-        )}
+        {steamDownload &&
+          steamDownload.status !== "waiting" &&
+          !showProgressBar && (
+            <progress
+              max={1}
+              value={steamDownload.progress ?? undefined}
+              className="hero-panel__progress-bar"
+            />
+          )}
 
         {showExtractionProgressBar && (
           <progress

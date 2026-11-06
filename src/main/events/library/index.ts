@@ -19,7 +19,7 @@ import "./get-installed-proton-versions";
 import "./is-gamemode-available";
 import "./is-steam-app-executable";
 import "./install-game-on-steam";
-import "./get-steam-install-state";
+import "./steam-downloads";
 import "./uninstall-game-on-steam";
 import "./is-mangohud-available";
 import "./is-winetricks-available";

@@ -30,6 +30,7 @@ import {
   useFinishedDownloadStep,
   useGameMods,
   useLibrary,
+  useSteamDownload,
   useToast,
 } from "@renderer/hooks";
 import { useEpicManagedConnection } from "@renderer/hooks/use-epic-managed";
@@ -51,7 +52,6 @@ import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-m
 import { useLaunchPhase } from "./use-launch-phase";
 import { formatSessionLength, useSessionEnd } from "../use-session-end";
 import { useOwnedSteamAppId } from "../use-owned-steam-app";
-import { useSteamInstallState } from "../use-steam-install-state";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
@@ -142,10 +142,11 @@ export function HeroPanelActions() {
     presentation?.members ?? (game ? [game] : [])
   );
   const steamAppId = officialMembers.steam?.objectId ?? ownedSteamAppId;
-  const steamInstall = useSteamInstallState(
-    steamAppId,
-    steamAppId !== null && !(game && isGameInstalled(game))
-  );
+  const liveSteamDownload = useSteamDownload(steamAppId);
+  const isSteamDownloading =
+    liveSteamDownload !== null &&
+    liveSteamDownload.status !== "waiting" &&
+    !(game && isGameInstalled(game));
   const [pendingClassicsLaunch, setPendingClassicsLaunch] = useState<{
     discPath: string | undefined;
   } | null>(null);
@@ -893,9 +894,13 @@ export function HeroPanelActions() {
     const finishedDownloadAction = finishedDownloadButton();
     if (finishedDownloadAction) return finishedDownloadAction;
 
-    if (steamInstall.state === "downloading") {
+    if (isSteamDownloading) {
       return (
-        <Button theme="outline" disabled className="hero-panel-actions__action">
+        <Button
+          theme="outline"
+          onClick={() => void window.electron.openSteamDownloads()}
+          className="hero-panel-actions__action"
+        >
           <DownloadIcon />
           {t("downloading_through_steam")}
         </Button>

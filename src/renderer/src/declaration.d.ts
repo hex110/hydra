@@ -64,7 +64,7 @@ import type {
   FloppyPullResult,
   FloppySearchResult,
   SteamGameHistory,
-  SteamAppInstallState,
+  SteamDownload,
   SteamHistorySyncStatus,
   FloppySyncStatus,
   GameLaunchPreview,
@@ -1052,7 +1052,12 @@ declare global {
       executablePath: string
     ) => Promise<boolean>;
     installGameOnSteam: (steamAppId: string, title?: string) => Promise<void>;
-    getSteamInstallState: (steamAppId: string) => Promise<SteamAppInstallState>;
+    getSteamDownloads: () => Promise<SteamDownload[]>;
+    openSteamDownloads: () => Promise<void>;
+    dismissSteamDownload: (steamAppId: string) => Promise<void>;
+    onSteamDownloadsChanged: (
+      cb: (downloads: SteamDownload[]) => void
+    ) => () => void;
     uninstallGameOnSteam: (steamAppId: string) => Promise<void>;
     isMangohudAvailable: () => Promise<boolean>;
     isWinetricksAvailable: () => Promise<boolean>;

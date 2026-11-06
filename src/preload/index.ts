@@ -8,6 +8,7 @@ import type {
   ModPlacementChoice,
   CatalogueSearchResult,
   ModDownload,
+  SteamDownload,
   ModFolderKind,
   ModPlayMode,
   NexusGameMatch,
@@ -1649,8 +1650,19 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),
   installGameOnSteam: (steamAppId: string, title?: string) =>
     ipcRenderer.invoke("installGameOnSteam", steamAppId, title),
-  getSteamInstallState: (steamAppId: string) =>
-    ipcRenderer.invoke("getSteamInstallState", steamAppId),
+  getSteamDownloads: () => ipcRenderer.invoke("getSteamDownloads"),
+  openSteamDownloads: () => ipcRenderer.invoke("openSteamDownloads"),
+  dismissSteamDownload: (steamAppId: string) =>
+    ipcRenderer.invoke("dismissSteamDownload", steamAppId),
+  onSteamDownloadsChanged: (cb: (downloads: SteamDownload[]) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      downloads: SteamDownload[]
+    ) => cb(downloads);
+    ipcRenderer.on("on-steam-downloads-changed", listener);
+    return () =>
+      ipcRenderer.removeListener("on-steam-downloads-changed", listener);
+  },
   uninstallGameOnSteam: (steamAppId: string) =>
     ipcRenderer.invoke("uninstallGameOnSteam", steamAppId),
   isMangohudAvailable: () => ipcRenderer.invoke("isMangohudAvailable"),
