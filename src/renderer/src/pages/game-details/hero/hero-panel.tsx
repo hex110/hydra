@@ -11,7 +11,7 @@ import { getOfficialStoreMembers } from "@shared";
 import { isGameInstalled } from "@renderer/helpers";
 import { useOwnedSteamAppId } from "../use-owned-steam-app";
 import { useSteamDownload } from "@renderer/hooks";
-import { useSteamDownloadText } from "../../downloads/steam-download-text";
+import { useSteamDownloadText } from "../../../features/activity/steam-download-text";
 import "./hero-panel.scss";
 
 export function HeroPanel() {

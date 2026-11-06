@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 
 import "./activity-section.scss";
 
@@ -7,13 +7,16 @@ interface ActivitySectionProps {
   count?: number;
   /** Header action, e.g. Clear all. */
   action?: ReactNode;
-  children: ReactNode;
+  /** Shown above the rows, e.g. the active download's card. */
+  lead?: ReactNode;
+  children?: ReactNode;
 }
 
 export function ActivitySection({
   title,
   count,
   action,
+  lead,
   children,
 }: Readonly<ActivitySectionProps>) {
   return (
@@ -25,7 +28,10 @@ export function ActivitySection({
         )}
         {action && <div className="activity-section__action">{action}</div>}
       </div>
-      <ul className="activity-section__list">{children}</ul>
+      {lead}
+      {Children.count(children) > 0 && (
+        <ul className="activity-section__list">{children}</ul>
+      )}
     </section>
   );
 }

@@ -26,7 +26,7 @@ import {
   useRemoveImportsPrompt,
   useTrackingStatus,
 } from "./settings-tracking-shared";
-import { useTaskErrorMessage } from "../downloads/use-task-error-message";
+import { useTaskErrorMessage } from "../../features/activity/use-task-error-message";
 
 import "./settings-tracking.scss";
 

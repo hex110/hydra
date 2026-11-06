@@ -33,6 +33,8 @@ export interface ActivityRowProps {
   /** The one obvious next step. */
   primary?: ReactNode;
   menu?: DropdownMenuItem[];
+  /** Replaces the ⋮ button when the menu is not a plain list (a context menu). */
+  menuSlot?: ReactNode;
   /** Hides a finished or failed row (or ignores an update). */
   onClear?: () => void;
   clearLabel?: string;
@@ -52,6 +54,7 @@ export function ActivityRow({
   progressTone = "default",
   primary,
   menu = [],
+  menuSlot,
   onClear,
   clearLabel,
 }: Readonly<ActivityRowProps>) {
@@ -131,18 +134,19 @@ export function ActivityRow({
         {primary}
 
         <span className="activity-row__slot">
-          {visibleMenu.length > 0 && (
-            <DropdownMenu align="end" items={visibleMenu}>
-              <Button
-                theme="ghost"
-                size="small"
-                className="activity-row__icon-button"
-                aria-label={t("more_actions")}
-              >
-                <MoreVertical size={16} />
-              </Button>
-            </DropdownMenu>
-          )}
+          {menuSlot ??
+            (visibleMenu.length > 0 && (
+              <DropdownMenu align="end" items={visibleMenu}>
+                <Button
+                  theme="ghost"
+                  size="small"
+                  className="activity-row__icon-button"
+                  aria-label={t("more_actions")}
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenu>
+            ))}
         </span>
 
         <span className="activity-row__slot">

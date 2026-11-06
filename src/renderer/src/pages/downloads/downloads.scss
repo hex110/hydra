@@ -1,18 +1,6 @@
 @use "../../scss/globals.scss";
 
 .downloads {
-  &__container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  &__groups {
-    display: flex;
-    gap: calc(globals.$spacing-unit * 3);
-    flex-direction: column;
-  }
-
   &__arrow-icon {
     width: 60px;
     height: 60px;

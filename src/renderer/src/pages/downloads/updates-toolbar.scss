@@ -1,0 +1,27 @@
+@use "../../scss/globals.scss";
+
+.updates-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(globals.$spacing-unit * 2);
+  margin-inline: calc(globals.$spacing-unit * 3);
+  padding-top: calc(globals.$spacing-unit * 3);
+
+  &__checked {
+    color: globals.$body-color;
+    font-size: globals.$hint-font-size;
+  }
+
+  &__spinner {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: updates-toolbar-spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes updates-toolbar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

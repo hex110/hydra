@@ -3,6 +3,7 @@ import type {
   DownloadLayoutState,
   LibraryGame,
   ModDownload,
+  SeedingStatus,
   SteamDownload,
 } from "@types";
 import { Downloader } from "../../../../shared/constants.js";
@@ -42,6 +43,19 @@ const gameOf = (game: LibraryGame) => ({
   title: game.title,
   coverUrl: coverOf(game),
 });
+
+/** The seeding push from the main process wins over the stored status. */
+export function isGameSeeding(
+  game: LibraryGame,
+  seedingStatus: SeedingStatus[]
+) {
+  const entry = seedingStatus.find((item) => item.gameId === game.id);
+  if (entry) {
+    const raw = (entry as { status?: unknown }).status;
+    return raw === "seeding" || raw === 5;
+  }
+  return game.download?.status === "seeding";
+}
 
 export const isFinishedDownload = (game: LibraryGame) =>
   game.download?.progress === 1 &&

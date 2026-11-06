@@ -4,7 +4,6 @@ import {
   DownloadIcon,
   FileDirectoryIcon,
   PlayIcon,
-  XIcon,
 } from "@primer/octicons-react";
 import { MoreVertical } from "lucide-react";
 
@@ -32,18 +31,16 @@ interface CompletedDownloadActionsProps {
   onExtract: () => void;
   onInstall: () => void;
   onOpenFolder: () => void;
-  /** Absent when the download can't be cleared, e.g. while it seeds. */
-  onClear?: () => void;
 }
 
-export function CompletedDownloadActions({
+/** A finished download's next step and its game menu, for an ActivityRow. */
+export function useCompletedDownloadActions({
   game,
   state,
   extraManageItems,
   onExtract,
   onInstall,
   onOpenFolder,
-  onClear,
 }: Readonly<CompletedDownloadActionsProps>) {
   const { t } = useTranslation("downloads");
   const { t: tGameDetails } = useTranslation("game_details");
@@ -70,7 +67,7 @@ export function CompletedDownloadActions({
             theme="primary"
             onClick={isGameRunning ? handleCloseGame : handlePlayGame}
             disabled={isDeleting}
-            className="download-group__simple-action-btn"
+            size="small"
           >
             <PlayIcon size={16} />
             {isGameRunning ? tGameDetails("close") : tGameDetails("play")}
@@ -82,7 +79,7 @@ export function CompletedDownloadActions({
             theme="primary"
             onClick={onExtract}
             disabled={isDeleting}
-            className="download-group__simple-action-btn"
+            size="small"
           >
             <FileDirectoryIcon size={16} />
             {t("extract")}
@@ -94,7 +91,7 @@ export function CompletedDownloadActions({
             theme="primary"
             onClick={onInstall}
             disabled={isDeleting}
-            className="download-group__simple-action-btn"
+            size="small"
           >
             <DownloadIcon size={16} />
             {t("install")}
@@ -106,7 +103,7 @@ export function CompletedDownloadActions({
             theme="primary"
             onClick={onOpenFolder}
             disabled={isDeleting}
-            className="download-group__simple-action-btn"
+            size="small"
           >
             <FileDirectoryIcon size={16} />
             {tGameDetails("open_folder")}
@@ -114,20 +111,20 @@ export function CompletedDownloadActions({
         );
       case "missing":
         return (
-          <span className="download-group__simple-missing">
+          <span className="activity-row__note">
             {tGameDetails("executable_status_missing_short")}
           </span>
         );
     }
   };
 
-  return (
+  const menuSlot = (
     <>
-      {primaryButton()}
-
       <Button
-        theme="outline"
-        className="download-group__simple-menu-btn"
+        theme="ghost"
+        size="small"
+        className="activity-row__icon-button"
+        aria-label={t("more_actions")}
         onClick={(event) => {
           const { right, bottom } = event.currentTarget.getBoundingClientRect();
           setMenuPosition({ x: right, y: bottom });
@@ -135,17 +132,6 @@ export function CompletedDownloadActions({
       >
         <MoreVertical size={16} />
       </Button>
-
-      {onClear && (
-        <Button
-          theme="outline"
-          className="download-group__simple-menu-btn"
-          onClick={onClear}
-          tooltip={t("clear_download")}
-        >
-          <XIcon size={16} />
-        </Button>
-      )}
 
       <GameContextMenu
         game={game}
@@ -167,4 +153,6 @@ export function CompletedDownloadActions({
       />
     </>
   );
+
+  return { primary: primaryButton(), menuSlot };
 }
