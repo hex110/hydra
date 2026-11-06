@@ -23,6 +23,7 @@ export type FriendRequestAction = "ACCEPTED" | "REFUSED" | "CANCEL";
 export * from "./download-contract";
 export * from "./floppy.types";
 export * from "./steam-history.types";
+export * from "./steam-install.types";
 export * from "./steam-wishlist.types";
 export * from "./background-tasks.types";
 export * from "./launcher-import.types";

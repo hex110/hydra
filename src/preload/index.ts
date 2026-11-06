@@ -1647,8 +1647,10 @@ contextBridge.exposeInMainWorld("electron", {
   isGamemodeAvailable: () => ipcRenderer.invoke("isGamemodeAvailable"),
   isSteamAppExecutable: (appId: string, executablePath: string) =>
     ipcRenderer.invoke("isSteamAppExecutable", appId, executablePath),
-  installGameOnSteam: (steamAppId: string) =>
-    ipcRenderer.invoke("installGameOnSteam", steamAppId),
+  installGameOnSteam: (steamAppId: string, title?: string) =>
+    ipcRenderer.invoke("installGameOnSteam", steamAppId, title),
+  getSteamInstallState: (steamAppId: string) =>
+    ipcRenderer.invoke("getSteamInstallState", steamAppId),
   uninstallGameOnSteam: (steamAppId: string) =>
     ipcRenderer.invoke("uninstallGameOnSteam", steamAppId),
   isMangohudAvailable: () => ipcRenderer.invoke("isMangohudAvailable"),

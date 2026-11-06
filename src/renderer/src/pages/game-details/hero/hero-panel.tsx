@@ -7,6 +7,10 @@ import { HeroPanelActions } from "./hero-panel-actions";
 import { HeroPanelPlaytime } from "./hero-panel-playtime";
 
 import { gameDetailsContext } from "@renderer/context";
+import { getOfficialStoreMembers } from "@shared";
+import { isGameInstalled } from "@renderer/helpers";
+import { useOwnedSteamAppId } from "../use-owned-steam-app";
+import { useSteamInstallState } from "../use-steam-install-state";
 import "./hero-panel.scss";
 
 export function HeroPanel() {
@@ -14,7 +18,18 @@ export function HeroPanel() {
 
   const { formatDate } = useDate();
 
-  const { game, downloadGame, repacks } = useContext(gameDetailsContext);
+  const { game, downloadGame, repacks, presentation, catalogueGame } =
+    useContext(gameDetailsContext);
+
+  const { steam: steamMember } = getOfficialStoreMembers(
+    presentation?.members ?? (game ? [game] : [])
+  );
+  const ownedSteamAppId = useOwnedSteamAppId(catalogueGame);
+  const steamAppId = steamMember?.objectId ?? ownedSteamAppId;
+  const steamInstall = useSteamInstallState(
+    steamAppId,
+    steamAppId !== null && !(game && isGameInstalled(game))
+  );
 
   const { lastPacket } = useDownload();
 
@@ -26,7 +41,25 @@ export function HeroPanel() {
 
   const isExtracting = extraction?.visibleId === downloadGame?.id;
 
+  const steamDownload =
+    steamInstall.state === "downloading" ? steamInstall : null;
+
   const getInfo = () => {
+    if (steamDownload) {
+      return (
+        <>
+          <p>{t("downloading_through_steam")}</p>
+          <p>
+            {steamDownload.progress === null
+              ? t("steam_download_waiting")
+              : t("steam_download_progress", {
+                  percentage: `${Math.floor(steamDownload.progress * 100)}%`,
+                })}
+          </p>
+        </>
+      );
+    }
+
     if (!game) {
       const [latestRepack] = repacks;
 
@@ -78,6 +111,14 @@ export function HeroPanel() {
                 ? "hero-panel__progress-bar--disabled"
                 : ""
             }`}
+          />
+        )}
+
+        {steamDownload && !showProgressBar && (
+          <progress
+            max={1}
+            value={steamDownload.progress ?? undefined}
+            className="hero-panel__progress-bar"
           />
         )}
 

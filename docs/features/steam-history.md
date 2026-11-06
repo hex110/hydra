@@ -60,7 +60,13 @@ hour. Demos and betas are always skipped.
   it is in the library or came from the import, lists **Download on Steam**
   first in its download options and opens Steam's install dialog. This needs
   the Steam history connected, since that is what knows what you own; it is
-  left out once the game is installed through Steam.
+  left out once the game is installed through Steam. Choosing it makes the
+  game an ordinary library game that Steam installs (added if it was not in
+  the library, restored if removed). While Steam downloads, the game page shows
+  **Downloading through Steam** with Steam's progress, read from the app
+  manifest in `steamapps/` every couple of seconds; Hydra does not control the
+  download. When Steam finishes, Hydra finds the executable and the game turns
+  into an installed one without a restart.
 - Achievements you already have on Steam are recorded silently: with **Steam
   achievements** on, Hydra reads them from Steam's local cache, but for these
   games that never produces an unlock popup or notification. Only an unlock

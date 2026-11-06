@@ -419,7 +419,7 @@ export function RepacksModal({
   const handleSteamOptionClick = () => {
     if (!steamAppId) return;
 
-    void window.electron.installGameOnSteam(steamAppId);
+    void window.electron.installGameOnSteam(steamAppId, optionTitle);
     onClose();
   };
 

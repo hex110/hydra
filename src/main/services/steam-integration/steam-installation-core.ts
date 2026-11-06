@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import type { SteamAppInstallState } from "@types";
+
 const APP_MANIFEST_PATTERN = /^appmanifest_(\d+)\.acf$/i;
 
 const readManifestValue = (content: string, key: string): string | null => {
@@ -272,4 +274,60 @@ export const findSteamAppInstallDirectories = async (
   }
 
   return installDirectories;
+};
+
+const readManifestNumber = (content: string, key: string) => {
+  const value = Number(readManifestValue(content, key));
+  return Number.isFinite(value) && value > 0 ? value : 0;
+};
+
+/** What an app manifest says, including an install Steam has only begun. */
+export const parseSteamAppInstallState = (
+  content: string
+): SteamAppInstallState => {
+  const stateFlags = Number(readManifestValue(content, "StateFlags"));
+  if (
+    Number.isInteger(stateFlags) &&
+    (stateFlags & STEAM_APP_STATE_FULLY_INSTALLED) !== 0
+  ) {
+    return { state: "installed" };
+  }
+
+  const total =
+    readManifestNumber(content, "BytesToDownload") +
+    readManifestNumber(content, "BytesToStage");
+  const done =
+    readManifestNumber(content, "BytesDownloaded") +
+    readManifestNumber(content, "BytesStaged");
+
+  return {
+    state: "downloading",
+    progress: total > 0 ? Math.min(done / total, 0.999) : null,
+  };
+};
+
+export const findSteamAppInstallState = async (
+  appId: string,
+  libraryFolders: string[]
+): Promise<SteamAppInstallState> => {
+  if (!/^\d+$/.test(appId)) return { state: "none" };
+
+  let downloading: SteamAppInstallState | null = null;
+
+  for (const libraryFolder of libraryFolders) {
+    const content = await fs.promises
+      .readFile(
+        path.join(libraryFolder, "steamapps", `appmanifest_${appId}.acf`),
+        "utf8"
+      )
+      .catch(() => null);
+
+    if (!content || readManifestValue(content, "appid") !== appId) continue;
+
+    const parsed = parseSteamAppInstallState(content);
+    if (parsed.state === "installed") return parsed;
+    downloading ??= parsed;
+  }
+
+  return downloading ?? { state: "none" };
 };

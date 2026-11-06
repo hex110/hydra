@@ -144,3 +144,20 @@ export const watchSteamAppInstall = async (steamAppId: string) => {
   await watchSteamLibraries();
   scheduleRefresh(checkTimers, steamAppId, MANIFEST_CHECK_DELAY_MS);
 };
+
+const REFRESH_REQUEST_COOLDOWN_MS = 30000;
+const lastRefreshRequests = new Map<string, number>();
+
+/** Asks for the same refresh a manifest change would, at most every 30 s per app. */
+export const requestSteamInstallRefresh = (steamAppId: string) => {
+  const now = Date.now();
+  if (
+    now - (lastRefreshRequests.get(steamAppId) ?? 0) <
+    REFRESH_REQUEST_COOLDOWN_MS
+  ) {
+    return;
+  }
+
+  lastRefreshRequests.set(steamAppId, now);
+  void refreshInstalledState(steamAppId);
+};

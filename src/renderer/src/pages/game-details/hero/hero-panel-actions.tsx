@@ -43,6 +43,7 @@ import {
   buildGameDetailsPath,
   canDownloadOnSteam,
   handleClassicsLaunchError,
+  isGameInstalled,
 } from "@renderer/helpers";
 import { DiscSelectionModal } from "../modals/disc-selection-modal";
 import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-modal";
@@ -50,6 +51,7 @@ import { EpicCloudSaveConflictModal } from "../modals/epic-cloud-save-conflict-m
 import { useLaunchPhase } from "./use-launch-phase";
 import { formatSessionLength, useSessionEnd } from "../use-session-end";
 import { useOwnedSteamAppId } from "../use-owned-steam-app";
+import { useSteamInstallState } from "../use-steam-install-state";
 import "./hero-panel-actions.scss";
 import { useEffect } from "react";
 import {
@@ -138,6 +140,11 @@ export function HeroPanelActions() {
   const [canRetryLocalSaves, setCanRetryLocalSaves] = useState(false);
   const officialMembers = getOfficialStoreMembers(
     presentation?.members ?? (game ? [game] : [])
+  );
+  const steamAppId = officialMembers.steam?.objectId ?? ownedSteamAppId;
+  const steamInstall = useSteamInstallState(
+    steamAppId,
+    steamAppId !== null && !(game && isGameInstalled(game))
   );
   const [pendingClassicsLaunch, setPendingClassicsLaunch] = useState<{
     discPath: string | undefined;
@@ -885,6 +892,15 @@ export function HeroPanelActions() {
 
     const finishedDownloadAction = finishedDownloadButton();
     if (finishedDownloadAction) return finishedDownloadAction;
+
+    if (steamInstall.state === "downloading") {
+      return (
+        <Button theme="outline" disabled className="hero-panel-actions__action">
+          <DownloadIcon />
+          {t("downloading_through_steam")}
+        </Button>
+      );
+    }
 
     return (
       <Button
