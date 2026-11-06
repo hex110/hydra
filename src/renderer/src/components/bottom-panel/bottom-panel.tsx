@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CommentDiscussionIcon } from "@primer/octicons-react";
 
+import { formatDownloadProgress } from "@renderer/helpers";
 import {
   useAppSelector,
   useDownload,
-  useLibrary,
-  useModDownloads,
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
+import { selectBottomBarStatus } from "../../features/activity/activity";
+import { useActivity } from "../../features/activity/use-activity";
+import { ProgressBar } from "../progress-bar/progress-bar";
 
 import "./bottom-panel.scss";
 
@@ -25,14 +27,11 @@ export function BottomPanel() {
 
   const { userDetails, hasActiveSubscription } = useUserDetails();
 
-  const { downloadLibrary: library } = useLibrary();
-
   const { showSuccessToast } = useToast();
 
   const { lastPacket, progress, downloadSpeed, eta } = useDownload();
 
   const extraction = useAppSelector((state) => state.download.extraction);
-  const modDownloads = useModDownloads();
 
   const [version, setVersion] = useState("");
   const [sessionHash, setSessionHash] = useState<null | string>("");
@@ -71,100 +70,109 @@ export function BottomPanel() {
     window.electron.getSessionHash().then((result) => setSessionHash(result));
   }, [userDetails?.id]);
 
+  const { groups } = useActivity();
+
+  const bar = useMemo(
+    () =>
+      selectBottomBarStatus(groups, { external: commonRedistStatus !== null }),
+    [groups, commonRedistStatus]
+  );
+
   const status = useMemo(() => {
-    if (commonRedistStatus) {
+    if (bar.external) {
       return t("installing_common_redist", { log: commonRedistStatus });
     }
 
-    if (extraction) {
-      const extractingGame = library.find(
-        (game) => game.id === extraction.visibleId
-      );
+    const item = bar.primary;
+    if (item) {
+      const { source } = item;
 
-      if (extractingGame) {
-        const extractionPercentage = Math.round(extraction.progress * 100);
-        return t("extracting", {
-          title: extractingGame.title,
-          percentage: `${extractionPercentage}%`,
+      if (source.kind === "game-download") {
+        const title = source.game.title;
+
+        if (extraction?.visibleId === source.game.id) {
+          return t("extracting", {
+            title,
+            percentage: `${Math.round(extraction.progress * 100)}%`,
+          });
+        }
+
+        if (lastPacket?.gameId !== source.game.id) {
+          return t("calculating_eta", {
+            title,
+            percentage: formatDownloadProgress(source.game.download?.progress),
+          });
+        }
+
+        if (lastPacket.isRecovering) {
+          return t("recovering", {
+            title,
+            percentage: `${Math.round((lastPacket.recoveryProgress ?? 0) * 100)}%`,
+          });
+        }
+
+        if (lastPacket.isReconnecting) return t("reconnecting", { title });
+
+        if (lastPacket.isCheckingFiles) {
+          return t("checking_files", { title, percentage: progress });
+        }
+
+        if (lastPacket.isDownloadingMetadata) {
+          return t("downloading_metadata", { title, percentage: progress });
+        }
+
+        if (!eta) return t("calculating_eta", { title, percentage: progress });
+
+        return t("downloading", {
+          title,
+          percentage: progress,
+          eta,
+          speed: downloadSpeed,
         });
       }
-    }
 
-    const game = lastPacket
-      ? library.find((game) => game.id === lastPacket?.gameId)
-      : undefined;
-
-    if (game) {
-      if (lastPacket?.isRecovering)
-        return t("recovering", {
-          title: game.title,
-          percentage: `${Math.round((lastPacket.recoveryProgress ?? 0) * 100)}%`,
-        });
-
-      if (lastPacket?.isReconnecting)
-        return t("reconnecting", {
-          title: game.title,
-        });
-
-      if (lastPacket?.isCheckingFiles)
-        return t("checking_files", {
-          title: game.title,
-          percentage: progress,
-        });
-
-      if (lastPacket?.isDownloadingMetadata)
-        return t("downloading_metadata", {
-          title: game.title,
-          percentage: progress,
-        });
-
-      if (!eta) {
-        return t("calculating_eta", {
-          title: game.title,
-          percentage: progress,
-        });
+      if (source.kind === "mod-download") {
+        const mod = source.download.modName;
+        if (source.download.state === "downloading") {
+          return t("mod_downloading", {
+            mod,
+            percentage: `${Math.round((source.download.progress ?? 0) * 100)}%`,
+          });
+        }
+        return t(
+          source.download.state === "installing"
+            ? "mod_installing"
+            : "mod_waiting_torbox",
+          { mod }
+        );
       }
 
-      return t("downloading", {
-        title: game.title,
-        percentage: progress,
-        eta,
-        speed: downloadSpeed,
-      });
+      return t("activity_line", { title: item.title, status: item.status });
     }
 
-    const modDownload = modDownloads.find(
-      (download) =>
-        download.state === "downloading" ||
-        download.state === "waiting-torbox" ||
-        download.state === "installing"
-    );
-    if (modDownload) {
-      if (modDownload.state === "downloading")
-        return t("mod_downloading", {
-          mod: modDownload.modName,
-          percentage: `${Math.round((modDownload.progress ?? 0) * 100)}%`,
-        });
-      return t(
-        modDownload.state === "installing"
-          ? "mod_installing"
-          : "mod_waiting_torbox",
-        { mod: modDownload.modName }
-      );
+    const next = bar.upNext;
+    if (next) {
+      const paused =
+        (next.source.kind === "game-download" &&
+          !next.source.game.download?.queued) ||
+        (next.source.kind === "steam-install" &&
+          next.source.download.status === "paused");
+      return t(paused ? "paused_item" : "queued_item", { title: next.title });
     }
 
     return t("no_downloads_in_progress");
   }, [
-    modDownloads,
+    bar,
     t,
-    library,
+    commonRedistStatus,
+    extraction,
     lastPacket,
     progress,
     eta,
     downloadSpeed,
-    commonRedistStatus,
-    extraction,
   ]);
+
+  const showBar = bar.external || bar.primary !== null;
 
   return (
     <footer className="bottom-panel">
@@ -221,7 +229,36 @@ export function BottomPanel() {
           className="bottom-panel__downloads-button"
           onClick={() => navigate("/downloads")}
         >
-          <small>{status}</small>
+          <span className="bottom-panel__downloads-line">
+            <small className="bottom-panel__downloads-text">{status}</small>
+            {bar.moreCount > 0 && (
+              <small className="bottom-panel__downloads-more">
+                {t("more_count", { count: bar.moreCount })}
+              </small>
+            )}
+            {bar.attentionCount > 0 && (
+              <small className="bottom-panel__downloads-attention">
+                {t("needs_you_count", { count: bar.attentionCount })}
+              </small>
+            )}
+          </span>
+          {showBar && (
+            <ProgressBar
+              label={status}
+              size="thin"
+              now={bar.primary?.progress ?? 0}
+              max={1}
+              indeterminate={bar.external || bar.primary?.progress == null}
+              tone={
+                extraction?.visibleId ===
+                (bar.primary?.source.kind === "game-download"
+                  ? bar.primary.source.game.id
+                  : null)
+                  ? "extraction"
+                  : "default"
+              }
+            />
+          )}
         </button>
       </div>
 

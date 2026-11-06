@@ -64,20 +64,50 @@
   }
 
   &__downloads-button {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     color: globals.$body-color;
-    border-bottom: solid 1px transparent;
     min-width: 0;
     max-width: 100%;
+    cursor: pointer;
 
-    small {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    &:hover .bottom-panel__downloads-text {
+      text-decoration: underline;
     }
+  }
 
-    &:hover {
-      border-bottom: solid 1px globals.$body-color;
-      cursor: pointer;
+  &__downloads-line {
+    display: flex;
+    align-items: baseline;
+    gap: globals.$spacing-unit;
+    min-width: 0;
+  }
+
+  &__downloads-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__downloads-more {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  &__downloads-attention {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: calc(globals.$spacing-unit / 2);
+    white-space: nowrap;
+
+    &::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: globals.$error-color;
     }
   }
 
