@@ -341,6 +341,17 @@ in the sections below.
     3. [x] Groups split by how games are played, and when too spread out
     4. [x] Leave out multiplayer games, for all groups and per group
     5. [x] Hide a group, refine a group, build a group around games
+23. **Downloads: one activity list.** Added 2026-11-06 with the owner.
+    Spec and plan: [Downloads redesign](downloads-redesign.md) (start there).
+    1. [ ] Shared progress bar and activity row
+    2. [ ] One action language: ✕ to clear or ignore, one primary, the rest
+           in ⋮
+    3. [ ] Now, Up next, Needs you, Recent
+    4. [ ] Bottom bar: what's happening now, +N more, needs you
+    5. [ ] Jobs that outlive their page (Proton, bulk tools, imports,
+           backups) on the Downloads page
+    6. [ ] Polish: keyboard, narrow windows, loading
+    7. [ ] Docs
 
 Why this order:
 
