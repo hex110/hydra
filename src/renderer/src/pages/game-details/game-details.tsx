@@ -23,8 +23,8 @@ import { useDownload } from "@renderer/hooks";
 import { GameOptionsModal, RepacksModal } from "./modals";
 import {
   Downloader,
-  getDownloadersForUri,
   getRepackUriParts,
+  selectRepackUris,
   toDownloadRelease,
 } from "@shared";
 import { CloudSyncFilesModal } from "./cloud-sync-files-modal/cloud-sync-files-modal";
@@ -78,9 +78,6 @@ export default function GameDetails() {
     }
   };
 
-  const selectRepackUri = (repack: GameRepack, downloader: Downloader) =>
-    repack.uris.find((uri) => getDownloadersForUri(uri).includes(downloader))!;
-
   return (
     <GameDetailsContextProvider
       gameTitle={gameTitle!}
@@ -116,7 +113,10 @@ export default function GameDetails() {
             signal?: AbortSignal,
             updateInPlace = false
           ) => {
-            const uri = selectRepackUri(repack, downloader);
+            const { uri, alternativeUris } = selectRepackUris(
+              repack,
+              downloader
+            );
             const payload = {
               objectId: downloadGame?.objectId ?? game?.objectId ?? objectId!,
               title: gameTitle,
@@ -125,6 +125,7 @@ export default function GameDetails() {
               downloadPath,
               uri,
               parts: getRepackUriParts(repack, uri),
+              alternativeUris,
               automaticallyExtract,
               automaticallyDeleteArchiveFiles,
               fileSize: repack.fileSize,

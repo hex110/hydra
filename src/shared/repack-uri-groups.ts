@@ -1,4 +1,5 @@
 import { Downloader } from "./constants.js";
+import { TORBOX_MAX_WEB_CANDIDATES } from "./torbox-hosters.js";
 
 /** Hoster downloaders that can fetch every part of a URI group in order. */
 export const MULTIPART_DOWNLOADERS: ReadonlySet<Downloader> = new Set([
@@ -60,6 +61,42 @@ export const getUriGroupDownloaders = (
   return (first ?? []).filter((downloader) =>
     rest.every((downloaders) => downloaders.includes(downloader))
   );
+};
+
+/** What can download this option: a group's first part stands for all its parts. */
+export const getRepackUriDownloaders = (
+  repack: Pick<UriGroupRepack, "uriGroups">,
+  uri: string,
+  getDownloadersForUri: (uri: string) => Downloader[]
+): Downloader[] => {
+  const group = getUriGroupParts(repack, uri);
+  return group
+    ? getUriGroupDownloaders(group, getDownloadersForUri)
+    : getDownloadersForUri(uri);
+};
+
+/**
+ * The links of a repack one downloader can take, in the repack's order. TorBox
+ * checks all of them for a cached copy, so it gets the rest as alternatives;
+ * every other downloader uses the first.
+ */
+export const selectUrisForDownloader = (
+  repack: UriGroupRepack,
+  downloader: Downloader,
+  getDownloadersForUri: (uri: string) => Downloader[]
+): { uri: string; alternativeUris?: string[] } => {
+  const [uri, ...rest] = repack.uris.filter((candidate) =>
+    getRepackUriDownloaders(repack, candidate, getDownloadersForUri).includes(
+      downloader
+    )
+  );
+  if (downloader !== Downloader.TorBox || uri?.startsWith("magnet:")) {
+    return { uri };
+  }
+  const alternativeUris = rest
+    .filter((candidate) => !candidate.startsWith("magnet:"))
+    .slice(0, TORBOX_MAX_WEB_CANDIDATES - 1);
+  return alternativeUris.length > 0 ? { uri, alternativeUris } : { uri };
 };
 
 /**

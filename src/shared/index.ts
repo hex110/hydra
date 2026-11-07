@@ -19,9 +19,12 @@ import {
 
 import { isArchiveOrgFileUri } from "./archive-org";
 import { isAnkerGamesUri } from "./ankergames";
+import { isTorBoxHosterUri } from "./torbox-hosters";
 import {
+  getRepackUriDownloaders as getGroupAwareRepackUriDownloaders,
   getUriGroupParts,
   normalizeUriGroups,
+  selectUrisForDownloader,
   withoutMultipartHosterDownloads,
 } from "./repack-uri-groups";
 import { charMap } from "./char-map";
@@ -41,6 +44,7 @@ export * from "./renodx";
 export * from "./reshade";
 export * from "./local-source-matching";
 export * from "./ankergames";
+export * from "./torbox-hosters";
 export * from "./release-version";
 export * from "./linux-launch";
 export * from "./launch-rules";
@@ -225,7 +229,7 @@ export const formatName = pipe<string>(
 
 const realDebridHosts = ["https://1fichier.com", "https://mediafire.com"];
 
-export const getDownloadersForUri = (uri: string) => {
+const getOwnDownloadersForUri = (uri: string) => {
   if (isAnkerGamesUri(uri)) return [Downloader.AnkerGames];
   if (uri.startsWith("https://gofile.io")) return [Downloader.Gofile];
 
@@ -272,6 +276,13 @@ export const getDownloadersForUri = (uri: string) => {
   return [];
 };
 
+export const getDownloadersForUri = (uri: string) => {
+  const downloaders = getOwnDownloadersForUri(uri);
+  return isTorBoxHosterUri(uri)
+    ? [...downloaders, Downloader.TorBox]
+    : downloaders;
+};
+
 export const getDownloadersForUris = (uris: string[]) => {
   const downloadersSet = uris.reduce<Set<Downloader>>((prev, next) => {
     const downloaders = getDownloadersForUri(next);
@@ -302,6 +313,18 @@ export const filterDownloadableRepacks = <
         Array.isArray(repack.uris) &&
         getDownloadersForUris(repack.uris).length > 0
     );
+
+/** The downloaders that can take this option's link; a multi-part group needs one that fetches every part. */
+export const getRepackUriDownloaders = (
+  repack: Pick<GameRepack, "uriGroups">,
+  uri: string
+) => getGroupAwareRepackUriDownloaders(repack, uri, getDownloadersForUri);
+
+/** The option's link for a downloader; TorBox also gets the other links to check for a cached copy. */
+export const selectRepackUris = (
+  repack: Pick<GameRepack, "uris" | "uriGroups">,
+  downloader: Downloader
+) => selectUrisForDownloader(repack, downloader, getDownloadersForUri);
 
 const AVAILABILITY_CHECK_DOWNLOADERS = new Set<Downloader>([
   Downloader.VikingFile,

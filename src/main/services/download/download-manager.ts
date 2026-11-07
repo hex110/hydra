@@ -62,7 +62,7 @@ import { logger } from "../logger";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { TorBoxClient } from "./torbox";
 import { TorBoxBatchDownloader } from "./torbox-batch-downloader";
-import { selectTorBoxFiles } from "./torbox-files";
+import { selectTorBoxFiles, type TorBoxSource } from "./torbox-files";
 import { GameFilesManager } from "../game-files-manager";
 import { PremiumizeClient } from "./premiumize";
 import { AllDebridClient } from "./all-debrid";
@@ -161,6 +161,8 @@ interface JsBatchState {
   savePath: string;
   entries: JsBatchEntry[];
   torrentId?: number;
+  /** What `torrentId` identifies on TorBox; a torrent unless it is a web download. */
+  torBoxSource?: TorBoxSource;
   sourceUri?: string;
   rootFolderName?: string;
   currentIndex: number;
@@ -1752,7 +1754,12 @@ export class DownloadManager {
       if (batch.torrentId === undefined || entry.fileId === undefined) {
         throw new Error("The TorBox file selection is incomplete.");
       }
-      return TorBoxClient.requestLink(batch.torrentId, entry.fileId);
+      return TorBoxClient.requestLink(
+        batch.torrentId,
+        entry.fileId,
+        undefined,
+        batch.torBoxSource
+      );
     }
     if (batch.provider === "realDebrid" && entry.isLocked && url) {
       const prepared = entry.preparedLink;
@@ -1870,14 +1877,15 @@ export class DownloadManager {
         return link;
       };
     }
-    const { torrentId } = batch;
+    const { torrentId, torBoxSource } = batch;
     const { fileId } = entry;
     if (
       batch.provider === "torBox" &&
       torrentId !== undefined &&
       fileId !== undefined
     ) {
-      return () => TorBoxClient.requestLink(torrentId, fileId);
+      return () =>
+        TorBoxClient.requestLink(torrentId, fileId, undefined, torBoxSource);
     }
     if (batch.provider !== "realDebrid" || !entry.url) return undefined;
     return async () => {
@@ -2321,8 +2329,28 @@ export class DownloadManager {
     return filename;
   }
 
+  /**
+   * Settles which hoster link TorBox takes (a cached one if any), and keeps the
+   * choice on the download. The download is pending until TorBox has the files.
+   */
+  private static async prepareTorBoxWebFiles(download: Download) {
+    const resolution = await TorBoxClient.resolveWebDownload(
+      [download.uri, ...(download.alternativeUris ?? [])],
+      download.torBoxWebId
+    );
+    download.uri = resolution.uri;
+    download.torBoxWebId = resolution.webId;
+    download.alternativeUris = undefined;
+    download.debridProgress = resolution.progress;
+    const manifest = TorBoxClient.getWebDownloadManifest(resolution.info);
+    download.debridProgress = undefined;
+    return manifest;
+  }
+
   private static async prepareTorBoxFiles(download: Download) {
-    const manifest = await TorBoxClient.getDownloadFiles(download.uri);
+    const manifest = download.uri.startsWith("magnet:")
+      ? await TorBoxClient.getDownloadFiles(download.uri)
+      : await this.prepareTorBoxWebFiles(download);
     const selectedFiles = selectTorBoxFiles(manifest, download.fileIndices);
     const selected = selectedFiles.map((file) => ({
       ...file,
@@ -2349,7 +2377,12 @@ export class DownloadManager {
     const url =
       firstFile.size === 0
         ? "about:blank"
-        : await TorBoxClient.requestLink(manifest.torrentId, firstFile.id);
+        : await TorBoxClient.requestLink(
+            manifest.torrentId,
+            firstFile.id,
+            undefined,
+            manifest.source
+          );
     return {
       ...this.buildDownloadOptions(url, download.downloadPath, firstFile.path),
       totalSize: selected.reduce((sum, file) => sum + file.size, 0),
@@ -2874,6 +2907,7 @@ export class DownloadManager {
         isZip: manifest.archiveOnly === true,
       })),
       torrentId: manifest.torrentId,
+      torBoxSource: manifest.source,
       rootFolderName:
         selected.length === 1 && !selected[0].path.includes("/")
           ? undefined
@@ -3331,7 +3365,8 @@ export class DownloadManager {
         TorBoxClient.requestLink(
           batch.torrentId!,
           batch.entries[index].fileId!,
-          signal
+          signal,
+          batch.torBoxSource
         ),
       (index, url) => {
         const entry = batch.entries[index];

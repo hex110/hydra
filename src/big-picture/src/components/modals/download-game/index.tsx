@@ -17,6 +17,7 @@ import {
   findLibraryGamePresentation,
   getOfficialStoreMembers,
   getRepackUriParts,
+  selectRepackUris,
   isEpicMemberInCurrentScope,
   toDownloadRelease,
 } from "@shared";
@@ -1687,6 +1688,8 @@ function DownloadGameOptions({
       shop: game.shop,
       uri: selectedUri,
       parts: getRepackUriParts(option, selectedUri),
+      alternativeUris: selectRepackUris(option, resolvedDownloader)
+        .alternativeUris,
       downloadPath: selectedDownloadPath,
       downloader: resolvedDownloader,
       automaticallyExtract: automaticExtractionEnabled,

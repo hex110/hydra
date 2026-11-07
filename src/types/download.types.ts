@@ -86,6 +86,47 @@ export interface TorBoxTorrentInfo {
   files: TorBoxFile[];
 }
 
+/** A TorBox web download (a hoster link TorBox fetches for you). */
+export interface TorBoxWebDownloadInfo
+  extends Omit<TorBoxTorrentInfo, "download_state" | "magnet" | "hash"> {
+  download_state: string;
+  hash?: string;
+  original_url?: string;
+  error?: string | null;
+}
+
+export interface TorBoxWebDownloadListRequest {
+  success: boolean;
+  detail: string;
+  error: string;
+  data: TorBoxWebDownloadInfo | TorBoxWebDownloadInfo[] | null;
+}
+
+export interface TorBoxCreateWebDownloadRequest {
+  success: boolean;
+  detail?: string;
+  error?: string | null;
+  data?: {
+    webdownload_id?: number;
+    queued_id?: number;
+    hash?: string;
+  } | null;
+}
+
+export interface TorBoxHoster {
+  name: string;
+  domains: string[];
+  status: boolean;
+  type: string;
+  daily_link_limit?: number;
+  daily_link_used?: number;
+}
+
+export interface TorBoxHostersRequest {
+  success: boolean;
+  data: TorBoxHoster[];
+}
+
 export interface TorBoxTorrentInfoRequest {
   success: boolean;
   detail: string;

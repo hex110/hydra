@@ -56,6 +56,38 @@ downloader you can use accepts) as **Recommended**. When only one option
 exists, it skips the list and opens that option's download settings
 straight away; closing them shows the list.
 
+## TorBox for direct links
+
+With a TorBox token set, **TorBox** is offered for releases that have links on
+a file host TorBox fetches (Gofile, Pixeldrain, Datanodes, Mediafire,
+Fuckingfast, VikingFile), next to the host's own downloader, and is the default
+choice. The list in `src/shared/torbox-hosters.ts` is the hosts Hydra already
+downloads directly; other hosts stay with their own downloader. Multi-part
+groups of links (many `.partN` files) are not offered to TorBox.
+
+Starting the download settles which link TorBox takes
+(`resolveTorBoxWebDownload`, tested in `torbox-web.test.ts`):
+
+1. A copy already in the TorBox account (added on its website or by an earlier
+   attempt) is used as it is.
+2. Otherwise every link of the release is offered to TorBox with "add only if
+   cached", in the release's order; the first one TorBox has cached is added and
+   downloads from TorBox at once. Links on a host TorBox reports as down are
+   skipped, and at most 6 links are checked (TorBox limits how fast links can be added).
+3. If none is cached, TorBox fetches the first link itself. The download waits
+   as "Waiting for debrid · NN%" (TorBox's progress) for up to an hour, then
+   starts by itself when TorBox has the files. Pausing, cancelling and resuming
+   work as for a pending Real-Debrid or TorBox torrent.
+
+The chosen link and the TorBox ID are kept on the download, so a resume or
+restart goes on with the same TorBox download instead of adding the link again.
+A single file is saved in the download folder itself; a host folder with several
+files keeps its folder. The download dialog explains the behaviour under the
+downloader list when TorBox is selected for links.
+
+Not done: TorBox fetches no multi-part groups, and a link TorBox fails to fetch
+ends the download with an error instead of falling back to the next link.
+
 ## Free space
 
 The download dialog refuses a download that does not fit on the drive, as

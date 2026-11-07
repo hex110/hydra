@@ -17,6 +17,7 @@ import {
 import {
   getGlobalTrackers,
   getMultipartDownloadParts,
+  getTorBoxAlternativeUris,
   handleDownloadError,
   isKnownDownloadError,
   prepareGameEntry,
@@ -34,6 +35,7 @@ const startGameDownload = async (
     downloader,
     uri,
     parts,
+    alternativeUris,
     automaticallyExtract,
     automaticallyDeleteArchiveFiles,
     fileSize,
@@ -71,6 +73,11 @@ const startGameDownload = async (
       downloader,
       uri,
       parts: await getMultipartDownloadParts(uri, parts, downloader),
+      alternativeUris: getTorBoxAlternativeUris(
+        downloader,
+        uri,
+        alternativeUris
+      ),
       folderName: null,
       shouldSeed: false,
       timestamp: Date.now(),

@@ -74,6 +74,14 @@ const NO_INTERNET_GRACE_MS = 15000;
 const RECONNECT_DEBOUNCE_MS = 2000;
 const DEBRID_PREPARATION_WINDOW_MS = 5 * 60 * 1000;
 const DEBRID_READINESS_POLL_MS = 5000;
+// TorBox fetches a hoster link from scratch, which takes as long as the file is big.
+const TORBOX_WEB_PREPARATION_WINDOW_MS = 60 * 60 * 1000;
+
+const getDebridPreparationWindow = (download: Download) =>
+  download.downloader === Downloader.TorBox &&
+  !download.uri.startsWith("magnet:")
+    ? TORBOX_WEB_PREPARATION_WINDOW_MS
+    : DEBRID_PREPARATION_WINDOW_MS;
 
 export class DownloadOrchestrator {
   private static epicActivationTail: Promise<unknown> = Promise.resolve();
@@ -936,7 +944,7 @@ export class DownloadOrchestrator {
           download.debridAutoResume === true &&
           Number.isFinite(download.debridPreparationDeadline)
             ? download.debridPreparationDeadline
-            : Date.now() + DEBRID_PREPARATION_WINDOW_MS,
+            : Date.now() + getDebridPreparationWindow(download),
       },
       { queued: false }
     );
@@ -1038,6 +1046,7 @@ export class DownloadOrchestrator {
     const readyDownload: Download = {
       ...current,
       realDebridTorrentId: download.realDebridTorrentId,
+      debridProgress: undefined,
       awaitingDebrid: false,
       debridAutoResume: false,
       debridQueueOnly: undefined,
@@ -1141,7 +1150,12 @@ export class DownloadOrchestrator {
           await downloadsSublevel.put(key, {
             ...current,
             realDebridTorrentId: download.realDebridTorrentId,
+            torBoxWebId: download.torBoxWebId,
+            debridProgress: download.debridProgress,
           });
+          if (current.debridProgress !== download.debridProgress) {
+            WindowManager.sendDownloadsUpdated();
+          }
           return;
         }
         const activate = withDownloadActivation(() =>

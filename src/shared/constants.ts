@@ -102,6 +102,7 @@ export enum DownloadError {
   TorBoxUnavailable = "download_error_torbox_unavailable",
   TorBoxTorrentNotReady = "download_error_torbox_torrent_not_ready",
   TorBoxLinkUnavailable = "download_error_torbox_link_unavailable",
+  TorBoxWebDownloadFailed = "download_error_torbox_web_download_failed",
   NetworkUnreachable = "download_error_network_unreachable",
   NetworkCertificateRejected = "download_error_network_certificate_rejected",
   AnkerGamesLimitReached = "download_error_ankergames_limit_reached",

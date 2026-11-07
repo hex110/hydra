@@ -8,7 +8,12 @@ import {
 import { DownloadOrchestrator } from "@main/services/download-orchestrator";
 import { getDownloadParts } from "@main/services/download/download-parts";
 import { assertMultipartHosterDownloadsEnabled } from "@main/services/download/multipart-hoster-feature";
-import { type Downloader, MULTIPART_DOWNLOADERS } from "@shared";
+import {
+  Downloader,
+  MULTIPART_DOWNLOADERS,
+  TORBOX_MAX_WEB_CANDIDATES,
+  isTorBoxHosterUri,
+} from "@shared";
 import { canDiscardDownload, type GameShop } from "../../types";
 import { IMPORT_FLAGS_CLEARED } from "@shared";
 
@@ -31,6 +36,28 @@ export const getMultipartDownloadParts = async (
   }
   await assertMultipartHosterDownloadsEnabled();
   return downloadParts;
+};
+
+/** Only TorBox picks among links; the renderer's list is checked, not trusted. */
+export const getTorBoxAlternativeUris = (
+  downloader: Downloader,
+  uri: string,
+  alternativeUris: unknown
+): string[] | undefined => {
+  if (downloader !== Downloader.TorBox || !Array.isArray(alternativeUris)) {
+    return undefined;
+  }
+  const alternatives = [
+    ...new Set(
+      alternativeUris.filter(
+        (candidate): candidate is string =>
+          typeof candidate === "string" &&
+          candidate !== uri &&
+          isTorBoxHosterUri(candidate)
+      )
+    ),
+  ].slice(0, TORBOX_MAX_WEB_CANDIDATES - 1);
+  return alternatives.length > 0 ? alternatives : undefined;
 };
 
 export const clearFinishedDownload = async (

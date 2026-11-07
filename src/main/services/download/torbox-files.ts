@@ -1,5 +1,7 @@
 import type { TorBoxTorrentInfo } from "@types";
 
+export type TorBoxSource = "torrent" | "web";
+
 export interface TorBoxDownloadFile {
   id: number;
   path: string;
@@ -7,7 +9,9 @@ export interface TorBoxDownloadFile {
 }
 
 export interface TorBoxDownloadManifest {
+  /** Torrent ID, or web download ID when `source` is "web". */
   torrentId: number;
+  source?: TorBoxSource;
   name: string;
   files: TorBoxDownloadFile[];
   totalSize: number;
@@ -44,7 +48,7 @@ const decodeHtmlEntities = (value: string): string =>
     }
   );
 
-const sanitizeSegment = (segment: string): string => {
+export const sanitizeSegment = (segment: string): string => {
   const trimmed = Array.from(
     decodeHtmlEntities(segment).normalize("NFC"),
     (char) =>

@@ -31,7 +31,7 @@ import {
   MINIMUM_FREE_DISK_SPACE_BYTES,
   estimateInstallSpace,
   formatBytes,
-  getDownloadersForUri,
+  getRepackUriDownloaders,
   parseBytes,
 } from "@shared";
 import type { GameRepack, TorrentFile, TorrentFilesResponse } from "@types";
@@ -368,7 +368,7 @@ export function DownloadSettingsModal({
 
     return (
       repack.uris.find((uri) =>
-        getDownloadersForUri(uri).includes(selectedDownloader)
+        getRepackUriDownloaders(repack, uri).includes(selectedDownloader)
       ) ?? null
     );
   }, [repack, selectedDownloader]);
@@ -383,6 +383,11 @@ export function DownloadSettingsModal({
     if (!selectedUri?.startsWith("magnet:")) return null;
     return selectedUri;
   }, [selectedDownloader, selectedUri]);
+
+  const showTorBoxLinksNotice =
+    selectedDownloader === Downloader.TorBox &&
+    !!selectedUri &&
+    !selectedUri.startsWith("magnet:");
 
   const getDiskFreeSpace = async (path: string) => {
     const result = await globalThis.electron.getDiskFreeSpace(path);
@@ -419,7 +424,7 @@ export function DownloadSettingsModal({
 
     if (repack) {
       for (const uri of repack.uris) {
-        const uriDownloaders = getDownloadersForUri(uri);
+        const uriDownloaders = getRepackUriDownloaders(repack, uri);
         const isAvailable = !unavailableUrisSet.has(uri);
 
         for (const downloader of uriDownloaders) {
@@ -1570,6 +1575,11 @@ export function DownloadSettingsModal({
             </div>
           </div>
 
+          {showTorBoxLinksNotice && (
+            <p className="download-settings-modal__single-archive-notice">
+              {t("torbox_links_notice")}
+            </p>
+          )}
           {canOpenTorrentStep && isSingleArchive && (
             <p className="download-settings-modal__single-archive-notice">
               {t("single_archive_download_notice")}

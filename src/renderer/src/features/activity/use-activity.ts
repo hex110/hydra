@@ -111,7 +111,13 @@ export function useActivity() {
 
       const parts: string[] = [];
       if (download.awaitingDebrid && download.debridAutoResume) {
-        parts.push(t("waiting_for_debrid"));
+        parts.push(
+          download.debridProgress
+            ? t("waiting_for_debrid_progress", {
+                progress: formatDownloadProgress(download.debridProgress),
+              })
+            : t("waiting_for_debrid")
+        );
       } else if (download.progress < 1) {
         if (download.status === "paused") {
           parts.push(download.queued ? t("queued") : t("paused"));

@@ -1,4 +1,4 @@
-import { Downloader, getDownloadersForUri } from "@shared";
+import { Downloader, getRepackUriDownloaders } from "@shared";
 import type { GameRepack, UserPreferences } from "@types";
 
 const DOWNLOADER_PREFERENCE_KEYS: Partial<
@@ -98,7 +98,7 @@ export function sortAvailableDownloaders(
 }
 
 export function getDownloaderAvailabilityOptions(
-  repack: Pick<GameRepack, "uris" | "unavailableUris">,
+  repack: Pick<GameRepack, "uris" | "unavailableUris" | "uriGroups">,
   preferences?: UserPreferences | null,
   enabledFeatures?: string[] | null,
   hasActiveSubscription?: boolean
@@ -117,7 +117,7 @@ export function getDownloaderAvailabilityOptions(
   ) as Downloader[];
 
   for (const uri of repack.uris) {
-    const uriDownloaders = getDownloadersForUri(uri);
+    const uriDownloaders = getRepackUriDownloaders(repack, uri);
     const isAvailable = !unavailableUrisSet.has(uri);
 
     for (const downloader of uriDownloaders) {

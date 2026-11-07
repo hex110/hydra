@@ -321,6 +321,12 @@ export interface Download {
   files?: DownloadFile[];
   selectedFilesSize?: number | null;
   realDebridTorrentId?: string;
+  /** Other links of the release TorBox has yet to choose between; dropped once it has. */
+  alternativeUris?: string[];
+  /** The TorBox web download that holds `uri`. */
+  torBoxWebId?: number;
+  /** How far the debrid service is in fetching the files itself, 0 to 1. */
+  debridProgress?: number;
   awaitingDebrid?: boolean;
   debridAutoResume?: boolean;
   debridQueueOnly?: boolean;

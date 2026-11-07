@@ -13,6 +13,7 @@ import { parseBytes } from "@shared";
 import {
   getGlobalTrackers,
   getMultipartDownloadParts,
+  getTorBoxAlternativeUris,
   handleDownloadError,
   isKnownDownloadError,
   prepareGameEntry,
@@ -30,6 +31,7 @@ const addGameToQueue = async (
     downloader,
     uri,
     parts,
+    alternativeUris,
     automaticallyExtract,
     automaticallyDeleteArchiveFiles,
     fileSize,
@@ -57,6 +59,11 @@ const addGameToQueue = async (
       downloader,
       uri,
       parts: await getMultipartDownloadParts(uri, parts, downloader),
+      alternativeUris: getTorBoxAlternativeUris(
+        downloader,
+        uri,
+        alternativeUris
+      ),
       folderName: null,
       fileSize: selectedFilesSize ?? parsedFileSize,
       shouldSeed: false,

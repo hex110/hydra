@@ -222,6 +222,8 @@ export interface StartGameDownloadPayload {
   shop: GameShop;
   uri: string;
   parts?: string[];
+  /** Other links of the same release; TorBox checks them all for a cached copy. */
+  alternativeUris?: string[];
   downloadPath: string;
   downloader: Downloader;
   automaticallyExtract: boolean;

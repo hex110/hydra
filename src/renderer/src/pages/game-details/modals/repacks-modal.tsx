@@ -23,7 +23,7 @@ import { gameDetailsContext } from "@renderer/context";
 import {
   ANKERGAMES_SOURCE_ID,
   Downloader,
-  getDownloadersForUri,
+  getRepackUriDownloaders,
   getOfficialStoreMembers,
   isEpicMemberInCurrentScope,
   rankRepacks,
@@ -271,7 +271,7 @@ export function RepacksModal({
       candidate.uris.some(
         (uri) =>
           !candidate.unavailableUris?.includes(uri) &&
-          getDownloadersForUri(uri).some(
+          getRepackUriDownloaders(candidate, uri).some(
             (downloader) =>
               downloader !== Downloader.Hydra && (accounts[downloader] ?? true)
           )
