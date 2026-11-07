@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import type { Game, LaunchRule } from "@types";
 import {
+  addNewLaunchRulePresets,
   migrateLegacyLaunchSettings,
   migrateReShadeLaunchRule,
 } from "./launch-rules-migration.js";
@@ -107,6 +108,49 @@ describe("migrateReShadeLaunchRule", () => {
         { ...rule(LEGACY_RESHADE_LAUNCH_OPTIONS), id: "mine" },
       ]),
       null
+    );
+  });
+});
+
+describe("addNewLaunchRulePresets", () => {
+  const allIds = LAUNCH_RULE_PRESETS.map((rule) => rule.presetId!);
+  const custom: LaunchRule = {
+    id: "mine",
+    name: "Mine",
+    enabled: true,
+    files: [],
+    launchOptions: "%command%",
+  };
+
+  it("records what is offered on an install that never edited its rules", () => {
+    const result = addNewLaunchRulePresets(undefined, undefined);
+    assert.strictEqual(result?.launchRules, undefined);
+    assert.deepStrictEqual(result?.seenPresetIds, allIds);
+  });
+
+  it("does nothing once every preset has been offered", () => {
+    assert.strictEqual(addNewLaunchRulePresets([custom], allIds), null);
+  });
+
+  it("appends a preset the saved list has never been offered, once", () => {
+    const [newest] = LAUNCH_RULE_PRESETS.slice(-1);
+    const seen = allIds.filter((id) => id !== newest.presetId);
+    const result = addNewLaunchRulePresets([custom], seen);
+    assert.deepStrictEqual(
+      result?.launchRules?.map((rule) => rule.id),
+      ["mine", newest.id]
+    );
+    assert.deepStrictEqual(
+      addNewLaunchRulePresets(result!.launchRules, result!.seenPresetIds),
+      null
+    );
+  });
+
+  it("keeps a preset the person removed gone", () => {
+    const result = addNewLaunchRulePresets([custom], undefined);
+    assert.deepStrictEqual(
+      result?.launchRules?.map((rule) => rule.id),
+      ["mine"]
     );
   });
 });

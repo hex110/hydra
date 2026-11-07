@@ -94,3 +94,48 @@ export const migrateReShadeLaunchRule = (
       : rule
   );
 };
+
+/** The presets every install had before new ones were added to saved lists. */
+const PRESETS_BEFORE_TRACKING = [
+  "hdr",
+  "hyprland-hdr",
+  "reshade",
+  "unity-vulkan",
+  "denuvo-bypass",
+];
+
+/**
+ * A preset added in a later version reaches people who have edited their
+ * rules (whose saved list hides the presets): it is appended once, on or off
+ * as the preset ships, and remembered, so removing it keeps it gone.
+ * Null when nothing needs saving.
+ */
+export const addNewLaunchRulePresets = (
+  launchRules: LaunchRule[] | null | undefined,
+  seenPresetIds: string[] | null | undefined
+): {
+  launchRules: LaunchRule[] | undefined;
+  seenPresetIds: string[];
+} | null => {
+  const allPresetIds = LAUNCH_RULE_PRESETS.flatMap((rule) =>
+    rule.presetId ? [rule.presetId] : []
+  );
+  const seen = new Set(seenPresetIds ?? PRESETS_BEFORE_TRACKING);
+  if (seenPresetIds && allPresetIds.every((id) => seen.has(id))) return null;
+
+  const added = launchRules
+    ? LAUNCH_RULE_PRESETS.filter(
+        (preset) =>
+          preset.presetId &&
+          !seen.has(preset.presetId) &&
+          !launchRules.some(
+            (rule) => rule.id === preset.id || rule.presetId === preset.presetId
+          )
+      )
+    : [];
+
+  return {
+    launchRules: launchRules ? [...launchRules, ...added] : undefined,
+    seenPresetIds: [...new Set([...seen, ...allPresetIds])],
+  };
+};

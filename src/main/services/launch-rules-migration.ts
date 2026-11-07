@@ -1,6 +1,10 @@
 import { db, gamesSublevel, levelKeys } from "@main/level";
 import { logger } from "@main/services/logger";
-import { migrateLegacyLaunchSettings, migrateReShadeLaunchRule } from "@shared";
+import {
+  addNewLaunchRulePresets,
+  migrateLegacyLaunchSettings,
+  migrateReShadeLaunchRule,
+} from "@shared";
 import type { UserPreferences } from "@types";
 
 /** Moves the old HDR switch and ignored-rule lists onto launch rules. */
@@ -41,6 +45,7 @@ export const migrateLegacyLaunchRuleSettings = async () => {
     }
 
     await migrateReShadeRule();
+    await addNewPresets();
 
     if (launchRules || gameOverrides.size > 0) {
       logger.info("[LaunchRules] Migrated legacy launch settings", {
@@ -71,4 +76,32 @@ const migrateReShadeRule = async () => {
     { valueEncoding: "json" }
   );
   logger.info("[LaunchRules] Updated the saved ReShade rule");
+};
+
+/** Adds presets shipped since the person last saved their rules. */
+const addNewPresets = async () => {
+  const preferences = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
+  if (!preferences) return;
+  const result = addNewLaunchRulePresets(
+    preferences.launchRules,
+    preferences.seenLaunchRulePresetIds
+  );
+  if (!result) return;
+
+  await db.put<string, UserPreferences>(
+    levelKeys.userPreferences,
+    {
+      ...preferences,
+      ...(result.launchRules ? { launchRules: result.launchRules } : {}),
+      seenLaunchRulePresetIds: result.seenPresetIds,
+    },
+    { valueEncoding: "json" }
+  );
+  const added =
+    (result.launchRules?.length ?? 0) - (preferences.launchRules?.length ?? 0);
+  if (added > 0) logger.info("[LaunchRules] Added new presets", { added });
 };

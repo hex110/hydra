@@ -490,6 +490,8 @@ export interface UserPreferences {
   startBrowserDownloadsImmediately?: boolean;
   /** Unset until first edited; the built-in presets apply until then. */
   launchRules?: LaunchRule[];
+  /** Built-in rule presets this install has been offered; newer ones are added to a saved list once. */
+  seenLaunchRulePresetIds?: string[];
   /** Corrections to the hardware Hydra detected, for the requirements check. */
   systemSpecs?: SystemSpecsOverrides;
   /** @deprecated Migrated to the HDR launch rule. */
