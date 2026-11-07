@@ -2918,6 +2918,8 @@
     "game_setup": "Game setup",
     "game_setup_description": "Runs automatically when a game becomes playable: after a download finishes, when you pick its executable, or when a library scan finds it.",
     "prepare_wine_prefix_on_install": "Create the game's Wine prefix right away instead of on first launch",
+    "silent_installers": "Install GOG and other Inno Setup installers without their wizard",
+    "silent_installers_description": "Install runs the installer unattended, into its default folder (C:\\GOG Games\\<game> for GOG). If it fails, the installer opens normally.",
     "games_missing_wine_prefix_one": "{{count}} game in your library has no Wine prefix yet",
     "games_missing_wine_prefix_other": "{{count}} games in your library have no Wine prefix yet",
     "preparing_wine_prefixes": "Preparing Wine prefixes ({{done}}/{{total}})",

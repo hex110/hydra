@@ -455,6 +455,8 @@ export interface UserPreferences {
   defaultProtonPath?: string | null;
   defaultLaunchOptions?: string | null;
   prepareWinePrefixOnInstall?: boolean;
+  /** Linux: run Inno Setup installers without their wizard. On unless false. */
+  silentInstallers?: boolean;
   postInstallCommand?: string | null;
   libraryScanDirectories?: string[];
   /** Folders the scan should never offer as games (launchers, mod managers). */

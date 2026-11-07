@@ -4,8 +4,8 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 
 import { registerEvent } from "../register-event";
-import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
-import type { Download, GameShop } from "@types";
+import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
+import type { Download, GameShop, UserPreferences } from "@types";
 import {
   GameFilesManager,
   logger,
@@ -16,6 +16,10 @@ import {
 import { UmuEarlyExitError } from "@main/services/umu-launch-monitor";
 import { resolveDownloadFolder } from "@main/services/download-game-folder";
 import { findDownloadInstaller } from "@main/helpers/find-game-installer";
+import {
+  INNO_SILENT_ARGS,
+  isInnoSetupInstaller,
+} from "@main/helpers/silent-installer";
 import {
   endInstallerRun,
   markInstallerRunLive,
@@ -217,12 +221,13 @@ const launchInstallerElevated = async (
 
 const launchInstallerWithUmu = async (
   filePath: string,
+  args: string[],
   options: InstallerLaunchOptions
 ) => {
   let launched = false;
 
   try {
-    await Umu.launchExecutable(filePath, [], {
+    await Umu.launchExecutable(filePath, args, {
       gameId: options.gameId,
       winePrefixPath: options.winePrefixPath,
       protonPath: options.protonPath,
@@ -285,12 +290,58 @@ const executeWindowsInstaller = async (
   return await openUntracked(filePath);
 };
 
+const shouldInstallSilently = async (filePath: string) => {
+  const preferences = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
+
+  return (
+    preferences?.silentInstallers !== false &&
+    (await isInnoSetupInstaller(filePath))
+  );
+};
+
+// A failed unattended run is repeated with the installer's own wizard, so the
+// user sees what went wrong instead of an Install button that does nothing.
+const withWizardFallback = (
+  filePath: string,
+  options: InstallerLaunchOptions
+): InstallerLaunchOptions => ({
+  ...options,
+  onExit: (exitCode) => {
+    if (isSuccessfulExit(exitCode)) return options.onExit(exitCode);
+
+    logger.warn(
+      `[GameInstaller] Unattended install ${describeInstallerExit(exitCode)}, opening the installer`
+    );
+    launchInstallerWithUmu(filePath, [], options).catch((error) => {
+      logger.error(
+        "Failed to open the installer after an unattended run",
+        error
+      );
+      options.onExit(exitCode);
+    });
+  },
+});
+
 const executeLinuxInstaller = async (
   filePath: string,
   options: InstallerLaunchOptions
 ): Promise<InstallerLaunchResult> => {
   try {
-    await launchInstallerWithUmu(filePath, options);
+    if (await shouldInstallSilently(filePath)) {
+      logger.info(`[GameInstaller] Installing ${filePath} unattended`);
+      await launchInstallerWithUmu(
+        filePath,
+        INNO_SILENT_ARGS,
+        withWizardFallback(filePath, options)
+      );
+      return trackedLaunch(filePath, "unattended with umu-run");
+    }
+
+    await launchInstallerWithUmu(filePath, [], options);
     return trackedLaunch(filePath, "with umu-run");
   } catch (error) {
     logger.error("Failed to execute game installer with umu-run", error);

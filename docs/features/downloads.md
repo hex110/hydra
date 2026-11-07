@@ -137,9 +137,25 @@ after the archive next to it counts as the unpacked game, the download points
 at that folder, and the executable is looked for as after Hydra's own
 extraction. Then the row offers **Play** or, if only an installer is there,
 **Install**. A folder left behind by a failed extraction is not trusted.
-Hydra does not watch an installer: after running it, set the game's
-executable under **Properties** (or let a library scan find it) and the row
-turns into **Play**.
+
+## Installing
+
+**Install** runs the installer and watches it. When it exits successfully,
+Hydra looks for the new game folder (in `C:\Games`, `C:\GOG Games` and
+`Program Files` of the game's prefix on Linux, in the usual drive folders on
+Windows), binds the executable and the row turns into **Play**. If nothing is
+found yet it keeps looking for ten minutes; you can always set the executable
+under **Properties**.
+
+On Linux, an Inno Setup installer (every GOG offline installer, and most
+repacks) runs **unattended** (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`)
+into the folder the installer itself defaults to, `C:\GOG Games\<game>` for
+GOG. No `/DIR` is passed, so that folder is always one the search looks in.
+If the unattended run fails, Hydra repeats it with the installer's own wizard.
+**Settings → Proton and Wine → Game setup** turns this off (`silentInstallers`);
+other installers always open their wizard. An installer is recognised by the
+`Inno Setup Setup Data` marker in the first megabyte of the file
+(`src/main/helpers/silent-installer.ts`).
 
 ## Pasting a Steam link
 

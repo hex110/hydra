@@ -60,6 +60,9 @@ export function SettingsContextCompatibility() {
   const [prepareWinePrefixOnInstall, setPrepareWinePrefixOnInstall] = useState(
     () => userPreferences?.prepareWinePrefixOnInstall !== false
   );
+  const [silentInstallers, setSilentInstallers] = useState(
+    () => userPreferences?.silentInstallers !== false
+  );
   const [postInstallCommand, setPostInstallCommand] = useState(
     () => userPreferences?.postInstallCommand ?? ""
   );
@@ -112,9 +115,11 @@ export function SettingsContextCompatibility() {
     setPrepareWinePrefixOnInstall(
       userPreferences?.prepareWinePrefixOnInstall !== false
     );
+    setSilentInstallers(userPreferences?.silentInstallers !== false);
     setPostInstallCommand(userPreferences?.postInstallCommand ?? "");
   }, [
     userPreferences?.prepareWinePrefixOnInstall,
+    userPreferences?.silentInstallers,
     userPreferences?.postInstallCommand,
   ]);
 
@@ -392,6 +397,19 @@ export function SettingsContextCompatibility() {
                 });
               }}
             />
+
+            <CheckboxField
+              label={t("silent_installers")}
+              checked={silentInstallers}
+              onChange={() => {
+                const nextValue = !silentInstallers;
+                setSilentInstallers(nextValue);
+                updateUserPreferences({ silentInstallers: nextValue });
+              }}
+            />
+            <p className="settings-general__common-redist-description">
+              {t("silent_installers_description")}
+            </p>
 
             <div className="settings-context-compatibility__setup-row">
               <span>
