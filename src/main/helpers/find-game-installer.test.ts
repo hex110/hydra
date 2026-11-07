@@ -116,6 +116,25 @@ describe("findGameInstaller", () => {
     );
   });
 
+  it("finds installers named after the game", async () => {
+    assert.equal(
+      await installerIn("named-setup", ["Hollow Knight Setup.exe", "data.bin"]),
+      "Hollow Knight Setup.exe"
+    );
+    assert.equal(
+      await installerIn("named-installer", ["Game_Installer.exe", "a.bin"]),
+      "Game_Installer.exe"
+    );
+  });
+
+  it("never takes an uninstaller or the game itself for an installer", async () => {
+    assert.equal(
+      await installerIn("uninstaller", ["unins000.exe", "Game.exe"]),
+      null
+    );
+    assert.equal(await installerIn("lone-game", ["Game.exe"]), null);
+  });
+
   it("skips installers inside redistributable folders", async () => {
     assert.equal(
       await installerIn("redist", [

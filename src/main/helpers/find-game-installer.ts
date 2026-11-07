@@ -11,7 +11,12 @@ import {
 
 const MAX_INSTALLER_DEPTH = 2;
 
-const INSTALLER_NAME_PATTERNS = [/^setup\.exe$/, /^(setup|install).*\.exe$/];
+const INSTALLER_NAME_PATTERNS = [
+  /^setup\.exe$/,
+  /^(setup|install).*\.exe$/,
+  // "Game Setup.exe", "Game_Installer.exe"; never an uninstaller.
+  /^(?!unins).*[^a-z](setup|installer)[^a-z]?.*\.exe$/,
+];
 
 interface InstallerCandidate {
   filePath: string;
@@ -88,6 +93,13 @@ const compareCandidates = (a: InstallerCandidate, b: InstallerCandidate) =>
     Number(isSecondaryInstaller(b.filePath)) ||
   path.basename(a.filePath).length - path.basename(b.filePath).length;
 
+/**
+ * The installer in an unpacked download: `setup.exe`, a `setup*`/`install*`
+ * file, or one named "… Setup" or "… Installer", within two folders of the
+ * top; redistributables and DLC installers are skipped, and a tie between two
+ * equally likely files gives none. Every installer check (the Downloads page,
+ * Install, game options) goes through this, so they always agree.
+ */
 export const findGameInstaller = async (
   folderPath: string
 ): Promise<string | null> => {

@@ -97,33 +97,21 @@ export const resolveDownloadFolder = (
     : { kind: "missing" };
 };
 
-/** The installer to run in a game folder: `setup.exe`, or a lone `.exe`. */
-export const findInstaller = (folderPath: string): string | null => {
-  const setupPath = path.join(folderPath, "setup.exe");
-  if (fs.existsSync(setupPath)) return setupPath;
-
-  const executables = fs
-    .readdirSync(folderPath)
-    .filter((fileName) => path.extname(fileName).toLowerCase() === ".exe");
-
-  return executables.length === 1
-    ? path.join(folderPath, executables[0])
-    : null;
-};
-
 /**
  * What the Downloads page offers for a finished download. A game with an
  * executable is installed whatever else the folder holds, so the lone `.exe`
  * of an unpacked game is never taken for an installer.
  */
-export const getCompletedDownloadState = (
+export const getCompletedDownloadState = async (
   download: Pick<
     Download,
     "downloadPath" | "folderName" | "extractionFailed" | "extracting"
   >,
   game: { executablePath?: string | null } | null | undefined,
+  /** `findGameInstaller`, the one installer check every caller uses. */
+  findInstaller: (folderPath: string) => Promise<string | null>,
   platform: NodeJS.Platform = process.platform
-): CompletedDownloadState => {
+): Promise<CompletedDownloadState> => {
   if (game?.executablePath) return "play";
 
   const folder = resolveDownloadFolder(download);
@@ -136,7 +124,7 @@ export const getCompletedDownloadState = (
     case "file":
       return "open-folder";
     case "folder":
-      return platform !== "darwin" && findInstaller(folder.folderPath)
+      return platform !== "darwin" && (await findInstaller(folder.folderPath))
         ? "install"
         : "open-folder";
   }

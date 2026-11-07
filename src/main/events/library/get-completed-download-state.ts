@@ -3,6 +3,7 @@ import path from "node:path";
 import { registerEvent } from "../register-event";
 import { downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { GameFilesManager } from "@main/services";
+import { findGameInstaller } from "@main/helpers/find-game-installer";
 import {
   getCompletedDownloadState as resolveCompletedDownloadState,
   resolveDownloadFolder,
@@ -52,7 +53,7 @@ const getCompletedDownloadState = async (
 
   if (!download) return "missing";
 
-  return resolveCompletedDownloadState(download, game);
+  return resolveCompletedDownloadState(download, game, findGameInstaller);
 };
 
 registerEvent("getCompletedDownloadState", getCompletedDownloadState);
