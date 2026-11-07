@@ -685,6 +685,7 @@
     "reset_game_title": "Use the original title",
     "bios_not_configured_toast": "BIOS not found. Please add BIOS folder in Emulation settings.",
     "open_download_options": "Open download options",
+    "download_from_other_source": "Download from another source",
     "download_options_zero": "No download option",
     "download_options_one": "{{count}} download option",
     "download_options_other": "{{count}} download options",

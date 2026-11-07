@@ -300,7 +300,10 @@ export function DownloadSettingsModal({
   const { lastPacket } = useDownload();
   const { showErrorToast } = useToast();
 
-  const hasActiveDownload = lastPacket !== null;
+  // Starting a release of the game that is downloading replaces that download.
+  const hasActiveDownload =
+    lastPacket !== null &&
+    (!game || lastPacket.gameId !== `${game.shop}:${game.objectId}`);
 
   const [diskFreeSpace, setDiskFreeSpace] = useState<number | null>(null);
   const [selectedPath, setSelectedPath] = useState("");

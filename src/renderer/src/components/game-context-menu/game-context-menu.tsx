@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   applyLibraryGroupAction,
+  canSwitchDownloadSource,
   getRemoveFilesTarget,
   isLibraryGameDownloading,
   PLAY_STATUSES,
@@ -593,6 +594,17 @@ export function GameContextMenu({
                   isDownloadDeleting ||
                   isGameDownloading ||
                   !hasRepacks,
+              },
+            ]
+          : []),
+        ...(canSwitchDownloadSource(downloadGame.download)
+          ? [
+              {
+                id: "download-other-source",
+                label: t("download_from_other_source"),
+                icon: <DownloadIcon size={16} />,
+                onClick: handleOpenDownloadOptions,
+                disabled: isDeleting || isDownloadDeleting,
               },
             ]
           : []),

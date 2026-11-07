@@ -66,6 +66,18 @@ export const isLibraryGameDownloading = (
   game?.download?.status === "extracting" ||
   game?.download?.extracting === true;
 
+/**
+ * A download that has not finished yet can be replaced by another release or
+ * downloader (a slow host, TorBox instead of the browser); starting the new
+ * one cancels it.
+ */
+export const canSwitchDownloadSource = (
+  download: { status?: string | null; extracting?: boolean } | null | undefined
+): boolean =>
+  !!download &&
+  !download.extracting &&
+  ["active", "paused", "waiting", "error"].includes(download.status ?? "");
+
 const downloadPriority = (game: LibraryGame) => {
   if (isLibraryGameDownloading(game)) return 3;
   if (game.download?.queued || game.download?.status === "waiting") return 2;
