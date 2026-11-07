@@ -147,6 +147,14 @@ Windows), binds the executable and the row turns into **Play**. If nothing is
 found yet it keeps looking for ten minutes; you can always set the executable
 under **Properties**.
 
+When the catalogue knows no executable names for the game, Hydra guesses the
+way a library scan does (installers, tools and redistributables are ignored)
+in the folders the installer just changed. A folder named like the game wins;
+a single changed folder is trusted; several unnamed ones are not. Without a
+match the hero shows **Find executable**: its main part runs the same search
+on demand (every folder in the prefix counts, so only a folder named like the
+game is trusted), and the arrow offers **Select manually…**.
+
 On Linux, an Inno Setup installer (every GOG offline installer, and most
 repacks) runs **unattended** (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`)
 into the folder the installer itself defaults to, `C:\GOG Games\<game>` for
@@ -156,6 +164,12 @@ If the unattended run fails, Hydra repeats it with the installer's own wizard.
 other installers always open their wizard. An installer is recognised by the
 `Inno Setup Setup Data` marker in the first megabyte of the file
 (`src/main/helpers/silent-installer.ts`).
+
+**Running it again.** Game options → Downloads → **Installer** names the
+installer file Hydra found in the download folder and offers **Run installer**
+(the Install behaviour above), with an arrow for **Install automatically** or
+**Open the installer's wizard** whichever way the setting does not pick, and
+**Show installer file**.
 
 ## Pasting a Steam link
 

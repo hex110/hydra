@@ -120,6 +120,7 @@ export function HeroPanelActions() {
   const location = useLocation();
 
   const [showDiscSelectionModal, setShowDiscSelectionModal] = useState(false);
+  const [searchingExecutable, setSearchingExecutable] = useState(false);
 
   useEffect(() => {
     const state = (location.state as Record<string, unknown> | null) ?? {};
@@ -666,23 +667,61 @@ export function HeroPanelActions() {
       );
     }
 
-    return (
-      <Button
-        onClick={async () => {
-          const picked = await pickGameExecutable(
-            downloadGame.shop,
-            downloadGame.objectId
-          );
+    const selectExecutableManually = async () => {
+      const picked = await pickGameExecutable(
+        downloadGame.shop,
+        downloadGame.objectId
+      );
 
-          if (picked) updateGame();
-        }}
-        theme="outline"
-        disabled={deleting}
-        className="hero-panel-actions__action"
+      if (picked) updateGame();
+    };
+
+    const findExecutableAutomatically = async () => {
+      setSearchingExecutable(true);
+
+      try {
+        const found = await window.electron.findGameExecutableAutomatically(
+          downloadGame.shop,
+          downloadGame.objectId
+        );
+
+        if (found) updateGame();
+        else showErrorToast(t("executable_not_found", { ns: "downloads" }));
+      } catch (error) {
+        logger.error("Failed to search for the game executable", error);
+        showErrorToast(t("executable_not_found", { ns: "downloads" }));
+      } finally {
+        setSearchingExecutable(false);
+      }
+    };
+
+    return (
+      <SplitButton
+        onClick={() => void findExecutableAutomatically()}
+        disabled={deleting || searchingExecutable}
+        menuLabel={t("find_executable_menu", { ns: "downloads" })}
+        partClassName="hero-panel-actions__action"
+        options={[
+          {
+            id: "automatic",
+            label: t("find_executable_automatically", { ns: "downloads" }),
+            hint: t("find_executable_automatically_hint", { ns: "downloads" }),
+            checked: true,
+            onSelect: () => void findExecutableAutomatically(),
+          },
+          {
+            id: "manual",
+            label: t("select_executable_manually", { ns: "downloads" }),
+            hint: t("select_executable_manually_hint", { ns: "downloads" }),
+            onSelect: () => void selectExecutableManually(),
+          },
+        ]}
       >
         <FileIcon size={16} />
-        {t("select_executable", { ns: "downloads" })}
-      </Button>
+        {searchingExecutable
+          ? t("searching_executable", { ns: "downloads" })
+          : t("find_executable", { ns: "downloads" })}
+      </SplitButton>
     );
   };
 

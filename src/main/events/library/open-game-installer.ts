@@ -5,7 +5,12 @@ import { spawn } from "node:child_process";
 
 import { registerEvent } from "../register-event";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
-import type { Download, GameShop, UserPreferences } from "@types";
+import type {
+  Download,
+  GameShop,
+  InstallerRunMode,
+  UserPreferences,
+} from "@types";
 import {
   GameFilesManager,
   logger,
@@ -28,6 +33,7 @@ import {
 } from "@main/helpers/installed-executable-poller";
 
 interface InstallerLaunchOptions {
+  mode: InstallerRunMode;
   gameId?: string;
   winePrefixPath?: string | null;
   protonPath?: string | null;
@@ -290,7 +296,13 @@ const executeWindowsInstaller = async (
   return await openUntracked(filePath);
 };
 
-const shouldInstallSilently = async (filePath: string) => {
+const shouldInstallSilently = async (
+  filePath: string,
+  mode: InstallerRunMode
+) => {
+  if (mode === "wizard") return false;
+  if (mode === "unattended") return await isInnoSetupInstaller(filePath);
+
   const preferences = await db
     .get<string, UserPreferences | null>(levelKeys.userPreferences, {
       valueEncoding: "json",
@@ -331,7 +343,7 @@ const executeLinuxInstaller = async (
   options: InstallerLaunchOptions
 ): Promise<InstallerLaunchResult> => {
   try {
-    if (await shouldInstallSilently(filePath)) {
+    if (await shouldInstallSilently(filePath, options.mode)) {
       logger.info(`[GameInstaller] Installing ${filePath} unattended`);
       await launchInstallerWithUmu(
         filePath,
@@ -476,7 +488,8 @@ const handleInstallerExit = async (
 const openGameInstaller = async (
   _event: Electron.IpcMainInvokeEvent,
   shop: GameShop,
-  objectId: string
+  objectId: string,
+  mode: InstallerRunMode = "default"
 ) => {
   const gameKey = levelKeys.game(shop, objectId);
   const download = await downloadsSublevel.get(gameKey);
@@ -544,6 +557,7 @@ const openGameInstaller = async (
   };
 
   const launchResult = await executeGameInstaller(installerPath, {
+    mode,
     gameId: objectId,
     winePrefixPath,
     protonPath: game?.protonPath,

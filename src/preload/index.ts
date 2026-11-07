@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { randomUUID } from "node:crypto";
 
 import type {
+  InstallerRunMode,
   MatugenPaletteState,
   ModPlacementChoice,
   CatalogueSearchResult,
@@ -1849,8 +1850,17 @@ contextBridge.exposeInMainWorld("electron", {
     matched: number;
     sizeBytes: number;
   } | null> => ipcRenderer.invoke("getActiveClassicsImport"),
-  openGameInstaller: (shop: GameShop, objectId: string) =>
-    ipcRenderer.invoke("openGameInstaller", shop, objectId),
+  openGameInstaller: (
+    shop: GameShop,
+    objectId: string,
+    mode?: InstallerRunMode
+  ) => ipcRenderer.invoke("openGameInstaller", shop, objectId, mode),
+  getGameInstallerInfo: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameInstallerInfo", shop, objectId),
+  showGameInstaller: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("showGameInstaller", shop, objectId),
+  findGameExecutableAutomatically: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("findGameExecutableAutomatically", shop, objectId),
   getCompletedDownloadState: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getCompletedDownloadState", shop, objectId),
   dismissDownloads: (downloads: { shop: GameShop; objectId: string }[]) =>

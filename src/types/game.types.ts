@@ -104,3 +104,13 @@ export interface UserAchievement extends SteamAchievement {
   };
   imageUrl?: string | null;
 }
+
+/** How Install runs an installer: per the user's setting, or forced. */
+export type InstallerRunMode = "default" | "unattended" | "wizard";
+
+export interface GameInstallerInfo {
+  path: string;
+  name: string;
+  /** Linux: Hydra can run it without its wizard (Inno Setup). */
+  supportsUnattended: boolean;
+}

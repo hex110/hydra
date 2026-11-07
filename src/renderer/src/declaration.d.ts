@@ -111,6 +111,8 @@ import type {
   SystemPowerAction,
   AppUpdaterEvent,
   GameShop,
+  GameInstallerInfo,
+  InstallerRunMode,
   Steam250Game,
   DownloadProgress,
   SeedingStatus,
@@ -1204,7 +1206,20 @@ declare global {
     ) => Promise<{ isHiddenFromOthers: boolean; isConcealed: boolean }>;
     refreshLibraryAssets: () => Promise<void>;
     getRemoteLibrarySyncState: () => Promise<boolean>;
-    openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
+    openGameInstaller: (
+      shop: GameShop,
+      objectId: string,
+      mode?: InstallerRunMode
+    ) => Promise<boolean>;
+    getGameInstallerInfo: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameInstallerInfo | null>;
+    showGameInstaller: (shop: GameShop, objectId: string) => Promise<void>;
+    findGameExecutableAutomatically: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<boolean>;
     getCompletedDownloadState: (
       shop: GameShop,
       objectId: string
