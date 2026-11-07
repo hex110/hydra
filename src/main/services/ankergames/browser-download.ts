@@ -54,35 +54,59 @@ interface FoundFile {
   size: number;
 }
 
+/** Slack for clocks and for a browser that creates its file just before Hydra notes the time. */
+const SHORT_NAME_SLACK_MS = 60 * 1000;
+
 /**
  * This game's archive in the browser's folder. A finished archive older than
- * AnkerGames' last update of the game is an old version and is ignored.
+ * AnkerGames' last update of the game is an old version and is ignored. An
+ * archive named after the title's first words only counts when it was written
+ * after `since`, the time the download page was opened.
  */
 const findBrowserDownload = async (
   directory: string,
   slug: string,
-  page: AnkerGamesGamePage | null
+  page: AnkerGamesGamePage | null,
+  since: number | null
 ): Promise<{ file: FoundFile | null; partial: FoundFile | null }> => {
   const names = await fs.promises.readdir(directory).catch(() => []);
-  const match = matchBrowserDownload(names, slug);
   const statOf = async (name: string | null) => {
     if (!name) return null;
-    const stats = await fs.promises.stat(path.join(directory, name));
-    return { name, size: stats.size, modified: stats.mtimeMs };
+    const stats = await fs.promises
+      .stat(path.join(directory, name))
+      .catch(() => null);
+    return stats ? { name, size: stats.size, modified: stats.mtimeMs } : null;
   };
-
-  const [file, partial] = await Promise.all([
-    statOf(match.file),
-    statOf(match.partial),
-  ]);
   const updatedAt = page?.modifiedAt ? Date.parse(page.modifiedAt) : Number.NaN;
-  const isCurrent =
-    !!file && (Number.isNaN(updatedAt) || file.modified >= updatedAt);
 
-  return {
-    file: file && isCurrent ? { name: file.name, size: file.size } : null,
-    partial: partial ? { name: partial.name, size: partial.size } : null,
+  const lookUp = async (shortNames: boolean) => {
+    const match = matchBrowserDownload(names, slug, { shortNames });
+    const [file, partial] = await Promise.all([
+      statOf(match.file),
+      statOf(match.partial),
+    ]);
+    const isCurrent =
+      !!file && (Number.isNaN(updatedAt) || file.modified >= updatedAt);
+    return {
+      file: file && isCurrent ? file : null,
+      partial,
+    };
   };
+
+  let found = await lookUp(false);
+  if (!found.file && !found.partial && since !== null) {
+    const short = await lookUp(true);
+    const fresh = (entry: { modified: number } | null) =>
+      !!entry && entry.modified >= since - SHORT_NAME_SLACK_MS;
+    found = {
+      file: fresh(short.file) ? short.file : null,
+      partial: fresh(short.partial) ? short.partial : null,
+    };
+  }
+
+  const strip = (entry: { name: string; size: number } | null) =>
+    entry ? { name: entry.name, size: entry.size } : null;
+  return { file: strip(found.file), partial: strip(found.partial) };
 };
 
 /** True when the browser already saved this game's current archive, or is saving it. */
@@ -93,7 +117,12 @@ export const hasBrowserDownload = async (pageUri: string) => {
     getBrowserDownloadsDirectory(),
     AnkerGamesCatalogue.getPage(slug),
   ]);
-  const found = await findBrowserDownload(directory, slug, page);
+  const found = await findBrowserDownload(
+    directory,
+    slug,
+    page,
+    getAnkerGamesPageOpenedAt(pageUri)
+  );
   return !!found.partial || (!!found.file && found.file.size > 0);
 };
 
@@ -149,7 +178,12 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
 
       const poll = async () => {
         try {
-          const found = await findBrowserDownload(directory, slug, page);
+          const found = await findBrowserDownload(
+            directory,
+            slug,
+            page,
+            this.waitingSince
+          );
 
           if (found.partial) {
             this.track(found.partial.size);

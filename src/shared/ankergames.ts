@@ -1,5 +1,5 @@
 import type { GameRepack } from "@types";
-import { comparableTitle } from "./title-matching.js";
+import { comparableTitle, titleTokens } from "./title-matching.js";
 
 export const ANKERGAMES_ORIGIN = "https://ankergames.net";
 export const ANKERGAMES_SOURCE_ID = "ankergames";
@@ -187,12 +187,21 @@ export const parseHomeFeed = (html: string): AnkerGamesHomeFeed => ({
 });
 
 const EXTRA_ROW = /\b(online[ -]?fix|fix|patch|crack|update|dlc)\b/i;
+/** AnkerGames' own server; other rows ("FileKeeper") are third-party hosts. */
+const DIRECT_ROW = /^\s*direct\b/i;
 
-/** The row that downloads the game itself, not an add-on such as Online Fix. */
+/**
+ * The row that downloads the game itself, not an add-on such as Online Fix.
+ * "Direct" wins over a mirror listed above it.
+ */
 export const pickMainDownload = (
   rows: AnkerGamesDownloadRow[]
-): AnkerGamesDownloadRow | null =>
-  rows.find((row) => !EXTRA_ROW.test(row.label)) ?? rows[0] ?? null;
+): AnkerGamesDownloadRow | null => {
+  const game = rows.filter((row) => !EXTRA_ROW.test(row.label));
+  return (
+    game.find((row) => DIRECT_ROW.test(row.label)) ?? game[0] ?? rows[0] ?? null
+  );
+};
 
 const titleFromSlug = (slug: string) =>
   slug
@@ -245,13 +254,37 @@ const PARTIAL_TOKEN =
 const partialTarget = (name: string) =>
   name.replace(PARTIAL_SUFFIX, "").replace(PARTIAL_TOKEN, "$1");
 
-const archiveMatchesSlug = (name: string, slug: string) => {
-  const base = BROWSER_ARCHIVE.exec(name)?.[1];
+/**
+ * True when an archive name is this game's. AnkerGames often names the archive
+ * after the leading words of the title only (`Probably-Stolen-AnkerGames.zip`
+ * for `probably-stolen-cyberpunk-shopkeeper-sim`); `shortNames` accepts those.
+ */
+const archiveMatchesSlug = (
+  name: string,
+  slug: string,
+  shortNames: boolean
+) => {
+  const base = BROWSER_ARCHIVE.exec(name)?.[1]?.replaceAll(/[-_.]+/g, " ");
+  if (!base) return false;
+  if (comparableTitle(base) === slugMatchKey(slug)) return true;
+  if (!shortNames) return false;
+  const words = titleTokens(base);
+  const slugWords = titleTokens(slug.replaceAll("-", " "));
   return (
-    !!base &&
-    comparableTitle(base.replaceAll(/[-_.]+/g, " ")) === slugMatchKey(slug)
+    words.length > 0 &&
+    words.length < slugWords.length &&
+    words.every((word, index) => slugWords[index] === word)
   );
 };
+
+export interface MatchBrowserDownloadOptions {
+  /**
+   * Also accept an archive named after the title's leading words. Callers only
+   * pass it for files written since the download page was opened, so an old
+   * "Hades" archive is not taken for "Hades II".
+   */
+  shortNames?: boolean;
+}
 
 /**
  * Finds this game's AnkerGames archive among a folder's file names. Firefox
@@ -260,15 +293,17 @@ const archiveMatchesSlug = (name: string, slug: string) => {
  */
 export const matchBrowserDownload = (
   names: string[],
-  slug: string
+  slug: string,
+  { shortNames = false }: MatchBrowserDownloadOptions = {}
 ): BrowserDownloadMatch => {
+  const archiveMatches = (name: string) =>
+    archiveMatchesSlug(name, slug, shortNames);
   const partials = names.filter(
-    (name) =>
-      PARTIAL_SUFFIX.test(name) && archiveMatchesSlug(partialTarget(name), slug)
+    (name) => PARTIAL_SUFFIX.test(name) && archiveMatches(partialTarget(name))
   );
   const inProgress = new Set(partials.map(partialTarget));
   const files = names
-    .filter((name) => archiveMatchesSlug(name, slug) && !inProgress.has(name))
+    .filter((name) => archiveMatches(name) && !inProgress.has(name))
     .sort((a, b) => b.length - a.length || b.localeCompare(a));
 
   return {

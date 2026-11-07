@@ -177,6 +177,23 @@ describe("pickMainDownload", () => {
     );
     assert.strictEqual(pickMainDownload([]), null);
   });
+
+  it("prefers AnkerGames' own Direct row over a mirror listed first", () => {
+    assert.strictEqual(
+      pickMainDownload([
+        { id: 7087, label: "FileKeeper" },
+        { id: 7368, label: "Direct File integrity MD5 d1a3f0e0" },
+      ])?.id,
+      7368
+    );
+    assert.strictEqual(
+      pickMainDownload([
+        { id: 7273, label: "Online Fix" },
+        { id: 7087, label: "FileKeeper" },
+      ])?.id,
+      7087
+    );
+  });
 });
 
 describe("toAnkerGamesRepack", () => {
@@ -278,6 +295,42 @@ describe("matchBrowserDownload", () => {
         file: null,
         partial: null,
       }
+    );
+  });
+
+  it("takes an archive named after the title's first words only when asked", () => {
+    const long = "probably-stolen-cyberpunk-shopkeeper-sim";
+    const names = [
+      "Probably-Stolen-AnkerGames.zip",
+      "Probably-Stolen-AnkerGames(1).zip",
+    ];
+    assert.deepStrictEqual(matchBrowserDownload(names, long), {
+      file: null,
+      partial: null,
+    });
+    assert.strictEqual(
+      matchBrowserDownload(names, long, { shortNames: true }).file,
+      "Probably-Stolen-AnkerGames(1).zip"
+    );
+    assert.strictEqual(
+      matchBrowserDownload(
+        ["Probably-Stolen-AnkerGames.k3Jx9aQz.zip.part"],
+        long,
+        { shortNames: true }
+      ).partial,
+      "Probably-Stolen-AnkerGames.k3Jx9aQz.zip.part"
+    );
+    assert.strictEqual(
+      matchBrowserDownload(["Probably-Lost-AnkerGames.zip"], long, {
+        shortNames: true,
+      }).file,
+      null
+    );
+    assert.strictEqual(
+      matchBrowserDownload(["Chants-of-Sennaar-2-AnkerGames.zip"], slug, {
+        shortNames: true,
+      }).file,
+      null
     );
   });
 });
