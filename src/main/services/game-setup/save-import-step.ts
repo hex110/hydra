@@ -1,3 +1,4 @@
+import type { GameSetupStepId } from "@shared";
 import { logger } from "@main/services/logger";
 import {
   SaveImport,
@@ -5,7 +6,7 @@ import {
 } from "@main/services/save-import/save-import";
 import { done, skipped, type GameSetupStep } from "./game-setup";
 
-export const SAVE_IMPORT_STEP_ID = "save-import";
+export const SAVE_IMPORT_STEP_ID: GameSetupStepId = "save-import";
 
 /**
  * Looks for the game's saves and achievements on other Windows installs once
@@ -14,7 +15,6 @@ export const SAVE_IMPORT_STEP_ID = "save-import";
  */
 export const saveImportStep: GameSetupStep = {
   id: SAVE_IMPORT_STEP_ID,
-  order: 300,
   run: async (context) => {
     if (!context.winePrefixPath) return skipped("not-wine");
 

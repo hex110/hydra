@@ -1,3 +1,4 @@
+import type { GameSetupStepId } from "@shared";
 import path from "node:path";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { logger } from "@main/services/logger";
@@ -12,7 +13,7 @@ import {
   getSteamClientSourceDirectories,
 } from "./online-fix";
 
-export const ONLINE_FIX_STEP_ID = "online-fix";
+export const ONLINE_FIX_STEP_ID: GameSetupStepId = "online-fix";
 
 const isPrefixValid = (winePrefixPath: string) => {
   try {
@@ -75,7 +76,6 @@ export const prepareOnlineFixGame = async ({
 
 export const onlineFixStep: GameSetupStep = {
   id: ONLINE_FIX_STEP_ID,
-  order: 200,
   run: async (context) => {
     if (path.extname(context.executablePath).toLowerCase() !== ".exe") {
       return skipped("not-windows");

@@ -1,3 +1,4 @@
+import type { GameSetupStepId } from "@shared";
 import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -11,7 +12,8 @@ import {
   type GameSetupStep,
 } from "./game-setup";
 
-export const POST_INSTALL_COMMAND_STEP_ID = "post-install-command";
+export const POST_INSTALL_COMMAND_STEP_ID: GameSetupStepId =
+  "post-install-command";
 
 const COMMAND_TIMEOUT_MS = 15 * 60 * 1000;
 
@@ -90,7 +92,6 @@ const runCommand = (
 
 export const postInstallCommandStep: GameSetupStep = {
   id: POST_INSTALL_COMMAND_STEP_ID,
-  order: 900,
   run: async (context) => {
     const command = context.userPreferences?.postInstallCommand?.trim();
     if (!command) return skipped("no-command");

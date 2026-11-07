@@ -6,18 +6,7 @@ import { Button } from "@renderer/components";
 import { gameDetailsContext } from "@renderer/context";
 import { useDate } from "@renderer/hooks";
 import type { GameSetupLogEntry, LibraryGame } from "@types";
-
-/** Setup steps in the order they run; matches the main process registry. */
-const SETUP_STEPS = [
-  "installed-version",
-  "wine-prefix",
-  "online-fix",
-  "save-import",
-  "reshade",
-  "renodx",
-  "optiscaler",
-  "post-install-command",
-];
+import { GAME_SETUP_STEP_IDS } from "@shared";
 
 const toKey = (value: string) => value.replaceAll("-", "_");
 
@@ -79,7 +68,7 @@ export function SetupLogSection({ game }: Readonly<{ game: LibraryGame }>) {
         </p>
       ) : (
         <ul className="game-options-modal__setup-log">
-          {SETUP_STEPS.map((stepId) => {
+          {GAME_SETUP_STEP_IDS.map((stepId) => {
             const entry = entries.get(stepId);
             const status = entry?.status ?? "never";
             const isRunning = runningStep === stepId;

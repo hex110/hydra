@@ -17,6 +17,7 @@ import type {
   GameShop,
   UserPreferences,
 } from "@types";
+import { GAME_SETUP_STEP_IDS, type GameSetupStepId } from "@shared";
 
 export interface GameSetupContext {
   shop: GameShop;
@@ -34,9 +35,8 @@ export interface GameSetupContext {
 }
 
 export interface GameSetupStep {
-  id: string;
-  /** Lower runs first. The Wine prefix step is 100. */
-  order: number;
+  /** Its place in `GAME_SETUP_STEP_IDS` is when it runs. */
+  id: GameSetupStepId;
   /** Returns what the step did for the setup log; nothing means "done". */
   run: (context: GameSetupContext) => Promise<GameSetupStepResult | void>;
 }
@@ -83,7 +83,10 @@ export class GameSetup {
     if (this.steps.some((existing) => existing.id === step.id)) return;
 
     this.steps.push(step);
-    this.steps.sort((a, b) => a.order - b.order);
+    this.steps.sort(
+      (a, b) =>
+        GAME_SETUP_STEP_IDS.indexOf(a.id) - GAME_SETUP_STEP_IDS.indexOf(b.id)
+    );
   }
 
   /** Game keys with setup queued or running. */
@@ -229,7 +232,9 @@ export class GameSetup {
     existing: GameSetupLogEntry[] | undefined,
     entries: GameSetupLogEntry[]
   ) {
-    const order = new Map(this.steps.map((step, index) => [step.id, index]));
+    const order = new Map<string, number>(
+      this.steps.map((step, index) => [step.id, index])
+    );
     const kept = (existing ?? []).filter(
       (entry) =>
         order.has(entry.stepId) &&

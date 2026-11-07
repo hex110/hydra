@@ -49,6 +49,7 @@ export * from "./release-version";
 export * from "./linux-launch";
 export * from "./launch-rules";
 export * from "./game-capabilities";
+export * from "./game-setup-steps";
 export * from "./game-dependencies";
 export * from "./capability-defaults";
 export * from "./compatibility-overview";

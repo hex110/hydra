@@ -1,9 +1,10 @@
+import type { GameSetupStepId } from "@shared";
 import { logger } from "@main/services/logger";
 import { Umu } from "@main/services/umu";
 import { Wine } from "@main/services/wine";
 import { done, skipped, type GameSetupStep } from "./game-setup";
 
-export const WINE_PREFIX_STEP_ID = "wine-prefix";
+export const WINE_PREFIX_STEP_ID: GameSetupStepId = "wine-prefix";
 
 const isPrefixValid = (winePrefixPath: string) => {
   try {
@@ -15,7 +16,6 @@ const isPrefixValid = (winePrefixPath: string) => {
 
 export const winePrefixStep: GameSetupStep = {
   id: WINE_PREFIX_STEP_ID,
-  order: 100,
   run: async (context) => {
     if (!context.winePrefixPath) return skipped("not-wine");
     if (

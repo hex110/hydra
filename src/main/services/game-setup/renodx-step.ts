@@ -1,14 +1,14 @@
+import type { GameSetupStepId } from "@shared";
 import { gamesSublevel, levelKeys } from "@main/level";
 import type { Game } from "@types";
 import { RenoDx } from "@main/services/renodx/renodx";
 import { done, skipped, type GameSetupStep } from "./game-setup";
 
-export const RENODX_STEP_ID = "renodx";
+export const RENODX_STEP_ID: GameSetupStepId = "renodx";
 
 /** Runs after the ReShade settings step and before OptiScaler, so OptiScaler sees ReShade's DLL. */
 export const renoDxStep: GameSetupStep = {
   id: RENODX_STEP_ID,
-  order: 450,
   run: async (context) => {
     // A manual re-run installs even with automatic installation off.
     const outcome = await RenoDx.installIfSupported(context.game, {

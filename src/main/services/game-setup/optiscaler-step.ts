@@ -1,3 +1,4 @@
+import type { GameSetupStepId } from "@shared";
 import { findConflictingWrappers } from "@main/helpers/launch-wrappers";
 import { logger } from "@main/services/logger";
 import { publishOptiScalerFilesMissingNotification } from "@main/services/notifications";
@@ -11,12 +12,11 @@ import {
   type GameSetupStep,
 } from "./game-setup";
 
-export const OPTISCALER_STEP_ID = "optiscaler";
+export const OPTISCALER_STEP_ID: GameSetupStepId = "optiscaler";
 
 /** Runs after the Wine prefix exists and before the post-install command. */
 export const optiScalerStep: GameSetupStep = {
   id: OPTISCALER_STEP_ID,
-  order: 500,
   run: async (context) => {
     // A manual re-run installs even with automatic installation off.
     const outcome = await OptiScaler.installIfEligible(context.game, {
