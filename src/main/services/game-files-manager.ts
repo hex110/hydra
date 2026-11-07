@@ -5,6 +5,7 @@ import {
   findGameExecutableInFolder,
   findOrGuessGameExecutable,
 } from "@main/helpers/find-game-executable";
+import { chooseGuessedInstall } from "@main/helpers/choose-guessed-install";
 import { findDownloadInstaller } from "@main/helpers/find-game-installer";
 import {
   getInstallerTargetDirectories,
@@ -887,14 +888,14 @@ export class GameFilesManager {
     if (await this.searchAndBindExecutable()) return true;
 
     try {
-      const download = await downloadsSublevel.get(this.gameKey);
+      const [download, game] = await Promise.all([
+        downloadsSublevel.get(this.gameKey),
+        gamesSublevel.get(this.gameKey).catch(() => null),
+      ]);
       if (!download) return false;
 
       const executables = GameExecutables.getExecutablesForGame(this.objectId);
-
-      if (!executables || executables.length === 0) {
-        return false;
-      }
+      const hasKnownExecutables = !!executables && executables.length > 0;
 
       const changedFolders = await listFoldersChangedSince(
         getInstallerTargetDirectories(download.downloadPath, winePrefixPath),
@@ -903,29 +904,35 @@ export class GameFilesManager {
       );
 
       const matches = await Promise.all(
-        changedFolders.map((folderPath) =>
-          findGameExecutableInFolder(
-            folderPath,
-            executables,
-            "installation",
-            INSTALLED_EXECUTABLE_MAX_DEPTH
-          )
-        )
-      );
-      const distinctMatches = [
-        ...new Set(matches.filter((match): match is string => !!match)),
-      ];
+        changedFolders.map(async (folderPath) => {
+          const executablePath = hasKnownExecutables
+            ? await findGameExecutableInFolder(
+                folderPath,
+                executables,
+                "installation",
+                INSTALLED_EXECUTABLE_MAX_DEPTH
+              )
+            : await findOrGuessGameExecutable(
+                folderPath,
+                null,
+                game?.title ?? ""
+              );
 
-      if (distinctMatches.length > 1) {
-        logger.warn(
-          `[GameFilesManager] Not binding ${this.objectId}, several installed copies match: ${distinctMatches.join(", ")}`
-        );
-        return false;
-      }
+          return executablePath ? { folderPath, executablePath } : null;
+        })
+      ).then((results) => results.filter((match) => match !== null));
 
-      if (distinctMatches.length === 0) return false;
+      const chosen = hasKnownExecutables
+        ? this.chooseKnownExecutable(matches)
+        : chooseGuessedInstall(
+            matches,
+            game?.title ?? "",
+            installerStartedAt > 0
+          )?.executablePath;
 
-      return await this.bindExecutable(distinctMatches[0]);
+      if (!chosen) return false;
+
+      return await this.bindExecutable(chosen);
     } catch (err) {
       logger.error(
         `[GameFilesManager] Error searching for installed executable: ${this.objectId}`,
@@ -933,6 +940,21 @@ export class GameFilesManager {
       );
       return false;
     }
+  }
+
+  private chooseKnownExecutable(matches: { executablePath: string }[]) {
+    const distinctMatches = [
+      ...new Set(matches.map(({ executablePath }) => executablePath)),
+    ];
+
+    if (distinctMatches.length > 1) {
+      logger.warn(
+        `[GameFilesManager] Not binding ${this.objectId}, several installed copies match: ${distinctMatches.join(", ")}`
+      );
+      return null;
+    }
+
+    return distinctMatches[0] ?? null;
   }
 
   private async bindExecutable(executablePath: string): Promise<boolean> {
