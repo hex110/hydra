@@ -19,6 +19,24 @@ describe("guessGameExecutable", () => {
     );
   });
 
+  it("never takes a repack's checking or unpacking tools for the game", () => {
+    assert.strictEqual(
+      guessGameExecutable(
+        [
+          { relativePath: "MD5/QuickSFV.EXE", sizeInBytes: MB },
+          {
+            relativePath: "Verify BIN files before installation.exe",
+            sizeInBytes: MB,
+          },
+          { relativePath: "unarc.exe", sizeInBytes: MB },
+          { relativePath: "setup.exe", sizeInBytes: 5 * MB },
+        ],
+        "Some Game"
+      ),
+      null
+    );
+  });
+
   it("prefers the executable named after the game", () => {
     assert.strictEqual(
       guessGameExecutable(

@@ -644,9 +644,11 @@ export class GameFilesManager {
 
     if (!extractedDownload) return;
 
-    await this.searchAndBindExecutable();
     const hasInstaller =
       (await findDownloadInstaller(extractedDownload)) !== null;
+    // A repack still to install holds tools (checksum checkers, unpackers)
+    // that a guess could take for the game; only known names count then.
+    await this.searchAndBindExecutable({ guess: !hasInstaller });
 
     const [download, game] = await Promise.all([
       downloadsSublevel.get(this.gameKey),
@@ -838,7 +840,9 @@ export class GameFilesManager {
     }
   }
 
-  async searchAndBindExecutable(): Promise<boolean> {
+  async searchAndBindExecutable({
+    guess = true,
+  }: { guess?: boolean } = {}): Promise<boolean> {
     try {
       const [download, game] = await Promise.all([
         downloadsSublevel.get(this.gameKey),
@@ -863,11 +867,18 @@ export class GameFilesManager {
         return false;
       }
 
-      const foundExePath = await findOrGuessGameExecutable(
-        gameFolderPath,
-        GameExecutables.getExecutablesForGame(this.objectId),
-        game.title
+      const knownExecutables = GameExecutables.getExecutablesForGame(
+        this.objectId
       );
+      const foundExePath = guess
+        ? await findOrGuessGameExecutable(
+            gameFolderPath,
+            knownExecutables,
+            game.title
+          )
+        : knownExecutables?.length
+          ? await findGameExecutableInFolder(gameFolderPath, knownExecutables)
+          : null;
 
       if (!foundExePath) return false;
 

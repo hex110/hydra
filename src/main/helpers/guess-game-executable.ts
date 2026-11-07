@@ -8,7 +8,7 @@ export interface ExecutableFileCandidate {
 }
 
 const NON_GAME_NAME =
-  /(^unins\d*|uninstall|setup|install|launcher_?updater|updater|crash|report|helper|config|settings|server|editor|benchmark|touchup|cleanup|cefprocess|webhelper|dxsetup|vc_?redist|prereq|activation|register|redmod|modtools?)/i;
+  /(^unins\d*|uninstall|setup|install|launcher_?updater|updater|crash|report|helper|config|settings|server|editor|benchmark|touchup|cleanup|cefprocess|webhelper|dxsetup|vc_?redist|prereq|activation|register|redmod|modtools?|quicksfv|checksum|^md5|^sfv|unarc|isdone|^verify)/i;
 
 const segmentsOf = (relativePath: string) =>
   relativePath.split(/[\\/]/).filter(Boolean);
