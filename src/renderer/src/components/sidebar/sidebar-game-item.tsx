@@ -129,7 +129,6 @@ export const SidebarGameItem = memo(function SidebarGameItem({
             location.pathname ===
             `/game/${catalogueIdentity.shop}/${catalogueIdentity.objectId}`,
           "sidebar__menu-item--playing": isPlaying,
-          "sidebar__menu-item--muted": game.download?.status === "removed",
           "sidebar__menu-item--not-installed": !isGameInstalled(game),
         })}
       >

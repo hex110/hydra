@@ -213,3 +213,23 @@ it("marks every game in the running list, not only the last one", () => {
   });
   assert.ok(row.querySelector(".sidebar__menu-item--playing"));
 });
+
+it("does not dim an installed game because its download was cancelled", () => {
+  const dom = new JSDOM(
+    renderToStaticMarkup(
+      React.createElement(exports.SidebarGameItem, {
+        game: {
+          ...epic,
+          executablePath: "/games/game.exe",
+          download: { status: "removed" } as LibraryGame["download"],
+        },
+        handleSidebarGameClick: () => {},
+        getGameTitle: (item: LibraryGame) => item.title,
+      })
+    )
+  );
+  const item = dom.window.document.querySelector(".sidebar__menu-item");
+  assert.ok(item);
+  assert.doesNotMatch(item.className, /--(muted|not-installed)/);
+  dom.window.close();
+});

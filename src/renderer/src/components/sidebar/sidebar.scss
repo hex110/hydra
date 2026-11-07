@@ -128,14 +128,6 @@
       background-color: rgba(255, 255, 255, 0.1);
     }
 
-    &--muted {
-      opacity: globals.$disabled-opacity;
-
-      &:hover {
-        opacity: 1;
-      }
-    }
-
     // Like Steam: in the library but not installed.
     &--not-installed {
       color: rgba(255, 255, 255, 0.4);
