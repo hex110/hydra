@@ -146,6 +146,8 @@ export interface TorBoxWebResolution {
   info: TorBoxWebDownloadInfo | null;
   /** A copy was already on TorBox, so nothing had to be fetched. */
   cached: boolean;
+  /** The links after `uri`, in order, to fall back on if TorBox fails to fetch it. */
+  remaining: string[];
 }
 
 /** What settling on a link needs from TorBox. */
@@ -159,60 +161,100 @@ export interface TorBoxWebApi {
   waitUntilReady(id: number): Promise<TorBoxWebDownloadInfo | null>;
 }
 
-const toResolution = (
+/** Answers about the account or TorBox's limits: another link would fail the same way. */
+const ACCOUNT_ERRORS = new Set<string>([
+  DownloadError.TorBoxAccountNotAuthorized,
+  DownloadError.TorBoxRateLimitExceeded,
+]);
+
+const isAccountError = (error: unknown) =>
+  error instanceof Error && ACCOUNT_ERRORS.has(error.message);
+
+const resolution = (
   uri: string,
   webId: number,
   info: TorBoxWebDownloadInfo | null,
-  cached: boolean
-): TorBoxWebResolution => {
-  if (info && isWebDownloadFailed(info)) {
-    throw new Error(DownloadError.TorBoxWebDownloadFailed);
-  }
-  return {
-    uri,
-    webId,
-    progress: info ? getWebDownloadProgress(info) : 0,
-    info,
-    cached,
-  };
-};
+  cached: boolean,
+  remaining: string[]
+): TorBoxWebResolution => ({
+  uri,
+  webId,
+  progress: info ? getWebDownloadProgress(info) : 0,
+  info,
+  cached,
+  remaining,
+});
 
 /**
  * Settles which of the links TorBox downloads: a copy it already holds (an
  * earlier attempt, or one added on its website), else the first link it has
- * cached, else the first link, which TorBox then fetches while the caller
- * waits. `knownId` is a web download made earlier for the chosen link.
+ * cached, else the first link TorBox accepts to fetch while the caller waits.
+ * A link TorBox refuses or fails to fetch gives way to the next one.
+ * `knownId` is a web download made earlier for `uris[0]`.
  */
 export const resolveTorBoxWebDownload = async (
   api: TorBoxWebApi,
   uris: string[],
   knownId?: number
 ): Promise<TorBoxWebResolution> => {
+  let links = uris;
   if (knownId !== undefined) {
     const known = await api.getDownload(knownId);
-    if (known) return toResolution(uris[0], knownId, known, false);
+    if (known && !isWebDownloadFailed(known)) {
+      return resolution(uris[0], knownId, known, false, uris.slice(1));
+    }
+    if (known) {
+      // TorBox gave up on this link; the others are still worth a try.
+      links = uris.slice(1);
+      if (links.length === 0) {
+        throw new Error(DownloadError.TorBoxWebDownloadFailed);
+      }
+    }
   }
 
-  const candidates = pickWebCandidates(uris, await api.getHosters());
+  const candidates = pickWebCandidates(links, await api.getHosters());
   if (candidates.length === 0) {
     throw new Error(DownloadError.TorBoxLinkUnavailable);
   }
+  const after = (uri: string) => candidates.filter((link) => link !== uri);
 
   const existing = findExistingWebDownload(
     await api.listDownloads(),
     candidates
   );
   if (existing) {
-    return toResolution(existing.uri, existing.info.id, existing.info, true);
+    return resolution(
+      existing.uri,
+      existing.info.id,
+      existing.info,
+      true,
+      after(existing.uri)
+    );
   }
 
   for (const uri of candidates) {
     const id = await api.createDownload(uri, true);
     if (id === null) continue;
-    return toResolution(uri, id, await api.waitUntilReady(id), true);
+    const info = await api.waitUntilReady(id);
+    if (info && isWebDownloadFailed(info)) continue;
+    return resolution(uri, id, info, true, after(uri));
   }
 
-  const id = await api.createDownload(candidates[0], false);
-  if (id === null) throw new Error(DownloadError.TorBoxLinkUnavailable);
-  return toResolution(candidates[0], id, await api.getDownload(id), false);
+  let lastError: unknown = new Error(DownloadError.TorBoxLinkUnavailable);
+  for (const [index, uri] of candidates.entries()) {
+    try {
+      const id = await api.createDownload(uri, false);
+      if (id === null) continue;
+      const info = await api.getDownload(id);
+      if (info && isWebDownloadFailed(info)) {
+        lastError = new Error(DownloadError.TorBoxWebDownloadFailed);
+        continue;
+      }
+      return resolution(uri, id, info, false, candidates.slice(index + 1));
+    } catch (error) {
+      if (isAccountError(error)) throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
 };

@@ -1150,6 +1150,8 @@ export class DownloadOrchestrator {
           await downloadsSublevel.put(key, {
             ...current,
             realDebridTorrentId: download.realDebridTorrentId,
+            uri: download.uri,
+            alternativeUris: download.alternativeUris,
             torBoxWebId: download.torBoxWebId,
             debridProgress: download.debridProgress,
           });

@@ -321,7 +321,7 @@ export interface Download {
   files?: DownloadFile[];
   selectedFilesSize?: number | null;
   realDebridTorrentId?: string;
-  /** Other links of the release TorBox has yet to choose between; dropped once it has. */
+  /** Other links of the release, for TorBox to try when `uri` can't be fetched. */
   alternativeUris?: string[];
   /** The TorBox web download that holds `uri`. */
   torBoxWebId?: number;

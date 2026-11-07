@@ -324,7 +324,8 @@ export class TorBoxClient {
       { validateStatus: () => true }
     );
     const { status, data } = response;
-    this.assertWebStatus(status);
+    // A server error on a cache check says nothing about the other links.
+    if (!(cachedOnly && status >= 500)) this.assertWebStatus(status);
 
     const id = data?.data?.webdownload_id;
     if (data?.success && typeof id === "number") return id;

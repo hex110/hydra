@@ -2340,7 +2340,8 @@ export class DownloadManager {
     );
     download.uri = resolution.uri;
     download.torBoxWebId = resolution.webId;
-    download.alternativeUris = undefined;
+    download.alternativeUris =
+      resolution.remaining.length > 0 ? resolution.remaining : undefined;
     download.debridProgress = resolution.progress;
     const manifest = TorBoxClient.getWebDownloadManifest(resolution.info);
     download.debridProgress = undefined;

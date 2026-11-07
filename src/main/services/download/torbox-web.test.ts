@@ -335,6 +335,55 @@ describe("resolveTorBoxWebDownload", () => {
     );
   });
 
+  it("moves on to the next link when TorBox refuses to fetch one", async () => {
+    const { api, calls } = fakeTorBox();
+    const create = api.createDownload;
+    api.createDownload = async (link, cachedOnly) => {
+      if (!cachedOnly && link === links[0]) {
+        await create(link, cachedOnly);
+        throw new Error(DownloadError.TorBoxUnavailable);
+      }
+      return create(link, cachedOnly);
+    };
+    const resolution = await resolveTorBoxWebDownload(api, links);
+    assert.equal(resolution.uri, links[1]);
+    assert.deepEqual(resolution.remaining, [links[2]]);
+    assert.deepEqual(calls.slice(-2), [`add:${links[0]}`, `add:${links[1]}`]);
+  });
+
+  it("stops at once on an account or rate-limit answer", async () => {
+    const { api, calls } = fakeTorBox();
+    const create = api.createDownload;
+    api.createDownload = async (link, cachedOnly) => {
+      if (!cachedOnly) {
+        await create(link, cachedOnly);
+        throw new Error(DownloadError.TorBoxRateLimitExceeded);
+      }
+      return create(link, cachedOnly);
+    };
+    await assert.rejects(
+      resolveTorBoxWebDownload(api, links),
+      new Error(DownloadError.TorBoxRateLimitExceeded)
+    );
+    assert.equal(calls.filter((call) => call.startsWith("add:")).length, 1);
+  });
+
+  it("falls back to the remaining links when the earlier fetch failed", async () => {
+    const { api, calls } = fakeTorBox();
+    api.getDownload = async (id) =>
+      id >= 100 ? info({ id }) : info({ id, download_state: "failed" });
+    const resolution = await resolveTorBoxWebDownload(api, links, 8);
+    assert.equal(resolution.uri, links[1]);
+    assert.equal(resolution.webId, 100);
+    assert.ok(!calls.some((call) => call.includes(links[0])));
+  });
+
+  it("keeps the links it did not choose", async () => {
+    const { api } = fakeTorBox({ cachedLinks: [links[1]] });
+    const resolution = await resolveTorBoxWebDownload(api, links);
+    assert.deepEqual(resolution.remaining, [links[0], links[2]]);
+  });
+
   it("fails without a link TorBox could fetch", async () => {
     const { api } = fakeTorBox();
     await assert.rejects(
