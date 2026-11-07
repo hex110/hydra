@@ -352,6 +352,30 @@ in the sections below.
            backups) on the Downloads page
     6. [x] Polish: keyboard, narrow windows, loading
     7. [x] Docs
+24. **Download to playable: sources and fixes.** Added 2026-11-07 from the
+    owner's night of downloads and a review of the pipeline. The map and
+    the "which fix goes where" guide: [Fixing games](features/fixing-games.md).
+    1. [x] AnkerGames: Direct over mirrors, short archive names, **Choose
+           the downloaded file…**
+    2. [x] TorBox: a link it can't fetch gives way to the next one
+    3. [x] **Download from another source** on unfinished downloads
+    4. [x] One installer check; no executable guess while an installer is
+           there; repack tools never guessed
+    5. [x] One list of setup steps; new launch-rule presets reach saved
+           lists
+    6. [x] The fixing-games guide
+    7. [ ] Crack detection as a table (`markers`, `proxyDlls`,
+           `keepSteamBridge`), OnlineFix and UCOnline as its first entries,
+           then RUNE/CODEX-style loaders
+    8. [ ] Hydra's launch DLL overrides as a list of contributors in
+           `launch-additions.ts` instead of a hand-written call per tool
+    9. [ ] One "is this downloader set up" helper for the download dialog,
+           download options and the Downloads row (Big Picture has one)
+    10. [ ] A downloader table (name, URI prefixes, multi-part, TorBox) that
+            the hoster lists derive from; fork hosters first, upstream ones
+            left until the next upstream merge
+    11. [ ] Unattended NSIS and MSI installers, each tested with a real one
+    12. [ ] Ask for an archive password when the known ones fail
 
 Why this order:
 

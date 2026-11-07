@@ -6,6 +6,9 @@ upstream. It is a **separate app** from upstream Hydra — app id
 `/opt/Hydra Plus`. Never touch upstream's `~/.config/hydralauncher/` while testing.
 
 Feature docs live in `docs/features/` — keep them in step with the code.
+Before touching downloads, installers, executable detection or a fix for a
+game that doesn't work, read `docs/features/fixing-games.md`: it maps the
+pipeline and says which kind of fix goes where.
 
 Product principles are in `docs/roadmap.md` under "Principles": it just works,
 tools are one switch away, one app for the whole workflow. It is for anyone on

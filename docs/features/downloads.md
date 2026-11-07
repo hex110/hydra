@@ -78,15 +78,30 @@ Starting the download settles which link TorBox takes
    as "Waiting for debrid · NN%" (TorBox's progress) for up to an hour, then
    starts by itself when TorBox has the files. Pausing, cancelling and resuming
    work as for a pending Real-Debrid or TorBox torrent.
+4. A link TorBox refuses (a server error, a host it can't reach) or fails to
+   fetch while the download waits gives way to the release's next link. An
+   answer about the account or TorBox's rate limit stops at once, since every
+   link would get the same answer.
 
-The chosen link and the TorBox ID are kept on the download, so a resume or
-restart goes on with the same TorBox download instead of adding the link again.
+The chosen link, the links after it and the TorBox ID are kept on the
+download, so a resume or restart goes on with the same TorBox download instead
+of adding the link again, and can still fall back.
 A single file is saved in the download folder itself; a host folder with several
 files keeps its folder. The download dialog explains the behaviour under the
 downloader list when TorBox is selected for links.
 
-Not done: TorBox fetches no multi-part groups, and a link TorBox fails to fetch
-ends the download with an error instead of falling back to the next link.
+Not done: TorBox fetches no multi-part groups. AnkerGames downloads can't go
+through TorBox: the link AnkerGames hands the browser is tied to your IP
+address. Use **Download from another source** to pick a release TorBox can
+fetch.
+
+## Switching source
+
+A download that is running, paused, queued or failed has **Download from
+another source** in its menu (⋮ on the Downloads page, or right-click the
+game). It opens the game's download options; starting one there replaces the
+current download instead of queueing behind it. Use it when a host is slow,
+or to move a release to TorBox.
 
 ## Free space
 
@@ -147,13 +162,13 @@ Finished downloads sit in **Recent**, newest first by when they finished
 **Needs you** with the reason. Each row offers what makes sense for the files
 on disk:
 
-| Files                                                                        | Button                             |
-| ---------------------------------------------------------------------------- | ---------------------------------- |
-| The game has an executable                                                   | **Play** (**Close** while it runs) |
-| An archive nobody has unpacked, or whose last extraction failed              | **Extract files**                  |
-| An unpacked folder with `setup.exe` (or a lone `.exe`) and no executable yet | **Install**                        |
-| An unpacked folder with nothing to install                                   | **Open folder**                    |
-| Nothing left on disk                                                         | "Files missing"                    |
+| Files                                                           | Button                             |
+| --------------------------------------------------------------- | ---------------------------------- |
+| The game has an executable                                      | **Play** (**Close** while it runs) |
+| An archive nobody has unpacked, or whose last extraction failed | **Extract files**                  |
+| An unpacked folder with an installer and no executable yet      | **Install**                        |
+| An unpacked folder with nothing to install                      | **Open folder**                    |
+| Nothing left on disk                                            | "Files missing"                    |
 
 The ⋮ button opens the same menu as right-clicking the game in the sidebar
 (torrents also get seeding controls under **Manage game**). **Remove files** is
@@ -171,6 +186,14 @@ extraction. Then the row offers **Play** or, if only an installer is there,
 **Install**. A folder left behind by a failed extraction is not trusted.
 
 ## Installing
+
+An installer is `setup.exe`, a file starting with `setup` or `install`, or
+one named "… Setup.exe" or "… Installer.exe", within two folders of the top.
+Redistributables (`_CommonRedist`, `vcredist`), uninstallers and DLC
+installers don't count, and two equally likely files give none. The
+Downloads page, **Install** and game options all use this one check
+(`findGameInstaller`), so a row that offers **Install** always runs one. A
+lone game `.exe` is not an installer.
 
 **Install** runs the installer and watches it. When it exits successfully,
 Hydra looks for the new game folder (in `C:\Games`, `C:\GOG Games` and
@@ -242,8 +265,10 @@ Once a download is extracted, Hydra looks for the game's executable:
    whose name matches the game title, near the top of the folder and largest,
    wins.
 
-Repacks that still need installing (only `setup.exe`) get no executable, as
-before.
+A folder that still holds an installer gets no guess: only the catalogue's
+known names can bind an executable there, so a repack's checksum checker or
+unpacker (`QuickSFV`, `unarc`) is never taken for the game. Those tools are
+also on the guess's skip list.
 
 ## Mod downloads
 

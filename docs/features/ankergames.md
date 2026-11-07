@@ -75,7 +75,8 @@ a debugger attached), so the download happens in your own browser. Hydra
 opens the page, the browser saves the file, and Hydra takes it from there.
 
 1. **Download now**: Hydra picks the game's main download row (not add-ons
-   such as Online Fix) and asks `/generate-download-url/<id>` for a signed
+   such as Online Fix; **Direct**, AnkerGames' own server, over a mirror such
+   as FileKeeper listed above it) and asks `/generate-download-url/<id>` for a signed
    download page, as the site's own button does (as a guest; the ticket is
    tied to your IP, not to Hydra). A refusal ends here with a message: limit
    reached, subscribers only, or not offered in your region.
@@ -85,7 +86,7 @@ opens the page, the browser saves the file, and Hydra takes it from there.
 3. Meanwhile the download shows in Hydra's Downloads page.
    `AnkerGamesBrowserDownload` stands in for the HTTP downloader: once a
    second it looks in the browser downloads folder for this game's archive
-   (matched by name against the slug) and reports the in-progress file's size
+   (matched by name against the slug; see below) and reports the in-progress file's size
    (`.part` for Firefox/Zen, with a random token before the extension, `.crdownload` for Chromium) against the size from
    the game page.
 4. When the browser has finished (no in-progress file, size unchanged across
@@ -95,6 +96,19 @@ opens the page, the browser saves the file, and Hydra takes it from there.
 
 Details:
 
+- The archive is `<Title>-AnkerGames.zip`, and the title is often shorter
+  than the slug (`Probably-Stolen-AnkerGames.zip` for
+  `probably-stolen-cyberpunk-shopkeeper-sim`). A name that matches the whole
+  slug always counts; one that matches only its first words counts when the
+  file was written after Hydra opened the download page, so an old "Hades"
+  archive is never taken for "Hades II". This also picks up a download you
+  start yourself on the site (another mirror, a second try) while Hydra is
+  watching.
+- **Choose the downloaded file…** in the download's menu takes any archive
+  you point at, wherever it is, for when the folder watch can't find it.
+  Hydra moves it into the download folder and carries on with extraction and
+  setup.
+
 - If this game's archive is already in the folder, or the browser is still
   saving it, **Download now** does not open the page again.
 - An archive older than AnkerGames' last update of the game (`dateModified`)
@@ -102,7 +116,11 @@ Details:
 - Pausing or cancelling in Hydra only stops the watch; the browser's download
   is its own. Resuming with nothing in the folder opens the page again.
 - With nothing appearing for 30 minutes, the download stops with an error
-  pointing at the folder setting.
+  pointing at the folder setting. **Choose the downloaded file…** still works
+  then.
+- To switch a slow AnkerGames download to another release (one TorBox can
+  fetch, say), use **Download from another source**; see
+  [Switching source](downloads.md#switching-source).
 - Hydra's usual link check before a download starts is skipped for
   AnkerGames (there is no link; the game page would answer 403).
 - Big Picture leaves AnkerGames releases out for now; it has no notice for
