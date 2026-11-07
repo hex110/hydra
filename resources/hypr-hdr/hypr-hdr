@@ -34,18 +34,26 @@ preset() {
     monitor_json | jq -r '.colorManagementPreset // empty'
 }
 
+bitdepth() {
+    monitor_json | jq -r 'if (.currentFormat // "" | test("2101010")) then 10 else 8 end'
+}
+
 # Re-applies the output's live mode, position and scale with a new colour
-# preset, so nothing but the colour mode changes.
+# preset. HDR gets 10-bit output: in 8-bit Hyprland bands and warns "wide
+# color gamut is enabled but the display is not in 10-bit mode". Other presets
+# keep the given bit depth, or the live one.
 set_preset() {
-    local want="$1" json lua
+    local want="$1" depth="${2:-}" json lua
     json="$(monitor_json)"
     [ -n "$json" ] || return 1
-    lua="$(jq -r --arg cm "$want" '
+    [ "$want" = hdr ] && depth=10
+    [ -n "$depth" ] || depth="$(bitdepth)"
+    lua="$(jq -r --arg cm "$want" --arg depth "$depth" '
         "hl.monitor({ output = \"\(.name)\", mode = \"\(.width)x\(.height)@\(.refreshRate * 1000 | round / 1000)\", "
         + "position = \"\(.x)x\(.y)\", scale = \(.scale), "
         + "vrr = \(if .vrr then 1 else 0 end), "
         + "transform = \(.transform), "
-        + "bitdepth = \(if (.currentFormat // "" | test("2101010")) then 10 else 8 end), "
+        + "bitdepth = \($depth), "
         + "cm = \"\($cm)\" })"
     ' <<<"$json")"
     hyprctl eval "$lua" >/dev/null 2>&1
@@ -75,7 +83,9 @@ case "${1:-}" in
         usable || { say "no Hyprland output named $output"; exit 1; }
         want=hdr
         [ "$1" = "--off" ] && want=srgb
-        set_preset "$want" && wait_for_preset "$want" && say "$output: $want" && exit 0
+        depth=
+        [ "$want" = srgb ] && depth=8
+        set_preset "$want" "$depth" && wait_for_preset "$want" && say "$output: $want" && exit 0
         say "could not set $output to $want"
         exit 1
         ;;
@@ -92,12 +102,13 @@ if ! usable; then
 fi
 
 before="$(preset)"
+before_depth="$(bitdepth)"
 changed=0
 
 restore() {
     trap - EXIT
     if [ "$changed" = 1 ]; then
-        set_preset "${before:-srgb}" || say "could not restore $output; run: hypr-hdr --off"
+        set_preset "${before:-srgb}" "$before_depth" || say "could not restore $output; run: hypr-hdr --off"
     fi
 }
 trap restore EXIT
