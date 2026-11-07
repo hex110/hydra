@@ -9,6 +9,7 @@ import ts from "typescript";
 import type { Download, LibraryGame } from "@types";
 import type { GameContextMenuGame } from "./game-context-menu.types";
 import {
+  canSwitchDownloadSource,
   findLibraryGamePresentation,
   getRemoveFilesTarget,
   getLibraryGameMembers,
@@ -208,6 +209,8 @@ async function fixture(
     findLibraryGamePresentation,
     mergeLibraryCatalogueMetadata,
     isLibraryGameDownloading,
+    canSwitchDownloadSource,
+    Downloader: { AnkerGames: 100 },
     applyLibraryGroupAction,
     PLAY_STATUSES: ["playing", "backlog", "finished", "dropped"],
     getOfficialStoreMembers,

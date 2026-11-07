@@ -10,6 +10,7 @@ export interface GameContextMenuGame {
     downloadPath?: string | null;
     status?: string | null;
     extracting?: boolean;
+    downloader?: number;
   } | null;
   favorite?: boolean;
   isPinned?: boolean;

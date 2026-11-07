@@ -271,6 +271,28 @@ export function useGameActions(requestedGame: GameContextMenuGame) {
     }
   };
 
+  /** For an AnkerGames download whose archive the folder watch did not find. */
+  const handleChooseAnkerGamesArchive = async () => {
+    const { canceled, filePaths } = await window.electron.showOpenDialog({
+      properties: ["openFile"],
+      filters: [{ name: t("archive_files"), extensions: ["zip", "rar", "7z"] }],
+    });
+    const [filePath] = filePaths ?? [];
+    if (canceled || !filePath) return;
+
+    try {
+      await window.electron.useAnkerGamesArchive(
+        downloadGame.shop,
+        downloadGame.objectId,
+        filePath
+      );
+      updateLibrary();
+    } catch (error) {
+      logger.error("Failed to use the chosen AnkerGames archive", error);
+      showErrorToast(t("choose_downloaded_file_failed"));
+    }
+  };
+
   const handleOpenGameOptions = (initialCategory?: GameSettingsCategoryId) => {
     const libraryGame = library.find(
       (item) => item.objectId === game.objectId && item.shop === game.shop
@@ -426,6 +448,7 @@ export function useGameActions(requestedGame: GameContextMenuGame) {
     handleCreateSteamShortcut,
     handleOpenFolder,
     handleOpenDownloadOptions,
+    handleChooseAnkerGamesArchive,
     handleOpenDownloadLocation,
     handleTogglePin,
     handleRemoveFromLibrary,

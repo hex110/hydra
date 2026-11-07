@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   applyLibraryGroupAction,
   canSwitchDownloadSource,
+  Downloader,
   getRemoveFilesTarget,
   isLibraryGameDownloading,
   PLAY_STATUSES,
@@ -136,6 +137,7 @@ export function GameContextMenu({
     handleCreateSteamShortcut,
     handleOpenFolder,
     handleOpenDownloadOptions,
+    handleChooseAnkerGamesArchive,
     handleOpenDownloadLocation,
     handleTogglePin,
     handleRemoveFromLibrary,
@@ -606,6 +608,17 @@ export function GameContextMenu({
                 onClick: handleOpenDownloadOptions,
                 disabled: isDeleting || isDownloadDeleting,
               },
+              ...(downloadGame.download?.downloader === Downloader.AnkerGames
+                ? [
+                    {
+                      id: "choose-downloaded-file",
+                      label: t("choose_downloaded_file"),
+                      icon: <FileDirectoryIcon size={16} />,
+                      onClick: handleChooseAnkerGamesArchive,
+                      disabled: isDeleting || isDownloadDeleting,
+                    },
+                  ]
+                : []),
             ]
           : []),
         ...(downloadGame.download?.downloadPath

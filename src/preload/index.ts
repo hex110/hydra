@@ -474,6 +474,8 @@ contextBridge.exposeInMainWorld("electron", {
     objectId: string,
     strategy?: "interruptActive" | "queueIfActive"
   ) => ipcRenderer.invoke("resumeGameDownload", shop, objectId, strategy),
+  useAnkerGamesArchive: (shop: GameShop, objectId: string, filePath: string) =>
+    ipcRenderer.invoke("useAnkerGamesArchive", shop, objectId, filePath),
   pauseGameSeed: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("pauseGameSeed", shop, objectId),
   resumeGameSeed: (shop: GameShop, objectId: string) =>

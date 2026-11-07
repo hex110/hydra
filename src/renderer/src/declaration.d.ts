@@ -421,6 +421,11 @@ declare global {
       objectId: string,
       strategy?: "interruptActive" | "queueIfActive"
     ) => Promise<boolean>;
+    useAnkerGamesArchive: (
+      shop: GameShop,
+      objectId: string,
+      filePath: string
+    ) => Promise<void>;
     pauseGameSeed: (shop: GameShop, objectId: string) => Promise<void>;
     resumeGameSeed: (shop: GameShop, objectId: string) => Promise<void>;
     saveGlobalTrackers: (

@@ -109,6 +109,30 @@ const findBrowserDownload = async (
   return { file: strip(found.file), partial: strip(found.partial) };
 };
 
+/** Archives the person pointed Hydra at by hand, by download page. */
+const chosenArchives = new Map<string, string>();
+
+const ARCHIVE_EXTENSION = /\.(?:zip|rar|7z)$/i;
+
+/**
+ * Uses this file as the game's archive, for when the folder watch can't find
+ * it (another folder, a renamed file). The watch takes it on its next check.
+ */
+export const chooseAnkerGamesArchive = async (
+  pageUri: string,
+  filePath: string
+) => {
+  if (!parseAnkerGamesPageUri(pageUri) || !ARCHIVE_EXTENSION.test(filePath)) {
+    throw new Error(DownloadError.AnkerGamesBrowserDownloadMissing);
+  }
+  const stats = await fs.promises.stat(filePath).catch(() => null);
+  if (!stats?.isFile() || stats.size === 0) {
+    throw new Error(DownloadError.AnkerGamesBrowserDownloadMissing);
+  }
+  chosenArchives.set(pageUri, filePath);
+  logger.log("[AnkerGames] Archive chosen by hand", { pageUri, filePath });
+};
+
 /** True when the browser already saved this game's current archive, or is saving it. */
 export const hasBrowserDownload = async (pageUri: string) => {
   const slug = parseAnkerGamesPageUri(pageUri);
@@ -178,6 +202,17 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
 
       const poll = async () => {
         try {
+          const chosen = chosenArchives.get(pageUri);
+          if (chosen) {
+            chosenArchives.delete(pageUri);
+            const name = path.basename(chosen);
+            const { size } = await fs.promises.stat(chosen);
+            await moveFile(chosen, path.join(options.savePath, name));
+            this.complete(name, size);
+            this.settle?.();
+            return;
+          }
+
           const found = await findBrowserDownload(
             directory,
             slug,
@@ -196,12 +231,7 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
                 path.join(directory, name),
                 path.join(options.savePath, name)
               );
-              this.folder = name;
-              this.bytes = size;
-              this.size = size;
-              this.speed = 0;
-              this.state = "complete";
-              logger.log("[AnkerGames] Browser download picked up", { name });
+              this.complete(name, size);
               this.settle?.();
               return;
             }
@@ -230,6 +260,15 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
 
       void poll();
     });
+  }
+
+  private complete(name: string, size: number) {
+    this.folder = name;
+    this.bytes = size;
+    this.size = size;
+    this.speed = 0;
+    this.state = "complete";
+    logger.log("[AnkerGames] Browser download picked up", { name });
   }
 
   private track(bytes: number) {
