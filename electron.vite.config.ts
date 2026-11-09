@@ -7,10 +7,12 @@ import {
 } from "electron-vite";
 import { resolve } from "path";
 import svgr from "vite-plugin-svgr";
+import { contentSecurityPolicy } from "./src/big-picture/vite-content-security-policy";
 import { scopeBigPictureCss } from "./src/big-picture/vite-scope-big-picture-css";
 
 export default defineConfig(({ mode }) => {
-  loadEnv(mode);
+  const env = loadEnv(mode);
+  const csp = contentSecurityPolicy(env.RENDERER_VITE_EXTERNAL_RESOURCES_URL);
 
   return {
     main: {
@@ -50,7 +52,7 @@ export default defineConfig(({ mode }) => {
           "@shared": resolve("src/shared"),
         },
       },
-      plugins: [svgr(), react()],
+      plugins: [svgr(), react(), csp],
     },
     renderer: {
       build: {
@@ -76,7 +78,7 @@ export default defineConfig(({ mode }) => {
           "@shared": resolve("src/shared"),
         },
       },
-      plugins: [svgr(), react()],
+      plugins: [svgr(), react(), csp],
     },
   };
 });
