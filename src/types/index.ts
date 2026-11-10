@@ -843,7 +843,37 @@ export type LocalNotificationType =
   | "STEAM_WISHLIST_RELEASE"
   | "GAME_UPDATED"
   | "OPTISCALER_FILES_MISSING"
-  | "CAPABILITY_CHECK_FAILED";
+  | "CAPABILITY_CHECK_FAILED"
+  | "DOWNLOAD_HALTED";
+
+/** Game options sections a notification can open (?options=<section>). */
+export type NotificationGameSection =
+  | "save_import"
+  | "runs"
+  | "tools"
+  | "optiscaler";
+
+export interface NotificationGameRef {
+  shop: GameShop;
+  objectId: string;
+  title: string;
+  iconUrl: string | null;
+}
+
+/** Where clicking a notification leads, in the desktop pop-up and the inbox. */
+export type NotificationTarget =
+  | {
+      kind: "game";
+      shop: GameShop;
+      objectId: string;
+      section?: NotificationGameSection;
+    }
+  | { kind: "games"; games: NotificationGameRef[] }
+  | { kind: "achievements"; shop: GameShop; objectId: string; title: string }
+  | { kind: "profile"; userId: string }
+  | { kind: "downloads" }
+  | { kind: "library-scan" }
+  | { kind: "path"; path: string };
 
 export interface Notification {
   id: string;
@@ -862,7 +892,9 @@ export interface LocalNotification {
   title: string;
   description: string;
   pictureUrl: string | null;
+  /** Main-window route; kept for entries stored before `target` existed. */
   url: string | null;
+  target?: NotificationTarget | null;
   isRead: boolean;
   createdAt: string;
 }

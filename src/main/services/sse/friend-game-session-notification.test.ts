@@ -23,6 +23,7 @@ describe("toFriendGameSessionNotification", () => {
         })
       ),
       {
+        friendId: "friend01",
         displayName: "Alice",
         profileImageUrl: "https://cdn.example/alice.png",
         gameTitle: "Cyberpunk 2077",
@@ -59,7 +60,12 @@ describe("toFriendGameSessionNotification", () => {
             gameTitle: value,
           })
         ),
-        { displayName: "Alice", profileImageUrl: null, gameTitle: null }
+        {
+          friendId: "friend01",
+          displayName: "Alice",
+          profileImageUrl: null,
+          gameTitle: null,
+        }
       );
     }
   });

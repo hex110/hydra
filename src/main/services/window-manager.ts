@@ -11,6 +11,7 @@ import {
   CUSTOM_WINDOW_BORDER_WIDTH,
   CUSTOM_WINDOW_TITLE_BAR_HEIGHT,
   NATIVE_WINDOW_DECORATIONS_ARGUMENT,
+  notificationTargetBigPicturePath,
 } from "@shared";
 import type {
   AchievementCustomNotificationPosition,
@@ -49,6 +50,7 @@ import {
 } from "./steam-grid-db-cache";
 import { getRetroAchievementsConnectionWindowLayout } from "./retroachievements-connection-window-layout";
 import { resolveSocialWindowBounds } from "./social-window-bounds";
+import { bringWindowToFront } from "./window-focus";
 import {
   getTopSocialWindow,
   orderChatFriends,
@@ -1170,17 +1172,58 @@ export class WindowManager {
 
   private static focusMainWindow() {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-      if (this.mainWindow.isMinimized()) this.mainWindow.restore();
-      this.mainWindow.show();
-      this.mainWindow.focus();
+      bringWindowToFront(this.mainWindow);
     } else {
       this.createMainWindow();
     }
   }
 
-  public static focusMainWindowAndNavigate(path: string) {
+  /** Brings Big Picture forward when it is open, else the main window. */
+  public static bringAppToFront() {
+    const bigPicture = this.bigPicture;
+    if (bigPicture && !bigPicture.isDestroyed()) {
+      bringWindowToFront(bigPicture);
+      return;
+    }
     this.focusMainWindow();
-    this.mainWindow?.webContents.send("on-navigate", path);
+  }
+
+  /**
+   * Opens a route and brings its window forward. Big Picture, when open, takes
+   * the route if it has a page for it. A main window that is closed to the tray
+   * or still loading gets the route once it can take it.
+   */
+  public static focusMainWindowAndNavigate(
+    path: string,
+    options?: { bigPicturePath?: string | null }
+  ) {
+    const bigPicture = this.bigPicture;
+    if (bigPicture && !bigPicture.isDestroyed()) {
+      const bigPicturePath =
+        options?.bigPicturePath !== undefined
+          ? options.bigPicturePath
+          : notificationTargetBigPicturePath({ kind: "path", path });
+      if (bigPicturePath) {
+        bigPicture.webContents.send("on-navigate", bigPicturePath);
+      }
+      bringWindowToFront(bigPicture);
+      return;
+    }
+
+    const hash = path.replace(/^\/+/, "");
+    const mainWindow = this.mainWindow;
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      void this.createMainWindow({ initialHash: hash });
+      return;
+    }
+
+    // A loading window may not listen for "on-navigate" yet; load the route.
+    if (mainWindow.webContents.isLoading()) {
+      void this.loadMainWindowURL(hash);
+    } else {
+      mainWindow.webContents.send("on-navigate", path);
+    }
+    bringWindowToFront(mainWindow);
   }
 
   public static openAddFriendModalInMainWindow() {

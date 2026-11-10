@@ -1,6 +1,7 @@
 import "./notifications-library-section.scss";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Checkbox, VerticalFocusGroup } from "../../components";
 import { useUserPreferences } from "../../hooks";
@@ -12,18 +13,67 @@ import {
 } from "./settings-navigation";
 import { SettingsSection } from "./settings-section";
 import type { UserPreferences } from "@types";
+import {
+  isNotificationPreferenceEnabled,
+  type NotificationPreferenceKey,
+} from "@shared";
 
 interface NotificationsLibrarySectionProps {
   className?: string;
   lastItemDownTarget?: FocusOverrideTarget;
 }
 
-interface NotificationsLibraryForm {
-  downloadNotificationsEnabled: boolean;
-  repackUpdatesNotificationsEnabled: boolean;
-  friendRequestNotificationsEnabled: boolean;
-  friendStartGameNotificationsEnabled: boolean;
-}
+/** In display order; the last one is the achievements section's up target. */
+const LIBRARY_SWITCHES = [
+  {
+    key: "downloadNotificationsEnabled",
+    id: "download-notifications-enabled",
+    label: "enable_download_notifications",
+  },
+  {
+    key: "repackUpdatesNotificationsEnabled",
+    id: "repack-updates-notifications-enabled",
+    label: "enable_repack_list_notifications",
+  },
+  {
+    key: "wishlistNotificationsEnabled",
+    id: "wishlist-notifications-enabled",
+    label: "enable_wishlist_notifications",
+  },
+  {
+    key: "gameUpdateNotificationsEnabled",
+    id: "game-update-notifications-enabled",
+    label: "enable_game_update_notifications",
+  },
+  {
+    key: "gameToolNotificationsEnabled",
+    id: "game-tool-notifications-enabled",
+    label: "enable_game_tool_notifications",
+  },
+  {
+    key: "saveImportNotificationsEnabled",
+    id: "save-import-notifications-enabled",
+    label: "enable_save_import_notifications",
+  },
+  {
+    key: "friendRequestNotificationsEnabled",
+    id: "friend-request-notifications-enabled",
+    label: "enable_friend_request_notifications",
+  },
+  {
+    key: "friendStartGameNotificationsEnabled",
+    id: "friend-start-game-notifications-enabled",
+    label: "enable_friend_start_game_notifications",
+  },
+] as const satisfies readonly {
+  key: NotificationPreferenceKey &
+    keyof typeof NOTIFICATIONS_LIBRARY_ITEM_FOCUS_IDS;
+  id: string;
+  label: string;
+}[];
+
+type LibrarySwitchKey = (typeof LIBRARY_SWITCHES)[number]["key"];
+type NotificationsLibraryForm = Record<LibrarySwitchKey, boolean>;
 
 interface NotificationsLibraryItem {
   id: string;
@@ -33,33 +83,21 @@ interface NotificationsLibraryItem {
   onChange: (checked: boolean) => void;
 }
 
-const DEFAULT_FORM: NotificationsLibraryForm = {
-  downloadNotificationsEnabled: false,
-  repackUpdatesNotificationsEnabled: false,
-  friendRequestNotificationsEnabled: false,
-  friendStartGameNotificationsEnabled: true,
-};
-
 const buildForm = (
   preferences: UserPreferences | null
 ): NotificationsLibraryForm =>
-  preferences
-    ? {
-        downloadNotificationsEnabled:
-          preferences.downloadNotificationsEnabled ?? false,
-        repackUpdatesNotificationsEnabled:
-          preferences.repackUpdatesNotificationsEnabled ?? false,
-        friendRequestNotificationsEnabled:
-          preferences.friendRequestNotificationsEnabled ?? false,
-        friendStartGameNotificationsEnabled:
-          preferences.friendStartGameNotificationsEnabled ?? true,
-      }
-    : DEFAULT_FORM;
+  Object.fromEntries(
+    LIBRARY_SWITCHES.map(({ key }) => [
+      key,
+      isNotificationPreferenceEnabled(preferences, key),
+    ])
+  ) as NotificationsLibraryForm;
 
 export function NotificationsLibrarySection({
   className,
   lastItemDownTarget,
 }: Readonly<NotificationsLibrarySectionProps>) {
+  const { t } = useTranslation("settings");
   const userPreferences = useUserPreferences();
   const [form, setForm] = useState<NotificationsLibraryForm>(() =>
     buildForm(userPreferences)
@@ -80,52 +118,18 @@ export function NotificationsLibrarySection({
     await globalThis.window.electron.updateUserPreferences(values);
   };
 
-  const items = useMemo<NotificationsLibraryItem[]>(() => {
-    return [
-      {
-        id: "download-notifications-enabled",
-        focusId:
-          NOTIFICATIONS_LIBRARY_ITEM_FOCUS_IDS.downloadNotificationsEnabled,
-        label: "Enable download notifications",
-        checked: form.downloadNotificationsEnabled,
+  const items = useMemo<NotificationsLibraryItem[]>(
+    () =>
+      LIBRARY_SWITCHES.map(({ key, id, label }) => ({
+        id,
+        focusId: NOTIFICATIONS_LIBRARY_ITEM_FOCUS_IDS[key],
+        label: t(label),
+        checked: form[key],
         onChange: (checked: boolean) =>
-          void updateUserPreferences({ downloadNotificationsEnabled: checked }),
-      },
-      {
-        id: "repack-updates-notifications-enabled",
-        focusId:
-          NOTIFICATIONS_LIBRARY_ITEM_FOCUS_IDS.repackUpdatesNotificationsEnabled,
-        label: "Enable repack update notifications",
-        checked: form.repackUpdatesNotificationsEnabled,
-        onChange: (checked: boolean) =>
-          void updateUserPreferences({
-            repackUpdatesNotificationsEnabled: checked,
-          }),
-      },
-      {
-        id: "friend-request-notifications-enabled",
-        focusId:
-          NOTIFICATIONS_LIBRARY_ITEM_FOCUS_IDS.friendRequestNotificationsEnabled,
-        label: "Enable friend request notifications",
-        checked: form.friendRequestNotificationsEnabled,
-        onChange: (checked: boolean) =>
-          void updateUserPreferences({
-            friendRequestNotificationsEnabled: checked,
-          }),
-      },
-      {
-        id: "friend-start-game-notifications-enabled",
-        focusId:
-          NOTIFICATIONS_LIBRARY_ITEM_FOCUS_IDS.friendStartGameNotificationsEnabled,
-        label: "Enable friend start game notifications",
-        checked: form.friendStartGameNotificationsEnabled,
-        onChange: (checked: boolean) =>
-          void updateUserPreferences({
-            friendStartGameNotificationsEnabled: checked,
-          }),
-      },
-    ];
-  }, [form]);
+          void updateUserPreferences({ [key]: checked }),
+      })),
+    [form, t]
+  );
 
   const navigationOverridesByFocusId = useMemo<
     Record<string, FocusOverrides>
@@ -158,8 +162,8 @@ export function NotificationsLibrarySection({
 
   return (
     <SettingsSection
-      title="Library"
-      description="Choose which library activity notifications Hydra should show."
+      title={t("library_notifications")}
+      description={t("notification_switches_hint")}
       className={className}
     >
       <VerticalFocusGroup

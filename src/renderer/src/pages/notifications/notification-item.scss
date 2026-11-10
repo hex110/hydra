@@ -146,3 +146,73 @@
     }
   }
 }
+
+// Local entries hold more than one control (the entry, its games, dismiss),
+// so the card is a container and the entry itself is the main button.
+.notification-item--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: globals.$spacing-unit;
+  padding: 0;
+
+  .notification-item__main {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 2);
+    padding: calc(globals.$spacing-unit * 2);
+    padding-right: calc(globals.$spacing-unit * 5);
+    width: 100%;
+    background: none;
+    border: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+}
+
+.notification-item--highlighted {
+  border-color: globals.$brand-teal;
+}
+
+.notification-item__games {
+  display: flex;
+  flex-wrap: wrap;
+  gap: globals.$spacing-unit;
+  margin: 0;
+  padding: 0 calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 2)
+    calc(globals.$spacing-unit * 10);
+  list-style: none;
+}
+
+.notification-item__game {
+  display: flex;
+  align-items: center;
+  gap: globals.$spacing-unit;
+  max-width: calc(globals.$spacing-unit * 32);
+  padding: calc(globals.$spacing-unit / 2) globals.$spacing-unit;
+  padding-left: calc(globals.$spacing-unit / 2);
+  background-color: globals.$background-color;
+  border: 1px solid globals.$border-color;
+  border-radius: globals.$spacing-unit;
+  color: globals.$body-color;
+  font-size: globals.$small-font-size;
+  cursor: pointer;
+
+  &:hover {
+    border-color: globals.$brand-teal;
+  }
+
+  img {
+    flex-shrink: 0;
+    width: calc(globals.$spacing-unit * 4);
+    height: calc(globals.$spacing-unit * 3);
+    border-radius: calc(globals.$spacing-unit / 2);
+    object-fit: cover;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

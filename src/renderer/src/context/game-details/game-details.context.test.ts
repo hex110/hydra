@@ -243,7 +243,10 @@ async function fixture(
         i18n: { language: "en" },
       }),
     },
-    "react-router-dom": { useLocation: () => location },
+    "react-router-dom": {
+      useLocation: () => location,
+      useNavigate: () => () => undefined,
+    },
     "@renderer/hooks": {
       useAppDispatch: () => dispatch,
       useAppSelector: (selector: (state: typeof preferencesState) => unknown) =>

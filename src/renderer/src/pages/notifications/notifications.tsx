@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BellIcon } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@renderer/components";
 import {
@@ -53,6 +54,12 @@ export default function Notifications() {
   const [isLoading, setIsLoading] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
+  // A desktop notification about several games opens its entry here.
+  const [searchParams] = useSearchParams();
+  const highlightedId = searchParams.get("highlight");
+  const scrollToHighlighted = useCallback((element: HTMLDivElement | null) => {
+    element?.scrollIntoView({ block: "center" });
+  }, []);
   const [pagination, setPagination] = useState({
     total: 0,
     hasMore: false,
@@ -141,6 +148,11 @@ export default function Notifications() {
     [fetchLocalNotifications, fetchBadges, fetchApiNotifications, userDetails]
   );
 
+  // The click that opened the entry also marked it read.
+  useEffect(() => {
+    if (highlightedId) setFilter("all");
+  }, [highlightedId]);
+
   useEffect(() => {
     fetchAllNotifications(filter);
   }, [fetchAllNotifications, filter]);
@@ -152,7 +164,16 @@ export default function Notifications() {
       }
     );
 
-    return () => unsubscribe();
+    const unsubscribeRead = window.electron.onLocalNotificationRead((id) => {
+      setLocalNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeRead();
+    };
   }, []);
 
   // Accepting/refusing a friend request in another window (e.g. the friends
@@ -448,6 +469,12 @@ export default function Notifications() {
       >
         {notification.source === "local" ? (
           <LocalNotificationItem
+            ref={
+              notification.id === highlightedId
+                ? scrollToHighlighted
+                : undefined
+            }
+            isHighlighted={notification.id === highlightedId}
             notification={notification}
             onDismiss={(id) => handleDismiss(id, "local")}
             onMarkAsRead={(id) => handleMarkAsRead(id, "local")}

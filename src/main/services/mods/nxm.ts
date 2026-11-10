@@ -1,4 +1,4 @@
-import { Notification, app } from "electron";
+import { app } from "electron";
 import i18next from "i18next";
 
 import { gamesSublevel } from "@main/level";
@@ -7,6 +7,10 @@ import { isSameTitle, parseNxmLink } from "@shared";
 import type { Game, NexusGameMatch } from "@types";
 
 import { logger } from "../logger";
+import {
+  openNotificationTarget,
+  showDesktopNotification,
+} from "../notifications/notify";
 import { WindowManager } from "../window-manager";
 import { ModStore } from "./mod-store";
 import { queueNexusModFile } from "./mods";
@@ -18,13 +22,24 @@ import {
 
 const NXM_SCHEME = "nxm";
 
-const notify = (body: string) => {
-  if (Notification.isSupported()) {
-    new Notification({
-      title: i18next.t("section_title", { ns: "mods" }),
-      body,
-    }).show();
-  }
+/** Clicking opens the game's mods page when the game is known. */
+const notify = (body: string, game?: Game) => {
+  showDesktopNotification(
+    { title: i18next.t("section_title", { ns: "mods" }), body },
+    () =>
+      openNotificationTarget(
+        game
+          ? {
+              kind: "path",
+              path: `/mods?${new URLSearchParams({
+                title: game.title,
+                shop: game.shop,
+                objectId: game.objectId,
+              }).toString()}`,
+            }
+          : null
+      )
+  );
 };
 
 /** The library game a Nexus game is: its stored match, else by title. */
@@ -89,7 +104,8 @@ export const handleNxmLink = async (uri: string) => {
     notify(
       result.ok
         ? t("nxm_installed", { mod: modName ?? file?.name, game: game.title })
-        : t(`error_${result.error.replaceAll("-", "_")}`)
+        : t(`error_${result.error.replaceAll("-", "_")}`),
+      game
     );
   } catch (error) {
     logger.error("[Mods] Could not handle an nxm:// link", error);

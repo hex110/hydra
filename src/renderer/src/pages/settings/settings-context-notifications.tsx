@@ -21,23 +21,56 @@ import type {
   UserPreferences,
 } from "@types";
 import { UnmuteIcon } from "@primer/octicons-react";
-import { resolveInGameNotices } from "@shared";
+import {
+  isNotificationPreferenceEnabled,
+  resolveInGameNotices,
+  type NotificationPreferenceKey,
+} from "@shared";
 
 import "./settings-general.scss";
 
+const notificationSwitch = (
+  preferences: UserPreferences | null,
+  key: NotificationPreferenceKey
+) => isNotificationPreferenceEnabled(preferences, key);
+
 const buildForm = (preferences: UserPreferences | null) => ({
-  downloadNotificationsEnabled:
-    preferences?.downloadNotificationsEnabled ?? false,
-  repackUpdatesNotificationsEnabled:
-    preferences?.repackUpdatesNotificationsEnabled ?? false,
-  wishlistNotificationsEnabled:
-    preferences?.wishlistNotificationsEnabled ?? true,
-  friendRequestNotificationsEnabled:
-    preferences?.friendRequestNotificationsEnabled ?? false,
-  friendStartGameNotificationsEnabled:
-    preferences?.friendStartGameNotificationsEnabled ?? true,
-  chatMessageNotificationsEnabled:
-    preferences?.chatMessageNotificationsEnabled ?? true,
+  downloadNotificationsEnabled: notificationSwitch(
+    preferences,
+    "downloadNotificationsEnabled"
+  ),
+  repackUpdatesNotificationsEnabled: notificationSwitch(
+    preferences,
+    "repackUpdatesNotificationsEnabled"
+  ),
+  wishlistNotificationsEnabled: notificationSwitch(
+    preferences,
+    "wishlistNotificationsEnabled"
+  ),
+  gameUpdateNotificationsEnabled: notificationSwitch(
+    preferences,
+    "gameUpdateNotificationsEnabled"
+  ),
+  gameToolNotificationsEnabled: notificationSwitch(
+    preferences,
+    "gameToolNotificationsEnabled"
+  ),
+  saveImportNotificationsEnabled: notificationSwitch(
+    preferences,
+    "saveImportNotificationsEnabled"
+  ),
+  friendRequestNotificationsEnabled: notificationSwitch(
+    preferences,
+    "friendRequestNotificationsEnabled"
+  ),
+  friendStartGameNotificationsEnabled: notificationSwitch(
+    preferences,
+    "friendStartGameNotificationsEnabled"
+  ),
+  chatMessageNotificationsEnabled: notificationSwitch(
+    preferences,
+    "chatMessageNotificationsEnabled"
+  ),
   leaderboardSlamEnabled: preferences?.leaderboardSlamEnabled ?? true,
   leaderboardDropNotificationsEnabled:
     preferences?.leaderboardDropNotificationsEnabled ?? true,
@@ -169,6 +202,9 @@ export function SettingsContextNotifications() {
     <div className="settings-context-panel">
       <div className="settings-context-panel__group">
         <h3>{t("library_notifications")}</h3>
+        <p className="settings-context-panel__description">
+          {t("notification_switches_hint")}
+        </p>
 
         <CheckboxField
           label={t("enable_download_notifications")}
@@ -197,6 +233,38 @@ export function SettingsContextNotifications() {
           onChange={() =>
             handleChange({
               wishlistNotificationsEnabled: !form.wishlistNotificationsEnabled,
+            })
+          }
+        />
+
+        <CheckboxField
+          label={t("enable_game_update_notifications")}
+          checked={form.gameUpdateNotificationsEnabled}
+          onChange={() =>
+            handleChange({
+              gameUpdateNotificationsEnabled:
+                !form.gameUpdateNotificationsEnabled,
+            })
+          }
+        />
+
+        <CheckboxField
+          label={t("enable_game_tool_notifications")}
+          checked={form.gameToolNotificationsEnabled}
+          onChange={() =>
+            handleChange({
+              gameToolNotificationsEnabled: !form.gameToolNotificationsEnabled,
+            })
+          }
+        />
+
+        <CheckboxField
+          label={t("enable_save_import_notifications")}
+          checked={form.saveImportNotificationsEnabled}
+          onChange={() =>
+            handleChange({
+              saveImportNotificationsEnabled:
+                !form.saveImportNotificationsEnabled,
             })
           }
         />

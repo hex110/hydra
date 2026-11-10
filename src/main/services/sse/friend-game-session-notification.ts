@@ -1,6 +1,7 @@
 import type { FriendGameSession } from "./types";
 
 export interface FriendGameSessionNotification {
+  friendId: string;
   displayName: string;
   profileImageUrl: string | null;
   gameTitle: string | null;
@@ -16,6 +17,7 @@ export const toFriendGameSessionNotification = (
   if (!displayName) return null;
 
   return {
+    friendId: payload.friendId,
     displayName,
     profileImageUrl: nonBlankString(payload.profileImageUrl),
     gameTitle: nonBlankString(payload.gameTitle),

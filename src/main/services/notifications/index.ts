@@ -1,13 +1,9 @@
 import { Notification } from "electron";
 import i18next, { t } from "i18next";
 import trayIcon from "@resources/tray-icon.png?asset";
-import fs from "node:fs";
-import axios from "axios";
-import path from "node:path";
 import sound from "sound-play";
 import { achievementSoundPath, chatMessageSoundPath } from "@main/constants";
 import icon from "@resources/icon.png?asset";
-import { NotificationOptions, toXmlString } from "./xml";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import type {
@@ -15,110 +11,35 @@ import type {
   GameCapabilityId,
   GameCapabilityReason,
   GameUpdateFailure,
+  NotificationGameRef,
+  NotificationGameSection,
+  NotificationTarget,
   SteamWishlistEntry,
   SteamWishlistEvent,
-  UserPreferences,
   UserProfile,
 } from "@types";
-import { db, levelKeys, themesSublevel } from "@main/level";
+import { themesSublevel } from "@main/level";
 import { restartAndInstallUpdate } from "@main/events/autoupdater/restart-and-install-update";
-import { SystemPath } from "../system-path";
 import { getThemeSoundPath } from "@main/helpers";
-import { LocalNotificationManager } from "./local-notifications";
+import { summarizeTitles } from "@shared";
 import type { OptiScalerLaunchCheck } from "../optiscaler/optiscaler";
-import {
-  buildDownloadFileName,
-  transcodeNotificationIcon,
-} from "./notification-icon";
+import { downloadImage } from "./notification-image";
+import { notify } from "./notify";
 
-/**
- * Icons live in a directory of our own so it can be emptied wholesale. It is
- * cleared once per run rather than per notification because Electron reads the
- * icon off disk lazily, and the app holds a single-instance lock, so no other
- * run can be relying on what is already there.
- */
-let notificationIconDirectory: Promise<string> | null = null;
+export {
+  notify,
+  openNotificationTarget,
+  showDesktopNotification,
+} from "./notify";
 
-const getNotificationIconDirectory = () => {
-  notificationIconDirectory ??= (async () => {
-    const directory = path.join(
-      SystemPath.getPath("temp"),
-      "hydra-notifications"
-    );
-
-    await fs.promises.rm(directory, { recursive: true, force: true });
-    await fs.promises.mkdir(directory, { recursive: true });
-
-    return directory;
-  })();
-
-  return notificationIconDirectory;
-};
-
-const getStaticImage = async (imagePath: string, removeSource = true) => {
-  try {
-    return await transcodeNotificationIcon(
-      imagePath,
-      await getNotificationIconDirectory()
-    );
-  } catch (error) {
-    logger.error("Failed to transcode notification icon", imagePath, error);
-    return undefined;
-  } finally {
-    // Downloaded inputs can be removed; shared local icons must be preserved.
-    if (removeSource) {
-      await fs.promises.unlink(imagePath).catch(() => undefined);
-    }
+/** An open window plays the sound itself; sound-play has no Linux support. */
+const playAchievementSound = async () => {
+  if (WindowManager.mainWindow) {
+    WindowManager.mainWindow.webContents.send("on-achievement-unlocked");
+  } else if (process.platform !== "linux") {
+    sound.play(await getAchievementSoundPath());
   }
 };
-
-async function downloadImage(url: string | null, signal?: AbortSignal) {
-  if (signal?.aborted) return undefined;
-  if (!url) return undefined;
-  if (url.startsWith("local:")) {
-    const image = await getStaticImage(url.slice("local:".length), false);
-    return signal?.aborted ? undefined : image;
-  }
-  if (!url.startsWith("http")) return undefined;
-
-  const fileName = buildDownloadFileName(url);
-  const outputPath = path.join(await getNotificationIconDirectory(), fileName);
-  const writer = fs.createWriteStream(outputPath);
-
-  const response = await axios.get(url, {
-    responseType: "stream",
-    signal,
-  });
-
-  return new Promise<string | undefined>((resolve) => {
-    let settled = false;
-    const finish = (value: string | undefined) => {
-      if (settled) return;
-      settled = true;
-      signal?.removeEventListener("abort", onAbort);
-      resolve(value);
-    };
-    const discardDownload = () =>
-      fs.promises.unlink(outputPath).catch(() => undefined);
-    const onAbort = () => {
-      writer.destroy();
-      void discardDownload();
-      finish(undefined);
-    };
-
-    signal?.addEventListener("abort", onAbort, { once: true });
-    writer.on("finish", async () => {
-      const staticImagePath = await getStaticImage(outputPath);
-      finish(signal?.aborted ? undefined : staticImagePath);
-    });
-    writer.on("error", () => {
-      if (!signal?.aborted) logger.error("Failed to download image", { url });
-      void discardDownload();
-      finish(undefined);
-    });
-    response.data.pipe(writer);
-  });
-}
 
 async function getAchievementSoundPath(): Promise<string> {
   try {
@@ -141,165 +62,123 @@ async function getAchievementSoundPath(): Promise<string> {
   return achievementSoundPath;
 }
 
-export const publishDownloadCompleteNotification = async (game: Game) => {
-  const userPreferences = await db.get<string, UserPreferences>(
-    levelKeys.userPreferences,
-    {
-      valueEncoding: "json",
-    }
-  );
+const gameTarget = (
+  game: Game,
+  section?: NotificationGameSection
+): NotificationTarget => ({
+  kind: "game",
+  shop: game.shop,
+  objectId: game.objectId,
+  section,
+});
 
-  const title = t("download_complete", { ns: "notifications" });
-  const body = t("game_ready_to_install", {
-    ns: "notifications",
-    title: game.title,
-  });
+const gameRef = (game: Game): NotificationGameRef => ({
+  shop: game.shop,
+  objectId: game.objectId,
+  title: game.title,
+  iconUrl: game.iconUrl,
+});
 
-  if (userPreferences?.downloadNotificationsEnabled) {
-    new Notification({
-      title,
-      body,
-      icon: await downloadImage(game.iconUrl),
-    }).show();
-  }
-
-  // Create local notification
-  await LocalNotificationManager.createNotification(
-    "DOWNLOAD_COMPLETE",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: `/game/${game.shop}/${game.objectId}`,
-    }
-  );
+/** A list of titles for a body text, with "and others" past the first three. */
+const titleList = (titles: string[]) => {
+  const summary = summarizeTitles(titles);
+  return summary.hasMore
+    ? t("titles_and_more", { ns: "notifications", titles: summary.titles })
+    : summary.titles;
 };
 
-export const publishDownloadHaltedNotification = async (game: Game) => {
-  const userPreferences = await db.get<string, UserPreferences>(
-    levelKeys.userPreferences,
-    {
-      valueEncoding: "json",
-    }
-  );
+export const publishDownloadCompleteNotification = (game: Game) =>
+  notify({
+    type: "DOWNLOAD_COMPLETE",
+    title: t("download_complete", { ns: "notifications" }),
+    body: t("game_ready_to_install", {
+      ns: "notifications",
+      title: game.title,
+    }),
+    preference: "downloadNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: gameTarget(game),
+  });
 
-  if (!userPreferences?.downloadNotificationsEnabled) return;
-
-  new Notification({
+export const publishDownloadHaltedNotification = (game: Game) =>
+  notify({
+    type: "DOWNLOAD_HALTED",
     title: t("download_halted", { ns: "notifications" }),
     body: t("download_halted_no_disk_space", {
       ns: "notifications",
       title: game.title,
     }),
-    icon: await downloadImage(game.iconUrl),
-  }).show();
-};
-
-export const publishNotificationUpdateReadyToInstall = async (
-  version: string
-) => {
-  const title = t("new_update_available", {
-    ns: "notifications",
-    version,
-  });
-  const body = t("restart_to_install_update", {
-    ns: "notifications",
+    preference: "downloadNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: { kind: "downloads" },
   });
 
-  new Notification({
-    title,
-    body,
-    icon: trayIcon,
-  })
-    .on("click", () => {
-      restartAndInstallUpdate();
-    })
-    .show();
+export const publishNotificationUpdateReadyToInstall = (version: string) =>
+  notify({
+    type: "UPDATE_AVAILABLE",
+    title: t("new_update_available", { ns: "notifications", version }),
+    body: t("restart_to_install_update", { ns: "notifications" }),
+    preference: null,
+    target: null,
+    onClick: () => restartAndInstallUpdate(),
+  });
 
-  // Create local notification
-  await LocalNotificationManager.createNotification(
-    "UPDATE_AVAILABLE",
-    title,
-    body
-  );
-};
-
-export const publishLeaderboardNotification = async (
+export const publishLeaderboardNotification = (
   content: { title: string; body: string; imageUrl: string | null },
   onClick: () => void,
   signal?: AbortSignal
-) => {
-  const notificationIcon =
-    (await downloadImage(content.imageUrl, signal).catch(() => undefined)) ??
-    trayIcon;
-  if (signal?.aborted) return;
-
-  const notification = new Notification({
+) =>
+  notify({
+    type: null,
     title: content.title,
     body: content.body,
-    icon: notificationIcon,
+    preference: null,
+    imageUrl: content.imageUrl,
+    target: null,
+    onClick,
+    signal,
   });
-  notification.on("click", onClick);
-  notification.show();
-};
 
-export const publishNewFriendRequestNotification = async (
+/** Friend requests are server notifications, so they are already in the inbox. */
+export const publishNewFriendRequestNotification = (
   user: UserProfile,
   signal?: AbortSignal
-) => {
-  if (signal?.aborted) return;
-  const userPreferences = await db.get<string, UserPreferences | null>(
-    levelKeys.userPreferences,
-    {
-      valueEncoding: "json",
-    }
-  );
-
-  if (signal?.aborted) return;
-  if (!userPreferences?.friendRequestNotificationsEnabled) return;
-
-  const notificationIcon =
-    (user?.profileImageUrl
-      ? await downloadImage(user.profileImageUrl, signal)
-      : undefined) ?? trayIcon;
-  if (signal?.aborted) return;
-
-  new Notification({
-    title: t("new_friend_request_title", {
-      ns: "notifications",
-    }),
+) =>
+  notify({
+    type: null,
+    title: t("new_friend_request_title", { ns: "notifications" }),
     body: t("new_friend_request_description", {
       ns: "notifications",
       displayName: user.displayName,
     }),
-    icon: notificationIcon,
-  }).show();
-};
+    preference: "friendRequestNotificationsEnabled",
+    imageUrl: user.profileImageUrl,
+    target: { kind: "path", path: "/notifications" },
+    signal,
+  });
 
-export const publishFriendStartedPlayingGameNotification = async (
+/** The caller checks the switch, since it also gates the friends list update. */
+export const publishFriendStartedPlayingGameNotification = (
   friend: {
+    friendId: string;
     displayName: string;
     profileImageUrl: string | null;
     gameTitle: string | null;
   },
   signal?: AbortSignal
-) => {
-  if (signal?.aborted) return;
-  const notificationIcon =
-    (friend.profileImageUrl
-      ? await downloadImage(friend.profileImageUrl, signal)
-      : undefined) ?? trayIcon;
-  if (signal?.aborted) return;
-
-  new Notification({
+) =>
+  notify({
+    type: null,
     title: t("friend_started_playing_game", {
       ns: "notifications",
       displayName: friend.displayName,
     }),
-    body: friend.gameTitle ?? undefined,
-    icon: notificationIcon,
-  }).show();
-};
+    body: friend.gameTitle ?? "",
+    preference: null,
+    imageUrl: friend.profileImageUrl,
+    target: { kind: "profile", userId: friend.friendId },
+    signal,
+  });
 
 const CHAT_NOTIFICATION_BODY_MAX_LENGTH = 200;
 /** Matches the chat window's own playback (chat-sounds.ts). */
@@ -441,146 +320,94 @@ export const publishChatUnreadNotification = (
       );
 
 export const publishCombinedNewAchievementNotification = async (
-  achievementCount,
-  gameCount
+  achievementCount: number,
+  gameCount: number
 ) => {
-  const options: NotificationOptions = {
+  await notify({
+    type: null,
     title: t("achievement_unlocked", { ns: "achievement" }),
     body: t("new_achievements_unlocked", {
       ns: "achievement",
       gameCount,
       achievementCount,
     }),
-    icon,
+    preference: null,
+    fallbackIcon: icon,
     silent: true,
-  };
-
-  new Notification({
-    ...options,
-    toastXml: toXmlString(options),
-  }).show();
-
-  if (WindowManager.mainWindow) {
-    WindowManager.mainWindow.webContents.send("on-achievement-unlocked");
-  } else if (process.platform !== "linux") {
-    const soundPath = await getAchievementSoundPath();
-    sound.play(soundPath);
-  }
-};
-
-export const publishExtractionCompleteNotification = async (game: Game) => {
-  const title = t("extraction_complete", { ns: "notifications" });
-  const body = t("game_extracted", {
-    ns: "notifications",
-    title: game.title,
+    target: null,
   });
 
-  new Notification({
-    title,
-    body,
-    icon: trayIcon,
-  }).show();
-
-  // Create local notification
-  await LocalNotificationManager.createNotification(
-    "EXTRACTION_COMPLETE",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: `/game/${game.shop}/${game.objectId}`,
-    }
-  );
+  await playAchievementSound();
 };
 
-export const publishSavesFoundNotification = async (
+export const publishExtractionCompleteNotification = (game: Game) =>
+  notify({
+    type: "EXTRACTION_COMPLETE",
+    title: t("extraction_complete", { ns: "notifications" }),
+    body: t("game_extracted", { ns: "notifications", title: game.title }),
+    preference: "downloadNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: gameTarget(game),
+  });
+
+export const publishSavesFoundNotification = (
   game: Game,
   found: { files: number; achievements: number; sourceLabel: string }
-) => {
-  const title = t("saves_found", { ns: "notifications", title: game.title });
-  const body = t("saves_found_description", {
-    ns: "notifications",
-    files: found.files,
-    achievements: found.achievements,
-    source: found.sourceLabel,
+) =>
+  notify({
+    type: "SAVES_FOUND",
+    title: t("saves_found", { ns: "notifications", title: game.title }),
+    body: t("saves_found_description", {
+      ns: "notifications",
+      files: found.files,
+      achievements: found.achievements,
+      source: found.sourceLabel,
+    }),
+    preference: "saveImportNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: gameTarget(game, "save_import"),
   });
 
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "SAVES_FOUND",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: `/game/${game.shop}/${game.objectId}?options=save_import`,
-    }
-  );
-};
-
-export const publishGameUpdatesNotification = async (games: Game[]) => {
-  const title = t("game_updates_available", {
-    ns: "notifications",
-    count: games.length,
+export const publishGameUpdatesNotification = (games: Game[]) =>
+  notify({
+    type: "GAME_UPDATES_AVAILABLE",
+    title: t("game_updates_available", {
+      ns: "notifications",
+      count: games.length,
+    }),
+    body: t("game_updates_available_description", {
+      ns: "notifications",
+      titles: titleList(games.map((game) => game.title)),
+      count: games.length,
+    }),
+    preference: "gameUpdateNotificationsEnabled",
+    imageUrl: games.length === 1 ? games[0].iconUrl : null,
+    target: { kind: "downloads" },
   });
-  const body = t("game_updates_available_description", {
-    ns: "notifications",
-    titles: games
-      .slice(0, 3)
-      .map((game) => game.title)
-      .join(", "),
-    count: games.length,
-  });
-
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "GAME_UPDATES_AVAILABLE",
-    title,
-    body,
-    {
-      pictureUrl: games.length === 1 ? games[0].iconUrl : null,
-      url: "/downloads",
-    }
-  );
-};
 
 export const publishWishlistDownloadsNotification = async (games: Game[]) => {
-  const userPreferences = await db.get<string, UserPreferences | null>(
-    levelKeys.userPreferences,
-    { valueEncoding: "json" }
-  );
-  if (userPreferences?.wishlistNotificationsEnabled === false) return;
+  if (games.length === 0) return;
 
-  const title = t("wishlist_downloads_available", {
-    ns: "notifications",
-    count: games.length,
-    title: games[0].title,
+  await notify({
+    type: "WISHLIST_DOWNLOAD_AVAILABLE",
+    title: t("wishlist_downloads_available", {
+      ns: "notifications",
+      count: games.length,
+      title: games[0].title,
+    }),
+    body: t("wishlist_downloads_available_description", {
+      ns: "notifications",
+      titles: titleList(games.map((game) => game.title)),
+      count: games.length,
+    }),
+    preference: "wishlistNotificationsEnabled",
+    imageUrl: games[0].iconUrl,
+    target: { kind: "games", games: games.map(gameRef) },
   });
-  const body = t("wishlist_downloads_available_description", {
-    ns: "notifications",
-    titles: games
-      .slice(0, 3)
-      .map((game) => game.title)
-      .join(", "),
-    count: games.length,
-  });
-
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "WISHLIST_DOWNLOAD_AVAILABLE",
-    title,
-    body,
-    {
-      pictureUrl: games[0].iconUrl,
-      url:
-        games.length === 1
-          ? `/game/${games[0].shop}/${games[0].objectId}`
-          : "/library?collection=__wishlist__",
-    }
-  );
 };
+
+const steamHeaderUrl = (appId: number | string) =>
+  `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
 
 export const publishSteamWishlistNotification = async (
   entries: SteamWishlistEntry[],
@@ -596,172 +423,137 @@ export const publishSteamWishlistNotification = async (
         : "steam_wishlist_released"
       : "steam_wishlist_date_announced";
 
-  const title = t(key, {
-    ns: "notifications",
-    count: entries.length,
-    title: first.name,
+  await notify({
+    type: "STEAM_WISHLIST_RELEASE",
+    title: t(key, {
+      ns: "notifications",
+      count: entries.length,
+      title: first.name,
+    }),
+    body: t(`${key}_description`, {
+      ns: "notifications",
+      count: entries.length,
+      titles: titleList(entries.map((entry) => entry.name)),
+      date: first.releaseDate
+        ? new Date(first.releaseDate * 1000).toLocaleDateString(
+            i18next.language
+          )
+        : "",
+    }),
+    preference: "wishlistNotificationsEnabled",
+    // The pop-up icon is small; the header art reads better in the inbox.
+    pictureUrl: steamHeaderUrl(first.appId),
+    target: {
+      kind: "games",
+      games: entries.map((entry) => ({
+        shop: "steam",
+        objectId: String(entry.appId),
+        title: entry.name,
+        iconUrl: steamHeaderUrl(entry.appId),
+      })),
+    },
   });
-  const body = t(`${key}_description`, {
-    ns: "notifications",
-    count: entries.length,
-    titles: entries
-      .slice(0, 3)
-      .map((entry) => entry.name)
-      .join(", "),
-    date: first.releaseDate
-      ? new Date(first.releaseDate * 1000).toLocaleDateString(i18next.language)
-      : "",
-  });
-
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "STEAM_WISHLIST_RELEASE",
-    title,
-    body,
-    {
-      pictureUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${first.appId}/header.jpg`,
-      url:
-        entries.length === 1
-          ? `/game/steam/${first.appId}`
-          : "/library?collection=__wishlist__",
-    }
-  );
 };
 
-export const publishGameUpdatedNotification = async (
+export const publishGameUpdatedNotification = (
   game: Game,
   release: string | null
-) => {
-  const title = t("game_updated", { ns: "notifications", title: game.title });
-  const body = release
-    ? t("game_updated_description", { ns: "notifications", release })
-    : t("game_updated_description_unknown", { ns: "notifications" });
+) =>
+  notify({
+    type: "GAME_UPDATED",
+    title: t("game_updated", { ns: "notifications", title: game.title }),
+    body: release
+      ? t("game_updated_description", { ns: "notifications", release })
+      : t("game_updated_description_unknown", { ns: "notifications" }),
+    preference: "gameUpdateNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: gameTarget(game),
+  });
 
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "GAME_UPDATED",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: `/game/${game.shop}/${game.objectId}`,
-    }
-  );
-};
-
-export const publishGameUpdateFailedNotification = async (
+export const publishGameUpdateFailedNotification = (
   game: Game,
   code: GameUpdateFailure
-) => {
-  const title = t("game_update_failed", {
-    ns: "notifications",
-    title: game.title,
+) =>
+  notify({
+    type: "GAME_UPDATED",
+    title: t("game_update_failed", {
+      ns: "notifications",
+      title: game.title,
+    }),
+    body: t(`game_update_failed_${code.replaceAll("-", "_")}`, {
+      ns: "notifications",
+    }),
+    preference: "gameUpdateNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: { kind: "downloads" },
   });
-  const body = t(`game_update_failed_${code.replaceAll("-", "_")}`, {
-    ns: "notifications",
-  });
 
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "GAME_UPDATED",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: "/downloads",
-    }
-  );
-};
-
-export const publishOptiScalerFilesMissingNotification = async (
+export const publishOptiScalerFilesMissingNotification = (
   game: Game,
   check: OptiScalerLaunchCheck,
   wrappers: string[]
-) => {
-  const title = t("optiscaler_files_missing", {
-    ns: "notifications",
-    title: game.title,
-  });
-  const body = t(
-    check.repaired
-      ? "optiscaler_files_missing_restored"
-      : `optiscaler_files_missing_${check.reason.replaceAll("-", "_")}`,
-    {
+) =>
+  notify({
+    type: "OPTISCALER_FILES_MISSING",
+    title: t("optiscaler_files_missing", {
       ns: "notifications",
-      wrappers: wrappers.join(", "),
-    }
-  );
+      title: game.title,
+    }),
+    body: t(
+      check.repaired
+        ? "optiscaler_files_missing_restored"
+        : `optiscaler_files_missing_${check.reason.replaceAll("-", "_")}`,
+      { ns: "notifications", wrappers: wrappers.join(", ") }
+    ),
+    preference: "gameToolNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: gameTarget(game, "optiscaler"),
+  });
 
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "OPTISCALER_FILES_MISSING",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: `/game/${game.shop}/${game.objectId}?options=optiscaler`,
-    }
-  );
-};
-
-export const publishCapabilityCheckFailedNotification = async (
+export const publishCapabilityCheckFailedNotification = (
   game: Game,
   capability: GameCapabilityId,
   reason: GameCapabilityReason
-) => {
-  const title = t("capability_check_failed", {
-    ns: "notifications",
-    title: game.title,
-    tool: t(`capability_${capability}`, { ns: "game_details" }),
+) =>
+  notify({
+    type: "CAPABILITY_CHECK_FAILED",
+    title: t("capability_check_failed", {
+      ns: "notifications",
+      title: game.title,
+      tool: t(`capability_${capability}`, { ns: "game_details" }),
+    }),
+    body: t(`capability_reason_${reason.code}`, {
+      ...reason.params,
+      ns: "game_details",
+    }),
+    preference: "gameToolNotificationsEnabled",
+    imageUrl: game.iconUrl,
+    target: gameTarget(game, "tools"),
   });
-  const body = t(`capability_reason_${reason.code}`, {
-    ...reason.params,
-    ns: "game_details",
-  });
-
-  new Notification({ title, body, icon: trayIcon }).show();
-
-  await LocalNotificationManager.createNotification(
-    "CAPABILITY_CHECK_FAILED",
-    title,
-    body,
-    {
-      pictureUrl: game.iconUrl,
-      url: `/game/${game.shop}/${game.objectId}?options=tools`,
-    }
-  );
-};
 
 export const publishNewAchievementNotification = async (info: {
   achievements: { title: string; iconUrl: string }[];
   unlockedAchievementCount: number;
   totalAchievementCount: number;
-  gameTitle: string;
-  gameIcon: string | null;
+  game: Pick<Game, "shop" | "objectId" | "title" | "iconUrl">;
 }) => {
-  const partialOptions =
-    info.achievements.length > 1
-      ? {
-          title: t("achievements_unlocked_for_game", {
-            ns: "achievement",
-            gameTitle: info.gameTitle,
-            achievementCount: info.achievements.length,
-          }),
-          body: info.achievements.map((a) => a.title).join(", "),
-          icon: (await downloadImage(info.gameIcon)) ?? icon,
-        }
-      : {
-          title: t("achievement_unlocked", { ns: "achievement" }),
-          body: info.achievements[0].title,
-          icon: (await downloadImage(info.achievements[0].iconUrl)) ?? icon,
-        };
+  const isBatch = info.achievements.length > 1;
 
-  const options: NotificationOptions = {
-    ...partialOptions,
+  await notify({
+    type: null,
+    title: isBatch
+      ? t("achievements_unlocked_for_game", {
+          ns: "achievement",
+          gameTitle: info.game.title,
+          achievementCount: info.achievements.length,
+        })
+      : t("achievement_unlocked", { ns: "achievement" }),
+    body: isBatch
+      ? info.achievements.map((a) => a.title).join(", ")
+      : info.achievements[0].title,
+    preference: null,
+    imageUrl: isBatch ? info.game.iconUrl : info.achievements[0].iconUrl,
+    fallbackIcon: icon,
     silent: true,
     progress: {
       value: info.unlockedAchievementCount / info.totalAchievementCount,
@@ -771,17 +563,13 @@ export const publishNewAchievementNotification = async (info: {
         totalCount: info.totalAchievementCount,
       }),
     },
-  };
+    target: {
+      kind: "achievements",
+      shop: info.game.shop,
+      objectId: info.game.objectId,
+      title: info.game.title,
+    },
+  });
 
-  new Notification({
-    ...options,
-    toastXml: toXmlString(options),
-  }).show();
-
-  if (WindowManager.mainWindow) {
-    WindowManager.mainWindow.webContents.send("on-achievement-unlocked");
-  } else if (process.platform !== "linux") {
-    const soundPath = await getAchievementSoundPath();
-    sound.play(soundPath);
-  }
+  await playAchievementSound();
 };

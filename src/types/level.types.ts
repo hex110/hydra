@@ -421,8 +421,14 @@ export interface UserPreferences {
   showDownloadSpeedInMegabits?: boolean;
   downloadNotificationsEnabled?: boolean;
   repackUpdatesNotificationsEnabled?: boolean;
-  /** Notify when a download source adds a wishlisted game; on by default. */
+  /** Wishlist news (new downloads, Steam releases); on by default. */
   wishlistNotificationsEnabled?: boolean;
+  /** Game updates found, applied or failed; on by default. */
+  gameUpdateNotificationsEnabled?: boolean;
+  /** OptiScaler and other game tools failing their checks; on by default. */
+  gameToolNotificationsEnabled?: boolean;
+  /** Saves found for a game that can import them; on by default. */
+  saveImportNotificationsEnabled?: boolean;
   achievementNotificationsEnabled?: boolean;
   achievementCustomNotificationsEnabled?: boolean;
   achievementCustomNotificationPosition?: AchievementCustomNotificationPosition;

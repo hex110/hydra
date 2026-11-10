@@ -24,7 +24,7 @@ import type {
 } from "@types";
 
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   GameDetailsContext,
   GameOptionsCategoryId,
@@ -36,13 +36,13 @@ import {
   mergeLocalRepacks,
   getGameExecutableFilters,
   SteamContentDescriptor,
+  NOTIFICATION_GAME_SECTIONS,
 } from "@shared";
 
-const LINKABLE_OPTIONS_CATEGORIES: GameOptionsCategoryId[] = [
-  "save_import",
-  "runs",
-  "tools",
-];
+// Notifications link to these sections; the list is shared so a notification
+// cannot name a section the page ignores.
+const LINKABLE_OPTIONS_CATEGORIES: readonly GameOptionsCategoryId[] =
+  NOTIFICATION_GAME_SECTIONS;
 
 export const gameDetailsContext = createContext<GameDetailsContext>({
   game: null,
@@ -127,6 +127,7 @@ export function GameDetailsContextProvider({
 
   const { t, i18n } = useTranslation("game_details");
   const location = useLocation();
+  const navigate = useNavigate();
 
   const dispatch = useAppDispatch();
 
@@ -543,13 +544,16 @@ export function GameDetailsContextProvider({
       );
       setShowGameOptionsModal(true);
 
-      try {
-        window.history.replaceState({}, document.title, location.pathname);
-      } catch (_e) {
-        void _e;
-      }
+      // Through the router: a raw history.replaceState drops the hash route.
+      const params = new URLSearchParams(location.search);
+      params.delete("options");
+      const search = params.toString();
+      navigate(
+        { pathname: location.pathname, search: search ? `?${search}` : "" },
+        { replace: true, state: null }
+      );
     }
-  }, [location]);
+  }, [location, navigate]);
 
   useEffect(() => {
     const members =

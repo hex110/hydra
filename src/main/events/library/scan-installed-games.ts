@@ -1021,7 +1021,7 @@ async function publishScanNotification(
       linked: linkedCount,
       pending: pendingCount,
     }),
-    { url: "/library?openScanModal=true" }
+    { target: { kind: "library-scan" } }
   );
 }
 

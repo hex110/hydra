@@ -180,10 +180,16 @@ export function SidebarProfile() {
   }, [userDetails, fetchApiNotificationCount, fetchLocalNotificationCount]);
 
   useEffect(() => {
-    const unsubscribe = window.electron.onLocalNotificationCreated(() => {
-      fetchLocalNotificationCount();
-    });
-    return () => unsubscribe();
+    const unsubscribeCreated = window.electron.onLocalNotificationCreated(() =>
+      fetchLocalNotificationCount()
+    );
+    const unsubscribeRead = window.electron.onLocalNotificationRead(() =>
+      fetchLocalNotificationCount()
+    );
+    return () => {
+      unsubscribeCreated();
+      unsubscribeRead();
+    };
   }, [fetchLocalNotificationCount]);
 
   useEffect(() => {

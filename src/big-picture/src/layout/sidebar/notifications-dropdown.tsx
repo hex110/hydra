@@ -64,6 +64,7 @@ import {
   CLOUD_GIFT_RECEIVED_NOTIFICATION,
   NOTIFICATIONS_FETCH_FILTER,
   NOTIFICATIONS_FETCH_TAKE,
+  notificationTargetBigPicturePath,
 } from "@shared";
 
 const hydraIconUrl = new URL("../../assets/hydra-icon.svg", import.meta.url)
@@ -305,6 +306,10 @@ function getNotificationUrl(notification: MergedNotification) {
     );
   }
 
+  if (notification.source === "local" && notification.target) {
+    return notificationTargetBigPicturePath(notification.target);
+  }
+
   if (!notification.url) return null;
   const target =
     notification.source === "api"
@@ -468,6 +473,17 @@ export function SidebarNotificationsDropdown({
       globalThis.window.electron.onLocalNotificationCreated((notification) => {
         setLocalNotifications((current) => [notification, ...current]);
       });
+    const unsubscribeRead = globalThis.window.electron.onLocalNotificationRead(
+      (id) => {
+        setLocalNotifications((current) =>
+          current.map((notification) =>
+            notification.id === id
+              ? { ...notification, isRead: true }
+              : notification
+          )
+        );
+      }
+    );
     const unsubscribeSync = globalThis.window.electron.onSyncNotificationCount(
       (notification) => {
         setApiUnreadCount(notification.notificationCount);
@@ -485,6 +501,7 @@ export function SidebarNotificationsDropdown({
 
     return () => {
       unsubscribeLocal();
+      unsubscribeRead();
       unsubscribeSync();
       globalThis.window.removeEventListener(
         "notificationsChanged",

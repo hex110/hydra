@@ -56,6 +56,7 @@ export * from "./compatibility-overview";
 export * from "./launch-rules-migration";
 export * from "./repack-ranking";
 export * from "./leaderboard-notifications";
+export * from "./notification-targets";
 export * from "./review-translation";
 export {
   getDisplayedPlayTimeInMilliseconds,

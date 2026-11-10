@@ -1,11 +1,13 @@
-import { Notification } from "electron";
+import type { Notification } from "electron";
 import { t } from "i18next";
 import icon from "@resources/icon.png?asset";
 import type { LocalScreenshot } from "@types";
 
 import { HydraApi } from "../hydra-api";
-import { logger } from "../logger";
-import { toXmlString } from "../notifications/xml";
+import {
+  openNotificationTarget,
+  showDesktopNotification,
+} from "../notifications/notify";
 import { WindowManager } from "../window-manager";
 import { LocalScreenshotStore } from "./local-screenshot-store";
 
@@ -18,21 +20,11 @@ interface UploadBatch {
 let batch: UploadBatch | null = null;
 const userUploadClientIds = new Set<string>();
 
-const showNotification = (title: string, body: string) => {
-  const options = { title, body, icon, silent: true };
-
-  try {
-    const notification = new Notification({
-      ...options,
-      toastXml: process.platform === "win32" ? toXmlString(options) : undefined,
-    });
-    notification.show();
-    return notification;
-  } catch (error) {
-    logger.error("Failed to show the screenshot upload notification", error);
-    return null;
-  }
-};
+/** Clicking opens the uploader's profile, where the screenshots are. */
+const showNotification = (ownerId: string, title: string, body: string) =>
+  showDesktopNotification({ title, body, icon, silent: true }, () =>
+    openNotificationTarget({ kind: "profile", userId: ownerId })
+  );
 
 const isActiveState = (state: LocalScreenshot["state"] | undefined) =>
   state === "queued" || state === "uploading";
@@ -67,6 +59,7 @@ const startBatch = (ownerId: string, unattended: LocalScreenshot[]) => {
     ownerId,
     clientIds: new Set(unattended.map(({ clientId }) => clientId)),
     notification: showNotification(
+      ownerId,
       t("uploading_title", { ns: "screenshots_capture" }),
       t("uploading_body", {
         ns: "screenshots_capture",
@@ -76,9 +69,14 @@ const startBatch = (ownerId: string, unattended: LocalScreenshot[]) => {
   };
 };
 
-const showBatchSummary = (uploadedCount: number, failedCount: number) => {
+const showBatchSummary = (
+  ownerId: string,
+  uploadedCount: number,
+  failedCount: number
+) => {
   if (failedCount > 0) {
     showNotification(
+      ownerId,
       t("upload_failed_title", { ns: "screenshots_capture" }),
       t("upload_failed_body", { ns: "screenshots_capture", count: failedCount })
     );
@@ -87,6 +85,7 @@ const showBatchSummary = (uploadedCount: number, failedCount: number) => {
 
   if (uploadedCount > 0) {
     showNotification(
+      ownerId,
       t("uploaded_title", { ns: "screenshots_capture" }),
       t("uploaded_body", { ns: "screenshots_capture", count: uploadedCount })
     );
@@ -109,6 +108,7 @@ const finishBatchIfSettled = (
   batch = null;
 
   showBatchSummary(
+    currentBatch.ownerId,
     states.filter((state) => state === "uploaded").length,
     states.filter((state) => state === "failed").length
   );

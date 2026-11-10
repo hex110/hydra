@@ -408,7 +408,7 @@ test("local cached icons reach notifications and automatic shortcuts", async () 
     "src/main/services/notifications/notification-icon.ts"
   );
   const downloadImage = runSourceFragment(
-    "src/main/services/notifications/index.ts",
+    "src/main/services/notifications/notification-image.ts",
     (source) =>
       source.statements.filter(
         (node) =>

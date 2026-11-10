@@ -1,4 +1,4 @@
-import { BrowserWindow, Notification } from "electron";
+import { BrowserWindow } from "electron";
 import { t } from "i18next";
 import { pathToFileURL } from "node:url";
 import icon from "@resources/icon.png?asset";
@@ -7,6 +7,7 @@ import soundPagePath from "@resources/screenshot-sound.html?asset";
 import { resolveScreenshotPreferences } from "@shared";
 import type { ScreenshotFeedbackToast, UserPreferences } from "@types";
 
+import { showDesktopNotification } from "../notifications/notify";
 import { achievementNotificationPresenter } from "../achievement-notification-presenter-electron";
 import { logger } from "../logger";
 import { readUserPreferences } from "./screenshot-user-preferences";
@@ -66,11 +67,7 @@ const createSoundWindow = (): SoundWindow => {
 const captureSoundUrl = pathToFileURL(captureSoundPath).href;
 
 const showOsNotification = (title: string, body: string) => {
-  try {
-    new Notification({ title, body, icon, silent: true }).show();
-  } catch (error) {
-    logger.error("Failed to show the screenshot notification", error);
-  }
+  showDesktopNotification({ title, body, icon, silent: true });
 };
 
 const usesCustomNotifications = (userPreferences: UserPreferences | null) =>

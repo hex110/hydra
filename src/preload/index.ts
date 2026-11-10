@@ -2780,6 +2780,12 @@ contextBridge.exposeInMainWorld("electron", {
     return () =>
       ipcRenderer.removeListener("on-local-notification-created", listener);
   },
+  onLocalNotificationRead: (cb: (id: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, id: string) => cb(id);
+    ipcRenderer.on("on-local-notification-read", listener);
+    return () =>
+      ipcRenderer.removeListener("on-local-notification-read", listener);
+  },
   onAchievementUnlocked: (
     cb: (
       position?: AchievementCustomNotificationPosition,

@@ -2137,6 +2137,9 @@ declare global {
     onLocalNotificationCreated: (
       cb: (notification: LocalNotification) => void
     ) => () => Electron.IpcRenderer;
+    onLocalNotificationRead: (
+      cb: (id: string) => void
+    ) => () => Electron.IpcRenderer;
     onAchievementUnlocked: (
       cb: (
         position?: AchievementCustomNotificationPosition,

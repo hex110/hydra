@@ -119,8 +119,7 @@ export const publishAchievementUnlockNotifications = ({
       achievements: achievementsInfo,
       unlockedAchievementCount,
       totalAchievementCount,
-      gameTitle: game.title,
-      gameIcon: game.iconUrl,
+      game,
     });
 
   if (process.platform === "linux") {

@@ -2361,7 +2361,7 @@
     "downloads_path": "Downloads path",
     "change": "Update",
     "notifications": "Notifications",
-    "enable_download_notifications": "When a download is complete",
+    "enable_download_notifications": "When a download is complete, extracted or halted",
     "enable_repack_list_notifications": "When a new repack is added",
     "real_debrid_api_token_label": "Real-Debrid API token",
     "quit_app_instead_hiding": "Don't hide Hydra when closing",
@@ -3502,7 +3502,7 @@
     "library_folders_ignored": "Ignored folders",
     "library_folders_ignored_description": "Folders you marked as not a game in the scan dialog. Scans skip them and everything inside.",
     "library_folders_unignore": "Scan this folder again",
-    "enable_wishlist_notifications": "When a download source adds a game on my wishlist",
+    "enable_wishlist_notifications": "When a wishlisted game gets a download, comes out on Steam or gets a release date",
     "play_tracking": "Play tracking",
     "play_tracking_description": "Bring in what you played outside Hydra and keep a tracker in step. Both are optional and work without a Hydra account.",
     "tracking_status_connected": "Connected",
@@ -3726,7 +3726,11 @@
     "launcher_import_done_other": "Added {{count}} games",
     "launcher_import_failed": "Could not add: {{titles}}",
     "launcher_import_failed_generic": "The import failed",
-    "mods": "Mods"
+    "mods": "Mods",
+    "enable_game_update_notifications": "When a game update is found, installed or fails",
+    "enable_game_tool_notifications": "When OptiScaler or another game tool fails its check",
+    "enable_save_import_notifications": "When saves are found that a game can import",
+    "notification_switches_hint": "These switches control pop-ups. Everything still shows up in Notifications."
   },
   "notifications": {
     "download_complete": "Download complete",
@@ -3768,7 +3772,7 @@
     "game_updates_available_one": "An update is available",
     "game_updates_available_other": "{{count}} updates are available",
     "game_updates_available_description_one": "{{titles}} has a newer release in your download sources.",
-    "game_updates_available_description_other": "{{titles}} and others have newer releases in your download sources.",
+    "game_updates_available_description_other": "{{titles}} have newer releases in your download sources.",
     "game_updated": "{{title}} was updated",
     "game_updated_description": "Installed {{release}} over the previous version.",
     "game_updated_description_unknown": "Installed the new version over the previous one.",
@@ -3788,17 +3792,18 @@
     "steam_wishlist_released_one": "{{title}} is out on Steam",
     "steam_wishlist_released_other": "{{count}} wishlisted games are out on Steam",
     "steam_wishlist_released_description_one": "It's on your Steam wishlist. Open it to find a download.",
-    "steam_wishlist_released_description_other": "{{titles}} and others from your Steam wishlist.",
+    "steam_wishlist_released_description_other": "Out now from your Steam wishlist: {{titles}}.",
     "steam_wishlist_early_access": "{{title}} is out in Early Access",
     "steam_wishlist_early_access_description": "It's on your Steam wishlist. Open it to find a download.",
     "steam_wishlist_date_announced_one": "{{title}} has a release date",
     "steam_wishlist_date_announced_other": "{{count}} wishlisted games have a release date",
     "steam_wishlist_date_announced_description_one": "It comes out on {{date}}.",
-    "steam_wishlist_date_announced_description_other": "{{titles}} and others from your Steam wishlist now have dates.",
+    "steam_wishlist_date_announced_description_other": "Release dates announced for {{titles}}.",
     "wishlist_downloads_available_one": "New download for {{title}}",
     "wishlist_downloads_available_other": "New downloads for {{count}} wishlisted games",
     "wishlist_downloads_available_description_one": "A download source added {{titles}}, which is on your wishlist.",
-    "wishlist_downloads_available_description_other": "Download sources added {{titles}} and others from your wishlist."
+    "wishlist_downloads_available_description_other": "Download sources added {{titles}} from your wishlist.",
+    "titles_and_more": "{{titles}} and others"
   },
   "system_tray": {
     "open": "Open Hydra",
@@ -4477,7 +4482,9 @@
     "leaderboard_scope_friends": "Friends",
     "leaderboard_view_ranking": "View leaderboard",
     "leaderboard_close": "Close",
-    "leaderboard_slam_label": "{{tag}}: rank #{{rank}} in {{board}}"
+    "leaderboard_slam_label": "{{tag}}: rank #{{rank}} in {{board}}",
+    "notification_games_one": "{{count}} game",
+    "notification_games_other": "{{count}} games"
   },
   "friends_window": {
     "title": "Friends",

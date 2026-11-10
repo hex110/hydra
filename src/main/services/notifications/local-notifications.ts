@@ -1,6 +1,11 @@
 import { localNotificationsSublevel } from "@main/level";
 import { WindowManager } from "../window-manager";
-import type { LocalNotification, LocalNotificationType } from "@types";
+import type {
+  LocalNotification,
+  LocalNotificationType,
+  NotificationTarget,
+} from "@types";
+import { LOCAL_NOTIFICATION_LIMIT, notificationTargetPath } from "@shared";
 import crypto from "node:crypto";
 
 export class LocalNotificationManager {
@@ -14,30 +19,30 @@ export class LocalNotificationManager {
     description: string,
     options?: {
       pictureUrl?: string | null;
-      url?: string | null;
+      target?: NotificationTarget | null;
     }
   ): Promise<LocalNotification> {
     const id = this.generateId();
+    const target = options?.target ?? null;
     const notification: LocalNotification = {
       id,
       type,
       title,
       description,
       pictureUrl: options?.pictureUrl ?? null,
-      url: options?.url ?? null,
+      url: target ? notificationTargetPath(target, id) : null,
+      target,
       isRead: false,
       createdAt: new Date().toISOString(),
     };
 
     await localNotificationsSublevel.put(id, notification);
+    await this.prune();
 
-    // Notify renderer about new notification
-    if (WindowManager.mainWindow) {
-      WindowManager.mainWindow.webContents.send(
-        "on-local-notification-created",
-        notification
-      );
-    }
+    WindowManager.sendToAppWindows(
+      "on-local-notification-created",
+      notification
+    );
 
     return notification;
   }
@@ -74,6 +79,22 @@ export class LocalNotificationManager {
       notification.isRead = true;
       await localNotificationsSublevel.put(id, notification);
     }
+  }
+
+  /** Marks an entry read from outside the inbox, e.g. a desktop click. */
+  static async markAsReadAndBroadcast(id: string): Promise<void> {
+    await this.markAsRead(id);
+    WindowManager.sendToAppWindows("on-local-notification-read", id);
+  }
+
+  private static async prune(): Promise<void> {
+    const notifications = await this.getNotifications();
+    const excess = notifications.slice(LOCAL_NOTIFICATION_LIMIT);
+    if (excess.length === 0) return;
+
+    const batch = localNotificationsSublevel.batch();
+    for (const { id } of excess) batch.del(id);
+    await batch.write();
   }
 
   static async markAsUnread(id: string): Promise<void> {

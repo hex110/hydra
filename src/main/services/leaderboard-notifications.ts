@@ -18,7 +18,10 @@ import type {
 } from "@types";
 import { HydraApi } from "./hydra-api";
 import { logger } from "./logger";
-import { publishLeaderboardNotification } from "./notifications";
+import {
+  openNotificationTarget,
+  publishLeaderboardNotification,
+} from "./notifications";
 import { WindowManager } from "./window-manager";
 
 const FETCH_TAKE = 20;
@@ -82,7 +85,7 @@ const showSystemNotification = async (
         info,
         user?.id ?? null
       );
-      if (target) WindowManager.focusMainWindowAndNavigate(target);
+      openNotificationTarget(target ? { kind: "path", path: target } : null);
     },
     signal
   );
