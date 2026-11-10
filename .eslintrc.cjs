@@ -29,6 +29,15 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      // The TypeScript parser reads an import-free file as a script, so the
+      // dev CDP helpers' top-level await looks like a call to `await`.
+      files: ["scripts/dev/*.mjs"],
+      parser: "espree",
+      parserOptions: { ecmaVersion: 2022, sourceType: "module" },
+    },
+  ],
   settings: {
     react: {
       version: "detect",

@@ -44,7 +44,6 @@ import type {
   PlayActivityEntry,
   PlayStatus,
   BackgroundTask,
-  BackgroundTaskKind,
   IntegrationName,
   IntegrationStatuses,
   LibraryImportSource,
