@@ -573,6 +573,31 @@ sync orchestrator); take our deletion there.
   game page hero has them). Installer detection (Not scheduled yet) is
   covered by upstream's guide.
 
+## Upstream 4.4.0
+
+Released 2026-11-05; 321 upstream commits since 4.3.0 (17158ab3e). A full
+merge conflicts in 81 files, most from upstream's UI pass (#3095: one 40px
+title bar, no bottom panel), so the 2026-11-10 sync cherry-picked fixes only:
+
+- **Taken:** rich text sanitised with DOMPurify and a generated CSP that
+  restricts script sources (#3110, without upstream's release-bundle
+  obfuscation), Gofile HTML replies (#3085), torrents that keep their peers
+  on resume and stay out of temp during a metadata lookup (#3068, #3070),
+  download-source migration fixes (#3050), the **Offline** source badge
+  (#3066), an opt-in **Use native system window decorations** setting on
+  Linux (#3057).
+- **Needs a decision (a merge phase like 14):** the title-bar/bottom-panel
+  UI pass (#3095) against our reworked pages, Recomps (PC ports of console
+  games, #3051–#3072), PS4 emulation through shadPS4 (#3103) and the generic
+  disc-emulator cloud saves (#3104), screenshot fast capture and failure
+  notification (#3053, #3048), the achievement-animation fix (#3042, depends
+  on #3048), hide community screenshots (#3049), the chat sidebar and
+  official Hydra messages (#3074, #3084, account), missions and streaks
+  (#2997, account).
+- **Skipped:** release-bundle obfuscation (#3065; an open fork gains nothing
+  and loses readable stack traces), Steam false-login (#3031; our Steam
+  integration is deleted), upstream's version bump.
+
 ## See and steer what Hydra does to a game
 
 Decided 2026-10-29. The goal is that installing a game and pressing Play is

@@ -45,6 +45,9 @@ download keeps using the previous copy. Common failures:
 | `Blocked by a Cloudflare challenge` | The host only serves browsers that pass a challenge. Use **Verify in browser** (below). Server-side matching still works. |
 | `The source did not return JSON`    | The URL points to a web page rather than the source file.                                                                 |
 
+Hydra's server marks a source **Offline** after repeated failures on its
+side; the badge shows that status (upstream #3066).
+
 Removing a source deletes its local copy.
 
 ## Verify in browser
