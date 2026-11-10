@@ -1224,14 +1224,31 @@ export function GameOptionsModal({
     visible,
   ]);
 
-  // Removing RenoDX or OptiScaler from its own tab removes the tab.
+  // Removing RenoDX or OptiScaler from its own tab removes the tab. A section
+  // a link asked for (e.g. from an old notification) may not exist either.
   useEffect(() => {
     if (
       (selectedCategory === "optiscaler" && !showOptiScalerTab) ||
       (selectedCategory === "renodx" && !showRenoDxTab)
+    ) {
+      openCategory(showToolsSettings ? "tools" : "general");
+      return;
+    }
+    if (
+      (selectedCategory === "tools" && !showToolsSettings) ||
+      (selectedCategory === "runs" && !showRunsSettings) ||
+      (selectedCategory === "save_import" && !showSaveImportSettings)
     )
-      openCategory("tools");
-  }, [selectedCategory, showOptiScalerTab, showRenoDxTab, openCategory]);
+      openCategory("general");
+  }, [
+    selectedCategory,
+    showOptiScalerTab,
+    showRenoDxTab,
+    showToolsSettings,
+    showRunsSettings,
+    showSaveImportSettings,
+    openCategory,
+  ]);
 
   const handleSelectCategory = (category: typeof selectedCategory) => {
     if (
