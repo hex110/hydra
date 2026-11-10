@@ -98,7 +98,9 @@ every three hours and when you press **Check wishlist now**.
 
 - **Release notifications.** When a game that was "coming soon" is out, you get
   a notification (and an entry in the notification list) that opens the game's
-  page, where the usual download options appear. A game going into Early
+  page, where the usual download options appear. When several games are out
+  at once, it opens its notification entry instead, which lists those games
+  ([Notifications](notifications.md)). A game going into Early
   Access says so. The first check only records the wishlist, so nothing that
   is already out is announced.
 - **Release dates (optional).** _Also tell me when an unreleased game gets a
