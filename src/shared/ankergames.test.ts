@@ -3,6 +3,7 @@ import assert from "node:assert";
 import {
   isAnkerGamesUri,
   matchBrowserDownload,
+  dropStalePartials,
   parseAnkerGamesPageUri,
   parseGamePage,
   parseGameSitemap,
@@ -221,6 +222,47 @@ describe("toAnkerGamesRepack", () => {
     );
     assert.strictEqual(repack.title, "Chants Of Sennaar");
     assert.strictEqual(repack.uploadDate, null);
+  });
+});
+
+describe("dropStalePartials", () => {
+  const now = 1_000_000_000;
+  const names = [
+    "Queens-Domain-AnkerGames.zip",
+    "Queens-Domain-AnkerGames.old1.zip.part",
+    "Queens-Domain-AnkerGames.new2.zip.part",
+    "Other-AnkerGames.zip.crdownload",
+  ];
+  const times: Record<string, number> = {
+    "Queens-Domain-AnkerGames.old1.zip.part": now - 2 * 24 * 3600 * 1000,
+    "Queens-Domain-AnkerGames.new2.zip.part": now - 5000,
+  };
+
+  it("drops abandoned partials and keeps the live one and plain files", () => {
+    assert.deepStrictEqual(
+      dropStalePartials(names, (name) => times[name] ?? null, now),
+      ["Queens-Domain-AnkerGames.zip", "Queens-Domain-AnkerGames.new2.zip.part"]
+    );
+  });
+
+  it("lets the live partial win over a stale one of the same length", () => {
+    const kept = dropStalePartials(names, (name) => times[name] ?? null, now);
+    assert.strictEqual(
+      matchBrowserDownload(kept, "queens-domain").partial,
+      "Queens-Domain-AnkerGames.new2.zip.part"
+    );
+  });
+
+  it("leaves nothing in progress when only a stale partial exists", () => {
+    const kept = dropStalePartials(
+      ["Queens-Domain-AnkerGames.old1.zip.part"],
+      (name) => times[name] ?? null,
+      now
+    );
+    assert.strictEqual(
+      matchBrowserDownload(kept, "queens-domain").partial,
+      null
+    );
   });
 });
 

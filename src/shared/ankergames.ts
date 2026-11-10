@@ -277,6 +277,28 @@ const archiveMatchesSlug = (
   );
 };
 
+export const isBrowserPartialName = (name: string) => PARTIAL_SUFFIX.test(name);
+
+/** A browser download that has not grown for this long was abandoned. */
+export const STALE_PARTIAL_MS = 10 * 60 * 1000;
+
+/**
+ * Drops in-progress browser files (`.part`, `.crdownload`) that have not been
+ * written to for `maxAgeMs` or whose time is unknown: they are left over from
+ * an abandoned attempt, not the download being watched.
+ */
+export const dropStalePartials = (
+  names: string[],
+  modifiedAt: (name: string) => number | null,
+  now: number,
+  maxAgeMs = STALE_PARTIAL_MS
+) =>
+  names.filter((name) => {
+    if (!isBrowserPartialName(name)) return true;
+    const modified = modifiedAt(name);
+    return modified !== null && now - modified <= maxAgeMs;
+  });
+
 export interface MatchBrowserDownloadOptions {
   /**
    * Also accept an archive named after the title's leading words. Callers only

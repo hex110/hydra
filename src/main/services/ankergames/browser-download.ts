@@ -12,6 +12,8 @@ import {
   DownloadError,
   matchBrowserDownload,
   type AnkerGamesGamePage,
+  dropStalePartials,
+  isBrowserPartialName,
   parseAnkerGamesPageUri,
   parseRepackSize,
 } from "@shared";
@@ -69,7 +71,23 @@ const findBrowserDownload = async (
   page: AnkerGamesGamePage | null,
   since: number | null
 ): Promise<{ file: FoundFile | null; partial: FoundFile | null }> => {
-  const names = await fs.promises.readdir(directory).catch(() => []);
+  const listed = await fs.promises.readdir(directory).catch(() => []);
+  const partialTimes = new Map<string, number>();
+  await Promise.all(
+    listed.filter(isBrowserPartialName).map(async (name) => {
+      const stats = await fs.promises
+        .stat(path.join(directory, name))
+        .catch(() => null);
+      if (stats) partialTimes.set(name, stats.mtimeMs);
+    })
+  );
+  // A leftover from an abandoned attempt must not pass for this download, nor
+  // hide the "open the page again" step.
+  const names = dropStalePartials(
+    listed,
+    (name) => partialTimes.get(name) ?? null,
+    Date.now()
+  );
   const statOf = async (name: string | null) => {
     if (!name) return null;
     const stats = await fs.promises
@@ -86,7 +104,9 @@ const findBrowserDownload = async (
       statOf(match.partial),
     ]);
     const isCurrent =
-      !!file && (Number.isNaN(updatedAt) || file.modified >= updatedAt);
+      !!file &&
+      file.size > 0 &&
+      (Number.isNaN(updatedAt) || file.modified >= updatedAt);
     return {
       file: file && isCurrent ? file : null,
       partial,

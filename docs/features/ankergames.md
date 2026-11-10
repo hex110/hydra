@@ -113,6 +113,10 @@ Details:
   saving it, **Download now** does not open the page again.
 - An archive older than AnkerGames' last update of the game (`dateModified`)
   is an old version and is ignored.
+- A `.part`/`.crdownload` file that has not been written to for 10 minutes
+  (`STALE_PARTIAL_MS`) is an abandoned attempt: the watch ignores it, so a new
+  download or update opens the page again instead of reporting the old
+  file's size as progress. A 0-byte archive does not count either.
 - Pausing or cancelling in Hydra only stops the watch; the browser's download
   is its own. Resuming with nothing in the folder opens the page again.
 - With nothing appearing for 30 minutes, the download stops with an error
