@@ -176,6 +176,12 @@ replaces one of those files later (a launcher's update or file check),
 removing OptiScaler keeps the new file and drops the old backup instead of
 restoring it.
 
+Installs made before 2026-11-11 have no fingerprints, so a file replaced
+outside Hydra is still restored from the old backup until the tool is
+installed again. The update handling is checked by unit tests
+(`tool-overlays.test.ts`) only; it has not been run against a real game
+update yet.
+
 ## Files removed outside Hydra
 
 Before each launch, Hydra compares the manifest with the files on disk. When

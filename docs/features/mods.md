@@ -242,7 +242,14 @@ file check, a manual patch) can't be caught as they happen. So
 or a copy's size and modification time. Undeploying keeps a file that is no
 longer the mod's, since it is the game's new file, and drops its stale backup
 instead of restoring it. A Play (modded) launch that finds mod files replaced
-or missing deploys again, so the mods go back over the new files.
+or missing deploys again, so the mods go back over the new files. Mods
+deployed before 2026-11-11 have no record of what was put there; the check
+starts with their next deploy.
+
+Checked 2026-11-11 with unit tests (`mod-store-game-update.test.ts`: a
+file-replacing mod through an update, a modded launch in between, a file
+replaced from outside) and the Mods page in a sandbox at 900 and 1600 px.
+Not checked: a real game update of a modded game.
 
 ## Installed mods
 

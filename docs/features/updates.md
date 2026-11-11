@@ -137,3 +137,38 @@ A game whose download is being extracted, or whose update is waiting to be
 installed, keeps its executable on record when a library scan finds the files
 missing for a moment; the scan used to clear it, and the game then looked
 uninstalled until a later scan found it again.
+
+## Not yet
+
+Planned as roadmap phase 25 (**Updates that keep what you added**):
+
+- **Installer releases.** A release that is a `setup.exe` (FitGirl, DODI
+  and most repacks) is not installed in place: Hydra stops with "The release
+  is an installer" and the user runs it into the game's folder by hand. For a
+  library of repacks this is the common case.
+- **Rollback.** Saves are backed up before an update; the game files it
+  replaces are not, so a bad update can only be undone by downloading the
+  old release again.
+- **Crash recovery.** If Hydra stops in the middle of installing an update,
+  tools lifted into `.hydra-update-stash/` stay there; nothing puts them
+  back on the next start.
+- **Extracting straight into the game folder.** When an update's download
+  folder is the game's own folder, changed files are written over the game
+  during extraction, before the tools are lifted. A tool file the update
+  changed is lost; the widescreen patch is then removed, OptiScaler or
+  ReShade is left incomplete (rare: they seldom replace game files).
+- **Version matching** is a heuristic over release names. Sources that
+  number the same game differently only compare by upload date, so an
+  update can be missed or a wrong one offered.
+- Games installed by Steam or Epic are never checked, on purpose: their
+  launchers update them. Mods and tools there are covered only by the
+  "replaced outside Hydra" check (see [Mods](mods.md#when-the-game-updates)).
+
+## How it was checked
+
+2026-11-11: mods and tools across an update are covered by unit tests
+(`src/main/services/mods/mod-store-game-update.test.ts`,
+`src/main/services/game-updates/tool-overlays.test.ts`, the delta and merge
+tests). The Downloads update row was looked at in a sandbox at 1400 and
+900 px wide. Not checked: a real game update in the app, the line in the
+download dialog and the notification text on screen.

@@ -34,7 +34,8 @@ in the sections below.
 
 1. **Updates.** Finish the install → update loop. Shipped:
    [Game updates](features/updates.md), backups in
-   [Save import](features/save-import.md#backups).
+   [Save import](features/save-import.md#backups). What is left (installer
+   releases, rollback, crash recovery) is phase 25.
    1. [x] Store the installed version
    2. [x] Better version stripping
    3. [x] Update detection
@@ -266,27 +267,53 @@ in the sections below.
     the right folder; this phase makes each game load them, for a user
     without Nexus Premium, and makes modding part of Hydra. Spec and plan:
     [Mods, phase 19](mods-phase-19.md) (start there); research:
-    [Mods: research](mods-game-support-design.md).
+    [Mods: research](mods-game-support-design.md). Status on 2026-11-11
+    (from a review of the code and docs): steps 1–3 are done, 4, 5 and 9
+    are partly done, 6–8 and 10–12 have not started.
     1. [x] Research the open-source managers and mod sites
     2. [x] Modding as part of Hydra: activity log and Copy report, Play
            (modded) split button, mods in run records, mod downloads in the
            Downloads queue, states, Settings → Mods
-    3. [ ] Game support definitions, Thunderstore data for 372 games,
-           Valheim first
+    3. [x] Game support definitions, Thunderstore data for 372 games,
+           Valheim first (376 games on 2026-11-04; exe names many games use
+           are no longer matched, 2026-11-11)
     4. [ ] Loaders installed and started automatically (BepInEx, SMAPI,
-           script extenders, REFramework), proxy DLL clash check
+           script extenders, REFramework), proxy DLL clash check. Done:
+           BepInEx 5/6 and MelonLoader, the clash check (2026-11-04). Open:
+           SMAPI and script extenders (they start through their own exe),
+           REFramework (`dinput8.dll`), UE4SS, 32-bit Unity games. Hydra
+           already recognises these loaders from a game's Nexus mods and
+           names them; it can't install them.
     5. [ ] Load order and the game's own list: `plugins.txt`, LOOT, manual
-           order, generic dependency order, Baldur's Gate 3
+           order, generic dependency order, Baldur's Gate 3. Done: manual
+           order and the generic dependency sort. Open: `plugins.txt`, LOOT,
+           Baldur's Gate 3's and RimWorld's own lists.
     6. [ ] Files in the Wine prefix
     7. [ ] Did it load: the loader's log after a run
     8. [ ] Downloads without Premium: TorBox for big files, the limit shown,
-           Prism-style manual queue with the Downloads folder watched
+           Prism-style manual queue with the Downloads folder watched. Today
+           a Nexus download needs a TorBox token; without one the user
+           downloads by hand and uses Install from file.
     9. [ ] Install knowledge in layers: content preview, archive clues,
-           optional AI plan, shared install plans
+           optional AI plan, shared install plans. Done: Nexus loader
+           evidence, the placement dialog, placement examples, the
+           description reader (not yet wired into placement). Open: the
+           rest of step 9 in [Mods, phase 19](mods-phase-19.md).
     10. [ ] More sources: Thunderstore, GameBanana, ModDB, Modrinth last
     11. [ ] Modpacks: Thunderstore, Nexus Collections, export a profile
     12. [ ] Prism's comforts: details page, update all, requirements with
             the mod, game-version filtering
+    13. [x] Game updates and mods (2026-11-11): mods taken out while an
+            update is compared and installed and put back after; each mod
+            notes the game version it was installed for; mod files replaced
+            outside Hydra are kept; Nexus mods checked after an update
+    14. [ ] Check against real use what is so far only tested in the
+            sandbox or unit tests: MelonLoader, a Mono Unity game, a Nexus
+            download through TorBox, a Nexus description in the placement
+            dialog, a real game update of a modded game
+    15. [ ] FOMOD conditions Hydra doesn't evaluate: other mods' plugin
+            files (only "missing" is known) and game version checks (taken
+            as met)
 20. **Catalogue: Discover, Charts, Browse.** Added 2026-11-03 from the
     owner's design pass over the catalogue (continues phase 13 item 8).
     Spec and plan: [Catalogue, phase 20](catalogue-phase-20.md) (start
@@ -376,6 +403,37 @@ in the sections below.
             left until the next upstream merge
     11. [ ] Unattended NSIS and MSI installers, each tested with a real one
     12. [ ] Ask for an archive password when the known ones fail
+25. **Updates that keep what you added.** Added 2026-11-11 after the
+    mods-and-updates work, from a review of what the update flow and the
+    game-folder tools still lack. Shipped first:
+    [Game updates](features/updates.md) now take mods, OptiScaler, ReShade
+    and the widescreen patch out and put them back, and keep files replaced
+    outside Hydra.
+    1. [x] Mods and tools survive an in-place update; generic exe names no
+           longer match a game support definition
+    2. [x] Say before the update what it takes out and puts back; the
+           notification says what happened
+    3. [ ] Updates from installer releases (`setup.exe`: FitGirl, DODI and
+           most repacks). Today Hydra refuses and asks the user to run the
+           installer into the game's folder by hand; for a repack library
+           this is the common case. Builds on unattended installers
+           (phase 24 item 11)
+    4. [ ] Roll back an update: keep the files an update replaces until the
+           new version has been played, with **Undo update**. Saves are
+           backed up today; the old game files are not
+    5. [ ] Recover from a crash mid-update: tools left in
+           `.hydra-update-stash/` are put back on the next start
+    6. [ ] Lift tools before extracting when an update extracts straight
+           into the game folder; today a tool file the update changed is
+           overwritten there and the tool is left incomplete
+    7. [ ] Version matching across sources that number releases
+           differently; today it falls back to upload dates and can miss an
+           update or offer a wrong one
+    8. [ ] An end-to-end check with a real game: a modded game with
+           OptiScaler and the widescreen patch updated in place; look at the
+           update dialog's line and the notification on screen
+    9. [ ] Widescreen patch: check it loaded after the first run, and
+           follow newer patch builds (pinned today)
 
 Why this order:
 
@@ -431,6 +489,11 @@ Why this order:
   step builds on it, the data layer comes before the charts and the
   recommender that read it, and Discover is regrouped last, once the shelves
   it needs exist.
+- Phase 25 comes from the mods-and-updates work of 2026-11-11. Installer
+  releases go first because they are the most common release format and the
+  update flow refuses them; rollback and crash recovery follow because an
+  update is the one action that overwrites a working game. Version matching
+  and the end-to-end check close it out.
 - Phase 21 follows phase 20 directly: it fixes what using it showed. The
   rating and the cache come first because every later step shows ratings and
   every surface reads the cache; the charts go before the recommender since
@@ -877,13 +940,15 @@ redirects shipped, nothing in use still needs `bgmod`.
 
 ## Mods
 
-- [ ] **Native mod support.** A mod manager inside Hydra, along the lines of
+- [x] **Native mod support.** Shipped as phases 17 and 19
+      ([Mods](features/mods.md)); what is left is in phase 19. A mod manager inside Hydra, along the lines of
       Amethyst Mod Manager or another open-source one, ideally as smooth as
       Prism Launcher but for every game. Sources: Nexus Mods, Wabbajack lists,
       and the other popular mod sites. TorBox integration to get around Nexus
       Mods' slow free downloads. Large; needs a design first.
 
-- [ ] **RenoDX HDR mods, installed automatically.** Match games to RenoDX's
+- [x] **RenoDX HDR mods, installed automatically.** Shipped
+      ([RenoDX](features/renodx.md)). Match games to RenoDX's
       mod index by Steam ID, install ReShade with add-ons and the mod, and
       remove it cleanly, like OptiScaler. Starts with a manual proof on one
       game. See [HDR and RenoDX: plan](renodx-hdr-plan.md).

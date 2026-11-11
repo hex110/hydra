@@ -61,6 +61,12 @@ update that leaves the patch's files alone takes the patch out and puts it
 back. If something else replaces a patched file later (a launcher's update),
 removing the patch keeps the new file instead of restoring the old backup.
 
+Installs made before 2026-11-11 have no fingerprints, so a file replaced
+outside Hydra is still restored from the old backup until the tool is
+installed again. The update handling is checked by unit tests
+(`tool-overlays.test.ts`) only; it has not been run against a real game
+update yet.
+
 ## Not yet
 
 Nothing checks that the patch loaded (no first-run check), and the pinned build

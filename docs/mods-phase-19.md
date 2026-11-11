@@ -10,6 +10,29 @@ to build, in which order, what the owner decided, and how to check each step.
   (what Vortex, MO2, Limo, r2modman and the mod sites do, with commits and
   API checks).
 
+## Status (2026-11-11)
+
+From a review of the code and docs; the roadmap's phase 19 list carries the
+same notes per step.
+
+| Step                         | State                                                                                                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2. Modding as part of Hydra  | Done                                                                                                                                                            |
+| 3. Game support definitions  | Done (Hydra's list, Thunderstore's 376 games, the mod folder table, Unity detection); generic exe names don't match since 2026-11-11                            |
+| 4. Loaders                   | BepInEx 5/6 and MelonLoader done. Open: SMAPI, script extenders, REFramework, UE4SS, 32-bit Unity. Hydra names these from Nexus evidence but can't install them |
+| 5. Load order                | Manual order and the generic dependency sort done. Open: `plugins.txt`, LOOT, Baldur's Gate 3, RimWorld                                                         |
+| 6. Files in the Wine prefix  | Not started                                                                                                                                                     |
+| 7. Did it load               | Not started                                                                                                                                                     |
+| 8. Downloads without Premium | Not started; Nexus downloads need a TorBox token, otherwise by hand and Install from file                                                                       |
+| 9. Install knowledge         | First part done (loader evidence, placement dialog, examples, description reader not wired into placement)                                                      |
+| 10–12                        | Not started                                                                                                                                                     |
+
+Added outside the plan: mods across game updates (2026-11-11, see
+[Mods](features/mods.md#when-the-game-updates)). Only checked in the
+sandbox or unit tests so far: MelonLoader, a Mono Unity game, a Nexus
+download through TorBox, a Nexus description in the placement dialog, a
+real update of a modded game.
+
 ## Goal
 
 Phase 17 puts a mod's files in the right folder. For many games that is not
