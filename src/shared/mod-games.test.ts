@@ -220,6 +220,21 @@ describe("matchGameSupport", () => {
     );
     assert.equal(match({ ...none, exeName: "other.exe" }), null);
   });
+
+  it("never matches a generic exe name", () => {
+    const definitions = [
+      {
+        ...HYDRA_GAME_SUPPORT[0],
+        id: "sexybrutale",
+        match: { exeNames: ["game.exe"] },
+      },
+    ];
+    const none = { steamAppId: null, nexusDomain: null };
+    assert.equal(
+      matchGameSupport(definitions, { ...none, exeName: "Game.exe" }),
+      null
+    );
+  });
 });
 
 describe("findProxyDllClash", () => {

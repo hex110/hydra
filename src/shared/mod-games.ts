@@ -349,7 +349,35 @@ export const detectedGameSupport = ({
 export const unityGameSupport = (runtime: UnityRuntime) =>
   detectedGameSupport({ runtime })!;
 
-/** The definition for a library game, by Steam app id, Nexus domain, then exe name. */
+/**
+ * Exe names many games use (engine defaults, launchers, shells): matching one
+ * says nothing about which game it is. Thunderstore lists some of them for a
+ * single game (`game.exe` for The Sexy Brutale).
+ */
+export const GENERIC_EXE_NAMES = new Set([
+  "game.exe",
+  "windowsplayer.exe",
+  "unityplayer.exe",
+  "main.exe",
+  "launcher.exe",
+  "start.exe",
+  "run.exe",
+  "play.exe",
+  "app.exe",
+  "client.exe",
+  "setup.exe",
+  "nw.exe",
+  "electron.exe",
+  "godot.exe",
+  "sh.exe",
+  "cd.exe",
+  "game-win64-shipping.exe",
+]);
+
+/**
+ * The definition for a library game, by Steam app id, Nexus domain, then exe
+ * name (never a generic one).
+ */
 export const matchGameSupport = (
   definitions: GameSupportDefinition[],
   game: {
@@ -358,7 +386,10 @@ export const matchGameSupport = (
     exeName: string | null;
   }
 ) => {
-  const exe = game.exeName ? lower(game.exeName) : null;
+  const exe =
+    game.exeName && !GENERIC_EXE_NAMES.has(lower(game.exeName))
+      ? lower(game.exeName)
+      : null;
   return (
     (game.steamAppId &&
       definitions.find((definition) =>
