@@ -80,6 +80,7 @@ export function HeroPanelActions() {
     downloadGame,
     presentation,
     repacks,
+    repacksLoaded,
     catalogueGame,
     isGameRunning,
     shop,
@@ -949,7 +950,9 @@ export function HeroPanelActions() {
       );
     }
 
+    // Until sources load, keep Download so the button doesn't flip.
     const hasDownloadSource =
+      !repacksLoaded ||
       repacks.length > 0 ||
       canDownloadOnSteam(officialMembers.steam) ||
       !!ownedSteamAppId ||
