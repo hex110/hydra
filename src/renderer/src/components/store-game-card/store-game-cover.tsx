@@ -25,12 +25,15 @@ const COVER_SIZES = {
 export function StoreGameCover({
   game,
   libraryState,
+  previewUrls,
   previewUrl,
   variant,
   children,
 }: Readonly<{
   game: StoreGameCoverGame;
   libraryState?: CatalogueLibraryState;
+  /** Screenshots that have loaded; all stay mounted so the swap never shows the cover. */
+  previewUrls: string[];
   previewUrl: string | null;
   variant: "card" | "row";
   /** The action buttons. */
@@ -54,14 +57,17 @@ export function StoreGameCover({
           <QuestionIcon size={28} />
         </div>
       )}
-      {previewUrl && (
+      {previewUrls.map((url) => (
         <img
-          key={previewUrl}
-          className="store-game-cover__preview"
-          src={previewUrl}
+          key={url}
+          className={cn(
+            "store-game-cover__preview",
+            url === previewUrl && "store-game-cover__preview--active"
+          )}
+          src={url}
           alt=""
         />
-      )}
+      ))}
       <GameLibraryBadge state={libraryState} overlay />
       {protonBadge && <ProtonDBBadge badge={protonBadge} />}
       {children}

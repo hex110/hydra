@@ -314,7 +314,12 @@ function FeaturePanel({
       }
     >
       <div className="catalogue-front-page__queue-cover">
-        <StoreGameCover game={game} previewUrl={null} variant="card" />
+        <StoreGameCover
+          game={game}
+          previewUrls={[]}
+          previewUrl={null}
+          variant="card"
+        />
       </div>
       <div className="catalogue-front-page__queue-details">
         {eyebrow && (

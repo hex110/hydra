@@ -1,0 +1,99 @@
+@use "../../scss/globals.scss";
+
+.store-game-hover-card {
+  position: fixed;
+  z-index: globals.$toast-z-index;
+  display: flex;
+  flex-direction: column;
+  gap: globals.$spacing-unit;
+  width: calc(globals.$spacing-unit * 38);
+  padding: calc(globals.$spacing-unit * 1.5) calc(globals.$spacing-unit * 2);
+  border: 1px solid globals.$border-color;
+  border-radius: 6px;
+  background-color: globals.$dark-background-color;
+  box-shadow: 0 globals.$spacing-unit calc(globals.$spacing-unit * 3)
+    globals.$overlay-strong-color;
+  // Out of sight until placed, so it never appears at the corner first.
+  opacity: 0;
+  pointer-events: none;
+
+  &--placed {
+    opacity: 1;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: store-game-hover-card-in 0.15s ease;
+    }
+  }
+
+  &__title {
+    color: globals.$muted-color;
+    font-size: globals.$body-font-size;
+  }
+
+  &__description {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  &__reviews {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 4);
+    font-size: globals.$small-font-size;
+  }
+
+  &__reviews-label,
+  &__reviews-detail {
+    color: globals.$body-color;
+  }
+
+  &__verdict {
+    font-weight: 600;
+
+    &--positive {
+      color: globals.$review-positive;
+    }
+
+    &--mixed {
+      color: globals.$review-mixed;
+    }
+
+    &--negative {
+      color: globals.$review-negative;
+    }
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(globals.$spacing-unit / 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__tag {
+    padding: calc(globals.$spacing-unit / 4) calc(globals.$spacing-unit * 0.75);
+    border-radius: 4px;
+    background-color: globals.$chip-background-color;
+    color: globals.$body-color;
+    font-size: globals.$small-font-size;
+  }
+}
+
+@keyframes store-game-hover-card-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

@@ -29,12 +29,25 @@
     object-fit: cover;
   }
 
+  // The shown screenshot fades in above the previous one, which only goes
+  // once it is covered, so the cover never shows through.
   &__preview {
     position: absolute;
     inset: 0;
+    z-index: 1;
+    opacity: 0;
+
+    &--active {
+      z-index: 2;
+      opacity: 1;
+    }
 
     @media (prefers-reduced-motion: no-preference) {
-      animation: store-game-cover-preview-in 0.3s ease;
+      transition: opacity 0s linear 0.3s;
+
+      &--active {
+        transition: opacity 0.3s ease;
+      }
     }
   }
 
@@ -80,15 +93,5 @@
       background-color: globals.$protondb-borked;
       color: globals.$muted-color;
     }
-  }
-}
-
-@keyframes store-game-cover-preview-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
   }
 }

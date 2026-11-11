@@ -20,6 +20,8 @@ export interface StoreGameFacts {
   reviewCount: number | null;
   /** From the search result when it has one, else Steam's release date. */
   releaseYear: number | null;
+  /** Steam's short description, as plain text, for the hover card. */
+  description: string | null;
 }
 
 export const CATALOGUE_PREVIEW_SCREENSHOTS = 5;
@@ -30,6 +32,7 @@ interface StoreGameFactsInput {
   steamDetails?: {
     metacritic?: { score?: number } | null;
     screenshots?: { path_thumbnail?: string; path_full?: string }[];
+    short_description?: string;
   } | null;
   howLongToBeatHours?: number | null;
   downloadSizes?: (number | null)[];
@@ -39,6 +42,29 @@ interface StoreGameFactsInput {
   steamReleaseDate?: number | null;
   releaseYear?: number | null;
 }
+
+const ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&nbsp;": " ",
+};
+
+/** Steam's short descriptions carry the odd tag and entity. */
+export const toPlainDescription = (html: string | null | undefined) => {
+  const text = (html ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(
+      /&(?:amp|quot|#39|apos|lt|gt|nbsp);/g,
+      (entity) => ENTITIES[entity]
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || null;
+};
 
 const yearOf = (unixSeconds: number | null | undefined) =>
   typeof unixSeconds === "number" && unixSeconds > 0
@@ -77,6 +103,7 @@ export const buildStoreGameFacts = ({
         : null,
     reviewCount: hasReviews ? reviewCount : null,
     releaseYear: releaseYear ?? yearOf(steamReleaseDate),
+    description: toPlainDescription(steamDetails?.short_description),
   };
 };
 

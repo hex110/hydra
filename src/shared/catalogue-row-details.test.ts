@@ -47,10 +47,28 @@ describe("store game facts", () => {
       reviewPercent: null,
       reviewCount: null,
       releaseYear: null,
+      description: null,
     });
     assert.equal(
       buildStoreGameFacts({ steamDetails: { metacritic: { score: 0 } } })
         .criticScore,
+      null
+    );
+  });
+
+  it("turns Steam's short description into plain text", () => {
+    assert.equal(
+      buildStoreGameFacts({
+        steamDetails: {
+          short_description:
+            "Rock &amp; <b>stone</b>, &quot;to the bone&quot;!  ",
+        },
+      }).description,
+      'Rock & stone , "to the bone"!'
+    );
+    assert.equal(
+      buildStoreGameFacts({ steamDetails: { short_description: " " } })
+        .description,
       null
     );
   });

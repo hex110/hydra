@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import cn from "classnames";
 import Skeleton from "react-loading-skeleton";
 import type { StoreGameFacts } from "@shared";
@@ -14,6 +14,7 @@ import { StoreGameMeta } from "@renderer/components/store-game-meta/store-game-m
 import { SourceBadges } from "./source-badges";
 import type { CatalogueLibraryState } from "@renderer/pages/catalogue/catalogue-library-state";
 import { StoreGameCover, type StoreGameCoverGame } from "./store-game-cover";
+import { StoreGameHoverCard } from "./store-game-hover-card";
 import "./store-game-card.scss";
 
 export interface StoreGameCardGame
@@ -55,10 +56,14 @@ export function StoreGameCard({
   feedback,
   size,
 }: Readonly<StoreGameCardProps>) {
-  const { previewUrl, hoverProps } = useHoverPreview(facts?.screenshots ?? []);
+  const { previewUrls, previewUrl, cardOpen, hoverProps } = useHoverPreview(
+    facts?.screenshots ?? []
+  );
+  const article = useRef<HTMLElement>(null);
 
   return (
     <article
+      ref={article}
       className={cn(
         "store-game",
         "store-game-card",
@@ -69,6 +74,7 @@ export function StoreGameCard({
       <StoreGameCover
         game={game}
         libraryState={libraryState}
+        previewUrls={previewUrls}
         previewUrl={previewUrl}
         variant="card"
       >
@@ -102,6 +108,14 @@ export function StoreGameCard({
         />
         <SourceBadges sources={sources} />
       </div>
+      {cardOpen && (
+        <StoreGameHoverCard
+          anchor={article.current}
+          title={game.title}
+          facts={facts}
+          fallbackTags={game.genres}
+        />
+      )}
     </article>
   );
 }

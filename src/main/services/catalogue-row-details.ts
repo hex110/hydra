@@ -25,6 +25,7 @@ interface SteamDetailsEntry {
     data?: {
       metacritic?: { score?: number };
       screenshots?: { path_thumbnail?: string; path_full?: string }[];
+      short_description?: string;
     };
   } | null;
 }

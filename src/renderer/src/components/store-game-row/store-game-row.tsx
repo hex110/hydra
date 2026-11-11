@@ -42,13 +42,16 @@ export function StoreGameRow({
   onNotInterested,
   feedback,
 }: Readonly<StoreGameRowProps>) {
-  const { previewUrl, hoverProps } = useHoverPreview(facts?.screenshots ?? []);
+  const { previewUrls, previewUrl, hoverProps } = useHoverPreview(
+    facts?.screenshots ?? []
+  );
 
   return (
     <article className={cn("store-game", "store-game-row")} {...hoverProps}>
       <StoreGameCover
         game={game}
         libraryState={libraryState}
+        previewUrls={previewUrls}
         previewUrl={previewUrl}
         variant="row"
       >

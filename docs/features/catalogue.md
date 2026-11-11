@@ -47,7 +47,7 @@ cards add their version as a chip.
 **Buttons**, on hover and on keyboard focus: download (when the game can be
 downloaded), wishlist star, and **+**. A wishlisted star and the added check
 stay visible, dimmed. Resting the pointer on a card cycles through
-screenshots (see below).
+screenshots and opens a hover card (see below).
 
 Skeletons use the dark token colours, not the skeleton library's light theme.
 
@@ -453,7 +453,17 @@ Once a game is on screen, Hydra fills in:
 
 Resting the pointer on a cover cycles through up to five screenshots after a
 short pause. Steam's trailers only come as DASH/HLS streams, which a plain
-video element can't play, so previews use screenshots.
+video element can't play, so previews use screenshots. The screenshots are
+preloaded and only loaded ones are shown, each fading in above the last, so
+the cover never shows between two of them.
+
+On a card (shelves and grids, not rows) the same pause opens a **hover card**
+beside it, as Steam's does: the game's short description, the Steam reviews
+(Steam's wording, the share of positive reviews and their number) and its first
+four tags. It opens on the right of the card, on the left when there is no
+room, is drawn in the page body so a shelf can't clip it, and closes when the
+pointer leaves or the page scrolls. Steam's short description comes with the
+screenshots, in English.
 
 The data comes from Hydra's API: the batched Steam store details (score and
 screenshots, one request per ten games), the How Long to Beat endpoint and the
