@@ -1,5 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+  fingerprintFiles,
+  findReplacedToolFiles,
+} from "../file-fingerprint.js";
 import type {
   OptiScalerChannel,
   OptiScalerManifest,
@@ -331,6 +335,10 @@ export const installOptiScaler = async (
     throw error;
   }
 
+  manifest.fingerprints = await fingerprintFiles(
+    installDirectory,
+    manifest.backups
+  );
   await writeManifest();
   return manifest;
 };
@@ -355,12 +363,17 @@ export const uninstallOptiScaler = async (
     return resolved;
   };
 
+  // A file the game replaced since (an update) is the game's now.
+  const replaced = await findReplacedToolFiles(installDirectory, manifest);
+
   for (const file of [...manifest.files, ...RUNTIME_FILES]) {
+    if (replaced.has(file)) continue;
     await fs.promises.rm(resolveInside(file), { force: true });
   }
 
   const backupRoot = path.join(installDirectory, OPTISCALER_BACKUP_DIRECTORY);
   for (const file of manifest.backups) {
+    if (replaced.has(file)) continue;
     const backup = path.join(backupRoot, file);
     if (!(await exists(backup))) continue;
     await fs.promises.mkdir(path.dirname(resolveInside(file)), {

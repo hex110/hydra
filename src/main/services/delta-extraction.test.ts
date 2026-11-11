@@ -120,6 +120,24 @@ describe("planDeltaExtraction", () => {
     ]);
   });
 
+  it("compares a tool-replaced file with the game's own copy", async () => {
+    write("game/dxgi.dll", "optiscaler");
+    write("backup/dxgi.dll", "game dxgi");
+    const plan = await planDeltaExtraction(
+      [entry("dxgi.dll", "game dxgi")],
+      path.join(root, "game"),
+      {
+        originals: new Map([
+          [
+            path.join(root, "game/dxgi.dll"),
+            path.join(root, "backup/dxgi.dll"),
+          ],
+        ]),
+      }
+    );
+    assert.strictEqual(plan.changed.length, 0);
+  });
+
   it("never matches a name that climbs out of the folder", async () => {
     write("evil.txt", "x");
     const plan = await planDeltaExtraction(

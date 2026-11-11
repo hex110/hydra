@@ -1,3 +1,4 @@
+import type { FileFingerprint } from "./level.types";
 /** Written next to the installed files as `.hydra-widescreen-patch.json`. */
 export interface WidescreenPatchManifest {
   patchId: string;
@@ -9,6 +10,8 @@ export interface WidescreenPatchManifest {
   directories: string[];
   /** Game files that were replaced, saved under the backup directory. */
   backups: string[];
+  /** What Hydra put at each backed-up path, to notice it being replaced. */
+  fingerprints?: Record<string, FileFingerprint>;
 }
 
 /** Stored on the game so the launcher can apply the DLL override without disk access. */

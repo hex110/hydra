@@ -1,5 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+  fingerprintFiles,
+  findReplacedToolFiles,
+} from "../file-fingerprint.js";
 import type { WidescreenPatchManifest } from "@types";
 
 export const WIDESCREEN_MANIFEST_FILE = ".hydra-widescreen-patch.json";
@@ -164,6 +168,10 @@ export const installWidescreenPatch = async (
     throw error;
   }
 
+  manifest.fingerprints = await fingerprintFiles(
+    installDirectory,
+    manifest.backups
+  );
   await writeManifest();
   return manifest;
 };
@@ -188,12 +196,17 @@ export const uninstallWidescreenPatch = async (
     return resolved;
   };
 
+  // A file the game replaced since (an update) is the game's now.
+  const replaced = await findReplacedToolFiles(installDirectory, manifest);
+
   for (const file of manifest.files) {
+    if (replaced.has(file)) continue;
     await fs.promises.rm(resolveInside(file), { force: true });
   }
 
   const backupRoot = path.join(installDirectory, WIDESCREEN_BACKUP_DIRECTORY);
   for (const file of manifest.backups) {
+    if (replaced.has(file)) continue;
     const backup = path.join(backupRoot, file);
     if (!(await exists(backup))) continue;
     await fs.promises.mkdir(path.dirname(resolveInside(file)), {

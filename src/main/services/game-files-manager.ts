@@ -68,6 +68,10 @@ import { runAutomaticCloudSaveSync } from "./cloud-save";
 import { GameSetup } from "./game-setup";
 import { GameUpdater, recordDownloadedRelease } from "./game-updates";
 import { ModStore } from "./mods/mod-store";
+import {
+  readToolOriginals,
+  toolOverlaysForGame,
+} from "./game-updates/tool-overlays";
 import { updateGameRecord } from "./game-record-updater";
 
 const PROGRESS_THROTTLE_MS = 1000;
@@ -344,9 +348,21 @@ export class GameFilesManager {
         root = found;
       }
 
+      // Tools such as OptiScaler replaced some of the game's files; the
+      // update is compared with the game's own copies, kept in their backups.
+      const game = await gamesSublevel.get(
+        levelKeys.game(this.shop, this.objectId)
+      );
+      const originals = game
+        ? await readToolOriginals(
+            toolOverlaysForGame(game, referenceDirectory)
+          ).catch(() => undefined)
+        : undefined;
+
       this.updateExtractionProgress(0, true);
       const plan = await planDeltaExtraction(entries, referenceDirectory, {
         root,
+        originals,
         onProgress: (fraction) =>
           this.updateExtractionProgress(
             fraction * DELTA_COMPARE_PROGRESS_SHARE

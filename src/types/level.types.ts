@@ -88,6 +88,12 @@ export interface GameInstalledVersion extends DownloadRelease {
   recordedAt: string;
 }
 
+/** Size and CRC-32 of a file, to tell later whether it was replaced. */
+export interface FileFingerprint {
+  size: number;
+  crc: number;
+}
+
 export interface GameAvailableUpdate {
   release: DownloadRelease;
   detectedAt: string;

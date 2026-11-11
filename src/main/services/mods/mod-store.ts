@@ -90,6 +90,13 @@ interface DeployedFile {
   backup: string | null;
   /** Hard link, or a copy when staging is on another filesystem. */
   method?: "link" | "copy";
+  /**
+   * What was put there, to notice something else replacing it: the inode of
+   * a hard link, or the size and modification time of a copy.
+   */
+  ino?: number;
+  size?: number;
+  mtimeMs?: number;
 }
 
 interface DeployState {
@@ -245,9 +252,34 @@ const linkOrCopy = async (
   }
 };
 
+/**
+ * Whether a deployed file is still the mod's: "replaced" when something else
+ * wrote a new file at its path since. Files deployed before this was recorded
+ * count as the mod's.
+ */
+const deployedFileState = async (
+  target: string,
+  file: DeployedFile
+): Promise<"mod" | "replaced" | "missing"> => {
+  const stats = await fs.promises.lstat(target).catch(() => null);
+  if (!stats) return "missing";
+  if (file.ino !== undefined)
+    return stats.ino === file.ino ? "mod" : "replaced";
+  if (file.size !== undefined && file.mtimeMs !== undefined)
+    return stats.size === file.size && stats.mtimeMs === file.mtimeMs
+      ? "mod"
+      : "replaced";
+  return "mod";
+};
+
 /** "1 file", "2 files": the activity log is English for people and agents. */
 const count = (amount: number, noun: string) =>
   `${amount} ${noun}${amount === 1 ? "" : "s"}`;
+
+const keptNote = (undeployed: { replaced: number } | null) =>
+  undeployed?.replaced
+    ? ` Kept ${count(undeployed.replaced, "file")} that something else replaced after the mods were deployed (a game update or a file check): ${undeployed.replaced === 1 ? "it is" : "they are"} the game's now.`
+    : "";
 
 /** Where a game's mods go when Hydra has no definition for it. */
 export const resolveModSupport = (
@@ -526,14 +558,23 @@ export class ModStore {
     );
     if (!deployed) return null;
 
+    let replaced = 0;
+    let restored = 0;
     for (const file of deployed.files) {
       const target = path.join(deployed.gameFolder, file.target);
+      if ((await deployedFileState(target, file)) === "replaced") {
+        // Something else (a launcher's update, a file check) put a new file
+        // here: it is the game's now, and the old backup would undo it.
+        replaced += 1;
+        continue;
+      }
       await fs.promises.rm(target, { force: true });
       if (file.backup) {
         const backup = path.join(backupFolder(folder), file.backup);
         if (await exists(backup)) {
           await fs.promises.mkdir(path.dirname(target), { recursive: true });
           await fs.promises.rename(backup, target);
+          restored += 1;
         }
       }
     }
@@ -546,8 +587,9 @@ export class ModStore {
     });
     await fs.promises.rm(deployedFilePath(folder), { force: true });
     return {
-      removed: deployed.files.length,
-      restored: deployed.files.filter((file) => file.backup).length,
+      removed: deployed.files.length - replaced,
+      restored,
+      replaced,
     };
   }
 
@@ -561,7 +603,7 @@ export class ModStore {
     if (undeployed && undeployed.removed > 0)
       await ModActivity.append(shop, objectId, {
         kind: "undeploy",
-        message: `Took ${count(undeployed.removed, "mod file")} out of the game folder and put back ${count(undeployed.restored, "file")} of the game's own, so the game's new files replace its own files and not the mods'.`,
+        message: `Took ${count(undeployed.removed, "mod file")} out of the game folder and put back ${count(undeployed.restored, "file")} of the game's own, so the game's new files replace its own files and not the mods'.${keptNote(undeployed)}`,
         details: { ...undeployed, reason },
       });
   }
@@ -674,17 +716,44 @@ export class ModStore {
         const undeployed = await this.undeploy(folder);
         await ModActivity.append(shop, objectId, {
           kind: "undeploy",
-          message: `Play: took ${count(undeployed?.removed ?? 0, "mod file")} out of the game folder and put back ${count(undeployed?.restored ?? 0, "file")} of the game's own, so the game starts unmodded.`,
+          message: `Play: took ${count(undeployed?.removed ?? 0, "mod file")} out of the game folder and put back ${count(undeployed?.restored ?? 0, "file")} of the game's own, so the game starts unmodded.${keptNote(undeployed)}`,
           details: { ...undeployed, reason: "play-unmodded" },
         });
         return;
       }
-      if (deployed || !state.mods.some((mod) => mod.enabled)) return;
+      if (!state.mods.some((mod) => mod.enabled)) return;
+      if (deployed) {
+        // A launcher's update or file check may have replaced mod files
+        // since; deploying again puts them back over the game's new files.
+        const replaced = await this.countReplacedDeployedFiles(folder);
+        if (replaced === 0) return;
+        await ModActivity.append(shop, objectId, {
+          kind: "deploy",
+          message: `${count(replaced, "mod file")} in the game folder ${replaced === 1 ? "was" : "were"} replaced by something else since the mods were deployed (a game update or a file check); deploying them again.`,
+          details: { replaced },
+        });
+      }
       const game = await this.loadGame(shop, objectId);
       const gameFolder = resolveModGameFolder(game.executablePath ?? null);
       if (!gameFolder) return;
       await this.deploy(shop, objectId, folder, gameFolder, state.mods);
     });
+  }
+
+  private static async countReplacedDeployedFiles(folder: string) {
+    const deployed = await readJson<DeployState | null>(
+      deployedFilePath(folder),
+      null
+    );
+    let replaced = 0;
+    for (const file of deployed?.files ?? []) {
+      const state = await deployedFileState(
+        path.join(deployed!.gameFolder, file.target),
+        file
+      );
+      if (state !== "mod") replaced += 1;
+    }
+    return replaced;
   }
 
   /** Whether the mods are in the game folder now (Play takes them out). */
@@ -718,7 +787,7 @@ export class ModStore {
     if (undeployed && undeployed.removed > 0)
       await ModActivity.append(shop, objectId, {
         kind: "undeploy",
-        message: `Took ${count(undeployed.removed, "mod file")} out of the game folder and put back ${count(undeployed.restored, "file")} of the game's own.`,
+        message: `Took ${count(undeployed.removed, "mod file")} out of the game folder and put back ${count(undeployed.restored, "file")} of the game's own.${keptNote(undeployed)}`,
         details: undeployed,
       });
 
@@ -767,7 +836,18 @@ export class ModStore {
           await fs.promises.rename(destination, backupPath);
         }
         const method = await linkOrCopy(source, destination);
-        files.push({ target: relative, backup, method });
+        const stats = await fs.promises.lstat(destination);
+        files.push(
+          method === "link"
+            ? { target: relative, backup, method, ino: stats.ino }
+            : {
+                target: relative,
+                backup,
+                method,
+                size: stats.size,
+                mtimeMs: stats.mtimeMs,
+              }
+        );
       }
     } finally {
       await record();

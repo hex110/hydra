@@ -455,16 +455,55 @@ export const publishSteamWishlistNotification = async (
   });
 };
 
+/** What happened to the game's mods and tools during an update. */
+export interface GameUpdatedAddOns {
+  mods: number;
+  restored: ("optiscaler" | "renodx" | "widescreen-patch")[];
+  removed: ("optiscaler" | "renodx" | "widescreen-patch")[];
+}
+
+const describeUpdateAddOns = (addOns: GameUpdatedAddOns) => {
+  const kept = [
+    ...(addOns.mods > 0
+      ? [t("game_updated_mods", { ns: "notifications", count: addOns.mods })]
+      : []),
+    ...addOns.restored.map((tool) =>
+      t(`game_updated_tool_${tool.replaceAll("-", "_")}`, {
+        ns: "notifications",
+      })
+    ),
+  ];
+  const sentences: string[] = [];
+  if (kept.length > 0)
+    sentences.push(
+      t("game_updated_kept", {
+        ns: "notifications",
+        items: new Intl.ListFormat(i18next.language || "en", {
+          type: "conjunction",
+        }).format(kept),
+      })
+    );
+  if (addOns.removed.includes("widescreen-patch"))
+    sentences.push(
+      t("game_updated_widescreen_removed", { ns: "notifications" })
+    );
+  return sentences;
+};
+
 export const publishGameUpdatedNotification = (
   game: Game,
-  release: string | null
+  release: string | null,
+  addOns?: GameUpdatedAddOns
 ) =>
   notify({
     type: "GAME_UPDATED",
     title: t("game_updated", { ns: "notifications", title: game.title }),
-    body: release
-      ? t("game_updated_description", { ns: "notifications", release })
-      : t("game_updated_description_unknown", { ns: "notifications" }),
+    body: [
+      release
+        ? t("game_updated_description", { ns: "notifications", release })
+        : t("game_updated_description_unknown", { ns: "notifications" }),
+      ...(addOns ? describeUpdateAddOns(addOns) : []),
+    ].join(" "),
     preference: "gameUpdateNotificationsEnabled",
     imageUrl: game.iconUrl,
     target: gameTarget(game),

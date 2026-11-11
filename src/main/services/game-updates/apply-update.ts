@@ -13,11 +13,18 @@ import {
   publishGameUpdatedNotification,
 } from "@main/services/notifications";
 import { ModStore } from "@main/services/mods/mod-store";
+import { checkModUpdates } from "@main/services/mods/mods";
 import { SaveBackups } from "@main/services/save-backups";
 import { WindowManager } from "@main/services/window-manager";
 import { Wine } from "@main/services/wine";
 import type { Download, Game, GameUpdateFailure, GameShop } from "@types";
 import { toInstalledVersion } from "./installed-version";
+import {
+  liftToolOverlays,
+  restoreToolOverlays,
+  toolOverlaysForGame,
+  type ToolOverlayOutcome,
+} from "./tool-overlays";
 import {
   locateUpdateRoot,
   looksLikeInstaller,
@@ -156,7 +163,7 @@ export class GameUpdater {
 
     // Mods are taken out while the files move, so the update replaces the
     // game's own files and the mods go back over the new ones.
-    const movedFiles = await ModStore.applyGameUpdate(
+    const { movedFiles, tools } = await ModStore.applyGameUpdate(
       game.shop,
       game.objectId,
       {
@@ -164,13 +171,28 @@ export class GameUpdater {
         to: nextVersion?.title ?? null,
       },
       async () => {
+        // Tools that replaced game files (OptiScaler, ReShade, the widescreen
+        // patch) are lifted the same way and laid back over the new files.
+        const lifted = await liftToolOverlays(
+          toolOverlaysForGame(game, installDirectory)
+        );
         let moved = 0;
-        if (!sameFolder) {
-          moved = await mergeDirectoryInto(updateRoot, installDirectory);
-          await fs.promises.rm(extractedDirectory, {
-            recursive: true,
-            force: true,
-          });
+        const written: string[] = [];
+        let tools: ToolOverlayOutcome;
+        try {
+          if (!sameFolder) {
+            moved = await mergeDirectoryInto(
+              updateRoot,
+              installDirectory,
+              written
+            );
+            await fs.promises.rm(extractedDirectory, {
+              recursive: true,
+              force: true,
+            });
+          }
+        } finally {
+          tools = await restoreToolOverlays(lifted, written);
         }
 
         const nextExecutable = fs.existsSync(executablePath)
@@ -188,12 +210,18 @@ export class GameUpdater {
 
         await gamesSublevel.put(gameKey, {
           ...withExecutable,
+          ...(tools.removed.includes("widescreen-patch")
+            ? { widescreenPatch: null }
+            : {}),
           installedVersion: nextVersion,
           availableUpdate: null,
           installedSizeInBytes: await getDirectorySize(installDirectory),
         });
-        return moved;
+        return { movedFiles: moved, tools };
       }
+    );
+    const mods = await ModStore.readState(game.shop, game.objectId).catch(
+      () => null
     );
 
     // The download now points at the installed folder, like a fresh install.
@@ -210,11 +238,20 @@ export class GameUpdater {
       installDirectory,
       movedFiles,
       backupPath,
+      tools,
     });
 
     WindowManager.sendDownloadsUpdated();
     WindowManager.sendToAppWindows("on-library-batch-complete");
     void GameSetup.enqueue(game.shop, game.objectId, { reason: "update" });
-    void publishGameUpdatedNotification(game, download.release?.title ?? null);
+    void publishGameUpdatedNotification(game, download.release?.title ?? null, {
+      mods: mods?.mods.filter((mod) => mod.enabled).length ?? 0,
+      ...tools,
+    });
+    // A new game version often needs new mod versions.
+    if (mods?.mods.some((mod) => mod.source.kind === "nexus"))
+      void checkModUpdates(game.shop, game.objectId).catch((error) =>
+        logger.warn("[GameUpdates] Could not check mods for updates", error)
+      );
   }
 }

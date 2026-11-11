@@ -201,4 +201,43 @@ describe("mods and game updates", () => {
     assert.equal(await read("Data", "sounds.pak"), "snd v1");
     await assert.rejects(read("Data", "hd.ini"));
   });
+
+  it("keeps a file something else replaced, and deploys again over it", async () => {
+    // State from the test above: the mod is off and the game is at v2.
+    await ModStore.setEnabled(shop, objectId, "hd", true);
+    assert.equal(await read("Data", "textures.pak"), "tex HD");
+
+    // A launcher's update writes a new file over the mod's hard link.
+    const target = path.join(gameFolder, "Data", "textures.pak");
+    await fs.rm(target);
+    await fs.writeFile(target, "tex v3");
+
+    // A modded launch notices and puts the mod back over the new file.
+    await ModStore.prepareLaunch(shop, objectId);
+    assert.equal(await read("Data", "textures.pak"), "tex HD");
+
+    // Turning the mod off restores v3, not the v2 backed up before it.
+    await ModStore.setEnabled(shop, objectId, "hd", false);
+    assert.equal(await read("Data", "textures.pak"), "tex v3");
+
+    // Replaced while the mod is off then on: undeploy keeps the new file.
+    await ModStore.setEnabled(shop, objectId, "hd", true);
+    await fs.rm(target);
+    await fs.writeFile(target, "tex v4");
+    await ModStore.setEnabled(shop, objectId, "hd", false);
+    assert.equal(await read("Data", "textures.pak"), "tex v4");
+    assert.equal(
+      await fs.readFile(
+        path.join(
+          ModStore.storeFolder(shop, objectId),
+          "staging",
+          "hd",
+          "Data",
+          "textures.pak"
+        ),
+        "utf8"
+      ),
+      "tex HD"
+    );
+  });
 });

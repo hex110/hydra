@@ -91,11 +91,12 @@ const moveFile = async (source: string, target: string) => {
 /**
  * Moves every file under `source` into `target`, replacing files with the
  * same path and keeping the rest of `target` (saves, configs, mods).
- * Returns the number of files moved.
+ * Returns the number of files moved; `written` collects their new paths.
  */
 export const mergeDirectoryInto = async (
   source: string,
-  target: string
+  target: string,
+  written?: string[]
 ): Promise<number> => {
   await fs.promises.mkdir(target, { recursive: true });
   let moved = 0;
@@ -107,12 +108,13 @@ export const mergeDirectoryInto = async (
 
     if (entry.isDirectory()) {
       if (existing && !existing.isDirectory()) await fs.promises.rm(to);
-      moved += await mergeDirectoryInto(from, to);
+      moved += await mergeDirectoryInto(from, to, written);
     } else {
       if (existing?.isDirectory()) {
         await fs.promises.rm(to, { recursive: true, force: true });
       }
       await moveFile(from, to);
+      written?.push(to);
       moved += 1;
     }
   }

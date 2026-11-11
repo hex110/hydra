@@ -1,5 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+  fingerprintFiles,
+  findReplacedToolFiles,
+} from "../file-fingerprint.js";
 import type {
   ReShadeProxyDll,
   RenoDxArchitecture,
@@ -165,6 +169,10 @@ export const installRenoDx = async (
     throw error;
   }
 
+  manifest.fingerprints = await fingerprintFiles(
+    installDirectory,
+    manifest.backups
+  );
   await writeManifest();
   return manifest;
 };
@@ -200,13 +208,17 @@ const setOptiScalerLoadsReShade = async (
 export const uninstallRenoDx = async (installDirectory: string) => {
   const manifest = await readRenoDxManifest(installDirectory);
   if (!manifest) return;
+  // A file the game replaced since (an update) is the game's now.
+  const replaced = await findReplacedToolFiles(installDirectory, manifest);
 
   for (const file of manifest.files) {
+    if (replaced.has(file)) continue;
     await fs.promises.rm(path.join(installDirectory, file), { force: true });
   }
 
   const backupRoot = path.join(installDirectory, RENODX_BACKUP_DIRECTORY);
   for (const file of manifest.backups) {
+    if (replaced.has(file)) continue;
     const backup = path.join(backupRoot, file);
     if (await exists(backup)) {
       await fs.promises.rename(backup, path.join(installDirectory, file));

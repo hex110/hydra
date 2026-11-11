@@ -91,9 +91,15 @@ export const planDeltaExtraction = async (
   {
     root = "",
     onProgress,
+    originals,
   }: {
     root?: string;
     onProgress?: (fraction: number) => void;
+    /**
+     * Files to compare instead of the one at a path (absolute path → file):
+     * the game's own copy of a file a tool replaced.
+     */
+    originals?: ReadonlyMap<string, string>;
   } = {}
 ): Promise<DeltaPlan> => {
   const rootSegments = splitEntryName(root);
@@ -108,7 +114,10 @@ export const planDeltaExtraction = async (
       // A name that climbs out of the folder is never matched; 7-Zip decides
       // what to do with it when it is extracted.
       target: isSafeSegments(relative)
-        ? path.join(destination, ...relative)
+        ? (() => {
+            const target = path.join(destination, ...relative);
+            return originals?.get(path.resolve(target)) ?? target;
+          })()
         : null,
     });
   }
