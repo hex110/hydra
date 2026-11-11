@@ -6,6 +6,7 @@ import { registerEvent } from "../register-event";
 import { getGameAssets } from "../catalogue/get-game-assets";
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import {
+  isNonGameDirectory,
   isRedistributableDirectory,
   isRedistributablePath,
   rankExecutableCandidates,
@@ -129,7 +130,12 @@ const listGameFiles = async (
       const entryPath = path.join(current, entry.name);
 
       if (entry.isDirectory()) {
-        if (!isRedistributableDirectory(entry.name)) await walk(entryPath);
+        if (
+          !isRedistributableDirectory(entry.name) &&
+          !isNonGameDirectory(entryPath)
+        ) {
+          await walk(entryPath);
+        }
         continue;
       }
 

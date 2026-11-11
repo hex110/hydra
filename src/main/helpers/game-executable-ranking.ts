@@ -38,6 +38,7 @@ const SHARED_RUNTIME_FILES = new Set([
   "java.exe",
   "dotnet.exe",
   "setup.exe",
+  "update.exe",
 ]);
 
 const toSegments = (value: string) =>
@@ -47,6 +48,31 @@ const basenameOf = (relativePath: string) => toSegments(relativePath).at(-1);
 
 export const isRedistributableDirectory = (directoryName: string) =>
   REDIST_DIRECTORIES.has(directoryName.toLowerCase());
+
+const STEAM_TOOL_DIRECTORY =
+  /^(spacewar|steam ?linux ?runtime.*|steamworks common redistributables|proton\b[\s-]*(\d|experimental|hotfix|stable).*|proton-.+)$/;
+
+/**
+ * Wine and Proton ship their own `start.exe`, `notepad.exe` and friends, and
+ * Steam installs tools such as Spacewar beside games; none of them is a game
+ * a scan should offer.
+ */
+export const isNonGameDirectory = (directoryPath: string) => {
+  const segments = toSegments(directoryPath);
+  const name = segments.at(-1) ?? "";
+  const parent = segments.at(-2);
+
+  if (name === "compatibilitytools.d") return true;
+  if (name === "wine" && (parent === "lib" || parent === "lib64")) return true;
+  if (name === "windows" && parent === "drive_c") return true;
+  if (name.startsWith("ge-proton")) return true;
+
+  return (
+    parent === "common" &&
+    segments.at(-3) === "steamapps" &&
+    STEAM_TOOL_DIRECTORY.test(name)
+  );
+};
 
 export const isThirdPartyInstallerPath = (relativePath: string) => {
   const segments = toSegments(relativePath);
