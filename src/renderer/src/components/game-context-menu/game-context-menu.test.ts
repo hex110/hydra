@@ -11,6 +11,7 @@ import type { GameContextMenuGame } from "./game-context-menu.types";
 import {
   canSwitchDownloadSource,
   findLibraryGamePresentation,
+  getFolderUninstallTarget,
   getRemoveFilesTarget,
   getLibraryGameMembers,
   isLibraryGameDownloading,
@@ -216,6 +217,7 @@ async function fixture(
     getOfficialStoreMembers,
     getLibraryGameMembers,
     getRemoveFilesTarget,
+    getFolderUninstallTarget,
     isSameRemoveFilesTarget,
     isValidSteamAppId,
   };
@@ -339,6 +341,7 @@ async function fixture(
         });
         return null;
       },
+      UninstallGameModal: stubComponent,
       CreateCollectionModal: stubComponent,
     },
     "@renderer/hooks": hooks,
@@ -645,14 +648,16 @@ describe("context menu download identity", () => {
     assert.equal(state.item("remove-files").disabled, true);
   });
 
-  it("hides Remove files after the Steam executable check resolves false", async (t) => {
+  it("offers Hydra's own uninstall once the executable proves to be outside Steam", async (t) => {
     const state = await fixture(t, [steam]);
 
     await state.setSteamExecutableCheck(null);
     assert.equal(state.item("remove-files").disabled, true);
 
     await state.setSteamExecutableCheck(false);
-    assert.equal(state.hasItem("remove-files"), false);
+    assert.equal(state.item("remove-files").disabled, false);
+    await state.click("remove-files");
+    assert.equal(state.steamConfirmation?.visible, false);
   });
 
   it("routes Steam removal through the Steam uninstall bridge", async (t) => {
@@ -807,12 +812,13 @@ describe("context menu download identity", () => {
     );
   });
 
-  it("hides Steam removal when the uninstall bridge is unavailable", async (t) => {
+  it("falls back to Hydra's own uninstall when the Steam bridge is unavailable", async (t) => {
     const state = await fixture(t, [steam]);
     await state.setSteamExecutableCheck(true);
     await state.removeSteamUninstallBridge();
 
-    assert.equal(state.hasItem("remove-files"), false);
+    // Hydra's planner refuses Steam library folders itself.
+    assert.equal(state.item("remove-files").disabled, false);
   });
 
   it("hides Steam removal for an invalid app ID", async (t) => {

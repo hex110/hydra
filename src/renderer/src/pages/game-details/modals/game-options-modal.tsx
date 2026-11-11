@@ -7,11 +7,16 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, SteamUninstallModal } from "@renderer/components";
+import {
+  Modal,
+  SteamUninstallModal,
+  UninstallGameModal,
+} from "@renderer/components";
 import {
   formatBytes,
   getGameExecutableFilters,
   getGameCatalogueIdentity,
+  getFolderUninstallTarget,
   getRemoveFilesTarget,
   isSameRemoveFilesTarget,
   applyLibraryGroupAction,
@@ -292,6 +297,8 @@ export function GameOptionsModal({
   );
   const {
     steamUninstallTarget,
+    isSteamProbePending,
+    isSteamLibraryExecutable,
     isUninstalling: steamUninstalling,
     handleSteamUninstall,
   } = useSteamUninstallAction(
@@ -302,7 +309,16 @@ export function GameOptionsModal({
       onTargetChanged: () => setPendingRemoveFilesTarget(null),
     }
   );
-  const removeFilesTarget = hydraRemoveFilesTarget ?? steamUninstallTarget;
+  const folderUninstallTarget = useMemo(
+    () => getFolderUninstallTarget(presentation ?? game),
+    [presentation, game]
+  );
+  const removeFilesTarget =
+    hydraRemoveFilesTarget ??
+    steamUninstallTarget ??
+    (isSteamProbePending || isSteamLibraryExecutable
+      ? null
+      : folderUninstallTarget);
   const removeFilesDeleting =
     removeFilesTarget?.kind === "hydra" &&
     isGameDeleting(removeFilesTarget.game.objectId);
@@ -1442,6 +1458,21 @@ export function GameOptionsModal({
         onClose={() => {
           if (!steamUninstalling) setPendingRemoveFilesTarget(null);
         }}
+      />
+      <UninstallGameModal
+        visible={pendingRemoveFilesTarget?.kind === "folder"}
+        target={
+          pendingRemoveFilesTarget?.kind === "folder"
+            ? pendingRemoveFilesTarget.game
+            : null
+        }
+        onClose={() => setPendingRemoveFilesTarget(null)}
+        onUninstalled={() => {
+          showSuccessToast(t("uninstall_success", { game: game.title }));
+          updateGame();
+          void updateLibrary();
+        }}
+        onError={showErrorToast}
       />
       <RemoveGameFromLibraryModal
         visible={showRemoveGameModal}

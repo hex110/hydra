@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { Download, DownloadStatus, LibraryGame } from "@types";
 import {
   findLibraryGamePresentation,
+  getFolderUninstallTarget,
   getRemoveFilesTarget,
   groupLibraryGames,
   isLibraryGameDownloading,
@@ -325,6 +326,33 @@ describe("library catalogue presentation", () => {
         .availableShops,
       ["epic"]
     );
+  });
+
+  describe("folder uninstall target", () => {
+    it("targets a game Hydra didn't download", () => {
+      const game = makeGame({ executablePath: "/games/Celeste/Celeste.exe" });
+
+      assert.deepEqual(getFolderUninstallTarget(game), {
+        kind: "folder",
+        game,
+      });
+    });
+
+    it("leaves downloads, Steam libraries and emulated games alone", () => {
+      const cases = [
+        makeGame({ executablePath: "/g/a.exe", download: makeDownload() }),
+        makeGame({ executablePath: "/s/steamapps/common/A/a.exe" }),
+        makeGame({ executablePath: "/roms/a.iso", shop: "launchbox" }),
+        makeGame({
+          executablePath: "/roms/a.cue",
+          discs: [{ path: "/roms/a.cue" } as never],
+        }),
+        makeGame({ executablePath: null }),
+      ];
+
+      for (const game of cases)
+        assert.equal(getFolderUninstallTarget(game), null);
+    });
   });
 
   describe("remove files target", () => {

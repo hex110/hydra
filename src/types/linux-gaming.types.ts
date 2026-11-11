@@ -89,3 +89,27 @@ export interface WinePrefixInfo {
   exists: boolean;
   sizeInBytes: number | null;
 }
+
+export type GameUninstallPlanError =
+  | "no-executable"
+  | "not-found"
+  | "steam-managed"
+  | "protected-folder"
+  | "shared-folder"
+  | "symlink"
+  | "has-download";
+
+/** What uninstalling a game Hydra didn't download would delete. */
+export type GameUninstallPlan =
+  | {
+      ok: true;
+      folder: { path: string; sizeInBytes: number };
+      /** The game's own Wine prefix; null when there is none or it is shared. */
+      prefix: {
+        path: string;
+        /** Null when the game folder sits inside the prefix. */
+        sizeInBytes: number | null;
+        holdsGame: boolean;
+      } | null;
+    }
+  | { ok: false; error: GameUninstallPlanError };

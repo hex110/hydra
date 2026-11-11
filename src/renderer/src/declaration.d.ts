@@ -72,6 +72,7 @@ import type {
   ProtonFlavorOverview,
   ProtonInstallProgress,
   WinePrefixInfo,
+  GameUninstallPlan,
   GameSaveBackups,
   GameUpdateCheckResult,
   GameUpdateFailedEvent,
@@ -1308,6 +1309,15 @@ declare global {
       options?: { deleteSourceArchive?: boolean; keepEpicUpdateFiles?: boolean }
     ) => Promise<unknown>;
     hasSourceArchive: (shop: GameShop, objectId: string) => Promise<boolean>;
+    getGameUninstallPlan: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameUninstallPlan>;
+    uninstallGameFolder: (
+      shop: GameShop,
+      objectId: string,
+      confirmed: { folder: string; prefix: string | null }
+    ) => Promise<{ ok: true } | { ok: false; error: string }>;
     recheckInstalledExecutable: (
       shop: GameShop,
       objectId: string

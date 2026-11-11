@@ -1,0 +1,45 @@
+@use "../../scss/globals.scss";
+
+.uninstall-game-modal {
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 2);
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: globals.$spacing-unit;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit / 2);
+    padding: globals.$spacing-unit calc(globals.$spacing-unit * 1.5);
+    border: 1px solid globals.$border-color;
+    border-radius: 4px;
+  }
+
+  &__path {
+    font-family: monospace;
+    font-size: globals.$small-font-size;
+    color: globals.$muted-color;
+    overflow-wrap: anywhere;
+  }
+
+  &__hint {
+    font-size: globals.$hint-font-size;
+    color: globals.$body-color;
+  }
+
+  &__actions {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    gap: globals.$spacing-unit;
+  }
+}

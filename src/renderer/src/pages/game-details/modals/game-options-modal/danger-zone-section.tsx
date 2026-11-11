@@ -80,7 +80,7 @@ export function DangerZoneSection({
           {t("reset_playtime")}
         </Button>
 
-        {game.shop !== "custom" && (
+        {(game.shop !== "custom" || removeFilesTarget) && (
           <Button
             onClick={() => {
               if (removeFilesTarget) onOpenRemoveFiles(removeFilesTarget);

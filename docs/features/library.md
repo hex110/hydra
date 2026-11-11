@@ -90,8 +90,32 @@ show **Play** on hover the way cards do. The choice is remembered.
 Ctrl-click (Cmd on macOS) adds a card to the selection, Shift-click selects a
 range. A bar at the bottom then acts on all of them at once: set the play
 status, add to a collection, add to favourites, add to or remove from the
-wishlist, remove the files of installed copies, or remove them from the
+wishlist, uninstall the copies Hydra downloaded, or remove them from the
 library (both ask first). **Esc** or the bar's **×** clears the selection.
+
+## Uninstalling
+
+**Uninstall** (game context menu → **Manage game**, or the game's Options →
+**Danger Zone**) depends on where the game came from:
+
+| The game                                    | Uninstall                                                             |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| Hydra downloaded it                         | Deletes the download folder (and, if ticked, the source archive).     |
+| It sits in a Steam library                  | Asks Steam to uninstall it.                                           |
+| It was installed some other way (scan, exe) | Hydra finds its files itself and lists them before deleting anything. |
+
+For the last kind (`src/main/services/game-uninstall/`), Hydra takes the
+folder directly inside a library or download folder that holds the
+executable, or else the game root found from the executable. It then climbs
+out of parents that hold nothing but that folder (at most three), and adds the
+game's own Wine prefix as a ticked option. It refuses, with a reason, when the
+folder is or holds the home folder, a library, download or Steam library
+folder, the prefix root, a mount point or a folder named like a games folder
+(`Games`, `Program Files`, `drive_c`, …), or when another library game's
+executable or prefix is inside it. A prefix another game uses is never
+offered. Emulated games are not offered at all, since their ROM folder holds
+other games. The plan is built again when you confirm and must match what the
+dialog showed. The game stays in the library without an executable.
 
 ## Keyboard
 

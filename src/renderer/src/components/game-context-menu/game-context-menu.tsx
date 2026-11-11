@@ -5,6 +5,7 @@ import {
   applyLibraryGroupAction,
   canSwitchDownloadSource,
   Downloader,
+  getFolderUninstallTarget,
   getRemoveFilesTarget,
   isLibraryGameDownloading,
   PLAY_STATUSES,
@@ -42,6 +43,7 @@ import {
   ConfirmationModal,
   CreateCollectionModal,
   SteamUninstallModal,
+  UninstallGameModal,
   useGameActions,
 } from "..";
 import {
@@ -95,6 +97,7 @@ export function GameContextMenu({
   const [showConfirmRemoveLibrary, setShowConfirmRemoveLibrary] =
     useState(false);
   const [showConfirmRemoveFiles, setShowConfirmRemoveFiles] = useState(false);
+  const [showConfirmUninstall, setShowConfirmUninstall] = useState(false);
   const [pendingSteamUninstallTarget, setPendingSteamUninstallTarget] =
     useState<RemoveFilesTarget | null>(null);
   const [showCreateCollectionModal, setShowCreateCollectionModal] =
@@ -162,15 +165,28 @@ export function GameContextMenu({
   const hydraRemoveFilesAvailable =
     hydraRemoveFilesTarget !== null ||
     Boolean(downloadGame.download?.downloadPath);
-  const { steamUninstallTarget, isSteamProbePending, handleSteamUninstall } =
-    useSteamUninstallAction(
-      targetSource,
-      visible && !hydraRemoveFilesAvailable
-    );
+  const {
+    steamUninstallTarget,
+    isSteamProbePending,
+    isSteamLibraryExecutable,
+    handleSteamUninstall,
+  } = useSteamUninstallAction(
+    targetSource,
+    visible && !hydraRemoveFilesAvailable
+  );
+  const folderUninstallTarget =
+    targetSource &&
+    !hydraRemoveFilesAvailable &&
+    !isSteamProbePending &&
+    !isSteamLibraryExecutable &&
+    steamUninstallTarget === null
+      ? getFolderUninstallTarget(targetSource)
+      : null;
   const showRemoveFiles =
     hydraRemoveFilesAvailable ||
     isSteamProbePending ||
-    steamUninstallTarget !== null;
+    steamUninstallTarget !== null ||
+    folderUninstallTarget !== null;
   const hydraRemoveFilesDeleting =
     hydraRemoveFilesTarget?.kind === "hydra" &&
     isGameDeleting(hydraRemoveFilesTarget.game.objectId);
@@ -189,6 +205,7 @@ export function GameContextMenu({
     if (!visible) {
       setShowConfirmRemoveLibrary(false);
       setShowConfirmRemoveFiles(false);
+      setShowConfirmUninstall(false);
       setPendingSteamUninstallTarget(null);
     }
   }, [visible]);
@@ -655,7 +672,9 @@ export function GameContextMenu({
                   }
                   if (steamUninstallTarget) {
                     setPendingSteamUninstallTarget(steamUninstallTarget);
+                    return;
                   }
+                  if (folderUninstallTarget) setShowConfirmUninstall(true);
                 },
                 disabled: removeFilesDisabled,
                 danger: true,
@@ -679,6 +698,7 @@ export function GameContextMenu({
   if (
     showConfirmRemoveLibrary ||
     showConfirmRemoveFiles ||
+    showConfirmUninstall ||
     pendingSteamUninstallTarget !== null
   ) {
     forceOpenSubmenuId = "manage";
@@ -747,6 +767,20 @@ export function GameContextMenu({
             deleteSourceArchive
           );
         }}
+      />
+
+      <UninstallGameModal
+        visible={showConfirmUninstall}
+        target={folderUninstallTarget?.game ?? null}
+        onClose={() => {
+          setShowConfirmUninstall(false);
+          onClose();
+        }}
+        onUninstalled={() => {
+          showSuccessToast(t("uninstall_success", { game: game.title }));
+          void updateLibrary();
+        }}
+        onError={showErrorToast}
       />
 
       <SteamUninstallModal

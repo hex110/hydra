@@ -171,10 +171,10 @@ on disk:
 | Nothing left on disk                                            | "Files missing"                    |
 
 The ⋮ button opens the same menu as right-clicking the game in the sidebar
-(torrents also get seeding controls under **Manage game**). **Remove files** is
+(torrents also get seeding controls under **Manage game**). **Uninstall** is
 in that menu's **Manage game** submenu. The ✕ button clears a row from the list
 and **Clear all** (in **Recent**) clears every finished one. Clearing only hides the row; the
-files, the game and its download record stay, so **Remove files** and **Open
+files, the game and its download record stay, so **Uninstall** and **Open
 download location** keep working. Rows that are seeding or extracting are not
 cleared. Starting a new download of the game shows it again.
 

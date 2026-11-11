@@ -1953,6 +1953,13 @@ contextBridge.exposeInMainWorld("electron", {
   ) => ipcRenderer.invoke("deleteGameFolder", shop, objectId, options),
   recheckInstalledExecutable: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("recheckInstalledExecutable", shop, objectId),
+  getGameUninstallPlan: (shop: GameShop, objectId: string) =>
+    ipcRenderer.invoke("getGameUninstallPlan", shop, objectId),
+  uninstallGameFolder: (
+    shop: GameShop,
+    objectId: string,
+    confirmed: { folder: string; prefix: string | null }
+  ) => ipcRenderer.invoke("uninstallGameFolder", shop, objectId, confirmed),
   hasSourceArchive: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("hasSourceArchive", shop, objectId),
   getGameByObjectId: (shop: GameShop, objectId: string) =>

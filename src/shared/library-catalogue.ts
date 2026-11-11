@@ -103,7 +103,8 @@ export const selectDownloadLibraryGame = (
 
 export type RemoveFilesTarget =
   | { kind: "hydra"; game: LibraryGame }
-  | { kind: "steam"; game: LibraryGame; appId: string };
+  | { kind: "steam"; game: LibraryGame; appId: string }
+  | { kind: "folder"; game: LibraryGame };
 
 const STEAM_APP_ID_PATTERN = /^[1-9]\d{0,9}$/;
 
@@ -116,7 +117,7 @@ export const isSameRemoveFilesTarget = (
 ): boolean => {
   if (target.kind !== other.kind) return false;
 
-  if (target.kind === "hydra" && other.kind === "hydra") {
+  if (target.kind !== "steam" && other.kind !== "steam") {
     return (
       target.game.shop === other.game.shop &&
       target.game.objectId === other.game.objectId
@@ -171,6 +172,34 @@ export const getRemoveFilesTarget = (
     game: steamMember,
     appId: steamMember.objectId,
   };
+};
+
+/**
+ * A game Hydra didn't download but can find on disk: Hydra deletes its folder
+ * and prefix itself. Emulated games are left alone, as their ROM folder holds
+ * other games. Use it only when there is no Hydra or Steam target.
+ */
+export const getFolderUninstallTarget = (
+  game: LibraryGame
+): RemoveFilesTarget | null => {
+  const members = getLibraryGameMembers(game);
+  if (members.some((member) => member.download)) return null;
+
+  const operationalGame = getLibraryOperationalGame(game);
+  const member = [operationalGame, ...members].find(
+    (candidate) => candidate.executablePath
+  );
+  if (
+    !member ||
+    member.shop === "launchbox" ||
+    /[\\/]steamapps[\\/]/i.test(member.executablePath ?? "") ||
+    (member.discs?.length ?? 0) > 0 ||
+    member.epicInstallation
+  ) {
+    return null;
+  }
+
+  return { kind: "folder", game: member };
 };
 
 const latestDate = (values: (Date | null)[]): Date | null =>

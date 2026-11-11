@@ -22,6 +22,7 @@ export * from "./vertical-cover-card/vertical-cover-card";
 export * from "./badge/badge";
 export * from "./confirmation-modal/confirmation-modal";
 export * from "./steam-uninstall-modal/steam-uninstall-modal";
+export * from "./uninstall-game-modal/uninstall-game-modal";
 export * from "./suspense-wrapper/suspense-wrapper";
 export * from "./context-menu/context-menu";
 export * from "./game-context-menu/game-context-menu";
