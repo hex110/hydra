@@ -18,7 +18,8 @@ export function useSearchSuggestions(
   query: string,
   isOnLibraryPage: boolean,
   enabled: boolean = true,
-  shop: SuggestionShop = "steam"
+  shop: SuggestionShop = "steam",
+  limit: number = 3
 ) {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -168,11 +169,11 @@ export function useSearchSuggestions(
     }
 
     if (isOnLibraryPage) {
-      const librarySuggestions = getLibrarySuggestions(query, 3);
+      const librarySuggestions = getLibrarySuggestions(query, limit);
       setSuggestions(librarySuggestions);
       setIsLoading(false);
     } else {
-      debouncedFetchCatalogue(query, 3, shop);
+      debouncedFetchCatalogue(query, limit, shop);
     }
 
     return () => {
@@ -184,6 +185,7 @@ export function useSearchSuggestions(
     isOnLibraryPage,
     enabled,
     shop,
+    limit,
     getLibrarySuggestions,
     debouncedFetchCatalogue,
   ]);

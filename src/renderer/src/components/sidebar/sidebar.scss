@@ -94,6 +94,39 @@
     color: rgba(255, 255, 255, 0.5);
   }
 
+  &__catalogue-results {
+    padding-top: calc(globals.$spacing-unit * 2);
+  }
+
+  &__catalogue-heading {
+    margin: 0;
+    padding: 0 globals.$spacing-unit globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: globals.with-alpha(globals.$body-color, 0.6);
+  }
+
+  &__catalogue-status {
+    margin: 0;
+    padding: globals.$spacing-unit;
+    font-size: globals.$small-font-size;
+    color: globals.with-alpha(globals.$body-color, 0.5);
+  }
+
+  &__catalogue-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__catalogue-all {
+    font-size: globals.$hint-font-size;
+  }
+
   &__handle {
     width: 5px;
     height: 100%;

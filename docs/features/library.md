@@ -173,6 +173,11 @@ executable, a scan or a Steam/Epic import — so games installed before this
 existed sort by last played until they are played or reinstalled. Starting or
 ending a session refreshes the list, so the game you just played moves up at
 once.
+
+Typing in the sidebar's filter also searches the catalogue: under the library
+matches, **From the catalogue** lists up to five games that aren't in the
+library (two characters or more, after a short pause). A result opens its game
+page; **See all in the catalogue** opens the catalogue with that search.
 **Favorites on top** is a switch below the sorts and applies to all of them.
 Games that are in the library but not installed show with a gray name and a
 faded, grayscale icon, as in Steam.

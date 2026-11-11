@@ -53,6 +53,7 @@ import {
 import { Tooltip } from "react-tooltip";
 import deckyIcon from "@renderer/assets/icons/decky.png";
 import cn from "classnames";
+import { SidebarCatalogueResults } from "./sidebar-catalogue-results";
 import { SidebarFilterMenu } from "./sidebar-filter-menu";
 import { SidebarGameItem } from "./sidebar-game-item";
 import { SidebarGameListSkeleton } from "./sidebar-game-list-skeleton";
@@ -588,7 +589,9 @@ export function Sidebar() {
 
                 {hasActiveFilter && visibleGames.length === 0 && (
                   <p className="sidebar__game-list-empty">
-                    {t("library:no_results")}
+                    {isSearching
+                      ? t("no_library_matches")
+                      : t("library:no_results")}
                   </p>
                 )}
 
@@ -622,6 +625,15 @@ export function Sidebar() {
                     );
                   })}
                 </div>
+
+                {isSearching && (
+                  <div style={{ marginRight: 16 - scrollbarWidth }}>
+                    <SidebarCatalogueResults
+                      query={filterQuery}
+                      library={orderedLibrary}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </section>
