@@ -42,6 +42,17 @@ export interface InstalledMod {
   needsLoader?: ModLoaderKind;
   /** It ships ReShade add-ons (`.addon64`/`.addon32`): it needs ReShade's add-on build. */
   needsReShade?: boolean;
+  /** The game's installed release when the mod was installed, if known. */
+  gameVersion?: string;
+  /** The game was updated after this mod was installed; it may not work. */
+  gameUpdatedSince?: ModGameUpdate;
+}
+
+export interface ModGameUpdate {
+  /** The release the mod was installed for, when known. */
+  from: string | null;
+  to: string | null;
+  at: string;
 }
 
 export type ModLoaderKind = "bepinex" | "melonloader";
@@ -297,6 +308,7 @@ export type ModActivityKind =
   | "load-order"
   | "placement-waiting"
   | "placement-chosen"
+  | "game-updated"
   | "error";
 
 /** One line of a game's `activity.jsonl`. Never holds tokens or signed URLs. */

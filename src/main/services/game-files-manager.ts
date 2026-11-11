@@ -67,6 +67,7 @@ import { WindowManager } from "./window-manager";
 import { runAutomaticCloudSaveSync } from "./cloud-save";
 import { GameSetup } from "./game-setup";
 import { GameUpdater, recordDownloadedRelease } from "./game-updates";
+import { ModStore } from "./mods/mod-store";
 import { updateGameRecord } from "./game-record-updater";
 
 const PROGRESS_THROTTLE_MS = 1000;
@@ -1333,6 +1334,14 @@ export class GameFilesManager {
     }
 
     this.updateExtractionProgress(0, true);
+
+    // Mods deployed into the game would be compared, and overwritten, as if
+    // they were the game's own files.
+    await ModStore.takeOutBeforeGameFiles(
+      this.shop,
+      this.objectId,
+      download.update?.installDirectory ?? extractionPath
+    );
 
     const delta = resume
       ? null

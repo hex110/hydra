@@ -12,6 +12,7 @@ import {
   publishGameUpdateFailedNotification,
   publishGameUpdatedNotification,
 } from "@main/services/notifications";
+import { ModStore } from "@main/services/mods/mod-store";
 import { SaveBackups } from "@main/services/save-backups";
 import { WindowManager } from "@main/services/window-manager";
 import { Wine } from "@main/services/wine";
@@ -149,36 +150,51 @@ export class GameUpdater {
 
     const backupPath = await backupSaves(game, executablePath);
 
-    let movedFiles = 0;
-    if (!sameFolder) {
-      movedFiles = await mergeDirectoryInto(updateRoot, installDirectory);
-      await fs.promises.rm(extractedDirectory, {
-        recursive: true,
-        force: true,
-      });
-    }
+    const nextVersion = download.release
+      ? toInstalledVersion(download.release, installDirectory, "update")
+      : null;
 
-    const nextExecutable = fs.existsSync(executablePath)
-      ? executablePath
-      : await findOrGuessGameExecutable(
-          installDirectory,
-          GameExecutables.getExecutablesForGame(game.objectId),
-          game.title
-        );
+    // Mods are taken out while the files move, so the update replaces the
+    // game's own files and the mods go back over the new ones.
+    const movedFiles = await ModStore.applyGameUpdate(
+      game.shop,
+      game.objectId,
+      {
+        from: game.installedVersion?.title ?? null,
+        to: nextVersion?.title ?? null,
+      },
+      async () => {
+        let moved = 0;
+        if (!sameFolder) {
+          moved = await mergeDirectoryInto(updateRoot, installDirectory);
+          await fs.promises.rm(extractedDirectory, {
+            recursive: true,
+            force: true,
+          });
+        }
 
-    const refreshed = (await gamesSublevel.get(gameKey)) ?? game;
-    const withExecutable = nextExecutable
-      ? updateGameExecutablePath(refreshed, nextExecutable)
-      : refreshed;
+        const nextExecutable = fs.existsSync(executablePath)
+          ? executablePath
+          : await findOrGuessGameExecutable(
+              installDirectory,
+              GameExecutables.getExecutablesForGame(game.objectId),
+              game.title
+            );
 
-    await gamesSublevel.put(gameKey, {
-      ...withExecutable,
-      installedVersion: download.release
-        ? toInstalledVersion(download.release, installDirectory, "update")
-        : null,
-      availableUpdate: null,
-      installedSizeInBytes: await getDirectorySize(installDirectory),
-    });
+        const refreshed = (await gamesSublevel.get(gameKey)) ?? game;
+        const withExecutable = nextExecutable
+          ? updateGameExecutablePath(refreshed, nextExecutable)
+          : refreshed;
+
+        await gamesSublevel.put(gameKey, {
+          ...withExecutable,
+          installedVersion: nextVersion,
+          availableUpdate: null,
+          installedSizeInBytes: await getDirectorySize(installDirectory),
+        });
+        return moved;
+      }
+    );
 
     // The download now points at the installed folder, like a fresh install.
     await downloadsSublevel.put(gameKey, {

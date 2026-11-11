@@ -333,6 +333,18 @@ const singleWrapperFolder = (files: string[]) => {
 const EVIDENCE_REFRESH_MS = 14 * 24 * 60 * 60_000;
 const EVIDENCE_WAIT_MS = 10_000;
 
+/** One folder is the other or holds it. */
+export const foldersOverlap = (a: string, b: string) => {
+  const inside = (parent: string, child: string) => {
+    const relative = path.relative(path.resolve(parent), path.resolve(child));
+    return (
+      relative === "" ||
+      (!relative.startsWith("..") && !path.isAbsolute(relative))
+    );
+  };
+  return inside(a, b) || inside(b, a);
+};
+
 const queues = new Map<string, Promise<unknown>>();
 
 /** Runs one change to a game's mods at a time. */
@@ -537,6 +549,113 @@ export class ModStore {
       removed: deployed.files.length,
       restored: deployed.files.filter((file) => file.backup).length,
     };
+  }
+
+  private static async undeployForGameFiles(
+    shop: GameShop,
+    objectId: string,
+    folder: string,
+    reason: "game-extraction" | "game-update"
+  ) {
+    const undeployed = await this.undeploy(folder);
+    if (undeployed && undeployed.removed > 0)
+      await ModActivity.append(shop, objectId, {
+        kind: "undeploy",
+        message: `Took ${count(undeployed.removed, "mod file")} out of the game folder and put back ${count(undeployed.restored, "file")} of the game's own, so the game's new files replace its own files and not the mods'.`,
+        details: { ...undeployed, reason },
+      });
+  }
+
+  /**
+   * Before game files are extracted into `directory`: takes the mods out when
+   * they are deployed there, so an update is compared with the game's own
+   * files and the backups of the files mods replace don't go stale. The update
+   * (or the next modded launch) puts them back.
+   */
+  public static async takeOutBeforeGameFiles(
+    shop: GameShop,
+    objectId: string,
+    directory: string
+  ) {
+    const folder = storeFolder(shop, objectId);
+    await serialize(folder, async () => {
+      const deployed = await readJson<DeployState | null>(
+        deployedFilePath(folder),
+        null
+      );
+      if (!deployed || !foldersOverlap(deployed.gameFolder, directory)) return;
+      await this.undeployForGameFiles(
+        shop,
+        objectId,
+        folder,
+        "game-extraction"
+      );
+    });
+  }
+
+  /**
+   * Runs `task` (an update's files moving into the game folder) with the mods
+   * out of it, then marks every mod as installed for the older release and,
+   * for Play (modded), deploys them again over the new files. If `task`
+   * throws, the mods stay out and the next modded launch puts them back.
+   */
+  public static async applyGameUpdate<T>(
+    shop: GameShop,
+    objectId: string,
+    versions: { from: string | null; to: string | null },
+    task: () => Promise<T>
+  ): Promise<T> {
+    const folder = storeFolder(shop, objectId);
+    return serialize(folder, async () => {
+      await this.undeployForGameFiles(shop, objectId, folder, "game-update");
+      const result = await task();
+      try {
+        await this.afterGameUpdate(shop, objectId, folder, versions);
+      } catch (error) {
+        logger.error("[Mods] Could not put mods back after a game update", {
+          gameKey: levelKeys.game(shop, objectId),
+          error,
+        });
+        await ModActivity.append(shop, objectId, {
+          kind: "error",
+          message: `Could not put the mods back after the game update: ${error instanceof Error ? error.message : String(error)}. Play (modded) tries again.`,
+        });
+      }
+      return result;
+    });
+  }
+
+  private static async afterGameUpdate(
+    shop: GameShop,
+    objectId: string,
+    folder: string,
+    versions: { from: string | null; to: string | null }
+  ) {
+    const state = await this.readMods(folder);
+    if (state.mods.length === 0) return;
+
+    const at = new Date().toISOString();
+    const mods = state.mods.map((mod) => ({
+      ...mod,
+      gameUpdatedSince: {
+        from: mod.gameUpdatedSince?.from ?? mod.gameVersion ?? versions.from,
+        to: versions.to,
+        at,
+      },
+    }));
+    await writeJson(modsFilePath(folder), { ...state, mods });
+    await ModActivity.append(shop, objectId, {
+      kind: "game-updated",
+      message: `The game was updated${versions.from ? ` from ${versions.from}` : ""}${versions.to ? ` to ${versions.to}` : ""}. ${count(mods.length, "mod")} ${mods.length === 1 ? "was" : "were"} installed for an older version and may need an update.`,
+      details: versions,
+    });
+
+    if ((state.playMode ?? "modded") !== "modded") return;
+    if (!mods.some((mod) => mod.enabled)) return;
+    const game = await this.loadGame(shop, objectId);
+    const gameFolder = resolveModGameFolder(game.executablePath ?? null);
+    if (!gameFolder) return;
+    await this.deploy(shop, objectId, folder, gameFolder, mods);
   }
 
   /**
@@ -1509,6 +1628,7 @@ export class ModStore {
       loader: options.loader ?? undefined,
       needsLoader: (!options.loader && options.needsLoader) || undefined,
       needsReShade: options.needsReShade || undefined,
+      gameVersion: options.game.installedVersion?.title || undefined,
     };
 
     let replaced: InstalledMod | undefined;
