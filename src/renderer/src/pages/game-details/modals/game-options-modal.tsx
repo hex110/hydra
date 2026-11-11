@@ -430,7 +430,9 @@ export function GameOptionsModal({
     }, 1000)
   ).current;
 
-  const handleRemoveGameFromLibrary = async () => {
+  const handleRemoveGameFromLibrary = async (options: {
+    ignoreExecutable: boolean;
+  }) => {
     try {
       await applyLibraryGroupAction(
         presentation?.members ?? [game],
@@ -441,7 +443,7 @@ export function GameOptionsModal({
               member.objectId
             );
           }
-          await removeGameFromLibrary(member.shop, member.objectId);
+          await removeGameFromLibrary(member.shop, member.objectId, options);
         }
       );
       onClose();

@@ -1,7 +1,12 @@
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { FileDirectoryIcon, SyncIcon, XIcon } from "@primer/octicons-react";
+import {
+  FileDirectoryIcon,
+  FileIcon,
+  SyncIcon,
+  XIcon,
+} from "@primer/octicons-react";
 
 import { Button, CheckboxField } from "@renderer/components";
 import { settingsContext } from "@renderer/context";
@@ -38,6 +43,24 @@ export function SettingsContextLibraryFolders() {
       libraryScanDirectories: [
         ...folders,
         ...filePaths.filter((filePath) => !folders.includes(filePath)),
+      ],
+    });
+  };
+
+  const handleAddIgnored = async (kind: "openFile" | "openDirectory") => {
+    const { canceled, filePaths } = await window.electron.showOpenDialog({
+      properties: [kind, "multiSelections"],
+      ...(kind === "openFile" && {
+        filters: [{ name: "Executables", extensions: ["exe"] }],
+      }),
+    });
+
+    if (canceled || filePaths.length === 0) return;
+
+    await updateUserPreferences({
+      libraryScanIgnoredFolders: [
+        ...ignoredFolders,
+        ...filePaths.filter((filePath) => !ignoredFolders.includes(filePath)),
       ],
     });
   };
@@ -123,12 +146,36 @@ export function SettingsContextLibraryFolders() {
         </p>
       </div>
 
-      {ignoredFolders.length > 0 && (
-        <div className="settings-context-panel__group">
+      <div className="settings-context-panel__group">
+        <div className="settings-library-folders__header">
           <h3>{t("library_folders_ignored")}</h3>
-          <p className="settings-library-folders__hint">
-            {t("library_folders_ignored_description")}
+          <div className="settings-library-folders__buttons">
+            <Button
+              type="button"
+              theme="outline"
+              onClick={() => handleAddIgnored("openFile")}
+            >
+              <FileIcon size={14} />
+              {t("library_folders_ignore_file")}
+            </Button>
+            <Button
+              type="button"
+              theme="outline"
+              onClick={() => handleAddIgnored("openDirectory")}
+            >
+              <FileDirectoryIcon size={14} />
+              {t("library_folders_ignore_folder")}
+            </Button>
+          </div>
+        </div>
+        <p className="settings-library-folders__hint">
+          {t("library_folders_ignored_description")}
+        </p>
+        {ignoredFolders.length === 0 ? (
+          <p className="settings-library-folders__empty">
+            {t("library_folders_ignored_empty")}
           </p>
+        ) : (
           <ul className="settings-library-folders__list">
             {ignoredFolders.map((folder) => (
               <li key={folder} className="settings-library-folders__item">
@@ -151,8 +198,8 @@ export function SettingsContextLibraryFolders() {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="settings-context-panel__group">
         <h3>{t("launcher_import_section")}</h3>

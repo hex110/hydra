@@ -361,7 +361,9 @@ export function useGameActions(requestedGame: GameContextMenuGame) {
     }
   };
 
-  const handleRemoveFromLibrary = async () => {
+  const handleRemoveFromLibrary = async (options?: {
+    ignoreExecutable: boolean;
+  }) => {
     try {
       await applyLibraryGroupAction(members, async (member) => {
         if (member.download?.status === "active") {
@@ -370,7 +372,7 @@ export function useGameActions(requestedGame: GameContextMenuGame) {
             member.objectId
           );
         }
-        await removeGameFromLibrary(member.shop, member.objectId);
+        await removeGameFromLibrary(member.shop, member.objectId, options);
       });
       showSuccessToast(t("game_removed_from_library"));
       try {

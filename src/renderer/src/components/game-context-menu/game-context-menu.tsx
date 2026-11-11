@@ -728,10 +728,10 @@ export function GameContextMenu({
         visible={showConfirmRemoveLibrary}
         game={game}
         onClose={() => setShowConfirmRemoveLibrary(false)}
-        removeGameFromLibrary={async () => {
+        removeGameFromLibrary={async (options) => {
           setShowConfirmRemoveLibrary(false);
           onClose();
-          await handleRemoveFromLibrary();
+          await handleRemoveFromLibrary(options);
         }}
       />
 

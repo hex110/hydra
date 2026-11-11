@@ -16,6 +16,11 @@
     gap: calc(globals.$spacing-unit * 2);
   }
 
+  &__buttons {
+    display: flex;
+    gap: globals.$spacing-unit;
+  }
+
   &__list {
     list-style: none;
     margin: 0;

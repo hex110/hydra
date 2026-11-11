@@ -1286,7 +1286,11 @@ declare global {
     getEmulatorRomExtensions: (system: EmulatorSystem) => Promise<string[]>;
     closeGame: (shop: GameShop, objectId: string) => Promise<boolean>;
     cancelGameLaunch: (shop: GameShop, objectId: string) => Promise<void>;
-    removeGameFromLibrary: (shop: GameShop, objectId: string) => Promise<void>;
+    removeGameFromLibrary: (
+      shop: GameShop,
+      objectId: string,
+      options?: { ignoreExecutable?: boolean }
+    ) => Promise<void>;
     removeGame: (shop: GameShop, objectId: string) => Promise<void>;
     deleteGameFolder: (
       shop: GameShop,

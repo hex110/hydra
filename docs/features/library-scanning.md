@@ -88,14 +88,29 @@ skeletons, native Linux games) are skipped, as are folders that already hold a
 library game. The scan results list the skipped folders under **N folders were
 skipped**, so a game that seems missed can be told apart from an empty folder.
 
-## Ignoring folders
+## Ignoring folders and executables
 
 Launchers and mod managers (`Prism Launcher`, `r2modman`, `Vortex Mods`)
-contain executables but are not games. **Not a game** next to a folder in the
-scan dialog ignores it for good: later scans skip the folder and everything
-inside it, including executable-name matches. Ignored folders are listed in
-**Settings → Library folders → Ignored folders**, where they can be scanned
-again. The list is stored as `libraryScanIgnoredFolders`.
+contain executables but are not games. Three ways to say so, all stored in one
+list, `libraryScanIgnoredFolders`:
+
+- **Not a game** next to a folder in the scan dialog.
+- **Don't add it again when scanning**, a checkbox in the dialog that removes
+  a game from the library (shown when the game has an executable). It ignores
+  that executable, so a scan neither re-adds the game by its executable name
+  nor picks the file when it identifies the folder.
+- **Settings → Library folders → Ignored folders and files**, with **Add file**
+  and **Add folder**. Entries can be removed there to scan them again.
+
+A folder entry makes scans skip the folder and everything inside it, including
+executable-name matches. A file entry only rules out that executable.
+
+Some things are never offered, with no setting needed: Wine and Proton
+runtimes (`compatibilitytools.d`, `lib/wine`, `drive_c/windows`, and Proton
+installs under `steamapps/common`, whose `start.exe` and `notepad.exe` match
+catalogue games), Steam tools such as Spacewar and the Steam Linux Runtime
+(`isNonGameDirectory`), and generic `Update.exe` files. Add a name there when a
+tool keeps turning up on every machine; use the ignore list for one-offs.
 
 ## After a game is added
 

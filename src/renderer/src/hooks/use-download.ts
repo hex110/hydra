@@ -174,8 +174,12 @@ export function useDownload() {
       await removeGameInstaller(shop, objectId, { keepEpicUpdateFiles: true });
   };
 
-  const removeGameFromLibrary = (shop: GameShop, objectId: string) =>
-    window.electron.removeGameFromLibrary(shop, objectId).then(() => {
+  const removeGameFromLibrary = (
+    shop: GameShop,
+    objectId: string,
+    options?: { ignoreExecutable?: boolean }
+  ) =>
+    window.electron.removeGameFromLibrary(shop, objectId, options).then(() => {
       updateLibrary();
     });
 

@@ -173,7 +173,7 @@ const identifyFolder = async (
 export const identifyUnclaimedFolders = async (options: {
   roots: string[];
   occupiedPaths: string[];
-  /** Folders the user marked as not a game. */
+  /** Folders or executables the user marked as not a game. */
   ignoredFolders: string[];
   libraryObjectIds: Set<string>;
   isCancelled: () => boolean;
@@ -218,7 +218,11 @@ export const identifyUnclaimedFolders = async (options: {
         });
         return null;
       });
-      if (result) identified.push(result);
+      if (!result) continue;
+      // The guessed executable was ignored on its own (a file, not a folder).
+      const executable = normalize(result.executablePath);
+      if ([...ignored].some((p) => isInside(executable, p))) continue;
+      identified.push(result);
     }
   };
 
