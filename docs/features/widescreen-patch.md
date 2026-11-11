@@ -51,6 +51,16 @@ OptiScaler and ReShade overrides. Nothing to type in the launch options.
 - Files removed from the game folder later (an update or a verify): the row is
   **Blocked** and says which; Off then On puts them back.
 
+## Game updates
+
+A patch is made for one version of the game. When a
+[game update in Hydra](updates.md#installing-an-update) ships a file the patch
+replaced, Hydra removes the patch instead of putting it back, and the update
+notification says so: install it again once it supports the new version. An
+update that leaves the patch's files alone takes the patch out and puts it
+back. If something else replaces a patched file later (a launcher's update),
+removing the patch keeps the new file instead of restoring the old backup.
+
 ## Not yet
 
 Nothing checks that the patch loaded (no first-run check), and the pinned build

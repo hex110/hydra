@@ -179,6 +179,15 @@ ReShade or its mod has a newer build; **Update** installs both again, and
 of each are kept in `<userData>/reshade` and `<userData>/renodx`, so an older
 one is still on disk; **Clear downloads** deletes them without touching games.
 
+## Game updates
+
+Each game file ReShade replaced is fingerprinted
+(size and CRC-32) in the manifest. A [game update in Hydra](updates.md#installing-an-update)
+takes ReShade and the mod out and puts ReShade and the mod back around the new files. If something else
+replaces one of those files later (a launcher's update or file check),
+removing ReShade and the mod keeps the new file and drops the old backup instead of
+restoring it.
+
 ## Linux
 
 Under Proton the proxy DLL must be loaded from the game folder, not Wine's

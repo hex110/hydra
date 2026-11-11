@@ -70,6 +70,26 @@ takes them out before the archive is compared and puts them back once the
 update is in, so the comparison sees the game's own files and the update
 never overwrites a mod.
 
+Tools that put files over the game's own ([OptiScaler](optiscaler.md),
+ReShade for [RenoDX](renodx.md), the [widescreen patch](widescreen-patch.md))
+are handled the same way:
+
+- the archive is compared with the game files they replaced, which they keep
+  in their backup folders, not with their own files;
+- right before the files move in, their files go to `.hydra-update-stash/`
+  beside them and the game's own files are put back;
+- afterwards they are laid back over the new files, and the new files become
+  their backups;
+- the widescreen patch is made for one game version, so if the update ships a
+  file it replaced, Hydra removes the patch instead and the notification says
+  to install it again once it supports the new version.
+
+The update dialog says, under **Install over the current version**, what
+will be taken out and put back; the update's row in **Needs you** summarises
+it. The notification after the update says what was put back or removed.
+Nexus mods are checked for updates afterwards, since a new game version
+often needs new mod versions.
+
 The download and extraction run as usual, except that Hydra compares the
 archive with the installed game first and extracts only the files that are new
 or different (size and CRC-32, see
@@ -90,8 +110,8 @@ looking for an executable:
    without a backup; nothing below touches their saves anyway.
 3. Every file of the update (the changed ones, with a delta extraction) is
    moved into the installed folder, replacing the file at the same path. Files only the installed copy has stay: saves and
-   configs kept in the game folder, OptiScaler and its manifest. Mods are
-   out of the folder during this step and are deployed again after it.
+   configs kept in the game folder. Mods and the tools above are out of the
+   folder during this step and are put back after it.
 4. The extracted folder is deleted, and the download now points at the
    installed folder.
 5. The installed version becomes the new release. If the old executable is

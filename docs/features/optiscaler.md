@@ -169,6 +169,13 @@ backed-up files back, deletes the folders Hydra created if they are empty and
 opts the game out of automatic installation. Files you added yourself, for
 example other ASI plugins in `plugins/`, are kept.
 
+**After a game update.** Each game file OptiScaler replaced is fingerprinted
+(size and CRC-32) in the manifest. A [game update in Hydra](updates.md#installing-an-update)
+takes OptiScaler out and puts OptiScaler back around the new files. If something else
+replaces one of those files later (a launcher's update or file check),
+removing OptiScaler keeps the new file and drops the old backup instead of
+restoring it.
+
 ## Files removed outside Hydra
 
 Before each launch, Hydra compares the manifest with the files on disk. When

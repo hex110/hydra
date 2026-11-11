@@ -236,6 +236,14 @@ one back. So Hydra:
 The activity log has a `game-updated` line for the update and an `undeploy`
 line with reason `game-extraction` or `game-update`.
 
+**Updates Hydra doesn't run** (Steam or Epic updating the game, a launcher's
+file check, a manual patch) can't be caught as they happen. So
+`deployed.json` records what each deployed file is: the hard link's inode,
+or a copy's size and modification time. Undeploying keeps a file that is no
+longer the mod's, since it is the game's new file, and drops its stale backup
+instead of restoring it. A Play (modded) launch that finds mod files replaced
+or missing deploys again, so the mods go back over the new files.
+
 ## Installed mods
 
 Each mod is unpacked into `<userData>/mods/<shop>/<objectId>/staging/<id>/`
