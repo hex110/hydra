@@ -2,6 +2,7 @@ import {
   AlertIcon,
   CheckIcon,
   DownloadIcon,
+  FileDirectoryIcon,
   FileIcon,
   GearIcon,
   PlayIcon,
@@ -27,6 +28,7 @@ import { FileArchive, XCircle } from "lucide-react";
 import {
   useDownload,
   useGameExecutablePicker,
+  useGameFolderPicker,
   useFinishedDownloadStep,
   useGameMods,
   useLibrary,
@@ -110,6 +112,7 @@ export function HeroPanelActions() {
     !!epicDownload && isEpicUpdateInterrupted(epicDownload);
 
   const pickGameExecutable = useGameExecutablePicker();
+  const pickGameFolder = useGameFolderPicker();
   const finishedDownloadStep = useFinishedDownloadStep(downloadGame);
 
   const { updateLibrary } = useLibrary();
@@ -946,16 +949,60 @@ export function HeroPanelActions() {
       );
     }
 
+    const hasDownloadSource =
+      repacks.length > 0 ||
+      canDownloadOnSteam(officialMembers.steam) ||
+      !!ownedSteamAppId ||
+      !!officialMembers.epic;
+
+    const locateGameFolder = async () => {
+      if (!game) return;
+      if (await pickGameFolder(game.shop, game.objectId)) updateGame();
+    };
+
+    const locateGameExecutable = async () => {
+      if (!game) return;
+      if (await pickGameExecutable(game.shop, game.objectId)) updateGame();
+    };
+
+    const options = [
+      {
+        id: "download",
+        label: t("download"),
+        hint: t("download_option_hint"),
+        checked: hasDownloadSource,
+        onSelect: () => setShowRepacksModal(true),
+      },
+      {
+        id: "folder",
+        label: t("locate_game_folder"),
+        hint: t("locate_game_folder_hint"),
+        checked: !hasDownloadSource,
+        onSelect: () => void locateGameFolder(),
+      },
+      {
+        id: "executable",
+        label: t("select_executable_manually", { ns: "downloads" }),
+        hint: t("select_executable_manually_hint", { ns: "downloads" }),
+        onSelect: () => void locateGameExecutable(),
+      },
+    ];
+
     return (
-      <Button
-        onClick={() => setShowRepacksModal(true)}
-        theme="outline"
+      <SplitButton
+        onClick={() =>
+          hasDownloadSource
+            ? setShowRepacksModal(true)
+            : void locateGameFolder()
+        }
         disabled={isGameDownloading}
-        className={`hero-panel-actions__action ${repacks.length === 0 && !canDownloadOnSteam(officialMembers.steam) && !ownedSteamAppId && !officialMembers.epic ? "hero-panel-actions__action--disabled" : ""}`}
+        menuLabel={t("locate_game_menu")}
+        partClassName="hero-panel-actions__action"
+        options={options}
       >
-        <DownloadIcon />
-        {t("download")}
-      </Button>
+        {hasDownloadSource ? <DownloadIcon /> : <FileDirectoryIcon />}
+        {hasDownloadSource ? t("download") : t("locate_game")}
+      </SplitButton>
     );
   };
 

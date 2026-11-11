@@ -210,6 +210,12 @@ match the hero shows **Find executable**: its main part runs the same search
 on demand (every folder in the prefix counts, so only a folder named like the
 game is trusted), and the arrow offers **Select manually…**.
 
+A library game that was never downloaded through Hydra gets a split
+**Download** button. Its arrow offers **Choose game folder…** for a copy
+installed some other way: Hydra finds the executable in that folder the way
+a library scan does, and opens the file picker there if it can't. When the
+game has no download source at all, **Locate game** is the main part.
+
 On Linux, an Inno Setup installer (every GOG offline installer, and most
 repacks) runs **unattended** (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`)
 into the folder the installer itself defaults to, `C:\GOG Games\<game>` for

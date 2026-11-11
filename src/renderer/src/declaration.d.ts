@@ -1224,6 +1224,11 @@ declare global {
       shop: GameShop,
       objectId: string
     ) => Promise<boolean>;
+    findExecutableInFolder: (
+      shop: GameShop,
+      objectId: string,
+      folderPath: string
+    ) => Promise<string | null>;
     getCompletedDownloadState: (
       shop: GameShop,
       objectId: string

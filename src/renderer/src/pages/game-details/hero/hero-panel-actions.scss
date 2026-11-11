@@ -10,10 +10,6 @@
   &__action {
     border: solid 1px globals.$muted-color;
 
-    &--disabled {
-      opacity: 0.5;
-    }
-
     // Play coming back after a session: a pop and one ripple ring.
     &--returned {
       animation:

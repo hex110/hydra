@@ -1864,6 +1864,11 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("showGameInstaller", shop, objectId),
   findGameExecutableAutomatically: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("findGameExecutableAutomatically", shop, objectId),
+  findExecutableInFolder: (
+    shop: GameShop,
+    objectId: string,
+    folderPath: string
+  ) => ipcRenderer.invoke("findExecutableInFolder", shop, objectId, folderPath),
   getCompletedDownloadState: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getCompletedDownloadState", shop, objectId),
   dismissDownloads: (downloads: { shop: GameShop; objectId: string }[]) =>

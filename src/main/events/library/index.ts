@@ -30,6 +30,7 @@ import "./has-game-installer";
 import "./get-game-installer-info";
 import "./show-game-installer";
 import "./find-game-executable-automatically";
+import "./find-executable-in-folder";
 import "./has-download-folder";
 import "./has-source-archive";
 import "./recheck-installed-executable";
