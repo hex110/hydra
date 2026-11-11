@@ -110,6 +110,7 @@ import type {
   SystemPowerAction,
   AppUpdaterEvent,
   GameShop,
+  GameUpdateAddOns,
   GameInstallerInfo,
   InstallerRunMode,
   Steam250Game,
@@ -1046,6 +1047,10 @@ declare global {
     isCheckingGameUpdates: () => Promise<boolean>;
     getGameUpdatesCheckedAt: () => Promise<number | null>;
     dismissGameUpdate: (shop: GameShop, objectId: string) => Promise<void>;
+    getGameUpdateAddOns: (
+      shop: GameShop,
+      objectId: string
+    ) => Promise<GameUpdateAddOns>;
     onGameUpdatesChecking: (cb: (checking: boolean) => void) => () => void;
     onGameUpdateFailed: (
       cb: (event: GameUpdateFailedEvent) => void

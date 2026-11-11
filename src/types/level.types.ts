@@ -94,6 +94,16 @@ export interface FileFingerprint {
   crc: number;
 }
 
+/** Tools that put files over a game's own and are kept across updates. */
+export type GameFileToolId = "optiscaler" | "renodx" | "widescreen-patch";
+
+/** What an in-place update takes out of the game and puts back after. */
+export interface GameUpdateAddOns {
+  /** Mods that are on. */
+  mods: number;
+  tools: GameFileToolId[];
+}
+
 export interface GameAvailableUpdate {
   release: DownloadRelease;
   detectedAt: string;

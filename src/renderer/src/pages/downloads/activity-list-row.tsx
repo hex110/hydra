@@ -5,7 +5,7 @@ import { PackageIcon, SyncIcon } from "@primer/octicons-react";
 
 import { ActivityRow, Button } from "@renderer/components";
 import { buildGameDetailsPath, buildGameModsPath } from "@renderer/helpers";
-import { useLibrary, useToast } from "@renderer/hooks";
+import { useGameUpdateAddOns, useLibrary, useToast } from "@renderer/hooks";
 import type { BackgroundTask, LibraryGame, ModDownload } from "@types";
 
 import type { ActivityItem } from "../../features/activity/activity.types";
@@ -169,10 +169,21 @@ function UpdateRow({
   const { t } = useTranslation("downloads");
   const navigate = useNavigate();
   const { updateLibrary } = useLibrary();
+  const addOns = useGameUpdateAddOns(game.shop, game.objectId);
 
   return (
     <ActivityRow
       {...common(item)}
+      status={
+        addOns.short
+          ? [item.status, addOns.short].filter(Boolean).join(" · ")
+          : item.status
+      }
+      statusTitle={
+        addOns.sentences.length > 0
+          ? [item.status, ...addOns.sentences].filter(Boolean).join("\n")
+          : undefined
+      }
       onOpen={() => navigate(buildGameDetailsPath(game))}
       primary={
         <Button

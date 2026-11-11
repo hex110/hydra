@@ -44,6 +44,7 @@ export * from "./use-drag-text-selection";
 export * from "./use-save-sync-statuses";
 export * from "./use-hover-preview";
 export * from "./use-game-mods";
+export * from "./use-game-update-add-ons";
 export * from "./use-system-specs";
 export * from "./use-steam-downloads";
 export * from "./use-background-tasks";

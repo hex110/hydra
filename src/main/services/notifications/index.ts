@@ -7,6 +7,7 @@ import icon from "@resources/icon.png?asset";
 import { logger } from "../logger";
 import { WindowManager } from "../window-manager";
 import type {
+  GameFileToolId,
   Game,
   GameCapabilityId,
   GameCapabilityReason,
@@ -458,8 +459,8 @@ export const publishSteamWishlistNotification = async (
 /** What happened to the game's mods and tools during an update. */
 export interface GameUpdatedAddOns {
   mods: number;
-  restored: ("optiscaler" | "renodx" | "widescreen-patch")[];
-  removed: ("optiscaler" | "renodx" | "widescreen-patch")[];
+  restored: GameFileToolId[];
+  removed: GameFileToolId[];
 }
 
 const describeUpdateAddOns = (addOns: GameUpdatedAddOns) => {

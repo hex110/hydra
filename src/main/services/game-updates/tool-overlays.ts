@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { FileFingerprint, Game } from "@types";
+import type { FileFingerprint, Game, GameFileToolId } from "@types";
 import {
   RENODX_BACKUP_DIRECTORY,
   RENODX_MANIFEST_FILE,
@@ -25,7 +25,7 @@ import {
  * not overwrite their files, and their backups must not go stale, so the
  * update takes them out first and lays them back over the new files.
  */
-export type ToolOverlayId = "optiscaler" | "renodx" | "widescreen-patch";
+export type ToolOverlayId = GameFileToolId;
 
 interface ToolOverlay {
   manifestFile: string;

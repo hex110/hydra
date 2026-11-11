@@ -22,6 +22,7 @@ import {
   useAppSelector,
   useDownload,
   useFeature,
+  useGameUpdateAddOns,
   useToast,
   useUserDetails,
 } from "@renderer/hooks";
@@ -323,6 +324,10 @@ export function DownloadSettingsModal({
     !installedGame.epicInstallation &&
     shop !== "launchbox";
   const [updateInPlace, setUpdateInPlace] = useState(false);
+  const updateAddOns = useGameUpdateAddOns(
+    isInstalled ? installedGame?.shop : null,
+    isInstalled ? installedGame?.objectId : null
+  );
   useEffect(() => {
     setUpdateInPlace(
       isInstalled &&
@@ -1722,6 +1727,11 @@ export function DownloadSettingsModal({
                 ? t("update_in_place_hint")
                 : t("update_in_place_off_hint")}
             </p>
+            {updateInPlace && updateAddOns.sentences.length > 0 && (
+              <p className="download-settings-modal__hint-text">
+                {updateAddOns.sentences.join(" ")}
+              </p>
+            )}
           </div>
         )}
 
