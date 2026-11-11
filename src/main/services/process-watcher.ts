@@ -14,6 +14,7 @@ import { db, gamesSublevel, levelKeys } from "@main/level";
 import { CloudSync } from "./cloud-sync";
 import { logger, networkLogger } from "./logger";
 import { PowerSaveBlockerManager } from "./power-save-blocker";
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { AchievementWatcherManager } from "./achievements/achievement-watcher-manager";
@@ -185,6 +186,25 @@ const logPlaytimeTrace = (
 
 void GameExecutables.ensureLoaded();
 
+// A process path is built from its working directory and name, so it can name
+// a file that does not exist (an emulator thread called `Game`).
+const pathExistsIgnoringCase = async (filePath: string) => {
+  try {
+    await fs.promises.access(filePath);
+    return true;
+  } catch {
+    // Linux process names are truncated and may differ in case.
+  }
+
+  try {
+    const wanted = path.basename(filePath).toLowerCase();
+    const entries = await fs.promises.readdir(path.dirname(filePath));
+    return entries.some((entry) => entry.toLowerCase() === wanted);
+  } catch {
+    return false;
+  }
+};
+
 const findGamePathByProcess = async (
   processMap: Map<string, Set<string>>,
   winePrefixMap: Map<string, string>,
@@ -205,7 +225,8 @@ const findGamePathByProcess = async (
         if (
           (path.toLowerCase().endsWith(executable.name) ||
             path.toLowerCase().endsWith(executablewithoutExtension)) &&
-          isPlausibleGameProcessPath(path)
+          isPlausibleGameProcessPath(path) &&
+          (await pathExistsIgnoringCase(path))
         ) {
           const gameKey = levelKeys.game("steam", gameId);
           const game = await gamesSublevel.get(gameKey);

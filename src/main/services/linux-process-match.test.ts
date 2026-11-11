@@ -112,6 +112,14 @@ describe("isPlausibleGameProcessPath", () => {
     assert.equal(isPlausibleGameProcessPath("/floppy/sh"), false);
     assert.equal(isPlausibleGameProcessPath("/usr/bin/python3"), false);
     assert.equal(isPlausibleGameProcessPath("/usr/lib/game/thing"), false);
+    assert.equal(
+      isPlausibleGameProcessPath("/home/me/Games/Hookshot/Game"),
+      false
+    );
+    assert.equal(
+      isPlausibleGameProcessPath("/home/me/Games/Foo/Game.exe"),
+      false
+    );
   });
 
   it("accepts game executables", () => {

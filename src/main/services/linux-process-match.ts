@@ -148,6 +148,14 @@ const GENERIC_PROGRAM_NAMES = new Set([
   "wine-preloader",
   "wine64-preloader",
   "steam",
+  // So common that many unrelated catalogue entries list them, and an
+  // emulator can run a thread called `Game`.
+  "game",
+  "main",
+  "app",
+  "start",
+  "run",
+  "play",
 ]);
 
 const SYSTEM_FOLDERS = [
