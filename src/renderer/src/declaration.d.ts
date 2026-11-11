@@ -773,6 +773,11 @@ declare global {
       modId: string,
       enabled: boolean
     ) => Promise<ModActionResult>;
+    clearModGameUpdateNote: (
+      shop: GameShop,
+      objectId: string,
+      modId: string
+    ) => Promise<ModActionResult>;
     moveMod: (
       shop: GameShop,
       objectId: string,

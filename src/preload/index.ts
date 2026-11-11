@@ -1359,6 +1359,8 @@ contextBridge.exposeInMainWorld("electron", {
     modId: string,
     enabled: boolean
   ) => ipcRenderer.invoke("setModEnabled", shop, objectId, modId, enabled),
+  clearModGameUpdateNote: (shop: GameShop, objectId: string, modId: string) =>
+    ipcRenderer.invoke("clearModGameUpdateNote", shop, objectId, modId),
   moveMod: (
     shop: GameShop,
     objectId: string,

@@ -182,6 +182,11 @@ export const formatModReport = (input: ModReportInput) => {
       mod.update
         ? `update available: ${mod.update.version ?? mod.update.name}`
         : null,
+      mod.gameUpdatedSince
+        ? `installed for ${mod.gameUpdatedSince.from ?? "an earlier game version"}, the game is now ${mod.gameUpdatedSince.to ?? "updated"}`
+        : mod.gameVersion
+          ? `installed for game version ${mod.gameVersion}`
+          : null,
     ].filter(Boolean);
     lines.push(`${index + 1}. ${mod.name}: ${notes.join(", ")}`);
   });

@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  CheckIcon,
   CopyIcon,
   FileDirectoryIcon,
   FileIcon,
@@ -615,6 +616,20 @@ export default function Mods() {
                             {t("overridden", { count: overridden })}
                           </span>
                         )}
+                        {mod.gameUpdatedSince && (
+                          <span
+                            title={t("game_updated_since_hint", {
+                              from:
+                                mod.gameUpdatedSince.from ??
+                                t("game_updated_since_unknown"),
+                              to:
+                                mod.gameUpdatedSince.to ??
+                                t("game_updated_since_unknown"),
+                            })}
+                          >
+                            {t("game_updated_since")}
+                          </span>
+                        )}
                       </div>
                       <div className="mods__row-actions">
                         {mod.update && (
@@ -628,6 +643,26 @@ export default function Mods() {
                               version: mod.update.version ?? mod.update.name,
                             })}
                           </Button>
+                        )}
+                        {mod.gameUpdatedSince && (
+                          <button
+                            type="button"
+                            className="mods__icon-button"
+                            disabled={busy}
+                            onClick={() =>
+                              run(() =>
+                                window.electron.clearModGameUpdateNote(
+                                  shop,
+                                  objectId,
+                                  mod.id
+                                )
+                              )
+                            }
+                            title={t("game_updated_since_dismiss")}
+                            aria-label={t("game_updated_since_dismiss")}
+                          >
+                            <CheckIcon />
+                          </button>
                         )}
                         <button
                           type="button"

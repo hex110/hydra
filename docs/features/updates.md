@@ -65,6 +65,11 @@ A notification is posted when a check finds new updates.
 installed game, so any release can be installed in place, and can be
 unticked to download the release next to the installed one instead.
 
+If the game has [mods](mods.md#when-the-game-updates) in its folder, Hydra
+takes them out before the archive is compared and puts them back once the
+update is in, so the comparison sees the game's own files and the update
+never overwrites a mod.
+
 The download and extraction run as usual, except that Hydra compares the
 archive with the installed game first and extracts only the files that are new
 or different (size and CRC-32, see
@@ -85,7 +90,8 @@ looking for an executable:
    without a backup; nothing below touches their saves anyway.
 3. Every file of the update (the changed ones, with a delta extraction) is
    moved into the installed folder, replacing the file at the same path. Files only the installed copy has stay: saves and
-   configs kept in the game folder, mods, OptiScaler and its manifest.
+   configs kept in the game folder, OptiScaler and its manifest. Mods are
+   out of the folder during this step and are deployed again after it.
 4. The extracted folder is deleted, and the download now points at the
    installed folder.
 5. The installed version becomes the new release. If the old executable is

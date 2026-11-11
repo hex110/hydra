@@ -1963,6 +1963,39 @@ export class ModStore {
     });
   }
 
+  /** The user says the mod still works after the game's update. */
+  public static async clearGameUpdateNote(
+    shop: GameShop,
+    objectId: string,
+    modId: string
+  ) {
+    const folder = storeFolder(shop, objectId);
+    await serialize(folder, async () => {
+      const state = await this.readMods(folder);
+      const mod = state.mods.find((item) => item.id === modId);
+      if (!mod) throw new ModError("not-found");
+      if (!mod.gameUpdatedSince) return;
+      await writeJson(modsFilePath(folder), {
+        ...state,
+        mods: state.mods.map((item) =>
+          item.id === modId
+            ? {
+                ...item,
+                gameVersion: mod.gameUpdatedSince?.to ?? item.gameVersion,
+                gameUpdatedSince: undefined,
+              }
+            : item
+        ),
+      });
+      await ModActivity.append(shop, objectId, {
+        kind: "game-updated",
+        modId,
+        modName: mod.name,
+        message: `Marked as working with ${mod.gameUpdatedSince.to ?? "the updated game"}.`,
+      });
+    });
+  }
+
   /** A folder for downloads on the way into staging. */
   public static downloadFolder(shop: GameShop, objectId: string) {
     return path.join(storeFolder(shop, objectId), "downloads");

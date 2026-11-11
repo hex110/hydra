@@ -167,6 +167,12 @@ registerEvent(
 );
 
 registerEvent(
+  "clearModGameUpdateNote",
+  (_event, shop: GameShop, objectId: string, modId: string) =>
+    runModAction(() => ModStore.clearGameUpdateNote(shop, objectId, modId))
+);
+
+registerEvent(
   "moveMod",
   (
     _event,

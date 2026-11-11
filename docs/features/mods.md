@@ -209,6 +209,33 @@ The first **Play (modded)** of a game whose saves are backed up by save sync
 asks once: "Mods can change saves", **Back up and play** or **Play without a
 backup**. A failed backup doesn't start the game.
 
+## When the game updates
+
+A [game update](updates.md#installing-an-update) installed over the game
+would otherwise meet the mods in its folder. The archive is compared with the
+folder file by file, so a game file a mod replaced always looked changed and
+was overwritten, while `deployed.json` still listed it and its backup held the
+pre-update file. The next undeploy then deleted the new file and put the old
+one back. So Hydra:
+
+1. takes the mods out (putting the game's own files back) before extraction
+   compares the archive with the folder, whenever the mods are deployed in
+   the folder being extracted into;
+2. takes them out again right before the update's files move in, in case a
+   modded launch put them back meanwhile; the move runs in the mods' queue, so
+   no mod change can happen during it;
+3. afterwards, for Play (modded), deploys them again. The game's new files are
+   what gets backed up. If that fails, the activity log says so and the next
+   Play (modded) deploys them;
+4. marks every mod **Installed for an older game version**, with the release
+   it was installed for and the new one on hover. Each mod records the game's
+   release when it is installed (`gameVersion`). Updating or reinstalling the
+   mod clears the note, and so does the check button on the row ("It still
+   works"). The mods report lists it too.
+
+The activity log has a `game-updated` line for the update and an `undeploy`
+line with reason `game-extraction` or `game-update`.
+
 ## Installed mods
 
 Each mod is unpacked into `<userData>/mods/<shop>/<objectId>/staging/<id>/`
