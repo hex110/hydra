@@ -79,6 +79,7 @@ export * from "./finished-download-step";
 export * from "./format-bit-rate";
 export * from "./library-group-actions";
 export * from "./library-metadata";
+export * from "./how-long-to-beat-search";
 export * from "./similar-games";
 export * from "./play-activity";
 export * from "./completion-suggestion";

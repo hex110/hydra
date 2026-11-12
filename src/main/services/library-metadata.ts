@@ -1,7 +1,6 @@
 import type {
   CatalogueGameIdentity,
   GameLibraryMetadata,
-  HowLongToBeatCategory,
   ProtonDBData,
   SteamGenre,
 } from "@types";
@@ -20,6 +19,7 @@ import {
   parseReleaseDate,
 } from "@shared";
 import { HydraApi } from "./hydra-api";
+import { getHowLongToBeat } from "./how-long-to-beat";
 import { logger } from "./logger";
 import { getGameSteamTags } from "./steam-tags";
 import { WindowManager } from "./window-manager";
@@ -84,6 +84,7 @@ const fetchSteamDetails = async (
 
 const fetchMetadata = async (
   identity: CatalogueGameIdentity,
+  title: string,
   steamDetails: SteamDetails | undefined
 ): Promise<{ metadata: GameLibraryMetadata; complete: boolean } | null> => {
   const { shop, objectId } = identity;
@@ -95,13 +96,7 @@ const fetchMetadata = async (
       HydraApi.get<CatalogueGameRecord | null>(base, null, requestOptions)
     ),
     isPcGame
-      ? settle(
-          HydraApi.get<HowLongToBeatCategory[] | null>(
-            `${base}/how-long-to-beat`,
-            null,
-            requestOptions
-          )
-        )
+      ? settle(getHowLongToBeat(shop, objectId, title))
       : Promise.resolve(null),
     isPcGame && process.platform === "linux"
       ? settle(
@@ -214,12 +209,16 @@ export class LibraryMetadata {
       this.getAll(),
     ]);
 
-    const stale = new Map<string, CatalogueGameIdentity>();
+    const stale = new Map<
+      string,
+      { identity: CatalogueGameIdentity; title: string }
+    >();
     for (const game of games) {
       if (game.isDeleted || game.shop === "custom") continue;
       const identity = getGameCatalogueIdentity(game);
       const key = levelKeys.game(identity.shop, identity.objectId);
-      if (isLibraryMetadataStale(cached.get(key))) stale.set(key, identity);
+      if (isLibraryMetadataStale(cached.get(key)))
+        stale.set(key, { identity, title: game.title });
     }
 
     if (stale.size === 0) return;
@@ -228,8 +227,8 @@ export class LibraryMetadata {
 
     const steamDetails = await fetchSteamDetails(
       [...stale.values()]
-        .filter((identity) => identity.shop === "steam")
-        .map((identity) => identity.objectId)
+        .filter(({ identity }) => identity.shop === "steam")
+        .map(({ identity }) => identity.objectId)
     );
 
     const queue = [...stale.entries()];
@@ -238,9 +237,10 @@ export class LibraryMetadata {
 
     const worker = async () => {
       for (let next = queue.shift(); next; next = queue.shift()) {
-        const [key, identity] = next;
+        const [key, { identity, title }] = next;
         const result = await fetchMetadata(
           identity,
+          title,
           identity.shop === "steam"
             ? steamDetails.get(identity.objectId)
             : undefined

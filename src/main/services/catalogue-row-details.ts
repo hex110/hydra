@@ -1,4 +1,4 @@
-import type { GameRepack, GameShop, HowLongToBeatCategory } from "@types";
+import type { GameRepack, GameShop } from "@types";
 import { downloadSourcesSublevel } from "@main/level";
 import {
   buildStoreGameFacts,
@@ -8,6 +8,7 @@ import {
   parseHowLongToBeat,
   type StoreGameFacts,
 } from "@shared";
+import { getHowLongToBeat } from "./how-long-to-beat";
 import { HydraApi } from "./hydra-api";
 import { getSteamStoreFacts } from "./steam-tags";
 import { rememberCriticScores } from "./critic-scores";
@@ -67,13 +68,7 @@ const fetchGameExtras = async (
   const [howLongToBeat, repacks] = await Promise.all([
     shop === "launchbox"
       ? Promise.resolve(null)
-      : settle(
-          HydraApi.get<HowLongToBeatCategory[] | null>(
-            `${base}/how-long-to-beat`,
-            null,
-            requestOptions
-          )
-        ),
+      : settle(getHowLongToBeat(shop, objectId, title)),
     sourceIds.length === 0
       ? Promise.resolve([] as GameRepack[])
       : settle(

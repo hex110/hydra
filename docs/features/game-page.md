@@ -163,6 +163,15 @@ the collapsible `card` variant.
 - **ProtonDB** and **HowLongToBeat** link to their site from their own
   headers. When a site has no data for the game the section, and so its link,
   is not shown.
+- **HowLongToBeat** times come from Hydra's API. When the API answers with
+  no times (it does for some new games, e.g. Castlevania: Belmont's Curse,
+  while howlongtobeat.com has them), the main process searches
+  howlongtobeat.com by title and uses an entry only when its name is the
+  same game (editions and punctuation ignored; a sequel never matches). The
+  fallback has no accuracy figure and is cached in memory for 6 hours (1 hour
+  when the site has no match, 5 minutes after an error). The game page, Big
+  Picture, the library cache and catalogue rows all read it through
+  `getHowLongToBeat`; the code is in `main/services/how-long-to-beat.ts`.
 - **Links** opens Steam, SteamDB and PCGamingWiki for games with a Steam app
   id, and a PCGamingWiki search otherwise. The page has no "More" menu any
   more; favorite, pin and wishlist moved to **Your game**.

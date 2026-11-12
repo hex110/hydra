@@ -237,23 +237,10 @@ export function useGameDetails(
     let current = true;
     setShopDetails(null);
     setStats(null);
-    setHowLongToBeat(null);
     setProtonDBData(null);
     refreshGameDetails({ showLoadingState: true }).catch(() => {});
 
     if (IS_DESKTOP && catalogueShop !== "custom") {
-      globalThis.window.electron.hydraApi
-        .get<HowLongToBeatCategory[] | null>(
-          `/games/${catalogueShop}/${catalogueObjectId}/how-long-to-beat`,
-          { needsAuth: false }
-        )
-        .then((data) => {
-          if (current) setHowLongToBeat(Array.isArray(data) ? data : null);
-        })
-        .catch(() => {
-          if (current) setHowLongToBeat(null);
-        });
-
       globalThis.window.electron.hydraApi
         .get<ProtonDBData | null>(
           `/games/${catalogueShop}/${catalogueObjectId}/protondb`,
@@ -268,7 +255,6 @@ export function useGameDetails(
           if (current) setProtonDBData(null);
         });
     } else {
-      setHowLongToBeat(null);
       setProtonDBData(null);
     }
     return () => {
@@ -276,6 +262,31 @@ export function useGameDetails(
       detailsAbortRef.current?.abort();
     };
   }, [catalogueObjectId, catalogueShop, refreshGameDetails]);
+
+  // The title arrives with the details; it lets the main process look the
+  // game up on howlongtobeat.com when the Hydra API has no times for it.
+  const howLongToBeatTitle =
+    game?.title ?? shopDetails?.assets?.title ?? shopDetails?.name ?? "";
+
+  useEffect(() => {
+    let current = true;
+    setHowLongToBeat(null);
+
+    if (IS_DESKTOP && catalogueShop !== "custom") {
+      globalThis.window.electron
+        .getHowLongToBeat(catalogueShop, catalogueObjectId, howLongToBeatTitle)
+        .then((data) => {
+          if (current) setHowLongToBeat(Array.isArray(data) ? data : null);
+        })
+        .catch(() => {
+          if (current) setHowLongToBeat(null);
+        });
+    }
+
+    return () => {
+      current = false;
+    };
+  }, [catalogueObjectId, catalogueShop, howLongToBeatTitle]);
 
   useEffect(() => {
     const achievementShop = lockAchievementIdentity

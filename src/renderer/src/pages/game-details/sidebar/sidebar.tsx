@@ -106,14 +106,8 @@ export function Sidebar() {
     if (objectId) {
       setHowLongToBeat({ isLoading: true, data: null });
 
-      // Directly fetch from API without checking cache
-      window.electron.hydraApi
-        .get<HowLongToBeatCategory[] | null>(
-          `/games/${catalogueGame.shop}/${catalogueGame.objectId}/how-long-to-beat`,
-          {
-            needsAuth: false,
-          }
-        )
+      window.electron
+        .getHowLongToBeat(catalogueGame.shop, catalogueGame.objectId, gameTitle)
         .then((howLongToBeatData) => {
           setHowLongToBeat({
             isLoading: false,
@@ -124,7 +118,7 @@ export function Sidebar() {
           setHowLongToBeat({ isLoading: false, data: null });
         });
     }
-  }, [objectId, catalogueGame.shop, catalogueGame.objectId]);
+  }, [objectId, catalogueGame.shop, catalogueGame.objectId, gameTitle]);
 
   useEffect(() => {
     if (!shouldShowProtonFeatures || !objectId) {

@@ -33,6 +33,7 @@ import type {
   Downloader,
   GameNewsItem,
   GameReception,
+  HowLongToBeatCategory,
   SteamSimilarGame,
 } from "@shared";
 import type {
@@ -2264,6 +2265,11 @@ declare global {
       countPerApp?: number
     ) => Promise<GameNewsItem[]>;
     getGameReception: (steamAppId: string) => Promise<GameReception | null>;
+    getHowLongToBeat: (
+      shop: GameShop,
+      objectId: string,
+      title: string
+    ) => Promise<HowLongToBeatCategory[] | null>;
     getSteamPopularTags: () => Promise<SteamTag[]>;
     getGameSteamTags: (shop: GameShop, objectId: string) => Promise<SteamTag[]>;
     getSteamSimilarGames: (

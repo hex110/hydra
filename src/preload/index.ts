@@ -2968,6 +2968,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getGameNews", steamAppIds, countPerApp),
   getGameReception: (steamAppId: string) =>
     ipcRenderer.invoke("getGameReception", steamAppId),
+  getHowLongToBeat: (shop: GameShop, objectId: string, title: string) =>
+    ipcRenderer.invoke("getHowLongToBeat", shop, objectId, title),
   getSteamPopularTags: () => ipcRenderer.invoke("getSteamPopularTags"),
   getGameSteamTags: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("getGameSteamTags", shop, objectId),
