@@ -29,6 +29,9 @@ import {
   EMULATOR_ICONS,
   RETROARCH_EMULATOR_ICON,
 } from "@renderer/pages/settings/emulation/emulator-icons";
+import { HoverPreviewImages } from "@renderer/components/hover-preview-images/hover-preview-images";
+import { StoreGameHoverCard } from "@renderer/components/store-game-card/store-game-hover-card";
+import { useGameHoverPreview } from "@renderer/hooks/use-game-hover-preview";
 import { LibraryCardActivity } from "./library-card-activity";
 import { LibraryCardPlayButton } from "./library-card-play-button";
 import { PlayStatusBadge } from "./play-status-badge";
@@ -383,16 +386,26 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
     []
   );
   const showPlayButton = isInstalled && (isCoverHovered || isPlayPending);
+  const container = useRef<HTMLDivElement>(null);
+  const preview = useGameHoverPreview(game);
 
   return (
     <div
+      ref={container}
       className={cn("library-game-card-large__container", {
         "library-game-card-large__container--not-installed": !isInstalled,
         "library-game-card-large__container--selected": selected,
         "library-game-card-large__container--focused": focused,
       })}
-      onMouseEnter={() => setIsCoverHovered(true)}
-      onMouseLeave={() => setIsCoverHovered(false)}
+      onMouseEnter={() => {
+        setIsCoverHovered(true);
+        preview.hoverProps.onMouseEnter();
+      }}
+      onMouseLeave={() => {
+        setIsCoverHovered(false);
+        preview.hoverProps.onMouseLeave();
+      }}
+      onPointerDown={preview.hoverProps.onPointerDown}
     >
       <button
         type="button"
@@ -417,6 +430,10 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
             className="library-game-card-large__animated-hero"
           />
         )}
+        <HoverPreviewImages
+          urls={preview.previewUrls}
+          activeUrl={preview.previewUrl}
+        />
         {classicsForegroundUrl && (
           <img
             src={classicsForegroundUrl}
@@ -541,6 +558,13 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
         <LibraryCardPlayButton
           game={game}
           onPendingChange={handlePlayPendingChange}
+        />
+      )}
+      {preview.cardOpen && (
+        <StoreGameHoverCard
+          anchor={container.current}
+          title={game.title}
+          facts={preview.facts}
         />
       )}
     </div>

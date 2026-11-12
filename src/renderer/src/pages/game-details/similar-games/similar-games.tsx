@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -13,6 +14,9 @@ import Skeleton from "react-loading-skeleton";
 
 import type { GameShop } from "@types";
 import { VerticalCoverCard } from "@renderer/components";
+import { HoverPreviewImages } from "@renderer/components/hover-preview-images/hover-preview-images";
+import { StoreGameHoverCard } from "@renderer/components/store-game-card/store-game-hover-card";
+import { useGameHoverPreview } from "@renderer/hooks/use-game-hover-preview";
 import { buildGameDetailsPath, isGameReadyToPlay } from "@renderer/helpers";
 import { useAppDispatch, useLibrary, useSimilarGames } from "@renderer/hooks";
 import { setDiscoverView } from "@renderer/features";
@@ -21,8 +25,12 @@ import { GameLibraryBadge } from "@renderer/components";
 import {
   catalogueKey,
   getCatalogueLibraryStates,
+  type CatalogueLibraryState,
 } from "@renderer/pages/catalogue/catalogue-library-state";
-import { getSimilarGamesSectionState } from "@renderer/hooks/similar-games";
+import {
+  getSimilarGamesSectionState,
+  type SimilarGame,
+} from "@renderer/hooks/similar-games";
 
 import "./similar-games.scss";
 
@@ -35,6 +43,57 @@ interface SimilarGamesProps {
 
 function SimilarGamesSlide({ children }: Readonly<{ children: ReactNode }>) {
   return <div className="similar-games__slide">{children}</div>;
+}
+
+/** One suggested game: its cover, with screenshots and a card beside it on hover. */
+function SimilarGameCard({
+  game,
+  libraryState,
+  onOpen,
+}: Readonly<{
+  game: SimilarGame;
+  libraryState: CatalogueLibraryState | undefined;
+  onOpen: () => void;
+}>) {
+  const anchor = useRef<HTMLDivElement>(null);
+  const preview = useGameHoverPreview(game);
+
+  return (
+    <SimilarGamesSlide>
+      <div
+        ref={anchor}
+        className="similar-games__anchor"
+        {...preview.hoverProps}
+      >
+        <GameLibraryBadge overlay state={libraryState} />
+        <VerticalCoverCard
+          className="similar-games__card"
+          gameTitle={game.title}
+          coverImageUrls={[
+            game.coverImageUrl,
+            game.libraryImageUrl,
+            game.iconUrl,
+          ]}
+          useClassicsLayout={game.shop === "launchbox"}
+          showTitleTooltip={false}
+          onClick={onOpen}
+        >
+          <HoverPreviewImages
+            urls={preview.previewUrls}
+            activeUrl={preview.previewUrl}
+          />
+        </VerticalCoverCard>
+      </div>
+      {preview.cardOpen && (
+        <StoreGameHoverCard
+          anchor={anchor.current}
+          title={game.title}
+          facts={preview.facts}
+          fitWidth
+        />
+      )}
+    </SimilarGamesSlide>
+  );
 }
 
 function SimilarGamesSkeleton() {
@@ -154,26 +213,12 @@ export function SimilarGames({ objectId, shop }: Readonly<SimilarGamesProps>) {
           <div className="similar-games__viewport" ref={emblaRef}>
             <div className="similar-games__container">
               {games.map((similarGame) => (
-                <SimilarGamesSlide
+                <SimilarGameCard
                   key={`${similarGame.shop}:${similarGame.objectId}`}
-                >
-                  <GameLibraryBadge
-                    overlay
-                    state={libraryStates.get(catalogueKey(similarGame))}
-                  />
-                  <VerticalCoverCard
-                    className="similar-games__card"
-                    gameTitle={similarGame.title}
-                    coverImageUrls={[
-                      similarGame.coverImageUrl,
-                      similarGame.libraryImageUrl,
-                      similarGame.iconUrl,
-                    ]}
-                    useClassicsLayout={similarGame.shop === "launchbox"}
-                    showTitleTooltip={false}
-                    onClick={() => navigate(buildGameDetailsPath(similarGame))}
-                  />
-                </SimilarGamesSlide>
+                  game={similarGame}
+                  libraryState={libraryStates.get(catalogueKey(similarGame))}
+                  onOpen={() => navigate(buildGameDetailsPath(similarGame))}
+                />
               ))}
             </div>
 

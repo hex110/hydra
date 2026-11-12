@@ -5,17 +5,34 @@ import { logger } from "@renderer/logger";
 
 const CHUNK_SIZE = 10;
 
+interface RowGame {
+  shop: GameShop;
+  objectId: string;
+  title: string;
+  releaseYear?: number | null;
+}
+
 const known = new Map<string, StoreGameFacts>();
 
+export const getKnownCatalogueFacts = (
+  game: Pick<RowGame, "shop" | "objectId">
+) => known.get(`${game.shop}:${game.objectId}`);
+
+/** Fetches details into the shared cache, which every card reads from. */
+export const loadCatalogueRowDetails = async (games: RowGame[]) => {
+  const result = await window.electron.getCatalogueRowDetails(
+    games.map(({ shop, objectId, title, releaseYear }) => ({
+      shop,
+      objectId,
+      title,
+      releaseYear,
+    }))
+  );
+  for (const [key, value] of Object.entries(result)) known.set(key, value);
+};
+
 /** Reviews, score, How Long to Beat, size and screenshots for the games on screen. */
-export function useCatalogueRowDetails(
-  games: {
-    shop: GameShop;
-    objectId: string;
-    title: string;
-    releaseYear?: number | null;
-  }[]
-) {
+export function useCatalogueRowDetails(games: RowGame[]) {
   const [details, setDetails] = useState(() => new Map(known));
   const keys = games.map((game) => `${game.shop}:${game.objectId}`).join("|");
 
@@ -32,16 +49,7 @@ export function useCatalogueRowDetails(
     const load = async () => {
       for (let index = 0; index < missing.length; index += CHUNK_SIZE) {
         const chunk = missing.slice(index, index + CHUNK_SIZE);
-        const result = await window.electron.getCatalogueRowDetails(
-          chunk.map(({ shop, objectId, title, releaseYear }) => ({
-            shop,
-            objectId,
-            title,
-            releaseYear,
-          }))
-        );
-        for (const [key, value] of Object.entries(result))
-          known.set(key, value);
+        await loadCatalogueRowDetails(chunk);
         if (!current) return;
         setDetails(new Map(known));
       }

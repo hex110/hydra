@@ -16,13 +16,16 @@ import {
 } from "@renderer/helpers";
 import { AchievementProgress, SteamLibraryBadge } from "@renderer/components";
 import { GameVisibilityBadge } from "@renderer/components/game-visibility-badge/game-visibility-badge";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ClockIcon, AlertFillIcon, ImageIcon } from "@primer/octicons-react";
 import {
   EMULATOR_ICONS,
   RETROARCH_EMULATOR_ICON,
 } from "@renderer/pages/settings/emulation/emulator-icons";
+import { HoverPreviewImages } from "@renderer/components/hover-preview-images/hover-preview-images";
+import { StoreGameHoverCard } from "@renderer/components/store-game-card/store-game-hover-card";
+import { useGameHoverPreview } from "@renderer/hooks/use-game-hover-preview";
 import { LibraryCardActivity } from "./library-card-activity";
 import { LibraryCardPlayButton } from "./library-card-play-button";
 import { PlayStatusBadge } from "./play-status-badge";
@@ -136,6 +139,8 @@ export const LibraryGameCard = memo(function LibraryGameCard({
   const isAnimatedCover = isAnimatedCoverCandidate(rawActiveSource);
   const coverPoster = useCoverPoster(rawActiveSource, isAnimatedCover);
   const [isCoverHovered, setIsCoverHovered] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const preview = useGameHoverPreview(game);
   const shouldHoldFrame =
     isAnimatedCover && !isCoverHovered && !autoplayAnimatedArtwork;
   const isAwaitingPoster = shouldHoldFrame && coverPoster === undefined;
@@ -255,13 +260,21 @@ export const LibraryGameCard = memo(function LibraryGameCard({
 
   return (
     <div
+      ref={container}
       className={cn("library-game-card__container", {
         "library-game-card__container--not-installed": !isInstalled,
         "library-game-card__container--selected": selected,
         "library-game-card__container--focused": focused,
       })}
-      onMouseEnter={() => setIsCoverHovered(true)}
-      onMouseLeave={() => setIsCoverHovered(false)}
+      onMouseEnter={() => {
+        setIsCoverHovered(true);
+        preview.hoverProps.onMouseEnter();
+      }}
+      onMouseLeave={() => {
+        setIsCoverHovered(false);
+        preview.hoverProps.onMouseLeave();
+      }}
+      onPointerDown={preview.hoverProps.onPointerDown}
     >
       <button
         type="button"
@@ -368,12 +381,24 @@ export const LibraryGameCard = memo(function LibraryGameCard({
         </div>
 
         {renderCoverMedia()}
+        <HoverPreviewImages
+          urls={preview.previewUrls}
+          activeUrl={preview.previewUrl}
+        />
         <LibraryCardActivity game={game} />
       </button>
       {showPlayButton && (
         <LibraryCardPlayButton
           game={game}
           onPendingChange={handlePlayPendingChange}
+        />
+      )}
+      {preview.cardOpen && (
+        <StoreGameHoverCard
+          anchor={container.current}
+          title={game.title}
+          facts={preview.facts}
+          fitWidth
         />
       )}
     </div>

@@ -75,6 +75,8 @@ export function useHoverPreview(screenshots: string[]) {
     hoverProps: {
       onMouseEnter: () => setHovered(true),
       onMouseLeave: () => setHovered(false),
+      // A click or context menu opens something the card would sit over.
+      onPointerDown: () => setHovered(false),
     },
   };
 }

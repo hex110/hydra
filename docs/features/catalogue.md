@@ -463,7 +463,9 @@ beside it, as Steam's does: the game's short description, the Steam reviews
 four tags. It opens on the right of the card, on the left when there is no
 room, is drawn in the page body so a shelf can't clip it, and closes when the
 pointer leaves or the page scrolls. Steam's short description comes with the
-screenshots, in English.
+screenshots, in English. The library's cards and the game page's **More like
+this** use the same preview and hover card (`useGameHoverPreview`, which
+fetches one game's details on the first hover).
 
 The data comes from Hydra's API: the batched Steam store details (score and
 screenshots, one request per ten games), the How Long to Beat endpoint and the

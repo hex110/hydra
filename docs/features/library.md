@@ -70,6 +70,13 @@ labelled **Installed** toggle (before, an unlabelled check-circle icon), then:
   on hover.
 - Hovering an installed game shows a **Play** button over the cover; it
   starts the game without opening its page (**Close** while it runs).
+- Resting the pointer on a Steam game's card (the posters and the large
+  cards, not the list rows) cycles through its screenshots, cropped to the
+  card, and opens the catalogue's hover card beside it: short description,
+  reviews and tags. The card is as wide as the poster it opens beside (208 to
+  304 px). The details are fetched on the first hover and kept for the
+  session; other stores have no screenshots, so their cards show neither.
+  Pressing the card closes the hover card.
 - Classics show their emulator as an icon instead of a text badge.
 - A yellow cloud alert in the corner (and after the title in the list view)
   means the game's last automatic save backup failed or found saves changed

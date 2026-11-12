@@ -11,23 +11,30 @@ const GAP = 12;
 const MARGIN = 8;
 const HOVER_CARD_TAGS = 4;
 const NO_TAGS: string[] = [];
+// When fitted to a thumbnail: a little wider than it, within what reads well.
+const FIT_RATIO = 1.25;
+const FIT_MIN_WIDTH = 208;
+const FIT_MAX_WIDTH = 304;
 
 /**
  * A small card beside a store game, as Steam's: its short description, the
  * Steam reviews and the first few tags. Rendered in the body, so a shelf's
  * overflow can't clip it; it opens on the right of the game and on the left
- * when there is no room.
+ * when there is no room. `fitWidth` sizes it to the thumbnail it opens
+ * beside, for sections whose thumbnails are small.
  */
 export function StoreGameHoverCard({
   anchor,
   title,
   facts,
   fallbackTags = NO_TAGS,
+  fitWidth = false,
 }: Readonly<{
   anchor: HTMLElement | null;
   title: string;
   facts?: StoreGameFacts;
   fallbackTags?: string[];
+  fitWidth?: boolean;
 }>) {
   const { t } = useTranslation("catalogue");
   const { formatNumber } = useFormat();
@@ -57,7 +64,15 @@ export function StoreGameHoverCard({
       Math.max(MARGIN, window.innerHeight - height - MARGIN)
     );
     setPosition({ left, top });
-  }, [anchor, facts, tags]);
+  }, [anchor, facts, tags, fitWidth]);
+
+  const width =
+    fitWidth && anchor
+      ? Math.min(
+          FIT_MAX_WIDTH,
+          Math.max(FIT_MIN_WIDTH, Math.round(anchor.offsetWidth * FIT_RATIO))
+        )
+      : undefined;
 
   const percent = facts?.reviewPercent ?? null;
   const count = facts?.reviewCount ?? null;
@@ -72,7 +87,7 @@ export function StoreGameHoverCard({
         "store-game-hover-card",
         position && "store-game-hover-card--placed"
       )}
-      style={position}
+      style={{ ...position, width }}
       role="tooltip"
     >
       <strong className="store-game-hover-card__title">{title}</strong>

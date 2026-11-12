@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { QuestionIcon } from "@primer/octicons-react";
 import cn from "classnames";
+import { HoverPreviewImages } from "@renderer/components/hover-preview-images/hover-preview-images";
 import { GameLibraryBadge } from "@renderer/components/game-library-badge/game-library-badge";
 import type { CatalogueLibraryState } from "@renderer/pages/catalogue/catalogue-library-state";
 import { getProtonDbBadge, ProtonDBBadge } from "./protondb-badge";
@@ -57,17 +58,7 @@ export function StoreGameCover({
           <QuestionIcon size={28} />
         </div>
       )}
-      {previewUrls.map((url) => (
-        <img
-          key={url}
-          className={cn(
-            "store-game-cover__preview",
-            url === previewUrl && "store-game-cover__preview--active"
-          )}
-          src={url}
-          alt=""
-        />
-      ))}
+      <HoverPreviewImages urls={previewUrls} activeUrl={previewUrl} />
       <GameLibraryBadge state={libraryState} overlay />
       {protonBadge && <ProtonDBBadge badge={protonBadge} />}
       {children}

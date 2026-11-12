@@ -69,6 +69,10 @@ $card-hover-transition-duration: 0.2s;
     padding: 3px globals.$spacing-unit;
   }
 
+  &__anchor {
+    position: relative;
+  }
+
   &__card:hover {
     transform: scale($card-hover-scale);
   }

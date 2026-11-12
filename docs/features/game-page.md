@@ -201,7 +201,9 @@ library filtered to the genre.
 
 **Similar games** ("More like this") lists up to 24 games, as a carousel of
 three at a time. The ones you own come first and are marked **In library** or
-**Installed**. For a Steam game the list comes from Steam's own "More like
+**Installed**. Resting the pointer on a Steam game's cover cycles through its
+screenshots, cropped to the poster, and opens a hover card beside it, the same
+as in the [library](library.md#cards). For a Steam game the list comes from Steam's own "More like
 this" page, which is far better for niche titles than Hydra's catalogue. Hydra
 re-ranks it (`src/shared/similar-games.ts`, `src/main/services/steam-similar.ts`):
 
