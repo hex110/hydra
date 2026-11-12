@@ -34,6 +34,16 @@ named exports, …):
   It builds the `.pacman` and installs it with `sudo pacman -U`, which opens a
   consent dialog on the user's screen. Use `--no-install` to only build. Say in
   your reply that it is installed and the app needs restarting.
+- **Run only the tests you need.** While working, run the test files for the
+  code you touched: `node --import ./scripts/register-ts-node.mjs --test <file>…`
+  (add `TS_NODE_LOG_ERROR=true` when a failure is opaque). Also run any test
+  that mocks what you changed (a new `window.electron` method breaks the hook
+  tests that stub it). Run the full `npm test` once, at the end. It takes over
+  two minutes, which is past the tool timeout, so send it to a file
+  (`npm test > $SCRATCH/test.log 2>&1`) and read the summary from there; piping
+  it through `head` loses the result. `main` has failing tests of its own
+  (Epic, library, archive; 41 on 2026-11-12). To tell them from yours, run just
+  the failing files on `main`; don't run the whole suite there.
 
 ## Worktrees
 
