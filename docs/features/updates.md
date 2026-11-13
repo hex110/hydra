@@ -173,6 +173,36 @@ existing Steam download watcher
 The code is `main/services/steam-integration/steam-updates.ts` and the pure,
 tested parts in `steam-manifest-core.ts`.
 
+### Steam version (beta)
+
+**Game options → Downloads → Steam version** lists the branches Steam has for
+the game (from `depots.branches` in the app cache) with Steam's description,
+build number and date, and the installed one marked. Only games installed
+through Steam with at least two open branches show it; branches that need a
+password are counted and left out, since Hydra cannot enter the password (do it
+in Steam's game properties). Older builds that Steam only offers as depot
+manifests are not covered.
+
+**Switch version** asks first, because Steam's manifests are rewritten while it
+runs, so an edit made under it is lost. Then Hydra:
+
+1. closes Steam (`steam -shutdown` and `steam://exit`) and waits up to 30
+   seconds for it to exit; if it does not, nothing is changed;
+2. reads the game's manifest again (Steam rewrites it on the way out) and keeps
+   a copy as `hydra-backup-appmanifest_<id>.acf` beside it;
+3. sets `UserConfig.BetaKey` to the branch (the key is removed for the default
+   one) and turns on the manifest's update-required flag, leaving every other
+   byte alone, `MountedConfig` included: its old branch is how Steam notices
+   the change;
+4. starts Steam, waits for it, and opens `steam://validate/<appid>`.
+
+Each failure says what happened: Steam would not close, the manifest could not
+be read or written, the branch needs a password, Steam did not start (the version
+is already changed then; opening Steam downloads it). The Steam button in the
+header pulses when Steam is the problem. The order of the steps is
+`steam-branch-switch-core.ts` (tested); the manifest edit is
+`setSteamManifestBranch` in `steam-manifest-core.ts` (tested).
+
 ## Not yet
 
 Planned as roadmap phase 25 (**Updates that keep what you added**):

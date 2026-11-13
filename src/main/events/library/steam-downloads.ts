@@ -1,5 +1,9 @@
 import { shell } from "electron";
 import { updateSteamGame } from "@main/services/steam-integration/steam-updates";
+import {
+  getSteamBranches,
+  switchSteamBranch,
+} from "@main/services/steam-integration/steam-branches";
 import { isValidSteamAppId } from "@shared";
 import { SteamStateService } from "@main/services/steam-integration/steam-state";
 import { SteamDownloads } from "@main/services/steam-integration/steam-downloads";
@@ -31,5 +35,25 @@ registerEvent(
   ) => {
     if (!isValidSteamAppId(appId)) throw new Error("invalid-steam-app-id");
     return updateSteamGame(appId, startSteam === true);
+  }
+);
+
+registerEvent(
+  "getSteamBranches",
+  async (_event: Electron.IpcMainInvokeEvent, appId: string) =>
+    isValidSteamAppId(appId) ? getSteamBranches(appId) : null
+);
+
+registerEvent(
+  "switchSteamBranch",
+  async (
+    _event: Electron.IpcMainInvokeEvent,
+    appId: string,
+    branch: string
+  ) => {
+    if (!isValidSteamAppId(appId) || typeof branch !== "string") {
+      throw new Error("invalid-steam-branch-request");
+    }
+    return switchSteamBranch(appId, branch);
   }
 );

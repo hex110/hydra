@@ -4,6 +4,7 @@ import { Button } from "@renderer/components";
 import type { LibraryGame } from "@types";
 
 import { InstallerSection } from "./installer-section";
+import { SteamBranchSection } from "./steam-branch-section";
 
 interface DownloadsSettingsSectionProps {
   game: LibraryGame;
@@ -89,6 +90,7 @@ export function DownloadsSettingsSection({
           )}
         </div>
       </div>
+      <SteamBranchSection game={game} deleting={deleting} />
       <InstallerSection game={game} deleting={deleting} />
     </>
   );

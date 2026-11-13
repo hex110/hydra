@@ -65,6 +65,8 @@ import type {
   FloppySearchResult,
   SteamGameHistory,
   SteamDownload,
+  SteamBranchesInfo,
+  SteamBranchSwitchResult,
   SteamState,
   SteamUpdateResult,
   SteamLaunchOptionInfo,
@@ -1084,6 +1086,11 @@ declare global {
       appId: string,
       startSteam: boolean
     ) => Promise<SteamUpdateResult>;
+    getSteamBranches: (appId: string) => Promise<SteamBranchesInfo | null>;
+    switchSteamBranch: (
+      appId: string,
+      branch: string
+    ) => Promise<SteamBranchSwitchResult>;
     getSteamState: () => Promise<SteamState>;
     openSteam: () => Promise<void>;
     onSteamStateChanged: (cb: (state: SteamState) => void) => () => void;

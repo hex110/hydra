@@ -41,6 +41,11 @@ in the sections below.
    3. [x] Update detection
    4. [x] Update a game in place
    5. [x] Backup cleanup, with backup sizes
+   6. [x] Steam games: updates through Steam, the beta a game follows, other
+          launch entries ([Steam games](features/updates.md#steam-games),
+          [Steam launch options](features/launch-rules.md#steam-launch-options))
+   7. [x] A Steam button in the header ([Steam in the
+          header](features/steam-history.md#steam-in-the-header))
 2. **Setup you can see and fix.** Shipped: setup log and per-step re-runs in
    [Game setup](features/game-setup.md#setup-log), the per-game switch in
    [OnlineFix](features/online-fix.md), the preview in

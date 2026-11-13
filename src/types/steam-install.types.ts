@@ -47,3 +47,30 @@ export type SteamUpdateResult =
   | "steam-not-installed"
   | "steam-not-running"
   | "steam-start-failed";
+
+/** A branch ("beta") a Steam game can follow. */
+export interface SteamBranchInfo {
+  name: string;
+  description: string | null;
+  buildId: string | null;
+  /** Seconds since the epoch of the branch's last update. */
+  updatedAt: number | null;
+  /** Needs a password Hydra cannot enter; it is listed but cannot be picked. */
+  locked: boolean;
+}
+
+export interface SteamBranchesInfo {
+  /** The branch the game follows now ("public" by default). */
+  current: string;
+  branches: SteamBranchInfo[];
+}
+
+export type SteamBranchSwitchResult =
+  | "switched"
+  | "not-installed"
+  | "unknown-branch"
+  | "branch-locked"
+  | "steam-would-not-close"
+  | "manifest-unreadable"
+  | "manifest-unwritable"
+  | "steam-start-failed";

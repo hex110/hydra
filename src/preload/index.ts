@@ -1674,6 +1674,10 @@ contextBridge.exposeInMainWorld("electron", {
   },
   updateSteamGame: (appId: string, startSteam: boolean) =>
     ipcRenderer.invoke("updateSteamGame", appId, startSteam),
+  getSteamBranches: (appId: string) =>
+    ipcRenderer.invoke("getSteamBranches", appId),
+  switchSteamBranch: (appId: string, branch: string) =>
+    ipcRenderer.invoke("switchSteamBranch", appId, branch),
   getSteamState: () => ipcRenderer.invoke("getSteamState"),
   openSteam: () => ipcRenderer.invoke("openSteam"),
   onSteamStateChanged: (cb: (state: SteamState) => void) => {
