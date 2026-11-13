@@ -109,6 +109,16 @@ export interface GameAvailableUpdate {
   detectedAt: string;
 }
 
+/** A newer build Steam has for a game installed through Steam. */
+export interface GameSteamUpdate {
+  /** The branch the game follows ("public" unless a beta is chosen). */
+  branch: string;
+  installedBuildId: string;
+  /** Null when Steam says an update is due but not which build. */
+  availableBuildId: string | null;
+  detectedAt: string;
+}
+
 /** Set on a download that updates an installed game in place. */
 export interface DownloadUpdateTarget {
   installDirectory: string;
@@ -183,6 +193,9 @@ export interface Game extends LibraryCatalogueMetadata {
   setupLog?: GameSetupLog | null;
   installedVersion?: GameInstalledVersion | null;
   availableUpdate?: GameAvailableUpdate | null;
+  steamUpdate?: GameSteamUpdate | null;
+  /** Steam builds the user chose not to be offered. */
+  dismissedSteamBuildIds?: string[];
   /** Release titles the user chose not to update to. */
   dismissedUpdateTitles?: string[];
   optiScaler?: GameOptiScalerInstallation | null;

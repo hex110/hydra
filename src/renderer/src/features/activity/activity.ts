@@ -204,7 +204,7 @@ export function fromModDownload(
 }
 
 export const hasAvailableUpdate = (game: LibraryGame) =>
-  !!game.availableUpdate && !!game.executablePath;
+  (!!game.availableUpdate || !!game.steamUpdate) && !!game.executablePath;
 
 export function fromGameUpdate(
   game: LibraryGame,

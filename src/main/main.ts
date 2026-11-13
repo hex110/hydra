@@ -58,7 +58,10 @@ import {
 } from "./services/steam-history";
 import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automatic-sync-emulator-migration";
 import { SteamStateService } from "./services/steam-integration/steam-state";
-import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
+import {
+  onSteamAppsChange,
+  watchSteamLibraries,
+} from "./services/steam-integration/steam-install-watcher";
 import { SteamDownloads } from "./services/steam-integration/steam-downloads";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
 import { migrateLegacyLaunchRuleSettings } from "./services/launch-rules-migration";
@@ -162,6 +165,11 @@ export const loadState = async () => {
   }
 
   SteamStateService.start();
+  onSteamAppsChange(() => GameUpdates.scheduleSteamCheck(5000));
+  // Steam refreshes its app data a while after it starts.
+  SteamStateService.onChange(
+    (state) => state.running && GameUpdates.scheduleSteamCheck(45_000)
+  );
   void watchSteamLibraries().then(() => SteamDownloads.start());
   await loadSaveStoreConfig();
   startCloudLibrarySchedule();

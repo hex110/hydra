@@ -48,8 +48,9 @@ picks a newer release:
 4. Among several newer releases, the installed release's source wins, then
    the highest version, then the latest upload.
 
-Games installed by Steam or Epic are never checked; their launchers update
-them. Repacks show **Installed** and **Update** badges in the download list.
+Games installed by Epic are never checked against the sources; their launcher
+updates them. Games installed through Steam have their own check, see
+[Steam games](#steam-games). Repacks show **Installed** and **Update** badges in the download list.
 
 Games with an update are listed under **Needs you** on the Downloads page,
 which is the home of that list; the hero's update chip and the home
@@ -138,6 +139,40 @@ installed, keeps its executable on record when a library scan finds the files
 missing for a moment; the scan used to clear it, and the game then looked
 uninstalled until a later scan found it again.
 
+## Steam games
+
+A game installed through Steam (its `appmanifest_<id>.acf` is in a Steam
+library) is not looked up in the download sources; Steam holds the update.
+Hydra only notices it and has Steam fetch it.
+
+**Finding it** needs no network. Steam's manifest says which build is
+installed (`buildid`), the update flags and the branch the game follows
+(`UserConfig.BetaKey`, none means `public`); Steam's app cache
+(`appcache/appinfo.vdf`) says which build each branch has. A game is behind when
+Steam has marked it (`StateFlags` has the update-required bit, or
+`TargetBuildID` differs from `buildid`) or when its branch has a newer build in
+the cache. The cache only ever hides an update (it is refreshed while Steam
+runs), it never invents one. The check runs with the others, five seconds after
+a Steam manifest changes and 45 seconds after Steam starts, and is stored on the
+game as `steamUpdate`.
+
+It shows where other updates show: **Needs you** on Downloads (status
+"Steam build 100 → 200 · public"), the home **Updates available** shelf, the
+hero's **Update through Steam** button and the same notification. **Ignore this
+version** hides that build. Nothing is listed while Steam is already
+downloading the game (its row under **Downloading through Steam** has the
+progress), and no notification is sent for it.
+
+**Updating** is Steam's job, so Steam must be open. The button opens
+`steam://validate/<appid>`, which makes Steam compare the game's files with its
+branch and download the difference. If Steam is closed the header's Steam
+button pulses and a dialog offers to start Steam first (Hydra waits up to a
+minute for it, then gives Steam a few seconds to settle). Progress is the
+existing Steam download watcher
+([Steam history](steam-history.md#adding-your-steam-games-to-the-library)).
+The code is `main/services/steam-integration/steam-updates.ts` and the pure,
+tested parts in `steam-manifest-core.ts`.
+
 ## Not yet
 
 Planned as roadmap phase 25 (**Updates that keep what you added**):
@@ -160,8 +195,8 @@ Planned as roadmap phase 25 (**Updates that keep what you added**):
 - **Version matching** is a heuristic over release names. Sources that
   number the same game differently only compare by upload date, so an
   update can be missed or a wrong one offered.
-- Games installed by Steam or Epic are never checked, on purpose: their
-  launchers update them. Mods and tools there are covered only by the
+- Games installed by Epic are never checked, on purpose: their launcher
+  updates them (Steam games are, see [Steam games](#steam-games)). Mods and tools there are covered only by the
   "replaced outside Hydra" check (see [Mods](mods.md#when-the-game-updates)).
 
 ## How it was checked

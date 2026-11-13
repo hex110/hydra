@@ -1672,6 +1672,8 @@ contextBridge.exposeInMainWorld("electron", {
     return () =>
       ipcRenderer.removeListener("on-steam-downloads-changed", listener);
   },
+  updateSteamGame: (appId: string, startSteam: boolean) =>
+    ipcRenderer.invoke("updateSteamGame", appId, startSteam),
   getSteamState: () => ipcRenderer.invoke("getSteamState"),
   openSteam: () => ipcRenderer.invoke("openSteam"),
   onSteamStateChanged: (cb: (state: SteamState) => void) => {

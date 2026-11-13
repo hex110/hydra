@@ -66,6 +66,7 @@ import type {
   SteamGameHistory,
   SteamDownload,
   SteamState,
+  SteamUpdateResult,
   SteamLaunchOptionInfo,
   SteamHistorySyncStatus,
   FloppySyncStatus,
@@ -1079,6 +1080,10 @@ declare global {
     onSteamDownloadsChanged: (
       cb: (downloads: SteamDownload[]) => void
     ) => () => void;
+    updateSteamGame: (
+      appId: string,
+      startSteam: boolean
+    ) => Promise<SteamUpdateResult>;
     getSteamState: () => Promise<SteamState>;
     openSteam: () => Promise<void>;
     onSteamStateChanged: (cb: (state: SteamState) => void) => () => void;

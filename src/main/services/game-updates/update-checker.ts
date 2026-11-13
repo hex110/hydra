@@ -24,6 +24,10 @@ import type {
   GameUpdateCheckResult,
   UserPreferences,
 } from "@types";
+import {
+  checkSteamGameUpdates,
+  dismissSteamUpdate,
+} from "@main/services/steam-integration/steam-updates";
 import { ensureInstalledVersion } from "./installed-version";
 
 const CONCURRENCY = 4;
@@ -160,8 +164,18 @@ export class GameUpdates {
 
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
+    // Games installed through Steam update through Steam; see steam-updates.ts.
+    newlyFound.push(
+      ...(await checkSteamGameUpdates().catch((error) => {
+        logger.error("[GameUpdates] Steam check failed", error);
+        return [] as Game[];
+      }))
+    );
+
     const withUpdates = (await gamesSublevel.values().all()).filter(
-      (game) => canUpdate(game) && game.availableUpdate
+      (game) =>
+        (canUpdate(game) && game.availableUpdate) ||
+        (!game.isDeleted && game.executablePath && game.steamUpdate)
     ).length;
 
     logger.info("[GameUpdates] Checked installed games", {
@@ -195,7 +209,37 @@ export class GameUpdates {
     return this.checkAll();
   }
 
+  private static steamCheckTimer: NodeJS.Timeout | undefined;
+
+  /** Re-checks Steam games soon, once a burst of manifest changes has settled. */
+  public static scheduleSteamCheck(delayMs: number) {
+    clearTimeout(this.steamCheckTimer);
+    this.steamCheckTimer = setTimeout(() => void this.checkSteam(), delayMs);
+  }
+
+  private static async checkSteam() {
+    const preferences = await db
+      .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+        valueEncoding: "json",
+      })
+      .catch(() => null);
+    if (preferences?.checkGameUpdates === false) return;
+
+    try {
+      const found = await checkSteamGameUpdates();
+      WindowManager.sendToAppWindows("on-library-batch-complete");
+      if (found.length > 0) void publishGameUpdatesNotification(found);
+    } catch (error) {
+      logger.error("[GameUpdates] Steam check failed", error);
+    }
+  }
+
   public static async dismiss(gameKey: string) {
+    if ((await gamesSublevel.get(gameKey))?.steamUpdate) {
+      await dismissSteamUpdate(gameKey);
+      WindowManager.sendToAppWindows("on-library-batch-complete");
+      return;
+    }
     await updateGameRecord(gameKey, (game) => ({
       availableUpdate: null,
       dismissedUpdateTitles: game.availableUpdate

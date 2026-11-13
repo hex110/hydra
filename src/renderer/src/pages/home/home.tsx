@@ -187,7 +187,10 @@ export default function Home() {
   const updates = useMemo(
     () =>
       groupedLibrary
-        .filter((game) => game.availableUpdate && game.executablePath)
+        .filter(
+          (game) =>
+            (game.availableUpdate || game.steamUpdate) && game.executablePath
+        )
         .sort((a, b) => a.title.localeCompare(b.title)),
     [groupedLibrary]
   );
@@ -446,7 +449,18 @@ export default function Home() {
             description={t("updates_description")}
           >
             {renderCaptionedCards(updates, (game) => {
-              const release = game.availableUpdate!.release;
+              if (!game.availableUpdate) {
+                return (
+                  <button
+                    type="button"
+                    className="home__caption-button"
+                    onClick={() => navigate(buildGameDetailsPath(game))}
+                  >
+                    {t("update_through_steam")}
+                  </button>
+                );
+              }
+              const release = game.availableUpdate.release;
               return (
                 <button
                   type="button"

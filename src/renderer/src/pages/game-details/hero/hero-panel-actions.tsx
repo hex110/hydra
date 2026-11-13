@@ -16,6 +16,7 @@ import {
   ConfirmationModal,
   Modal,
   SplitButton,
+  SteamUpdateButton,
 } from "@renderer/components";
 import type { LibraryGame, ModPlayMode } from "@types";
 import {
@@ -1062,6 +1063,9 @@ export function HeroPanelActions() {
     const availableUpdate = (presentation?.members ?? [game]).find(
       (member) => member.availableUpdate
     )?.availableUpdate;
+    const steamUpdateMember = (presentation?.members ?? [game]).find(
+      (member) => member.steamUpdate
+    );
 
     return (
       <div className="hero-panel-actions__container">
@@ -1147,6 +1151,13 @@ export function HeroPanelActions() {
                 ) ?? availableUpdate.release.title,
             })}
           </Button>
+        )}
+        {steamUpdateMember?.steamUpdate && !liveSteamDownload && (
+          <SteamUpdateButton
+            appId={steamUpdateMember.objectId}
+            title={steamUpdateMember.title}
+            className="hero-panel-actions__action hero-panel-actions__update"
+          />
         )}
         {gameActionButton()}
         <div className="hero-panel-actions__separator" />

@@ -185,7 +185,27 @@ export function useActivity() {
 
     if (checkUpdates) {
       for (const game of fullLibrary.filter(hasAvailableUpdate)) {
-        const update = game.availableUpdate!.release;
+        if (!game.availableUpdate) {
+          // Steam is already fetching it: its own row shows the progress.
+          if (steamDownloads.some((item) => item.appId === game.objectId)) {
+            continue;
+          }
+          const steamUpdate = game.steamUpdate!;
+          items.push(
+            fromGameUpdate(game, {
+              title: game.title,
+              badge: t("badge_update"),
+              status: t("steam_update_status", {
+                installed: steamUpdate.installedBuildId,
+                available: steamUpdate.availableBuildId ?? "?",
+                branch: steamUpdate.branch,
+              }),
+            })
+          );
+          continue;
+        }
+
+        const update = game.availableUpdate.release;
         const installed = game.installedVersion;
         const versions = installed
           ? t("game_update_versions", {

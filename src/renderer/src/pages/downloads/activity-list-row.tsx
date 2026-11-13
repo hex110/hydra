@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { PackageIcon, SyncIcon } from "@primer/octicons-react";
 
-import { ActivityRow, Button } from "@renderer/components";
+import { ActivityRow, Button, SteamUpdateButton } from "@renderer/components";
 import { buildGameDetailsPath, buildGameModsPath } from "@renderer/helpers";
 import { useGameUpdateAddOns, useLibrary, useToast } from "@renderer/hooks";
 import type { BackgroundTask, LibraryGame, ModDownload } from "@types";
@@ -186,12 +186,23 @@ function UpdateRow({
       }
       onOpen={() => navigate(buildGameDetailsPath(game))}
       primary={
-        <Button
-          size="small"
-          onClick={() => navigate(buildGameDetailsPath(game, { update: "1" }))}
-        >
-          {t("update_game")}
-        </Button>
+        game.steamUpdate && !game.availableUpdate ? (
+          <SteamUpdateButton
+            size="small"
+            theme="primary"
+            appId={game.objectId}
+            title={game.title}
+          />
+        ) : (
+          <Button
+            size="small"
+            onClick={() =>
+              navigate(buildGameDetailsPath(game, { update: "1" }))
+            }
+          >
+            {t("update_game")}
+          </Button>
+        )
       }
       onClear={async () => {
         await window.electron.dismissGameUpdate(game.shop, game.objectId);

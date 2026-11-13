@@ -97,6 +97,13 @@ const runDetached = (command: string, args: string[]) =>
 export class SteamStateService {
   private static current: SteamState = { installed: false, running: false };
   private static timer: NodeJS.Timeout | undefined;
+  private static listeners = new Set<(state: SteamState) => void>();
+
+  /** Called whenever Steam starts, exits, or is installed or removed. */
+  public static onChange(listener: (state: SteamState) => void) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
 
   public static get() {
     return this.current;
@@ -115,6 +122,7 @@ export class SteamStateService {
     ) {
       this.current = next;
       WindowManager.sendToAppWindows("on-steam-state-changed", next);
+      this.listeners.forEach((listener) => listener(next));
     }
 
     return this.current;

@@ -40,3 +40,10 @@ export interface SteamState {
   installed: boolean;
   running: boolean;
 }
+
+/** How a request to update a Steam game through Steam ended. */
+export type SteamUpdateResult =
+  | "started"
+  | "steam-not-installed"
+  | "steam-not-running"
+  | "steam-start-failed";
