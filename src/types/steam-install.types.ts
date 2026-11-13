@@ -21,3 +21,16 @@ export interface SteamDownload {
   /** Estimated network speed; null when not moving. */
   bytesPerSecond: number | null;
 }
+
+/** One way Steam can start an installed game ("Play", "Play in VR"). */
+export interface SteamLaunchOptionInfo {
+  /** The entry's key in Steam's launch list. */
+  id: string;
+  /** Steam's own name for it, when it has one. */
+  description: string | null;
+  /** File name of the program, for entries without a description. */
+  executable: string;
+  type: string | null;
+  /** The entry Steam's Play button runs. */
+  isDefault: boolean;
+}

@@ -2089,6 +2089,8 @@
     "details_language_hint": "The language of the description and other store details on this game's page. Steam and Epic only offer the languages they have.",
     "your_stuff": "Your game",
     "update_to_version": "Update to {{version}}",
+    "steam_launch_options_menu": "Choose how to start the game",
+    "steam_launch_default_hint": "What Steam's Play button starts",
     "your_stuff_copies": "Your copies",
     "your_stuff_installed": "Installed",
     "your_stuff_not_installed": "Not installed",

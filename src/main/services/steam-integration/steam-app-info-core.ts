@@ -30,7 +30,10 @@ export interface SteamKeyValues {
 }
 
 export interface SteamLaunchEntry {
+  /** The entry's key in `config.launch`, stable across reads. */
+  key: string;
   executable: string;
+  description: string | null;
   arguments: string | null;
   type: string | null;
   oslist: string[];
@@ -38,11 +41,21 @@ export interface SteamLaunchEntry {
   betakey: string | null;
 }
 
+export interface SteamBranch {
+  name: string;
+  buildId: string | null;
+  description: string | null;
+  /** Seconds since the epoch of the branch's last update. */
+  updatedAt: number | null;
+  passwordRequired: boolean;
+}
+
 export interface SteamAppInfo {
   appId: string;
   type: string | null;
   name: string | null;
   launch: SteamLaunchEntry[];
+  branches: SteamBranch[];
 }
 
 interface AppInfoLayout {
@@ -209,7 +222,10 @@ const getString = (value: SteamKeyValue | undefined, key: string) => {
   return text || null;
 };
 
-const toLaunchEntry = (value: SteamKeyValue): SteamLaunchEntry | null => {
+const toLaunchEntry = (
+  key: string,
+  value: SteamKeyValue
+): SteamLaunchEntry | null => {
   const executable = getString(value, "executable");
   if (!executable) return null;
 
@@ -217,7 +233,9 @@ const toLaunchEntry = (value: SteamKeyValue): SteamLaunchEntry | null => {
   const oslist = getString(config, "oslist");
 
   return {
+    key,
     executable,
+    description: getString(value, "description"),
     arguments: getString(value, "arguments"),
     type: getString(value, "type")?.toLowerCase() ?? null,
     oslist: oslist
@@ -229,6 +247,29 @@ const toLaunchEntry = (value: SteamKeyValue): SteamLaunchEntry | null => {
     osarch: getString(config, "osarch"),
     betakey: getString(config, "betakey"),
   };
+};
+
+const toBranches = (root: SteamKeyValue | undefined): SteamBranch[] => {
+  const branches = getChild(getChild(root, "depots"), "branches");
+  if (!branches || typeof branches !== "object") return [];
+
+  return Object.keys(branches).flatMap((name) => {
+    const branch = branches[name];
+    if (!branch || typeof branch !== "object") return [];
+
+    const updatedAt = Number(getString(branch, "timeupdated"));
+
+    return [
+      {
+        name,
+        buildId: getString(branch, "buildid"),
+        description: getString(branch, "description"),
+        updatedAt:
+          Number.isFinite(updatedAt) && updatedAt > 0 ? updatedAt : null,
+        passwordRequired: getString(branch, "pwdrequired") === "1",
+      },
+    ];
+  });
 };
 
 export const toSteamAppInfo = (
@@ -243,7 +284,7 @@ export const toSteamAppInfo = (
     launch && typeof launch === "object"
       ? Object.keys(launch)
           .sort((a, b) => Number(a) - Number(b))
-          .map((key) => toLaunchEntry(launch[key]))
+          .map((key) => toLaunchEntry(key, launch[key]))
           .filter((entry): entry is SteamLaunchEntry => entry !== null)
       : [];
 
@@ -252,6 +293,7 @@ export const toSteamAppInfo = (
     type: getString(common, "type")?.toLowerCase() ?? null,
     name: getString(common, "name"),
     launch: launchEntries,
+    branches: toBranches(root),
   };
 };
 
@@ -384,7 +426,7 @@ const NATIVE_STEAM_OPERATING_SYSTEMS: Partial<Record<NodeJS.Platform, string>> =
     darwin: "macos",
   };
 
-const getOperatingSystemTier = (
+export const getOperatingSystemTier = (
   oslist: string[],
   platform: NodeJS.Platform
 ): number | null => {
@@ -435,6 +477,78 @@ export const selectSteamLaunchCandidates = (
         a.index - b.index
     )
     .map(({ entry }) => entry);
+};
+
+export interface SteamLaunchOption {
+  /** The entry's key in Steam's `config.launch`. */
+  id: string;
+  /** Steam's own name for the entry ("Play in VR"), when it has one. */
+  description: string | null;
+  executable: string;
+  arguments: string | null;
+  type: string | null;
+  /** The entry Steam runs on Play. */
+  isDefault: boolean;
+}
+
+const toOption = (
+  entry: SteamLaunchEntry,
+  isDefault: boolean
+): SteamLaunchOption => ({
+  id: entry.key,
+  description: entry.description,
+  executable: entry.executable,
+  arguments: entry.arguments,
+  type: entry.type,
+  isDefault,
+});
+
+/**
+ * The launch entries Steam would offer for this OS and branch, default first.
+ * Entries for other branches, other operating systems (when this one has its
+ * own) and the 32-bit twin of a 64-bit build are left out, so a game only has
+ * options when it really has several ways to start.
+ */
+export const listSteamLaunchOptions = (
+  appInfo: SteamAppInfo,
+  branch: string | null,
+  platform: NodeJS.Platform = process.platform,
+  arch: string = process.arch
+): SteamLaunchOption[] => {
+  const is64Bit = arch === "x64" || arch === "arm64";
+  const candidates = selectSteamLaunchCandidates(
+    {
+      ...appInfo,
+      launch: appInfo.launch.filter(
+        (entry) => entry.betakey === null || entry.betakey === branch
+      ),
+    },
+    platform,
+    arch
+  );
+  if (candidates.length === 0) return [];
+
+  const bestTier = Math.min(
+    ...candidates.map(
+      (entry) => getOperatingSystemTier(entry.oslist, platform) ?? 9
+    )
+  );
+  const hasNon32Bit = candidates.some((entry) => entry.osarch !== "32");
+  const seen = new Set<string>();
+
+  const kept = candidates.filter((entry) => {
+    if (getOperatingSystemTier(entry.oslist, platform) !== bestTier) {
+      return false;
+    }
+    if (is64Bit && hasNon32Bit && entry.osarch === "32") return false;
+
+    const signature = `${entry.executable.toLowerCase()}\0${entry.arguments ?? ""}`;
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+
+  return kept.map((entry, index) => toOption(entry, index === 0));
 };
 
 export const toSteamExecutableSegments = (executable: string): string[] =>

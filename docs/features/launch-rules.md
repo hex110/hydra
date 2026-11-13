@@ -77,6 +77,31 @@ It uses the same code as a real launch, so it is the way to check what a rule
 or default actually changes. Games inside a Steam library are launched by
 Steam with Steam's own launch options; the preview says so.
 
+## Steam launch options
+
+Some Steam games have more than one way to start (Play, Play in VR, a
+launcher, a DirectX 12 build). Steam lists them in its app data
+(`appcache/appinfo.vdf`, `config.launch`); Hydra reads the same list, keeping
+the entries for this operating system and the game's branch and leaving out
+servers, editors and config tools. A game with a single way to start sees no
+change. With several, the hero's **Play** becomes a split button and its arrow
+lists them by Steam's own description (a name without one falls back to the
+program's file name).
+
+- **Play**, and the entry marked as Steam's default, start the game through
+  Steam as always (`steam://rungameid/<id>`).
+- Any other entry is started by Hydra directly, without Steam's launcher: the
+  program with the entry's arguments, then the player's own launch options,
+  with `SteamAppId` and `SteamGameId` set so Steamworks starts. Windows
+  programs run on Linux in the game's own Steam prefix
+  (`compatdata/<id>/pfx`). Steam's overlay and Steam Input are not there, and
+  Hydra's play tracking follows the process it started.
+- The game's stored executable is never changed by choosing an entry.
+- With mods on, the arrow also lists the entries after **Play (modded)**.
+
+The code is `main/services/steam-integration/steam-launch-options.ts` (listing
+and resolving) and `LaunchGameOptions.steamLaunchOptionId` in `launch-game.ts`.
+
 ## Built-in rules
 
 A new install starts with these. They can be edited, disabled or removed;

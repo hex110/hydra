@@ -37,6 +37,8 @@ import { UmuUpdater } from "@main/services/umu-updater";
 import { updateGameRecord } from "@main/services/game-record-updater";
 import { dispatchSteamProtocolLaunch } from "@main/services/steam-integration/steam-protocol-launch-dispatch";
 import { resolveSteamProtocolLaunch } from "@main/services/steam-integration/steam-protocol-launch";
+import { resolveSteamLaunchOption } from "@main/services/steam-integration/steam-launch-options";
+import { buildSteamLaunchEntryOptions } from "@main/services/steam-integration/steam-launch-options-core";
 import { CommonRedistManager } from "@main/services/common-redist-manager";
 import { runAchievementMetadataExport } from "@main/services/achievements/metadata-export";
 import {
@@ -80,6 +82,8 @@ export interface LaunchGameOptions {
   epicSavePolicy?: "local-once";
   epicOffline?: boolean;
   epicSkipUpdateCheck?: boolean;
+  /** Starts this entry of a Steam game's launch list instead of Steam's default. */
+  steamLaunchOptionId?: string;
 }
 
 const LAUNCH_DELAY_IN_MS = 2_000;
@@ -761,11 +765,30 @@ const launchGameWithCloudSaveChecks = async (
       )
     : storedGame;
   // A known publisher launcher stays the game's executable; its game runs.
-  const parsedPath = getLaunchExecutable(game, recordedPath);
+  const gamePath = getLaunchExecutable(game, recordedPath);
+  // Another entry of a Steam game's launch list runs without Steam's launcher.
+  const steamLaunchOption =
+    shop === "steam" && options.steamLaunchOptionId
+      ? await resolveSteamLaunchOption(objectId, options.steamLaunchOptionId)
+      : null;
+  if (options.steamLaunchOptionId && shop === "steam" && !steamLaunchOption) {
+    throw new Error("steam-launch-option-unavailable");
+  }
+  const directSteamOption =
+    steamLaunchOption && !steamLaunchOption.isDefault
+      ? steamLaunchOption
+      : null;
+  const parsedPath = directSteamOption?.executablePath ?? gamePath;
   // A shortcut's arguments belong to the executable it was recorded for.
   const shortcut =
     parsedPath === recordedPath ? readExecutableShortcut(executablePath) : null;
-  if (parsedPath !== recordedPath) {
+  if (directSteamOption) {
+    logger.log("Launching another Steam launch option", {
+      objectId,
+      option: directSteamOption.id,
+      executable: directSteamOption.executable,
+    });
+  } else if (parsedPath !== recordedPath) {
     logger.log("Running the game instead of its launcher", {
       launcher: recordedPath,
       game: parsedPath,
@@ -774,7 +797,7 @@ const launchGameWithCloudSaveChecks = async (
   clearCloudSaveLaunchGuard(objectId, shop);
 
   const steamProtocolLaunch =
-    shop === "steam"
+    shop === "steam" && !directSteamOption
       ? await resolveSteamProtocolLaunch(
           objectId,
           parsedPath,
@@ -799,7 +822,7 @@ const launchGameWithCloudSaveChecks = async (
     additions: launchAdditions,
     useMangohud,
     useGamemode,
-    launchOptions: effectiveLaunchOptions,
+    launchOptions: resolvedLaunchOptions,
   } = await resolveGameLaunchOptions({
     objectId,
     gameKey,
@@ -809,13 +832,24 @@ const launchGameWithCloudSaveChecks = async (
     gameLaunchOptions: launchOptions,
   });
 
+  const effectiveLaunchOptions = directSteamOption
+    ? buildSteamLaunchEntryOptions(
+        objectId,
+        directSteamOption.arguments,
+        resolvedLaunchOptions
+      )
+    : resolvedLaunchOptions;
+
   if (game) await checkOptiScalerBeforeLaunch(game, effectiveLaunchOptions);
 
+  const steamCompatibilityPrefix =
+    steamProtocolLaunch?.compatibilityPrefixPath ??
+    directSteamOption?.compatibilityPrefixPath;
   const steamCompatibilityPrefixPath =
     process.platform === "linux" &&
     isWindowsExecutable(parsedPath) &&
-    steamProtocolLaunch
-      ? steamProtocolLaunch.compatibilityPrefixPath
+    steamCompatibilityPrefix
+      ? steamCompatibilityPrefix
       : null;
 
   const updatedGame = game

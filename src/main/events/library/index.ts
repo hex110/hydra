@@ -21,6 +21,7 @@ import "./is-gamemode-available";
 import "./is-steam-app-executable";
 import "./install-game-on-steam";
 import "./steam-downloads";
+import "./steam-launch-options";
 import "./uninstall-game-on-steam";
 import "./is-mangohud-available";
 import "./is-winetricks-available";

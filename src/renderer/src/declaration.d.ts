@@ -65,6 +65,7 @@ import type {
   FloppySearchResult,
   SteamGameHistory,
   SteamDownload,
+  SteamLaunchOptionInfo,
   SteamHistorySyncStatus,
   FloppySyncStatus,
   GameLaunchPreview,
@@ -1271,8 +1272,10 @@ declare global {
       objectId: string,
       executablePath: string,
       launchOptions?: string | null,
-      epicLaunchOptions?: EpicLaunchOptions
+      epicLaunchOptions?: EpicLaunchOptions,
+      steamLaunchOptionId?: string
     ) => Promise<void>;
+    getSteamLaunchOptions: (appId: string) => Promise<SteamLaunchOptionInfo[]>;
     openClassicsGame: (
       shop: GameShop,
       objectId: string,

@@ -1901,7 +1901,8 @@ contextBridge.exposeInMainWorld("electron", {
     objectId: string,
     executablePath: string,
     launchOptions?: string | null,
-    epicLaunchOptions?: EpicLaunchOptions
+    epicLaunchOptions?: EpicLaunchOptions,
+    steamLaunchOptionId?: string
   ) =>
     ipcRenderer.invoke(
       "openGame",
@@ -1909,8 +1910,11 @@ contextBridge.exposeInMainWorld("electron", {
       objectId,
       executablePath,
       launchOptions,
-      epicLaunchOptions
+      epicLaunchOptions,
+      steamLaunchOptionId
     ),
+  getSteamLaunchOptions: (appId: string) =>
+    ipcRenderer.invoke("getSteamLaunchOptions", appId),
   openClassicsGame: (
     shop: GameShop,
     objectId: string,

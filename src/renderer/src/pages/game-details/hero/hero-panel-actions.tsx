@@ -33,6 +33,7 @@ import {
   useGameMods,
   useLibrary,
   useSteamDownload,
+  useSteamLaunchOptions,
   useToast,
 } from "@renderer/hooks";
 import { useEpicManagedConnection } from "@renderer/hooks/use-epic-managed";
@@ -168,6 +169,8 @@ export function HeroPanelActions() {
     Boolean(gameMods?.loader) ||
     Boolean(gameMods?.mods.some((mod) => mod.enabled));
   const playMode: ModPlayMode = gameMods?.playMode ?? "modded";
+  const steamLaunchOptions = useSteamLaunchOptions(game ?? null);
+  const pendingLaunchOption = useRef<string | undefined>();
   const [saveBackupOffer, setSaveBackupOffer] = useState(false);
   const [backingUpSaves, setBackingUpSaves] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -393,8 +396,9 @@ export function HeroPanelActions() {
   };
 
   /** Play from the split button: a modded launch may offer a save backup first. */
-  const playWithMode = async (mode: ModPlayMode) => {
+  const playWithMode = async (mode: ModPlayMode, launchOptionId?: string) => {
     if (!game) return;
+    pendingLaunchOption.current = launchOptionId;
     if (mode !== playMode) {
       await window.electron.setModPlayMode(game.shop, game.objectId, mode);
       void refreshMods();
@@ -408,7 +412,7 @@ export function HeroPanelActions() {
       setSaveBackupOffer(true);
       return;
     }
-    await openGame();
+    await openGame(launchOptionId);
   };
 
   const answerSaveBackupOffer = async (backUp: boolean) => {
@@ -424,10 +428,10 @@ export function HeroPanelActions() {
       return;
     }
     if (backUp) showSuccessToast(tMods("save_backup_done"));
-    await openGame();
+    await openGame(pendingLaunchOption.current);
   };
 
-  const openGame = async () => {
+  const openGame = async (launchOptionId?: string) => {
     if (!game) return;
 
     if (game.shop === "launchbox") {
@@ -436,7 +440,9 @@ export function HeroPanelActions() {
     }
 
     if (game.executablePath) {
-      await runLaunch(() => launchMember(game));
+      await runLaunch(() =>
+        launchMember(game, false, false, false, launchOptionId)
+      );
       return;
     }
 
@@ -453,7 +459,8 @@ export function HeroPanelActions() {
     member: LibraryGame,
     localOnce = false,
     offline = false,
-    skipUpdateCheck = false
+    skipUpdateCheck = false,
+    launchOptionId?: string
   ) => {
     if (!member.executablePath) return;
     setLocalSaveRetry(null);
@@ -467,7 +474,8 @@ export function HeroPanelActions() {
         member.objectId,
         member.executablePath,
         member.launchOptions,
-        getEpicLaunchOptions(localOnce, offline, skipUpdateCheck)
+        getEpicLaunchOptions(localOnce, offline, skipUpdateCheck),
+        launchOptionId
       );
     } catch (error) {
       clearTimeout(launchRelease.current);
@@ -871,6 +879,21 @@ export function HeroPanelActions() {
     }
 
     if (game?.executablePath || isPlayableClassics) {
+      const launchOptionItems = steamLaunchOptions
+        .filter((option) => !hasModsOn || !option.isDefault)
+        .map((option) => ({
+          id: `steam-${option.id}`,
+          label:
+            option.description ??
+            (option.isDefault ? t("play") : option.executable),
+          hint: option.isDefault ? t("steam_launch_default_hint") : undefined,
+          checked: false,
+          onSelect: () =>
+            void playWithMode(
+              playMode,
+              option.isDefault ? undefined : option.id
+            ),
+        }));
       const modsPlayButton = hasModsOn && game?.shop !== "launchbox" && (
         <SplitButton
           onClick={() => void playWithMode(playMode)}
@@ -899,15 +922,31 @@ export function HeroPanelActions() {
               checked: playMode === "modded",
               onSelect: () => void playWithMode("modded"),
             },
+            ...launchOptionItems,
           ]}
         >
           <PlayIcon />
           {playMode === "modded" ? tMods("play_modded") : t("play")}
         </SplitButton>
       );
-      const playButton = modsPlayButton || (
+      const launchOptionsPlayButton = launchOptionItems.length > 1 && (
+        <SplitButton
+          onClick={() => void openGame()}
+          disabled={deleting || isGameRunning}
+          menuLabel={t("steam_launch_options_menu")}
+          className={cn({
+            "hero-panel-actions__action--returned": sessionEnd.justEnded,
+          })}
+          partClassName="hero-panel-actions__action"
+          options={launchOptionItems}
+        >
+          <PlayIcon />
+          {t("play")}
+        </SplitButton>
+      );
+      const playButton = modsPlayButton || launchOptionsPlayButton || (
         <Button
-          onClick={openGame}
+          onClick={() => void openGame()}
           theme="outline"
           disabled={deleting || isGameRunning}
           className={cn("hero-panel-actions__action", {

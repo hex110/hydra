@@ -13,7 +13,8 @@ const openGame = async (
   objectId: string,
   executablePath: string,
   launchOptions?: string | null,
-  epicOptions?: unknown
+  epicOptions?: unknown,
+  steamLaunchOptionId?: string
 ) => {
   if (shop === "epic" || epicOptions !== undefined) {
     assertTrustedEpicSender(event, true);
@@ -25,6 +26,8 @@ const openGame = async (
     objectId,
     executablePath,
     launchOptions,
+    steamLaunchOptionId:
+      typeof steamLaunchOptionId === "string" ? steamLaunchOptionId : undefined,
     ...parseEpicLaunchOptions(epicOptions),
   });
 };

@@ -47,4 +47,5 @@ export * from "./use-game-mods";
 export * from "./use-game-update-add-ons";
 export * from "./use-system-specs";
 export * from "./use-steam-downloads";
+export * from "./use-steam-launch-options";
 export * from "./use-background-tasks";

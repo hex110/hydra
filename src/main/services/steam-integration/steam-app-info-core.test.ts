@@ -109,6 +109,7 @@ const launch = (
   entries: {
     executable: string;
     type?: string;
+    description?: string;
     oslist?: string;
     osarch?: string;
     betakey?: string;
@@ -123,6 +124,7 @@ const launch = (
 
       const value: TestKeyValues = { executable: entry.executable };
       if (entry.type) value.type = entry.type;
+      if (entry.description) value.description = entry.description;
       if (Object.keys(config).length > 0) value.config = config;
 
       return [String(index), value];
@@ -174,8 +176,11 @@ const makeAppInfo = (entries: Partial<SteamLaunchEntry>[]): SteamAppInfo => ({
   appId: "1",
   type: "game",
   name: "Game",
-  launch: entries.map((entry) => ({
+  branches: [],
+  launch: entries.map((entry, index) => ({
+    key: String(index),
     executable: "game.exe",
+    description: null,
     arguments: null,
     type: null,
     oslist: [],
@@ -208,7 +213,9 @@ describe("readSteamAppInfo", () => {
         name: "Portal 2",
         launch: [
           {
+            key: "0",
             executable: "portal2.sh",
+            description: null,
             arguments: null,
             type: null,
             oslist: ["linux"],
@@ -216,7 +223,9 @@ describe("readSteamAppInfo", () => {
             betakey: null,
           },
           {
+            key: "1",
             executable: "portal2.exe",
+            description: null,
             arguments: null,
             type: null,
             oslist: ["windows"],
@@ -224,11 +233,77 @@ describe("readSteamAppInfo", () => {
             betakey: null,
           },
         ],
+        branches: [],
       });
       assert.equal(appInfos.get("1070560")?.type, "tool");
       assert.deepEqual(appInfos.get("1070560")?.launch, []);
     });
   }
+
+  it("reads launch descriptions and branches", async (t) => {
+    const { directory, filePath } = await writeTempFile(
+      buildAppInfoFile(STEAM_APP_INFO_MAGIC_V41, [
+        {
+          appId: 77,
+          keyValues: {
+            appid: 77,
+            common: { name: "Branchy", type: "Game" },
+            config: {
+              launch: launch([
+                { executable: "play.exe", type: "default" },
+                {
+                  executable: "vr.exe",
+                  type: "option1",
+                  description: "Play in VR",
+                },
+              ]),
+            },
+            depots: {
+              branches: {
+                public: { buildid: 100, timeupdated: 1700000000 },
+                beta: { buildid: "200", description: "Next patch" },
+                secret: { buildid: 300, pwdrequired: "1" },
+              },
+            },
+          },
+        },
+      ])
+    );
+    t.after(() => fs.promises.rm(directory, { recursive: true, force: true }));
+
+    const info = (await readSteamAppInfo(filePath, ["77"])).get("77");
+
+    assert.deepEqual(
+      info?.launch.map((entry) => [entry.key, entry.description]),
+      [
+        ["0", null],
+        ["1", "Play in VR"],
+      ]
+    );
+    assert.deepEqual(info?.branches, [
+      {
+        name: "public",
+        buildId: "100",
+        description: null,
+        updatedAt: 1700000000,
+        passwordRequired: false,
+      },
+      {
+        name: "beta",
+        buildId: "200",
+        description: "Next patch",
+        updatedAt: null,
+        passwordRequired: false,
+      },
+      {
+        name: "secret",
+        buildId: "300",
+        description: null,
+        updatedAt: null,
+        passwordRequired: true,
+      },
+    ]);
+  });
 
   it("rejects unknown file versions", async (t) => {
     const { directory, filePath } = await writeTempFile(
