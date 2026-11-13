@@ -179,6 +179,33 @@ data, only when they are empty in Floppy and never overwritten:
 **Fill in Floppy start and end dates from Steam history** in the Floppy
 settings turns the dates off. Hydra also pushes the displayed playtime (Hydra plus Steam), not just its own.
 
+## Steam in the header
+
+A **Steam** button sits in the header, just left of **Big Picture**: the Steam
+logo, the word Steam and a small light, red when Steam is not running and green
+when it is (the text is dimmed while it is closed). It is left out when Steam is
+not installed.
+
+- **Closed:** the click starts Steam. On Linux Hydra runs `steam` (then
+  Flatpak's `com.valvesoftware.Steam` if that is missing); elsewhere it opens
+  `steam://open/main`.
+- **Running:** the click opens `steam://open/main`, which is meant to bring
+  up the main window, including one hidden in the tray, and on Hyprland Hydra
+  then asks the compositor to focus the `steam` window
+  (`hyprctl dispatch focuswindow class:steam`).
+- **Pulse:** when something needs Steam open (updating or switching the
+  branch of a Steam game), the button gets a ring for five seconds
+  (`requestSteamAttention()` in `renderer/src/helpers/steam-attention.ts`, a
+  no-op look under reduced motion).
+
+Running is read from Steam's pid file (`~/.steam/steam.pid`, or the registry's
+`ActiveProcess` on Windows) and checked against a live process called `steam`;
+the main process re-reads it every three seconds and pushes changes to every
+window (`on-steam-state-changed`, `useSteamState`). The code is
+`main/services/steam-integration/steam-state.ts` (`SteamStateService`), with
+the tested pid logic in `steam-state-core.ts`. A Flatpak Steam keeps its pid
+file inside its sandbox, so it shows as closed.
+
 ## Upstream's Steam integration
 
 Upstream Hydra's Steam integration (Steam sign-in, a sync through Hydra's

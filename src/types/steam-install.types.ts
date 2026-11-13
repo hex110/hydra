@@ -34,3 +34,9 @@ export interface SteamLaunchOptionInfo {
   /** The entry Steam's Play button runs. */
   isDefault: boolean;
 }
+
+/** What the header's Steam button shows. */
+export interface SteamState {
+  installed: boolean;
+  running: boolean;
+}

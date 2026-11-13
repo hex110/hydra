@@ -18,13 +18,16 @@ const runHyprctl = (args: string[]) =>
  * server's activation token. Asking the compositor directly is what works.
  * The legacy dispatcher fails on a Lua config, which needs `eval` instead.
  */
-const focusOnHyprland = async (pid: number) => {
-  if (await runHyprctl(["dispatch", "focuswindow", `pid:${pid}`])) return;
-  const lua = `hl.dispatch(hl.dsp.focus({ window = "pid:${pid}" }))`;
-  if (!(await runHyprctl(["eval", lua]))) {
-    logger.warn("Hyprland refused to focus the window");
-  }
+export const focusHyprlandWindow = async (selector: string) => {
+  if (await runHyprctl(["dispatch", "focuswindow", selector])) return true;
+  const lua = `hl.dispatch(hl.dsp.focus({ window = "${selector}" }))`;
+  if (await runHyprctl(["eval", lua])) return true;
+
+  logger.warn("Hyprland refused to focus the window", { selector });
+  return false;
 };
+
+const focusOnHyprland = (pid: number) => focusHyprlandWindow(`pid:${pid}`);
 
 /** Shows, restores and focuses a window, also where the compositor resists. */
 export const bringWindowToFront = (window: BrowserWindow) => {

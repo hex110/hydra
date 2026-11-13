@@ -1,0 +1,73 @@
+@use "../../scss/globals.scss";
+
+.steam-status-button {
+  position: relative;
+  gap: globals.$spacing-unit;
+  color: globals.$body-color;
+  opacity: 0.6;
+  transition:
+    opacity ease 0.2s,
+    color ease 0.2s,
+    border-color ease 0.2s;
+
+  &--running {
+    color: globals.$muted-color;
+    opacity: 1;
+  }
+
+  &__icon {
+    width: calc(globals.$spacing-unit * 2);
+    height: calc(globals.$spacing-unit * 2);
+    flex-shrink: 0;
+  }
+
+  &__label {
+    font-size: globals.$small-font-size;
+    line-height: 1;
+  }
+
+  &__light {
+    width: globals.$spacing-unit;
+    height: globals.$spacing-unit;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background-color: globals.$error-color;
+  }
+
+  &--running &__light {
+    background-color: globals.$success-color;
+  }
+
+  // The ring is a pseudo-element, so only opacity and transform animate.
+  &--attention::after {
+    content: "";
+    position: absolute;
+    inset: calc(globals.$spacing-unit * -0.5);
+    border-radius: globals.$spacing-unit;
+    border: calc(globals.$spacing-unit * 0.25) solid globals.$brand-teal;
+    pointer-events: none;
+    animation: steam-status-attention 1s ease-in-out infinite;
+  }
+
+  &--attention {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &--attention::after {
+      animation: none;
+    }
+  }
+}
+
+@keyframes steam-status-attention {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}

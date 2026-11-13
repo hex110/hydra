@@ -1,4 +1,5 @@
 import { shell } from "electron";
+import { SteamStateService } from "@main/services/steam-integration/steam-state";
 import { SteamDownloads } from "@main/services/steam-integration/steam-downloads";
 
 import { registerEvent } from "../register-event";
@@ -14,3 +15,7 @@ registerEvent(
 registerEvent("openSteamDownloads", () =>
   shell.openExternal("steam://open/downloads")
 );
+
+registerEvent("getSteamState", () => SteamStateService.refresh());
+
+registerEvent("openSteam", () => SteamStateService.open());

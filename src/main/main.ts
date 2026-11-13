@@ -57,6 +57,7 @@ import {
   startSteamWishlistSchedule,
 } from "./services/steam-history";
 import { migrateEmulatorCloudSaveDefaults } from "./services/cloud-save/automatic-sync-emulator-migration";
+import { SteamStateService } from "./services/steam-integration/steam-state";
 import { watchSteamLibraries } from "./services/steam-integration/steam-install-watcher";
 import { SteamDownloads } from "./services/steam-integration/steam-downloads";
 import { migrateGameVisibilityFields } from "./services/library-sync/game-visibility-migration";
@@ -160,6 +161,7 @@ export const loadState = async () => {
     void ProtonManager.updateAutomatically();
   }
 
+  SteamStateService.start();
   void watchSteamLibraries().then(() => SteamDownloads.start());
   await loadSaveStoreConfig();
   startCloudLibrarySchedule();

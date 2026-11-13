@@ -32,7 +32,7 @@ import { useTitleSelection } from "./use-title-selection";
 import { ScanGamesModal, type ScanResult } from "./scan-games-modal";
 import { setFilters, setLibrarySearchQuery } from "@renderer/features";
 import cn from "classnames";
-import { SearchDropdown } from "@renderer/components";
+import { SearchDropdown, SteamStatusButton } from "@renderer/components";
 import { buildGameDetailsPath } from "@renderer/helpers";
 import type { GameShop } from "@types";
 import type { SuggestionShop } from "@renderer/hooks/use-search-suggestions";
@@ -443,6 +443,8 @@ export function Header() {
               <SyncIcon size={16} />
             </button>
           )}
+
+          <SteamStatusButton />
 
           {window.electron.hasNativeWindowDecorations && (
             <button

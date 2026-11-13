@@ -10,6 +10,7 @@ import type {
   CatalogueSearchResult,
   ModDownload,
   SteamDownload,
+  SteamState,
   ModFolderKind,
   ModPlayMode,
   NexusGameMatch,
@@ -1670,6 +1671,14 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("on-steam-downloads-changed", listener);
     return () =>
       ipcRenderer.removeListener("on-steam-downloads-changed", listener);
+  },
+  getSteamState: () => ipcRenderer.invoke("getSteamState"),
+  openSteam: () => ipcRenderer.invoke("openSteam"),
+  onSteamStateChanged: (cb: (state: SteamState) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: SteamState) =>
+      cb(state);
+    ipcRenderer.on("on-steam-state-changed", listener);
+    return () => ipcRenderer.removeListener("on-steam-state-changed", listener);
   },
   uninstallGameOnSteam: (steamAppId: string) =>
     ipcRenderer.invoke("uninstallGameOnSteam", steamAppId),

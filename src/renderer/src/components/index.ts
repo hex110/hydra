@@ -41,6 +41,7 @@ export * from "./classics-onboarding-modal/classics-onboarding-modal";
 export * from "./classics-scan-indicator/classics-scan-indicator";
 export * from "./retroarch-scan-indicator/retroarch-scan-indicator";
 export * from "./steam-library-badge/steam-library-badge";
+export * from "./steam-status-button/steam-status-button";
 export * from "./classics-spinner/classics-spinner";
 export * from "./window-title-bar/window-title-bar";
 export * from "./error-boundary/error-fallback";
