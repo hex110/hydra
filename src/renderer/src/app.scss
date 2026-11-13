@@ -172,6 +172,13 @@ progress[value] {
     color: transparent;
   }
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-right: globals.$spacing-unit;
+  }
+
   &__big-picture {
     display: flex;
     align-items: center;
@@ -181,8 +188,6 @@ progress[value] {
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
-    margin-left: auto;
-    margin-right: globals.$spacing-unit;
     font-size: 12px;
     -webkit-app-region: no-drag;
     transition:

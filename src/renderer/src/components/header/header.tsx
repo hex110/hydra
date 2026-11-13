@@ -444,7 +444,7 @@ export function Header() {
             </button>
           )}
 
-          <SteamStatusButton />
+          {window.electron.hasNativeWindowDecorations && <SteamStatusButton />}
 
           {window.electron.hasNativeWindowDecorations && (
             <button

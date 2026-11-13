@@ -16,9 +16,16 @@ const ATTENTION_MS = 5000;
  * button that starts Steam, or shows and focuses its window. It pulses when a
  * feature asks for Steam to be open (`requestSteamAttention`).
  */
+interface SteamStatusButtonProps {
+  /** `title-bar` is the compact form that sits beside Big Picture in the window's title bar. */
+  variant?: "header" | "title-bar";
+  className?: string;
+}
+
 export function SteamStatusButton({
+  variant = "header",
   className,
-}: Readonly<{ className?: string }>) {
+}: Readonly<SteamStatusButtonProps>) {
   const { t } = useTranslation("header");
   const state = useSteamState();
   const [attention, setAttention] = useState(false);
@@ -54,9 +61,10 @@ export function SteamStatusButton({
       type="button"
       className={cn(
         "steam-status-button",
-        "header__action-button",
-        "header__action-button--outlined",
+        `steam-status-button--${variant}`,
         {
+          "header__action-button header__action-button--outlined":
+            variant === "header",
           "steam-status-button--running": state.running,
           "steam-status-button--attention": attention,
         },

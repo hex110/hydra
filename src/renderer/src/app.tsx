@@ -1,4 +1,10 @@
-import { BottomPanel, Header, Sidebar, Toast } from "@renderer/components";
+import {
+  BottomPanel,
+  Header,
+  Sidebar,
+  SteamStatusButton,
+  Toast,
+} from "@renderer/components";
 import { VideoIcon } from "@primer/octicons-react";
 import {
   DashIcon,
@@ -771,14 +777,17 @@ export function App() {
             )}
           </h4>
 
-          <button
-            type="button"
-            className="title-bar__big-picture"
-            onClick={() => globalThis.window.electron.openBigPictureWindow()}
-          >
-            <VideoIcon size={14} />
-            {t("big_picture", { ns: "sidebar" })}
-          </button>
+          <div className="title-bar__actions">
+            <SteamStatusButton variant="title-bar" />
+            <button
+              type="button"
+              className="title-bar__big-picture"
+              onClick={() => globalThis.window.electron.openBigPictureWindow()}
+            >
+              <VideoIcon size={14} />
+              {t("big_picture", { ns: "sidebar" })}
+            </button>
+          </div>
 
           {window.electron.platform === "linux" && (
             <div className="title-bar__window-controls">

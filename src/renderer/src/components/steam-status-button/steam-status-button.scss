@@ -15,6 +15,20 @@
     opacity: 1;
   }
 
+  &--title-bar {
+    display: flex;
+    align-items: center;
+    padding: calc(globals.$spacing-unit * 0.5) globals.$spacing-unit;
+    border-radius: calc(globals.$spacing-unit * 0.5);
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+
+    &:hover {
+      opacity: 1;
+      background-color: globals.with-alpha(globals.$muted-color, 0.1);
+    }
+  }
+
   &__icon {
     width: calc(globals.$spacing-unit * 2);
     height: calc(globals.$spacing-unit * 2);

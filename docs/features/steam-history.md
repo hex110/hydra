@@ -181,7 +181,7 @@ settings turns the dates off. Hydra also pushes the displayed playtime (Hydra pl
 
 ## Steam in the header
 
-A **Steam** button sits in the header, just left of **Big Picture**: the Steam
+A **Steam** button sits just left of **Big Picture**, in the header or, where the window has its own title bar, in the title bar: the Steam
 logo, the word Steam and a small light, red when Steam is not running and green
 when it is (the text is dimmed while it is closed). It is left out when Steam is
 not installed.
