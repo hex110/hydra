@@ -797,12 +797,14 @@ export const mergeImportedProfileGames = async (
     for (const remoteGame of remoteGames) {
       if (!remoteGame) continue;
       const gameKey = levelKeys.game(remoteGame.shop, remoteGame.objectId);
-      const localGame = await gamesSublevel.get(gameKey);
-      if (!localGame) continue;
-      await gamesSublevel.put(
-        gameKey,
-        mergeImportedProfileGame(localGame, remoteGame)
-      );
+      await libraryWriteQueue.run(async () => {
+        const localGame = await gamesSublevel.get(gameKey);
+        if (!localGame) return;
+        await gamesSublevel.put(
+          gameKey,
+          mergeImportedProfileGame(localGame, remoteGame)
+        );
+      });
     }
   }
 };

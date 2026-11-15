@@ -666,6 +666,23 @@ title bar, no bottom panel), so the 2026-11-10 sync cherry-picked fixes only:
   and loses readable stack traces), Steam false-login (#3031; our Steam
   integration is deleted), upstream's version bump.
 
+## Upstream 4.4.1
+
+Released 2026-11-12; ten pull requests since the 4.4.0 survey (e0a7a7973).
+Nearly all of it builds on work the 4.4.0 survey left for a decision, so the
+2026-11-15 sync took one fix:
+
+- **Taken (rewritten):** emulator-import profile merges read and write each
+  game inside the library write queue, so a write queued at the same moment
+  is not overwritten (from #3120).
+- **Joins the 4.4.0 decision:** shadPS4 polish and PKG extraction (#3108,
+  #3113, #3128), PS4 cloud saves (#3105, #3123), PS3 trophies from RPCS3
+  (#3114, built on the shadPS4 trophy watcher), more Recomps ports and the
+  game-options danger-zone table (#3113, #3125, #3127), custom library order
+  with per-collection order saved to the account (#3120; our library page is
+  reworked and has its own sorting).
+- **Skipped:** upstream's version bump (#3129).
+
 ## See and steer what Hydra does to a game
 
 Decided 2026-10-29. The goal is that installing a game and pressing Play is
