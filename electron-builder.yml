@@ -133,6 +133,9 @@ linux:
     - x-scheme-handler/nxm
 appImage:
   artifactName: ${name}-${version}.${ext}
+deb:
+  fpm:
+    - --deb-compression-level=9
 npmRebuild: false
 publish:
   provider: github
