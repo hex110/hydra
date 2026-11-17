@@ -22,6 +22,8 @@ export interface DownloadProgress {
   isReconnecting?: boolean;
   isRecovering?: boolean;
   recoveryProgress?: number;
+  isMovingFile?: boolean;
+  moveProgress?: number;
   progress: number;
   gameId: string;
   download: Download;

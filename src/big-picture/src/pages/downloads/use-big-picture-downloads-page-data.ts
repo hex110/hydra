@@ -361,6 +361,10 @@ export function useBigPictureDownloadsPageData() {
       (epicPhase === "finalizing" || epicPhase === "prerequisites")
     ) {
       statusLabel = t("epic_finalizing_install", { ns: "game_details" });
+    } else if (lastPacket?.isMovingFile) {
+      statusLabel = t("downloads_moving_file", {
+        percentage: `${Math.round((lastPacket.moveProgress ?? 0) * 100)}%`,
+      });
     } else if (lastPacket?.isRecovering) {
       statusLabel = `Re-downloading saved portion… ${Math.round(
         (lastPacket.recoveryProgress ?? 0) * 100

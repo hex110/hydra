@@ -279,7 +279,11 @@ function HeroDownloadTime({
 }: Readonly<HeroDownloadTimeProps>) {
   const { t: tGameDetails } = useTranslation("game_details");
 
-  if (!isGameDownloading || lastPacket?.isRecovering) {
+  if (
+    !isGameDownloading ||
+    lastPacket?.isRecovering ||
+    lastPacket?.isMovingFile
+  ) {
     return <span className="download-hero__progress-time" />;
   }
 
@@ -342,7 +346,10 @@ export function HeroDownloadView({
     navigate(buildGameDetailsPath(game));
   }, [navigate, game]);
 
-  const isRecovering = !isGameExtracting && !!lastPacket?.isRecovering;
+  const isMovingFile = !isGameExtracting && !!lastPacket?.isMovingFile;
+  const movePercent = Math.round((lastPacket?.moveProgress ?? 0) * 100);
+  const isRecovering =
+    !isGameExtracting && !isMovingFile && !!lastPacket?.isRecovering;
   const recoveryPercent = Math.round((lastPacket?.recoveryProgress ?? 0) * 100);
   const isReconnecting =
     !isGameExtracting && !isRecovering && !!lastPacket?.isReconnecting;
@@ -402,6 +409,11 @@ export function HeroDownloadView({
                     {t("checking_files")}
                   </span>
                 )}
+                {isMovingFile && (
+                  <span className="download-hero__progress-status">
+                    {t("moving_file", { percentage: `${movePercent}%` })}
+                  </span>
+                )}
                 {isRecovering && !lastPacket?.isCheckingFiles && (
                   <span className="download-hero__progress-status">
                     {t("recovering", { percentage: `${recoveryPercent}%` })}
@@ -415,7 +427,8 @@ export function HeroDownloadView({
                 {!isGameExtracting &&
                   !lastPacket?.isCheckingFiles &&
                   !isReconnecting &&
-                  !isRecovering && (
+                  !isRecovering &&
+                  !isMovingFile && (
                     <span className="download-hero__progress-size">
                       <DownloadIcon size={14} />
                       {isGameDownloading && lastPacket

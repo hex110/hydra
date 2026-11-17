@@ -104,6 +104,13 @@ export function BottomPanel() {
           });
         }
 
+        if (lastPacket.isMovingFile) {
+          return t("moving_file", {
+            title,
+            percentage: `${Math.round((lastPacket.moveProgress ?? 0) * 100)}%`,
+          });
+        }
+
         if (lastPacket.isRecovering) {
           return t("recovering", {
             title,

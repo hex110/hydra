@@ -59,6 +59,9 @@ export interface JsHttpDownloaderStatus {
   isReconnecting: boolean;
   isRecovering: boolean;
   recoveryProgress: number;
+  /** The finished file is being copied into place (AnkerGames browser downloads). */
+  isMovingFile?: boolean;
+  moveProgress?: number;
   resumeCapability?: "unknown" | "supported" | "unsupported";
 }
 

@@ -92,7 +92,12 @@ opens the page, the browser saves the file, and Hydra takes it from there.
 4. When the browser has finished (no in-progress file, size unchanged across
    two checks), Hydra moves the archive into the game's download folder and
    reports the download complete. Extraction, archive cleanup and game setup
-   then run as for any other download.
+   then run as for any other download. When the browser folder is on another
+   drive the move is a copy (`EXDEV`), which takes minutes for a big archive
+   (about 2.5 min for a 67 GB one onto NTFS). Meanwhile the download shows
+   "Moving to the download folder… N%" (`isMovingFile`/`moveProgress` on the
+   progress packet, read off the destination's size), not a stuck 99 %. A
+   resumed watch joins a copy already running instead of starting another.
 
 Details:
 
@@ -131,7 +136,8 @@ Details:
   the browser step.
 
 **Browser downloads folder** in the AnkerGames settings is the folder Hydra
-watches. It defaults to the system Downloads folder (XDG).
+watches. It defaults to the system Downloads folder (XDG). Its hint says
+that a folder on the same drive as the games folder skips the copy.
 
 Files: `src/shared/ankergames.ts` (URIs, sitemap, page and home-feed parsing,
 archive matching), `src/main/services/ankergames/` (catalogue, download page,

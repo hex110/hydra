@@ -19,6 +19,7 @@ import {
 } from "@shared";
 import type { UserPreferences } from "@types";
 import { AnkerGamesCatalogue } from "./catalogue";
+import { moveArchive, type ArchiveMove } from "./move-archive";
 import {
   getAnkerGamesPageOpenedAt,
   openAnkerGamesDownloadPage,
@@ -38,17 +39,6 @@ export const getBrowserDownloadsDirectory = async () => {
     preferences?.ankerGamesBrowserDownloadsPath ||
     SystemPath.getPath("downloads")
   );
-};
-
-const moveFile = async (from: string, to: string) => {
-  await fs.promises.mkdir(path.dirname(to), { recursive: true });
-  try {
-    await fs.promises.rename(from, to);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "EXDEV") throw error;
-    await fs.promises.copyFile(from, to);
-    await fs.promises.unlink(from);
-  }
 };
 
 interface FoundFile {
@@ -189,6 +179,7 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
   private lastPoll = { at: 0, bytes: 0 };
   private finishedSize: number | null = null;
   private waitingSince = 0;
+  private move: ArchiveMove | null = null;
 
   override async startDownload(options: JsHttpDownloaderOptions) {
     this.stopWatching();
@@ -227,7 +218,7 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
             chosenArchives.delete(pageUri);
             const name = path.basename(chosen);
             const { size } = await fs.promises.stat(chosen);
-            await moveFile(chosen, path.join(options.savePath, name));
+            await this.follow(chosen, path.join(options.savePath, name));
             this.complete(name, size);
             this.settle?.();
             return;
@@ -247,7 +238,7 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
             const { name, size } = found.file;
             // A finished file keeps its size across two polls.
             if (size > 0 && size === this.finishedSize) {
-              await moveFile(
+              await this.follow(
                 path.join(directory, name),
                 path.join(options.savePath, name)
               );
@@ -280,6 +271,30 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
 
       void poll();
     });
+  }
+
+  /** Moves the archive into place, reporting a cross-drive copy's progress meanwhile. */
+  private async follow(from: string, to: string) {
+    let copyStartedAt = 0;
+    this.move = moveArchive(from, to, (bytes) => {
+      copyStartedAt = Date.now();
+      logger.log("[AnkerGames] Copying the archive to another drive", {
+        from,
+        to,
+        bytes,
+      });
+    });
+    this.speed = 0;
+    try {
+      await this.move.done;
+    } finally {
+      this.move = null;
+    }
+    if (copyStartedAt) {
+      logger.log("[AnkerGames] Archive copied", {
+        seconds: Math.round((Date.now() - copyStartedAt) / 1000),
+      });
+    }
   }
 
   private complete(name: string, size: number) {
@@ -340,6 +355,11 @@ export class AnkerGamesBrowserDownload extends JsHttpDownloader {
       isReconnecting: false,
       isRecovering: false,
       recoveryProgress: 0,
+      isMovingFile: !!this.move,
+      moveProgress:
+        this.move && this.move.total > 0
+          ? this.move.copied / this.move.total
+          : 0,
     };
   }
 }
