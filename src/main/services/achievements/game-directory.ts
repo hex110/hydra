@@ -7,6 +7,8 @@ export const STEAM_SETTINGS_DIR_NAME = "steam_settings";
 export const ACHIEVEMENTS_FILE_NAME = "achievements.json";
 
 const MAX_UPWARD_LEVELS = 3;
+const MAX_SEARCH_DEPTH = 8;
+const MAX_DIRECTORIES_VISITED = 2000;
 
 const NESTED_EXECUTABLE_DIRS = new Set([
   "bin",
@@ -19,6 +21,29 @@ const NESTED_EXECUTABLE_DIRS = new Set([
   "x86",
   "game",
   "runtime",
+]);
+
+const IGNORED_SEARCH_DIRS = new Set([
+  ".git",
+  "audio",
+  "config",
+  "configs",
+  "content",
+  "data",
+  "intermediate",
+  "localization",
+  "logs",
+  "movies",
+  "music",
+  "pak",
+  "paks",
+  "saved",
+  "saves",
+  "shaders",
+  "sound",
+  "sounds",
+  "textures",
+  "videos",
 ]);
 
 const GAME_ROOT_MARKER_DIRS = new Set([
@@ -236,4 +261,62 @@ export const resolveGameSearchRoot = async (executablePath: string) => {
   }
 
   return searchRoot;
+};
+
+const splitDirectoryEntries = async (
+  dirPath: string,
+  isMatch: (entry: fs.Dirent) => boolean
+) => {
+  const found: string[] = [];
+  const nextLevel: string[] = [];
+
+  const entries = await readDirectorySafe(dirPath);
+
+  for (const entry of entries ?? []) {
+    if (isMatch(entry)) {
+      found.push(path.join(dirPath, entry.name));
+    } else if (
+      entry.isDirectory() &&
+      !IGNORED_SEARCH_DIRS.has(entry.name.toLowerCase())
+    ) {
+      nextLevel.push(path.join(dirPath, entry.name));
+    }
+  }
+
+  return { found, nextLevel };
+};
+
+export const findEntriesBreadthFirst = async (
+  searchRoot: string,
+  isMatch: (entry: fs.Dirent) => boolean
+) => {
+  const found: string[] = [];
+
+  let currentLevel = [searchRoot];
+  let visited = 0;
+
+  for (
+    let depth = 0;
+    depth < MAX_SEARCH_DEPTH && currentLevel.length;
+    depth++
+  ) {
+    const nextLevel: string[] = [];
+
+    for (const dirPath of currentLevel) {
+      if (visited >= MAX_DIRECTORIES_VISITED) break;
+
+      visited++;
+
+      const level = await splitDirectoryEntries(dirPath, isMatch);
+
+      found.push(...level.found);
+      nextLevel.push(...level.nextLevel);
+    }
+
+    if (found.length) break;
+
+    currentLevel = nextLevel;
+  }
+
+  return found;
 };
