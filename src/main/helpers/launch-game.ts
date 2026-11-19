@@ -41,6 +41,7 @@ import { resolveSteamLaunchOption } from "@main/services/steam-integration/steam
 import { buildSteamLaunchEntryOptions } from "@main/services/steam-integration/steam-launch-options-core";
 import { CommonRedistManager } from "@main/services/common-redist-manager";
 import { runAchievementMetadataExport } from "@main/services/achievements/metadata-export";
+import { seedEmulatorAchievementLists } from "@main/services/achievements/metadata-export/seed-emulator-achievement-lists";
 import {
   parseExecutablePath,
   readExecutableShortcut,
@@ -87,6 +88,7 @@ export interface LaunchGameOptions {
 }
 
 const LAUNCH_DELAY_IN_MS = 2_000;
+const EMULATOR_ACHIEVEMENT_SEED_TIMEOUT_IN_MS = 4_000;
 
 const createUmuStatusReporter =
   (gameKey: string) =>
@@ -1080,11 +1082,27 @@ const launchGameWithCloudSaveChecks = async (
   // Wrapped in try/catch to ensure game launch is never blocked
   await runCommonRedistPreflight(shop, objectId);
 
+  const emulatorAchievementSeed = updatedGame
+    ? seedEmulatorAchievementLists(
+        updatedGame,
+        AbortSignal.timeout(EMULATOR_ACHIEVEMENT_SEED_TIMEOUT_IN_MS)
+      )
+    : Promise.resolve();
+
   if (updatedGame) {
     void runAchievementMetadataExport(gameKey, updatedGame);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, LAUNCH_DELAY_IN_MS));
+  // The seed must not hold up the launch for longer than its timeout.
+  await Promise.all([
+    new Promise((resolve) => setTimeout(resolve, LAUNCH_DELAY_IN_MS)),
+    Promise.race([
+      emulatorAchievementSeed,
+      new Promise((resolve) =>
+        setTimeout(resolve, EMULATOR_ACHIEVEMENT_SEED_TIMEOUT_IN_MS)
+      ),
+    ]),
+  ]);
 
   if (steamProtocolLaunch) {
     if (

@@ -27,7 +27,7 @@ const getDocumentsPath = () => {
   return path.join("drive_c", "users", user || "", "Documents");
 };
 
-const getPublicDocumentsPath = () => {
+export const getPublicDocumentsPath = () => {
   if (process.platform === "win32") {
     return path.join("C:", "Users", "Public", "Documents");
   }
