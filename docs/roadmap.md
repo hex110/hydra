@@ -683,6 +683,21 @@ Nearly all of it builds on work the 4.4.0 survey left for a decision, so the
   reworked and has its own sorting).
 - **Skipped:** upstream's version bump (#3129).
 
+## Upstream after 4.4.1
+
+Three pull requests landed on upstream `main` up to 0efc3fadb; the
+2026-11-22 sync took one:
+
+- **Taken:** electron-builder 26.18.1 with its bundled fpm 1.17.0 (#3154).
+  The `.pacman` and AppImage contain the same app; the AppImage's new
+  `AppRun` adds `--no-sandbox` itself on hosts without unprivileged user
+  namespaces, where it used to crash. The deb and snap settings from the same
+  pull request are inert, since we build neither.
+- **Skipped:** the README rewrite (#3152; ours is Hydra Plus's own), and the
+  CSP hosts for upstream's Chatwoot support chat and Formbricks survey
+  (0efc3fadb). Our builds don't set `RENDERER_VITE_EXTERNAL_RESOURCES_URL`,
+  so that bundle never loads, and the CSP stays closed to hosts we don't use.
+
 ## See and steer what Hydra does to a game
 
 Decided 2026-10-29. The goal is that installing a game and pressing Play is
